@@ -75,7 +75,7 @@ def _load_module(script_name):
     """Load a skill script as a module by file path."""
     script_path = os.path.join(
         os.path.dirname(__file__),
-        f"../../.agents/skills/chem-dft-orca-advanced-calculation/scripts/{script_name}",
+        f"../../skills/chem-dft-orca-advanced-calculation/scripts/{script_name}",
     )
     script_path = os.path.abspath(script_path)
     spec = importlib_util.spec_from_file_location(

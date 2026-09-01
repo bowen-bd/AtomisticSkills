@@ -2,7 +2,7 @@
 target-version = "py310"
 
 [tool.ruff.lint.per-file-ignores]
-".agents/skills/**/scripts/*.py" = ["E402"]
-".agents/skills/**/examples/**/*.py" = ["E402"]
+"skills/**/scripts/*.py" = ["E402"]
+"skills/**/examples/**/*.py" = ["E402"]
 "src/mcp_server/*.py" = ["E402"]
 "tests/**/*.py" = ["E402"]

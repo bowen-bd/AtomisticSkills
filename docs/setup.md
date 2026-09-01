@@ -107,9 +107,9 @@ With `--scope global`, MCP tools become available everywhere. To also make Claud
 
 When a task involves materials simulation, drug discovery, or atomistic modeling,
 the full toolkit lives at /path/to/AtomisticSkills.
-Skills: /path/to/AtomisticSkills/.agents/skills/
+Skills: /path/to/AtomisticSkills/skills/
 Workflows: /path/to/AtomisticSkills/.agents/workflows/
-Discover skills: grep -r "^description:" /path/to/AtomisticSkills/.agents/skills/*/SKILL.md
+Discover skills: grep -r "^description:" /path/to/AtomisticSkills/skills/*/SKILL.md
 ```
 
 **Codex CLI users: global MCP, rules, skills, and workflows**
@@ -118,7 +118,7 @@ With `--scope global` or `--scope both`, `configure_mcp.py --agent codex` will:
 1. Register MCP tools globally in `~/.codex/config.toml`.
 2. Append/update the `AtomisticSkills Global Reference` block in `~/.codex/AGENTS.md` for rules and workflows.
 3. Create a compact pointer skill at `~/.codex/skills/atomisticskills/SKILL.md`.
-4. Symlink every project skill from `.agents/skills/` into `~/.codex/skills/`, making the full skill library available when Codex starts outside this repository.
+4. Symlink every project skill from `skills/` into `~/.codex/skills/`, making the full skill library available when Codex starts outside this repository.
 
 The symlink step preserves unrelated existing global skills. If a non-project skill with the same name already exists in `~/.codex/skills/`, `configure_mcp.py` skips that entry and reports it. On each run, stale Codex symlinks pointing to removed AtomisticSkills project skills are cleaned up, and new project skills are linked globally. When Codex is started inside the AtomisticSkills repository, the global reference tells it to prefer the project-local `AGENTS.md` and project-local skills, avoiding duplicate rule/skill context.
 
@@ -129,7 +129,7 @@ With `--scope global` or `--scope both`, running `configure_mcp.py --agent gemin
 2. Register a global IDE plugin in `~/.gemini/config/plugins/Google.atomisticskills.atomisticskills` and symlink the skills directory directly, making all 129+ skills natively accessible in any session.
 3. Append/update the `AtomisticSkills Global Reference` block in your global rules file (`~/.gemini/GEMINI.md`) for workflows and rules.
 
-This makes Gemini automatically aware of all rules, skills, and workflows when working in any folder outside this repository, while preventing duplicate context/rule loading when working inside the repository. Gemini uses a directory symlink to `.agents/skills/`, so added and removed project skills are reflected globally through that link; rerunning `configure_mcp.py` refreshes the plugin symlink if it becomes stale or points elsewhere.
+This makes Gemini automatically aware of all rules, skills, and workflows when working in any folder outside this repository, while preventing duplicate context/rule loading when working inside the repository. Gemini uses a directory symlink to `skills/`, so added and removed project skills are reflected globally through that link; rerunning `configure_mcp.py` refreshes the plugin symlink if it becomes stale or points elsewhere.
 
 Restart the assistant after any config changes.
 

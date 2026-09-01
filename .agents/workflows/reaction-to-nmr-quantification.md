@@ -22,7 +22,7 @@ If the user provides an image of a spectrum rather than a numeric data file.
 ### Step 1: Identify All NMR-Relevant Species
 Parse the user's reaction description and compile a complete list of compounds whose signals may appear in the crude NMR.
 
-- **Action:** The agent should use its chemistry knowledge and the reference file at `.agents/skills/chem-nmr-analysis/reference/named_reactions.json` to identify reactants, products, solvents, NMR-visible reagents, and byproducts. The agent must distinguish reactants (transformed, go to ReactionT5) from reagents (facilitate, go to ReactionT5 as `--reagent_smiles`) from solvents (do NOT go to ReactionT5, but may need NMR references).
+- **Action:** The agent should use its chemistry knowledge and the reference file at `skills/chem-nmr-analysis/reference/named_reactions.json` to identify reactants, products, solvents, NMR-visible reagents, and byproducts. The agent must distinguish reactants (transformed, go to ReactionT5) from reagents (facilitate, go to ReactionT5 as `--reagent_smiles`) from solvents (do NOT go to ReactionT5, but may need NMR references).
 - **Decision:** If the reaction name is ambiguous about the specific reagent or solvent used, ask the user before proceeding.
 
 ### Step 2: Resolve Compound Names to SMILES

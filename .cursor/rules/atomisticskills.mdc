@@ -9,4 +9,4 @@ This project uses AtomisticSkills — a framework for atomistic simulation
 workflows combining literature, MLIP tools, and MCP servers.
 
 See CLAUDE.md for the full instructions (Claude Code format, also applicable
-to other agents). Skills are in .agents/skills/, workflows in .agents/workflows/.
+to other agents). Skills are in skills/, workflows in .agents/workflows/.

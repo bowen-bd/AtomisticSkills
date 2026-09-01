@@ -11,7 +11,7 @@ Supported agents:
   cursor   - Cursor (.cursor/mcp.json)
   windsurf - Windsurf (~/.codeium/windsurf/mcp_config.json, global only)
 
-Skills (.agents/skills/) and workflows (.agents/workflows/) are the universal
+Skills (skills/) and workflows (.agents/workflows/) are the universal
 cross-platform paths — no changes needed for different agents.
 Instruction files (CLAUDE.md / AGENTS.md / GEMINI.md) are auto-generated
 for agents that don't already have one.
@@ -49,7 +49,7 @@ This project uses AtomisticSkills — a framework for atomistic simulation
 workflows combining literature, MLIP tools, and MCP servers.
 
 See CLAUDE.md for the full instructions (Claude Code format, also applicable
-to other agents). Skills are in .agents/skills/, workflows in .agents/workflows/.
+to other agents). Skills are in skills/, workflows in .agents/workflows/.
 """
 
 ATOMISTICSKILLS_GLOBAL_MARKER = "# AtomisticSkills Global Reference"
@@ -63,14 +63,14 @@ def _global_reference_block() -> str:
 If your current workspace is NOT {PROJECT_ROOT} (or any of its subdirectories), and the task involves atomistic research, materials simulation, drug discovery, spectroscopy, ML interatomic potentials, or related scientific workflows:
 - The AtomisticSkills repository is installed at {PROJECT_ROOT}.
 - Rules live at {PROJECT_ROOT}/.agents/rules/.
-- Skills live at {PROJECT_ROOT}/.agents/skills/.
+- Skills live at {PROJECT_ROOT}/skills/.
 - Workflows live at {PROJECT_ROOT}/.agents/workflows/.
 - First read these rules:
   - {PROJECT_ROOT}/.agents/rules/research-standards.md
   - {PROJECT_ROOT}/.agents/rules/coding-standards.md
   - {PROJECT_ROOT}/.agents/rules/mcp-environments.md
 - For skill discovery, scan descriptions with:
-  grep -r "^description:" {PROJECT_ROOT}/.agents/skills/*/SKILL.md
+  grep -r "^description:" {PROJECT_ROOT}/skills/*/SKILL.md
 - For end-to-end protocols, inspect:
   find {PROJECT_ROOT}/.agents/workflows -maxdepth 2 -type f
 - Read the full SKILL.md or workflow file before following it.
@@ -155,7 +155,7 @@ def _link_claude_project_skills() -> None:
     """Expose project skills to Claude Code as native project-scope skills.
 
     Claude Code discovers skills as `.claude/skills/<name>/SKILL.md`. Every
-    skill in `.agents/skills/` is symlinked into `.claude/skills/` so the
+    skill in `skills/` is symlinked into `.claude/skills/` so the
     repository stays the single source of truth — no copies to keep in sync.
     Only the `name` and `description` frontmatter of each SKILL.md is loaded
     into the system prompt; bodies are read on demand when a skill is invoked.
@@ -167,7 +167,7 @@ def _link_claude_project_skills() -> None:
     """
     claude_skills_dir = PROJECT_ROOT / ".claude" / "skills"
     claude_skills_dir.mkdir(parents=True, exist_ok=True)
-    project_skills_dir = PROJECT_ROOT / ".agents" / "skills"
+    project_skills_dir = PROJECT_ROOT / "skills"
     removed = _remove_stale_project_skill_symlinks(
         claude_skills_dir,
         project_skills_dir,
@@ -209,7 +209,7 @@ def _write_codex_global_skills() -> None:
     """Expose project skills globally for Codex."""
     codex_skills_dir = Path.home() / ".codex" / "skills"
     codex_skills_dir.mkdir(parents=True, exist_ok=True)
-    project_skills_dir = PROJECT_ROOT / ".agents" / "skills"
+    project_skills_dir = PROJECT_ROOT / "skills"
     removed = _remove_stale_project_skill_symlinks(
         codex_skills_dir,
         project_skills_dir,
@@ -238,7 +238,7 @@ Before acting, read the applicable project instructions directly from that repos
    - `{PROJECT_ROOT}/.agents/rules/coding-standards.md`
    - `{PROJECT_ROOT}/.agents/rules/mcp-environments.md`
 2. For skill discovery, inspect:
-   - `{PROJECT_ROOT}/.agents/skills/*/SKILL.md`
+   - `{PROJECT_ROOT}/skills/*/SKILL.md`
 3. For end-to-end protocols, inspect:
    - `{PROJECT_ROOT}/.agents/workflows/`
 4. Read the full selected `SKILL.md` or workflow file before following it.
@@ -450,7 +450,7 @@ def configure_claude(servers: dict, scope: str) -> None:
         _write_json(path, servers, merge_key="mcpServers")
         print(f"  Global MCP  → {path}")
 
-    # Register .agents/skills as native Claude Code project skills.
+    # Register skills as native Claude Code project skills.
     _link_claude_project_skills()
 
     # CLAUDE.md already exists — nothing to do for instruction file.
@@ -603,7 +603,7 @@ def configure_gemini(servers: dict, scope: str) -> None:
         print(f"  Created plugin config → {plugin_json}")
 
         skills_symlink = plugin_dir / "skills"
-        target_skills = PROJECT_ROOT / ".agents" / "skills"
+        target_skills = PROJECT_ROOT / "skills"
         symlink_action = _reset_directory_symlink(skills_symlink, target_skills)
         print(
             f"  {symlink_action} skills symlink → {skills_symlink} to {target_skills}"
@@ -617,8 +617,8 @@ def configure_gemini(servers: dict, scope: str) -> None:
 
 If your current workspace is NOT {PROJECT_ROOT} (or any of its subdirectories), and you need to perform atomistic research, materials discovery, molecular simulation, or related tasks:
 - The AtomisticSkills repository is installed at {PROJECT_ROOT}.
-- You can access its Skills at {PROJECT_ROOT}/.agents/skills/ and workflows at {PROJECT_ROOT}/.agents/workflows/.
-- Discover skills by running: grep -r "^description:" {PROJECT_ROOT}/.agents/skills/*/SKILL.md
+- You can access its Skills at {PROJECT_ROOT}/skills/ and workflows at {PROJECT_ROOT}/.agents/workflows/.
+- Discover skills by running: grep -r "^description:" {PROJECT_ROOT}/skills/*/SKILL.md
 - Read and follow these rules from the AtomisticSkills repo:
   - [research-standards.md](file://{PROJECT_ROOT}/.agents/rules/research-standards.md)
   - [coding-standards.md](file://{PROJECT_ROOT}/.agents/rules/coding-standards.md)
@@ -801,7 +801,7 @@ def main() -> None:
         AGENT_WRITERS[agent](servers, args.scope)
         print()
 
-    print("Done. Skills (.agents/skills/) and workflows (.agents/workflows/)")
+    print("Done. Skills (skills/) and workflows (.agents/workflows/)")
     print("are the cross-platform standard path — no changes needed there.")
 
 

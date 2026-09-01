@@ -29,14 +29,14 @@ You are an atomistic research agent with access to literature, Skills, and MCP t
 This project decomposes complex research tasks into three levels:
 
 - **Tools** (`src/mcp_server/`): Low-level operations exposed via MCP (relax structure, run MD, query databases). Strict typed I/O.
-- **Skills** (`.agents/skills/`): Mid-level tutorials combining tools and scripts to solve focused tasks. Each has a `SKILL.md` with step-by-step instructions.
+- **Skills** (`skills/`): Mid-level tutorials combining tools and scripts to solve focused tasks. Each has a `SKILL.md` with step-by-step instructions.
 - **Workflows** (`.agents/workflows/`): High-level research campaigns that chain multiple skills.
 
 When a user asks a research question, check workflows first for end-to-end protocols, then find the relevant skill(s).
 
 ## Skill Discovery
 
-Skills are at `.agents/skills/`. In Claude Code they are registered as native
+Skills are at `skills/`. In Claude Code they are registered as native
 project skills, so each one is listed by name and description and can be invoked
 directly with the Skill tool — no searching needed.
 
@@ -44,16 +44,16 @@ directly with the Skill tool — no searching needed.
 ```bash
 python configure_mcp.py --agent claude
 ```
-This symlinks every `.agents/skills/<name>` into `.claude/skills/<name>`, which
+This symlinks every `skills/<name>` into `.claude/skills/<name>`, which
 Claude Code discovers automatically. `.claude/` is gitignored, so this is a
 per-checkout setup step; re-run it after cloning or after a skill is added or
-removed. `.agents/skills/` stays the single source of truth — the symlinks are
+removed. `skills/` stays the single source of truth — the symlinks are
 never copies.
 
 Fallback for any agent without native skill registration — scan the frontmatter
 descriptions directly:
 ```bash
-grep -r "^description:" .agents/skills/*/SKILL.md
+grep -r "^description:" skills/*/SKILL.md
 ```
 
 Then read the full `SKILL.md` for any matching skill and follow its numbered instructions.
@@ -65,7 +65,7 @@ Use the `/skill-search` command for interactive discovery: `/skill-search [searc
 ### Scripts with `# Env:` annotations
 ```bash
 # Env: mace-agent
-python .agents/skills/mat-melting-point/scripts/create_interface.py ...
+python skills/mat-melting-point/scripts/create_interface.py ...
 ```
 Run with:
 ```bash

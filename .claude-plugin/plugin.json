@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "atomistic-skills",
+  "displayName": "Atomistic Skills",
+  "description": "Agent skills for atomistic simulation: materials science, chemistry, drug discovery, and machine-learning interatomic potentials.",
+  "version": "1.3.4",
+  "author": {
+    "name": "Learning Matter Lab, MIT",
+    "url": "https://github.com/learningmatter-mit"
+  },
+  "homepage": "https://github.com/learningmatter-mit/AtomisticSkills",
+  "repository": "https://github.com/learningmatter-mit/AtomisticSkills",
+  "license": "MIT",
+  "keywords": [
+    "materials-science",
+    "chemistry",
+    "drug-discovery",
+    "machine-learning",
+    "atomistic-simulation",
+    "mlip",
+    "dft"
+  ]
+}

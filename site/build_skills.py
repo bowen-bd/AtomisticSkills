@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Build static skill subpages for AtomisticSkills docs.
-Reads SKILL.md + example READMEs from .agents/skills/, writes HTML to site/skills/.
+Reads SKILL.md + example READMEs from skills/, writes HTML to site/skills/.
 Run from the project root: python site/build_skills.py
 """
 
@@ -16,7 +16,7 @@ import yaml
 # Fix: Define PROJECT_ROOT relative to this file's location (site/build_skills.py)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-SKILLS_SRC_DIR = PROJECT_ROOT / ".agents" / "skills"
+SKILLS_SRC_DIR = PROJECT_ROOT / "skills"
 DOCS_SRC_DIR = PROJECT_ROOT / "docs"
 WORKFLOWS_SRC_DIR = PROJECT_ROOT / ".agents" / "workflows"
 SITE_DIR = PROJECT_ROOT / "site"
@@ -84,6 +84,10 @@ def parse_frontmatter(content):
             except Exception as e:
                 print(f"Error parsing frontmatter: {e}")
             content = content[end + 3 :].strip()
+    # `category` lives under the spec-allowed `metadata` map (the Agent Skills
+    # spec rejects unknown top-level keys). Hoist it and normalise to a list.
+    cats = (meta.get("metadata") or {}).get("category", meta.get("category", []))
+    meta["category"] = cats if isinstance(cats, list) else [cats]
     return meta, content
 
 
@@ -394,7 +398,7 @@ def make_skill_page(
   </a>
   <a class="nav-back" href="../index.html">← Back to Home</a>
   <div class="nav-right">
-    <a class="gh-link" href="https://github.com/learningmatter-mit/AtomisticSkills/tree/main/.agents/skills/{skill_id}/SKILL.md" target="_blank">View on GitHub</a>
+    <a class="gh-link" href="https://github.com/learningmatter-mit/AtomisticSkills/tree/main/skills/{skill_id}/SKILL.md" target="_blank">View on GitHub</a>
   </div>
 </nav>
 
@@ -416,7 +420,7 @@ def make_skill_page(
   {examples_html}
   <hr style="margin: 3rem 0; border: none; border-top: 1px solid var(--border);">
   <div style="text-align: center; margin-bottom: 2rem;">
-    <a href="https://github.com/learningmatter-mit/AtomisticSkills/tree/main/.agents/skills/{skill_id}/SKILL.md" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; background: white; border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px; color: var(--text); font-weight: 600; text-decoration: none; font-size: 0.95rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s;">
+    <a href="https://github.com/learningmatter-mit/AtomisticSkills/tree/main/skills/{skill_id}/SKILL.md" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; background: white; border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px; color: var(--text); font-weight: 600; text-decoration: none; font-size: 0.95rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s;">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
       View this Skill on GitHub
     </a>

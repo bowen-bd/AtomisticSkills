@@ -1,17 +1,17 @@
 ---
 trigger: model_decision
-description: Rules to implement a skill under `.agents/skills/`
+description: Rules to implement a skill under `skills/`
 ---
 
 # Skill Standards
 
-All modular capabilities in this project should be implemented as "Skills" within the `.agents/skills/` directory. This rule ensures consistency, discoverability, and reusability for the agent.
+All modular capabilities in this project should be implemented as "Skills" within the `skills/` directory. This rule ensures consistency, discoverability, and reusability for the agent.
 
 ## Directory Structure
 
 Each skill must reside in its own subdirectory with the following structure:
 ```
-.agents/skills/<skill-name>/
+skills/<skill-name>/
 ├── SKILL.md                  # Required: Main documentation
 ├── scripts/                  # Optional: Helper scripts
 │   ├── script1.py
@@ -35,14 +35,17 @@ The `SKILL.md` file must follow this standardized structure:
 ---
 name: skill-name-in-kebab-case
 description: Concise one-sentence summary of the skill's purpose and outcome.
-category: category-name
+metadata:
+  category: [category-name]
 ---
 ```
+
+**Only the six keys of the [Agent Skills](https://agentskills.io) spec are allowed at the top level** — `name`, `description`, `license`, `compatibility`, `metadata`, `allowed-tools`. Claude Code tolerates extra keys, but claude.ai skill uploads and the Skills API reject them with a hard error, which would break importing this repository into Claude Science. Project-specific fields therefore go inside the free-form `metadata` map.
 
 **Guidelines:**
 - `name`: Use lowercase letters, numbers, and hyphens only (kebab-case)
 - `description`: Should be clear enough for the agent to decide if this skill is relevant to a user query. **The description must state what the skill is used for, NOT how the skill works.** Avoid mid-sentence colons (`: `) in unquoted values — they break YAML parsing.
-- `category`: Must be one of the following (use a YAML list like `[materials, chemistry]` if multiple apply):
+- `metadata.category`: Always a YAML list, even for a single value (e.g. `[materials]` or `[materials, chemistry]`). Must be drawn from:
   - `materials`: Materials science simulation and analysis skills (prefix: `mat-`)
   - `chemistry`: Chemistry and molecular simulation skills (prefix: `chem-`)
   - `machine-learning`: MLIP training, model selection, and ML workflows (prefix: `ml-`)
@@ -70,7 +73,7 @@ Provide numbered, step-by-step instructions. Each step should:
 ````markdown
 ```bash
 # Env: <conda-environment-name>
-python .agents/skills/<skill-name>/scripts/<script>.py [arguments]
+python skills/<skill-name>/scripts/<script>.py [arguments]
 ```
 ````
 
@@ -111,7 +114,7 @@ Provide concrete, runnable examples that demonstrate typical usage.
 Creating a solid-liquid interface for Aluminum:
 ```bash
 # Env: base-agent
-python .agents/skills/melting-point/scripts/create_interface.py Al_solid.cif Al_liquid.cif --axis 0 --output Al_interface.cif
+python skills/melting-point/scripts/create_interface.py Al_solid.cif Al_liquid.cif --axis 0 --output Al_interface.cif
 ```
 ```
 
@@ -211,7 +214,7 @@ The required environment must be consistent across:
 
 - **Purpose over Method**: Skill names should be informative of the *function or purpose* of the skill, NOT the specific computational method being used (e.g., `mat-solid-free-energy` is preferred over `mat-frenkel-ladd`).
 - Use **kebab-case** for skill directory names (lowercase with hyphens)
-- **Every skill name must start with a category prefix** matching its `category` field:
+- **Every skill name must start with a category prefix** matching its `metadata.category` field:
   - `mat-` for `materials` skills (e.g., `mat-melting-point`, `mat-diffusion-analysis`, `mat-phonon`)
   - `ml-` for `machine-learning` skills (e.g., `ml-foundation-potentials`, `ml-mlip-training`, `ml-cluster-expansion`)
   - `drug-` for `drug-discovery` skills (e.g., `drug-docking-vina`, `drug-admet-prediction`)
@@ -221,11 +224,11 @@ The required environment must be consistent across:
   - Avoid: `mat-mp`, `ml-train`, `drug-d`
 - Use **noun forms** for result-oriented skills: `mat-phase-diagram`, `mat-surface-energy`
 - Use **action/process names** for workflow skills: `mat-diffusion-analysis`, `ml-mlip-training`
-- **Private Skills**: To create a proprietary or private skill that should not be tracked by version control, prefix the entire name with `private-` (e.g., `private-mat-proprietary-workflow`). The repository's `.gitignore` is configured to ignore all directories matching `.agents/skills/private-*/`, ensuring they remain local while still being automatically discovered by the agent.
+- **Private Skills**: To create a proprietary or private skill that should not be tracked by version control, prefix the entire name with `private-` (e.g., `private-mat-proprietary-workflow`). The repository's `.gitignore` is configured to ignore all directories matching `skills/private-*/`, ensuring they remain local while still being automatically discovered by the agent.
 
 ## Example Skill Structure
 
-See [`.agents/skills/melting-point/`](./../skills/melting-point/) for a comprehensive reference implementation demonstrating workflows, tool integration, validation, and environment handling.
+See [`skills/melting-point/`](../../skills/melting-point/) for a comprehensive reference implementation demonstrating workflows, tool integration, validation, and environment handling.
 
 ### 7. Author Information
 

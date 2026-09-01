@@ -14,7 +14,7 @@ Creates `mace-agent` from `core_env.yaml`.
 
 ```bash
 conda activate mace-agent
-bash .agents/skills/mat-lammps-md/examples/mace/run_mace_na2si3o7_quench.sh
+bash skills/mat-lammps-md/examples/mace/run_mace_na2si3o7_quench.sh
 ```
 
 The script auto-generates:

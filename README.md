@@ -60,7 +60,7 @@ Tools are **strictly structured, fundamental operations** exposed as Python func
 ---
 
 ### ⚙️ Skills (Mid-Level Research Tutorials)
-[**Browse Skills →**](.agents/skills)
+[**Browse Skills →**](skills)
 
 Skills are **flexible tutorials** that combine multiple tool calls to solve focused research problems. Unlike tools, skills have **no fixed input/output type constraints**—the agent handles all data conversion and orchestration between steps.
 
@@ -70,11 +70,11 @@ Skills are **flexible tutorials** that combine multiple tool calls to solve focu
 - **Self-Documented**: Each skill includes instructions (`SKILL.md`), helper scripts, and examples
 
 **Examples:**
-- [**MLIP Benchmark**](.agents/skills/ml-mlip-benchmark/SKILL.md): Benchmark MLIP accuracy against a labeled dataset — compute MAE/RMSE and generate parity plots
-- [**Diffusion Analysis**](.agents/skills/mat-diffusion-analysis/SKILL.md): Compute diffusion coefficients and activation energies
-- [**Material Stability**](.agents/skills/mat-stability/SKILL.md): Calculate 0K thermodynamic stability and $E_{hull}$
-- [**Molecular Docking**](.agents/skills/drug-docking-vina/SKILL.md): Dock small-molecule ligands into a protein receptor using AutoDock Vina
-- [**Gas Sorption**](.agents/skills/chem-sorption-gcmc/SKILL.md): Calculate gas adsorption isotherms via Grand Canonical Monte Carlo (GCMC) simulations
+- [**MLIP Benchmark**](skills/ml-mlip-benchmark/SKILL.md): Benchmark MLIP accuracy against a labeled dataset — compute MAE/RMSE and generate parity plots
+- [**Diffusion Analysis**](skills/mat-diffusion-analysis/SKILL.md): Compute diffusion coefficients and activation energies
+- [**Material Stability**](skills/mat-stability/SKILL.md): Calculate 0K thermodynamic stability and $E_{hull}$
+- [**Molecular Docking**](skills/drug-docking-vina/SKILL.md): Dock small-molecule ligands into a protein receptor using AutoDock Vina
+- [**Gas Sorption**](skills/chem-sorption-gcmc/SKILL.md): Calculate gas adsorption isotherms via Grand Canonical Monte Carlo (GCMC) simulations
 
 
 ---
@@ -114,7 +114,7 @@ Workflow: "Find stable Li-ion conductors"
 ---
 
 ## Key Features
-[**Browse all skills →**](.agents/skills)
+[**Browse all skills →**](skills)
 
 ### 1. Simulation Infrastructure
 Multi-framework MLIP support (MACE, MatGL, FAIRCHEM) with unified relaxation, MD, and fine-tuning APIs. DFT integration for VASP input/output and electronic structure for periodic systems and ORCA input/output for molecular systems. HPC job management via Atomate2. Lattice-level cluster expansion and Monte Carlo via SMOL.
@@ -161,7 +161,7 @@ This project is optimized for use with coding AI copilots like **[Antigravity](h
 
 ### The `.agents/` Directory
 - **Rules (`.agents/rules/`)**: Contains project-specific standards, scientific constraints, and modeling guidelines. Coding agents automatically parse these to ensure all simulations and code follow best practices.
-- **Skills (`.agents/skills/`)**: Modular, reusable capabilities, typically at the scale of a single research task (e.g., calculate material's stability). Each skill is self-documented with instructions, scripts, and resources.
+- **Skills (`skills/`)**: Modular, reusable capabilities, typically at the scale of a single research task (e.g., calculate material's stability). Each skill is self-documented with instructions, scripts, and resources.
 - **Workflows (`.agents/workflows/`)**: Defines high level research procedures (e.g., workflow to design a new material). Coding agents can execute these step-by-step, managing the complex transitions between different conda environments and simulation stages.
 
 ---

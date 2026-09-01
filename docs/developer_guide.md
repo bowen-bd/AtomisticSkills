@@ -59,12 +59,12 @@ Supporting libraries shared across MCP servers:
 | `mlips/md_utils.py` | MD monitors (explosion, volume, melting, equilibration detection) |
 | `config_utils.py` | Global configuration and API key management |
 
-### 3. Skills (`.agents/skills/`)
+### 3. Skills (`skills/`)
 
 Skills are **modular, self-contained capabilities** that combine multiple tools and scripts to accomplish complex research tasks. Each skill lives in its own directory with a standardized structure:
 
 ```
-.agents/skills/<skill-name>/
+skills/<skill-name>/
 ├── SKILL.md              # Instructions and documentation
 ├── scripts/              # Python/Bash helper scripts
 ├── examples/             # Reference input/output files
@@ -121,7 +121,7 @@ Skills are **modular, self-contained capabilities** that combine multiple tools 
 
 ### Implementing a New Skill
 
-1. Create the skill directory: `.agents/skills/<skill-name>/`
+1. Create the skill directory: `skills/<skill-name>/`
 2. Write `SKILL.md` following the [standards](../.agents/rules/skill-standards.md)
 3. Add helper scripts to `scripts/` (specify required conda environment)
 4. Provide examples and resources as needed

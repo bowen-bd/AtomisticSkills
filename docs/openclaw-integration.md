@@ -47,7 +47,7 @@ absorb all of /home/<you>/Documents/AtomisticSkills into context. most crucially
 ```
 
 The agent will read and internalize:
-- `.agents/skills/` — all ~60 domain skills (melting point, docking, sorption, fine-tuning, etc.)
+- `skills/` — all ~60 domain skills (melting point, docking, sorption, fine-tuning, etc.)
 - `.agents/workflows/` — high-level research playbooks
 - `.agents/rules/` — coding, research, and plotting standards
 
@@ -130,7 +130,7 @@ Calculate the melting point of Ag using the solid-liquid coexistence method.
 ```
 
 The agent will:
-1. Discover the relevant skill by reading `.agents/skills/*/SKILL.md`
+1. Discover the relevant skill by reading `skills/*/SKILL.md`
 2. Run scripts via the appropriate conda env (e.g., `micromamba run -n mace-agent python ...`)
 3. Call MCP tools via `mcporter call <server> <tool> <args>`
 4. Save outputs to `research/<date>_<description>/`

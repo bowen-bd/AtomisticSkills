@@ -15,7 +15,7 @@ Creates `fairchem-agent` and installs `lmp` + `lmp_fc`.
 
 ```bash
 conda activate fairchem-agent
-bash .agents/skills/mat-lammps-md/examples/fairchem/run_fairchem_co_cu111_adsorption.sh
+bash skills/mat-lammps-md/examples/fairchem/run_fairchem_co_cu111_adsorption.sh
 ```
 
 ## 3) Hugging Face Auth (if model access fails)
