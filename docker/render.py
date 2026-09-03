@@ -125,11 +125,19 @@ def cmd_matrix(spec: dict, args: argparse.Namespace) -> int:
 
 def cmd_plugin_mcp(spec: dict, args: argparse.Namespace) -> int:
     """Write (or print) the plugin manifest's mcpServers block."""
-    registry = spec["registry"]
     servers: dict[str, dict] = {}
 
+    # The registry is a user config value rather than a baked-in constant. CI
+    # publishes to ghcr.io/<repository_owner>, so a fork's images land under the
+    # fork's namespace; hardcoding the upstream owner would leave anyone testing
+    # from a fork pointing at images that do not exist there. The default in
+    # plugin.json's userConfig is the upstream registry from images.json.
     for image in spec["images"]:
-        ref = f"{registry}/atomisticskills-{image['name']}:${{user_config.image_tag}}"
+        ref = (
+            "${user_config.image_registry}"
+            f"/atomisticskills-{image['name']}"
+            ":${user_config.image_tag}"
+        )
         for server in sorted(normalise_servers(image)):
             docker_args = [
                 "run",

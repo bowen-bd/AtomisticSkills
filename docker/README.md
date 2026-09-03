@@ -108,6 +108,21 @@ serves. `docker/entrypoint.sh` resolves the name against the baked-in
 The entrypoint matches the owner of `/work` before starting, so results land in
 your project owned by you rather than by root.
 
+## Testing images published from a fork
+
+CI pushes to `ghcr.io/<repository_owner>`, so images built on a fork land in the
+fork's namespace, not the upstream one. The plugin reads the registry from a
+`userConfig` value rather than hardcoding it, so point it at your fork when
+prompted:
+
+```
+Image registry: ghcr.io/<your-github-user>
+```
+
+The GHCR package is private on first publish. Make it public under
+*Packages → atomisticskills-\<image\> → Package settings → Change visibility*,
+otherwise anyone pulling it needs a token.
+
 ## Known limitations
 
 - **GPU images are arm64-only.** Their locks were frozen on `linux-aarch64` and

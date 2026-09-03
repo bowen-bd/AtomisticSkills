@@ -39,7 +39,7 @@
         "TORCH_HOME=/opt/model-cache/torch",
         "--env",
         "MATGL_CACHE=/opt/model-cache/matgl",
-        "ghcr.io/learningmatter-mit/atomisticskills-lightweight:${user_config.image_tag}",
+        "${user_config.image_registry}/atomisticskills-lightweight:${user_config.image_tag}",
         "atomate2"
       ]
     },
@@ -61,7 +61,7 @@
         "TORCH_HOME=/opt/model-cache/torch",
         "--env",
         "MATGL_CACHE=/opt/model-cache/matgl",
-        "ghcr.io/learningmatter-mit/atomisticskills-lightweight:${user_config.image_tag}",
+        "${user_config.image_registry}/atomisticskills-lightweight:${user_config.image_tag}",
         "base"
       ]
     },
@@ -83,7 +83,7 @@
         "TORCH_HOME=/opt/model-cache/torch",
         "--env",
         "MATGL_CACHE=/opt/model-cache/matgl",
-        "ghcr.io/learningmatter-mit/atomisticskills-lightweight:${user_config.image_tag}",
+        "${user_config.image_registry}/atomisticskills-lightweight:${user_config.image_tag}",
         "drugdisc"
       ]
     },
@@ -105,7 +105,7 @@
         "TORCH_HOME=/opt/model-cache/torch",
         "--env",
         "MATGL_CACHE=/opt/model-cache/matgl",
-        "ghcr.io/learningmatter-mit/atomisticskills-lightweight:${user_config.image_tag}",
+        "${user_config.image_registry}/atomisticskills-lightweight:${user_config.image_tag}",
         "smol"
       ]
     },
@@ -129,7 +129,7 @@
         "MATGL_CACHE=/opt/model-cache/matgl",
         "--gpus",
         "all",
-        "ghcr.io/learningmatter-mit/atomisticskills-mace:${user_config.image_tag}",
+        "${user_config.image_registry}/atomisticskills-mace:${user_config.image_tag}",
         "mace"
       ]
     },
@@ -153,7 +153,7 @@
         "MATGL_CACHE=/opt/model-cache/matgl",
         "--gpus",
         "all",
-        "ghcr.io/learningmatter-mit/atomisticskills-mace:${user_config.image_tag}",
+        "${user_config.image_registry}/atomisticskills-mace:${user_config.image_tag}",
         "matgl"
       ]
     },
@@ -177,7 +177,7 @@
         "MATGL_CACHE=/opt/model-cache/matgl",
         "--gpus",
         "all",
-        "ghcr.io/learningmatter-mit/atomisticskills-fairchem:${user_config.image_tag}",
+        "${user_config.image_registry}/atomisticskills-fairchem:${user_config.image_tag}",
         "fairchem"
       ]
     },
@@ -201,7 +201,7 @@
         "MATGL_CACHE=/opt/model-cache/matgl",
         "--gpus",
         "all",
-        "ghcr.io/learningmatter-mit/atomisticskills-generative:${user_config.image_tag}",
+        "${user_config.image_registry}/atomisticskills-generative:${user_config.image_tag}",
         "adit"
       ]
     },
@@ -225,7 +225,7 @@
         "MATGL_CACHE=/opt/model-cache/matgl",
         "--gpus",
         "all",
-        "ghcr.io/learningmatter-mit/atomisticskills-generative:${user_config.image_tag}",
+        "${user_config.image_registry}/atomisticskills-generative:${user_config.image_tag}",
         "diffcsp"
       ]
     },
@@ -249,7 +249,7 @@
         "MATGL_CACHE=/opt/model-cache/matgl",
         "--gpus",
         "all",
-        "ghcr.io/learningmatter-mit/atomisticskills-generative:${user_config.image_tag}",
+        "${user_config.image_registry}/atomisticskills-generative:${user_config.image_tag}",
         "mattergen"
       ]
     }
@@ -266,6 +266,13 @@
       "type": "directory",
       "title": "Working directory",
       "description": "Directory mounted into the containers at /work. Simulation inputs are read from here and all results are written back here, so it must be the project you want the skills to operate on.",
+      "required": true
+    },
+    "image_registry": {
+      "type": "string",
+      "title": "Image registry",
+      "description": "Registry namespace holding the atomisticskills-* server images. Change this only if you are testing images published from a fork, e.g. ghcr.io/<your-github-user>.",
+      "default": "ghcr.io/learningmatter-mit",
       "required": true
     },
     "image_tag": {
