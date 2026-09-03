@@ -1,0 +1,86 @@
+# Keep the build context small and free of anything private.
+#
+# Without this the context is the whole working tree -- on a development machine
+# that includes tens of gigabytes of research output and local credentials, all
+# of which would be uploaded to the daemon and could end up in an image layer.
+# The Dockerfiles copy only src/, skills/, docker/, conda-envs/ and
+# pyproject.toml, so everything else is excluded here by default.
+
+# --- credentials and private data (never build these in)
+.env
+*.env
+api_keys.yaml
+auth.json
+db_credentials.yaml
+private_data/
+.credentials.json
+
+# --- generated research output and downloads (large)
+research/
+results/
+downloads/
+papers/
+dummy_out/
+examples/
+site/skills/
+site/workflows/
+site/servers/
+site/skills_index.*
+
+# --- agent and IDE state (machine-specific)
+.agent/
+.agents/test/
+.agents/tmp/
+.claude/
+.codex/
+.cursor/
+.gemini/
+.mcp.json
+.windsurfrules*
+
+# --- version control and CI
+.git/
+.github/
+.gitignore
+.pre-commit-config.yaml
+
+# --- python and test caches
+__pycache__/
+**/__pycache__/
+*.py[cod]
+**/*.py[cod]
+.pytest_cache/
+**/.pytest_cache/
+.ruff_cache/
+**/.ruff_cache/
+.mypy_cache/
+**/.mypy_cache/
+.coverage
+htmlcov/
+*.egg-info/
+**/*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# --- model weights and trajectories that must not be baked into layers
+*.model
+**/*.model
+*.pt
+**/*.pt
+*.pth
+**/*.pth
+*.ckpt
+**/*.ckpt
+*.traj
+**/*.traj
+*.h5
+**/*.h5
+
+# --- docs and images not needed at runtime
+docs/
+tests/
+*.md
+!skills/**/*.md
+LICENSE

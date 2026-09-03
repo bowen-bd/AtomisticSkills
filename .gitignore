@@ -105,3 +105,6 @@ skills/private-*/
 .cursor/mcp.json
 .windsurfrules
 .windsurfrules.local
+
+# Generated inside the container images by docker/render.py
+docker/server-map.txt

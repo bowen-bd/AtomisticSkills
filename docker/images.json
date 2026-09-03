@@ -1,0 +1,83 @@
+{
+  "$comment": [
+    "Single source of truth for the container images that ship the MCP servers.",
+    "Consumed by docker/export_locks.py, docker/render_plugin_mcp.py, the",
+    "Dockerfiles and .github/workflows/build-images.yml. Adding a server means",
+    "editing this file only.",
+    "",
+    "Two strategies appear below, and the choice is forced by the dependency",
+    "graph rather than by preference:",
+    "",
+    "  merged  - the listed envs are resolved into ONE conda env. Only used",
+    "            where a clean union solve was verified. Smaller image.",
+    "  locked  - each env is installed side by side from its exact lockfile.",
+    "            Required wherever a union cannot resolve: mace-torch pins",
+    "            e3nn==0.4.4 while fairchem-core needs e3nn>=0.5, and the",
+    "            generative envs pin torch versions that violate their own",
+    "            declared constraints because no compliant build exists for",
+    "            sm_121 / aarch64 / CUDA 13. Preserves the tested versions",
+    "            exactly, which is the point: a container that resolves to",
+    "            different versions than the environment you validated is a",
+    "            container that silently breaks skills."
+  ],
+  "registry": "ghcr.io/learningmatter-mit",
+  "repo_path": "/opt/atomisticskills",
+  "images": [
+    {
+      "name": "lightweight",
+      "strategy": "merged",
+      "python": "3.11",
+      "gpu": false,
+      "platforms": ["linux/amd64", "linux/arm64"],
+      "spec": "docker/specs/lightweight.yaml",
+      "envs": ["base-agent", "drugdisc-agent", "smol-agent", "atomate2-agent"],
+      "merged_env": "lightweight",
+      "servers": {
+        "base": "src.mcp_server.base_server",
+        "drugdisc": "src.mcp_server.drugdisc_server",
+        "smol": "src.mcp_server.smol_server",
+        "atomate2": "src.mcp_server.atomate2_server"
+      },
+      "notes": "No torch. fpocket has no linux-aarch64 conda-forge build, so the arm64 variant omits it and drug-pocket-detection must use its P2Rank path there."
+    },
+    {
+      "name": "mace",
+      "strategy": "locked",
+      "gpu": true,
+      "platforms": ["linux/arm64"],
+      "envs": ["mace-agent", "matgl-agent"],
+      "servers": {
+        "mace": {"env": "mace-agent", "module": "src.mcp_server.mace_server"},
+        "matgl": {"env": "matgl-agent", "module": "src.mcp_server.matgl_server"}
+      },
+      "env_vars": {"matgl": {"MATGL_BACKEND": "DGL"}},
+      "notes": "torch 2.12.0. Cannot host fairchem: mace-torch 0.3.15 pins e3nn==0.4.4, fairchem-core needs e3nn>=0.5."
+    },
+    {
+      "name": "fairchem",
+      "strategy": "locked",
+      "gpu": true,
+      "platforms": ["linux/arm64"],
+      "envs": ["fairchem-agent"],
+      "servers": {
+        "fairchem": {"env": "fairchem-agent", "module": "src.mcp_server.fairchem_server"}
+      },
+      "notes": "torch 2.10.0 with e3nn 0.6.0. fairchem-core 2.19.0 declares torch~=2.8.0; the lock intentionally overrides it because torch 2.8 has no sm_121 build. Install pip layer with --no-deps."
+    },
+    {
+      "name": "generative",
+      "strategy": "locked",
+      "gpu": true,
+      "platforms": ["linux/arm64"],
+      "envs": ["adit-agent", "diffcsp-agent", "mattergen-agent"],
+      "pyg_from_source": true,
+      "torch_cuda_arch_list": "12.1",
+      "servers": {
+        "adit": {"env": "adit-agent", "module": "src.mcp_server.adit_server"},
+        "diffcsp": {"env": "diffcsp-agent", "module": "src.mcp_server.diffcsp_server"},
+        "mattergen": {"env": "mattergen-agent", "module": "src.mcp_server.mattergen_server"}
+      },
+      "notes": "torch-scatter/cluster/sparse are compiled from source; prebuilt wheels do not exist for aarch64 + CUDA 13. TORCH_CUDA_ARCH_LIST targets GB10 (sm_121) and must be widened for other GPUs."
+    }
+  ]
+}

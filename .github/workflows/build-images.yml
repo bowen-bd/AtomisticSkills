@@ -1,0 +1,228 @@
+name: Build MCP server images
+
+# Publishes the container images that back the MCP servers, so installing the
+# plugin gives working servers instead of ten commands pointing at conda
+# environments the user has not built.
+#
+# The matrix comes from docker/images.json via docker/render.py, so adding a
+# server means editing that one file. GPU images are arm64-only for now: their
+# lockfiles were frozen on linux-aarch64 and the PyG extensions are compiled
+# for sm_121. Producing amd64 variants needs locks generated on an amd64 host.
+
+on:
+  push:
+    branches: ["main"]
+    tags: ["v*"]
+    paths:
+      - "docker/**"
+      - "conda-envs/*/lock/**"
+      - "src/mcp_server/**"
+      - ".github/workflows/build-images.yml"
+  pull_request:
+    paths:
+      - "docker/**"
+      - "conda-envs/*/lock/**"
+      - ".github/workflows/build-images.yml"
+  workflow_dispatch:
+    inputs:
+      images:
+        description: "Space-separated image names to build (default: all)"
+        required: false
+        default: ""
+
+env:
+  REGISTRY: ghcr.io
+
+concurrency:
+  group: build-images-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Fail fast and cheaply: a version mismatch or an unrenderable images.json
+  # should not cost a multi-hour image build to discover.
+  preflight:
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Manifest versions agree with VERSION
+        run: python tools/sync_version.py --check
+
+      - name: Plugin mcpServers block is up to date with images.json
+        run: |
+          python docker/render.py plugin-mcp --stdout > /tmp/rendered.json
+          python - <<'PY'
+          import json, sys
+          rendered = json.load(open("/tmp/rendered.json"))["mcpServers"]
+          committed = json.load(open(".claude-plugin/plugin.json")).get("mcpServers", {})
+          if rendered != committed:
+              missing = sorted(set(rendered) - set(committed))
+              extra = sorted(set(committed) - set(rendered))
+              print("plugin.json mcpServers is stale relative to docker/images.json")
+              if missing: print("  missing:", ", ".join(missing))
+              if extra:   print("  unexpected:", ", ".join(extra))
+              print("\nRun: python docker/render.py plugin-mcp")
+              sys.exit(1)
+          print(f"plugin.json mcpServers matches images.json ({len(rendered)} servers)")
+          PY
+
+      - name: Every referenced lockfile exists
+        run: |
+          python - <<'PY'
+          import json, pathlib, sys
+          spec = json.loads(pathlib.Path("docker/images.json").read_text())
+          missing = []
+          for image in spec["images"]:
+              if not image["gpu"]:
+                  continue
+              for env in image["envs"]:
+                  for kind in ("conda", "pip"):
+                      p = pathlib.Path(f"conda-envs/{env}/lock/{kind}-linux-aarch64.txt")
+                      if not p.exists():
+                          missing.append(str(p))
+          if missing:
+              print("missing lockfiles:")
+              for m in missing: print("  -", m)
+              print("\nRun: python docker/export_locks.py")
+              sys.exit(1)
+          print("all lockfiles present")
+          PY
+
+      - name: Render build matrix
+        id: matrix
+        run: |
+          MATRIX="$(python docker/render.py matrix)"
+          FILTER="${{ github.event.inputs.images }}"
+          if [ -n "$FILTER" ]; then
+            MATRIX="$(FILTER="$FILTER" python - <<'PY'
+          import json, os, subprocess
+          m = json.loads(subprocess.run(
+              ["python", "docker/render.py", "matrix"],
+              capture_output=True, text=True, check=True).stdout)
+          wanted = set(os.environ["FILTER"].split())
+          m["include"] = [e for e in m["include"] if e["image"] in wanted]
+          print(json.dumps(m))
+          PY
+          )"
+          fi
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+          echo "$MATRIX"
+
+  build:
+    needs: preflight
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.preflight.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # The CUDA images carry torch and, for the generative image, compiled PyG
+      # extensions. Runners ship with only a few GB free, so reclaim what we can.
+      - name: Free disk space
+        if: matrix.image != 'lightweight'
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /usr/local/share/boost "$AGENT_TOOLSDIRECTORY" || true
+          df -h /
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        if: github.event_name != 'pull_request'
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Assemble build args
+        id: args
+        run: |
+          {
+            echo 'value<<EOF'
+            echo '${{ toJSON(matrix.build_args) }}' \
+              | python -c 'import json,sys; [print(f"{k}={v}") for k,v in json.load(sys.stdin).items()]'
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      # Per-platform tags on multi-arch images; the manifest job stitches them
+      # into a single reference afterwards.
+      - name: Compute tags
+        id: tags
+        run: |
+          BASE="${{ env.REGISTRY }}/${{ github.repository_owner }}/atomisticskills-${{ matrix.image }}"
+          BASE="$(echo "$BASE" | tr '[:upper:]' '[:lower:]')"
+          VERSION="$(cat VERSION)"
+          if [ "${{ matrix.multiarch }}" = "true" ]; then
+            SUFFIX="-${{ matrix.arch }}"
+          else
+            SUFFIX=""
+          fi
+          echo "base=$BASE" >> "$GITHUB_OUTPUT"
+          echo "tags=${BASE}:${VERSION}${SUFFIX},${BASE}:latest${SUFFIX}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: ${{ matrix.platform }}
+          build-args: ${{ steps.args.outputs.value }}
+          tags: ${{ steps.tags.outputs.tags }}
+          push: ${{ github.event_name != 'pull_request' }}
+          cache-from: type=gha,scope=${{ matrix.image }}-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}-${{ matrix.arch }}
+          provenance: false
+
+      # Proves the image can actually start a server and speak MCP, rather than
+      # only that it built. A green build with a broken entrypoint is exactly
+      # the silent breakage the images exist to prevent.
+      - name: Smoke test the entrypoint
+        if: github.event_name != 'pull_request' && matrix.image == 'lightweight'
+        run: |
+          IMAGE="${{ steps.tags.outputs.base }}:$(cat VERSION)${{ matrix.multiarch == true && format('-{0}', matrix.arch) || '' }}"
+          bash docker/smoke_test.sh "$IMAGE" base
+
+  manifest:
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Stitch multi-arch manifest lists
+        run: |
+          VERSION="$(cat VERSION)"
+          OWNER="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          python - "$VERSION" "$OWNER" <<'PY' > /tmp/cmds.sh
+          import json, pathlib, sys
+          version, owner = sys.argv[1], sys.argv[2]
+          spec = json.loads(pathlib.Path("docker/images.json").read_text())
+          for image in spec["images"]:
+              if len(image["platforms"]) < 2:
+                  continue
+              base = f"ghcr.io/{owner}/atomisticskills-{image['name']}"
+              arches = [p.split("/")[1] for p in image["platforms"]]
+              for tag in (version, "latest"):
+                  srcs = " ".join(f"{base}:{tag}-{a}" for a in arches)
+                  print(f"docker buildx imagetools create -t {base}:{tag} {srcs}")
+          PY
+          cat /tmp/cmds.sh
+          bash /tmp/cmds.sh

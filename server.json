@@ -1,77 +1,315 @@
 {
-    "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-    "name": "learningmatter-mit/atomisticskills",
-    "description": "AtomisticSkills MCP Server: AI tools for atomistic simulations, DFT, MLIPs, and generative models.",
-    "websiteUrl": "https://github.com/learningmatter-mit/AtomisticSkills",
-    "repository": {
-        "url": "https://github.com/learningmatter-mit/AtomisticSkills",
-        "source": "github"
-    },
-    "version": "1.0.0",
-    "packages": [
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "learningmatter-mit/atomisticskills",
+  "description": "AtomisticSkills MCP servers for atomistic simulation: materials science, chemistry, drug discovery and machine-learning interatomic potentials. Each package below is a container image; pass the server name as the first argument (e.g. `base`, `mace`, `matgl`).",
+  "websiteUrl": "https://github.com/learningmatter-mit/AtomisticSkills",
+  "repository": {
+    "url": "https://github.com/learningmatter-mit/AtomisticSkills",
+    "source": "github"
+  },
+  "version": "1.3.4",
+  "packages": [
+    {
+      "registryType": "oci",
+      "identifier": "ghcr.io/learningmatter-mit/atomisticskills-lightweight:1.3.4",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
         {
-            "registryType": "oci",
-            "identifier": "ghcr.io/learningmatter-mit/atomisticskills:1.0.0",
-            "transport": {
-                "type": "stdio"
-            },
-            "packageArguments": [],
-            "environmentVariables": [
-                {
-                    "name": "MP_API_KEY",
-                    "description": "API Key for Materials Project access. Required by base-server for querying bulk structures. Get a key at https://materialsproject.org/api",
-                    "isRequired": false,
-                    "isSecret": true
-                },
-                {
-                    "name": "OPENALEX_EMAIL",
-                    "description": "Email address to access the OpenAlex Polite Pool. Register your email for free at https://docs.openalex.org/how-to-use-the-api/rate-limits-and-authentication#the-polite-pool",
-                    "isRequired": false,
-                    "isSecret": false
-                },
-                {
-                    "name": "ELSEVIER_API_KEY",
-                    "description": "API Key for accessing Elsevier ScienceDirect API.",
-                    "isRequired": false,
-                    "isSecret": true
-                },
-                {
-                    "name": "ELSEVIER_INST_TOKEN",
-                    "description": "Optional institutional token for Elsevier access.",
-                    "isRequired": false,
-                    "isSecret": true
-                },
-                {
-                    "name": "SPRINGER_API_KEY",
-                    "description": "API Key for accessing Springer Nature Meta API v2.",
-                    "isRequired": false,
-                    "isSecret": true
-                },
-                {
-                    "name": "UNPAYWALL_EMAIL",
-                    "description": "Email required for accessing the Unpaywall API to retrieve open access preprints and papers.",
-                    "isRequired": false,
-                    "isSecret": false
-                },
-                {
-                    "name": "ATOMATE2_REMOTE_PROJECT",
-                    "description": "Default project name for remote job submission (auto-detected if blank). Required by atomate2-server.",
-                    "isRequired": false,
-                    "isSecret": false
-                },
-                {
-                    "name": "VASP_CMD",
-                    "description": "Command to run VASP. Required by atomate2-server if running locally.",
-                    "isRequired": false,
-                    "isSecret": false
-                },
-                {
-                    "name": "PMG_VASP_PSP_DIR",
-                    "description": "Path to VASP POTCAR directory. Required by pymatgen and atomate2-server.",
-                    "isRequired": false,
-                    "isSecret": false
-                }
-            ]
+          "type": "positional",
+          "name": "server",
+          "description": "MCP server to start. One of: atomate2, base, drugdisc, smol",
+          "isRequired": true,
+          "choices": [
+            "atomate2",
+            "base",
+            "drugdisc",
+            "smol"
+          ]
         }
-    ]
+      ],
+      "environmentVariables": [
+        {
+          "name": "MP_API_KEY",
+          "description": "API Key for Materials Project access. Required by base-server for querying bulk structures. Get a key at https://materialsproject.org/api",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "OPENALEX_EMAIL",
+          "description": "Email address to access the OpenAlex Polite Pool. Register your email for free at https://docs.openalex.org/how-to-use-the-api/rate-limits-and-authentication#the-polite-pool",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "ELSEVIER_API_KEY",
+          "description": "API Key for accessing Elsevier ScienceDirect API.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "ELSEVIER_INST_TOKEN",
+          "description": "Optional institutional token for Elsevier access.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "SPRINGER_API_KEY",
+          "description": "API Key for accessing Springer Nature Meta API v2.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "UNPAYWALL_EMAIL",
+          "description": "Email required for accessing the Unpaywall API to retrieve open access preprints and papers.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "ATOMATE2_REMOTE_PROJECT",
+          "description": "Default project name for remote job submission (auto-detected if blank). Required by atomate2-server.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "VASP_CMD",
+          "description": "Command to run VASP. Required by atomate2-server if running locally.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "PMG_VASP_PSP_DIR",
+          "description": "Path to VASP POTCAR directory. Required by pymatgen and atomate2-server.",
+          "isRequired": false,
+          "isSecret": false
+        }
+      ]
+    },
+    {
+      "registryType": "oci",
+      "identifier": "ghcr.io/learningmatter-mit/atomisticskills-mace:1.3.4",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "name": "server",
+          "description": "MCP server to start. One of: mace, matgl",
+          "isRequired": true,
+          "choices": [
+            "mace",
+            "matgl"
+          ]
+        }
+      ],
+      "environmentVariables": [
+        {
+          "name": "MP_API_KEY",
+          "description": "API Key for Materials Project access. Required by base-server for querying bulk structures. Get a key at https://materialsproject.org/api",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "OPENALEX_EMAIL",
+          "description": "Email address to access the OpenAlex Polite Pool. Register your email for free at https://docs.openalex.org/how-to-use-the-api/rate-limits-and-authentication#the-polite-pool",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "ELSEVIER_API_KEY",
+          "description": "API Key for accessing Elsevier ScienceDirect API.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "ELSEVIER_INST_TOKEN",
+          "description": "Optional institutional token for Elsevier access.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "SPRINGER_API_KEY",
+          "description": "API Key for accessing Springer Nature Meta API v2.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "UNPAYWALL_EMAIL",
+          "description": "Email required for accessing the Unpaywall API to retrieve open access preprints and papers.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "ATOMATE2_REMOTE_PROJECT",
+          "description": "Default project name for remote job submission (auto-detected if blank). Required by atomate2-server.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "VASP_CMD",
+          "description": "Command to run VASP. Required by atomate2-server if running locally.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "PMG_VASP_PSP_DIR",
+          "description": "Path to VASP POTCAR directory. Required by pymatgen and atomate2-server.",
+          "isRequired": false,
+          "isSecret": false
+        }
+      ]
+    },
+    {
+      "registryType": "oci",
+      "identifier": "ghcr.io/learningmatter-mit/atomisticskills-fairchem:1.3.4",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "name": "server",
+          "description": "MCP server to start. One of: fairchem",
+          "isRequired": true,
+          "choices": [
+            "fairchem"
+          ]
+        }
+      ],
+      "environmentVariables": [
+        {
+          "name": "MP_API_KEY",
+          "description": "API Key for Materials Project access. Required by base-server for querying bulk structures. Get a key at https://materialsproject.org/api",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "OPENALEX_EMAIL",
+          "description": "Email address to access the OpenAlex Polite Pool. Register your email for free at https://docs.openalex.org/how-to-use-the-api/rate-limits-and-authentication#the-polite-pool",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "ELSEVIER_API_KEY",
+          "description": "API Key for accessing Elsevier ScienceDirect API.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "ELSEVIER_INST_TOKEN",
+          "description": "Optional institutional token for Elsevier access.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "SPRINGER_API_KEY",
+          "description": "API Key for accessing Springer Nature Meta API v2.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "UNPAYWALL_EMAIL",
+          "description": "Email required for accessing the Unpaywall API to retrieve open access preprints and papers.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "ATOMATE2_REMOTE_PROJECT",
+          "description": "Default project name for remote job submission (auto-detected if blank). Required by atomate2-server.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "VASP_CMD",
+          "description": "Command to run VASP. Required by atomate2-server if running locally.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "PMG_VASP_PSP_DIR",
+          "description": "Path to VASP POTCAR directory. Required by pymatgen and atomate2-server.",
+          "isRequired": false,
+          "isSecret": false
+        }
+      ]
+    },
+    {
+      "registryType": "oci",
+      "identifier": "ghcr.io/learningmatter-mit/atomisticskills-generative:1.3.4",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "name": "server",
+          "description": "MCP server to start. One of: adit, diffcsp, mattergen",
+          "isRequired": true,
+          "choices": [
+            "adit",
+            "diffcsp",
+            "mattergen"
+          ]
+        }
+      ],
+      "environmentVariables": [
+        {
+          "name": "MP_API_KEY",
+          "description": "API Key for Materials Project access. Required by base-server for querying bulk structures. Get a key at https://materialsproject.org/api",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "OPENALEX_EMAIL",
+          "description": "Email address to access the OpenAlex Polite Pool. Register your email for free at https://docs.openalex.org/how-to-use-the-api/rate-limits-and-authentication#the-polite-pool",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "ELSEVIER_API_KEY",
+          "description": "API Key for accessing Elsevier ScienceDirect API.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "ELSEVIER_INST_TOKEN",
+          "description": "Optional institutional token for Elsevier access.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "SPRINGER_API_KEY",
+          "description": "API Key for accessing Springer Nature Meta API v2.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "UNPAYWALL_EMAIL",
+          "description": "Email required for accessing the Unpaywall API to retrieve open access preprints and papers.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "ATOMATE2_REMOTE_PROJECT",
+          "description": "Default project name for remote job submission (auto-detected if blank). Required by atomate2-server.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "VASP_CMD",
+          "description": "Command to run VASP. Required by atomate2-server if running locally.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "PMG_VASP_PSP_DIR",
+          "description": "Path to VASP POTCAR directory. Required by pymatgen and atomate2-server.",
+          "isRequired": false,
+          "isSecret": false
+        }
+      ]
+    }
+  ]
 }

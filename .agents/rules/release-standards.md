@@ -17,6 +17,24 @@ Use [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.PATCH`
 
 ## Pre-Tag Checklist
 
+0. Bump the version and propagate it to every published manifest. `VERSION` at
+   the repository root is the single source; `.claude-plugin/plugin.json`,
+   `.claude-plugin/marketplace.json` and `server.json` are derived from it.
+   The tag must match `VERSION` exactly.
+   ```bash
+   conda run -n base-agent python tools/sync_version.py --set 1.x.y
+   conda run -n base-agent python tools/sync_version.py --check
+   ```
+   > CI runs `--check` on every push, so a tag can never ship with the four
+   > files disagreeing. Before `VERSION` existed, `server.json` had drifted to
+   > `1.0.0` while the repository was tagged `v1.3.4`.
+
+   If `docker/images.json` changed in this release, re-render the plugin's MCP
+   wiring as well, since the image tags follow the version:
+   ```bash
+   conda run -n base-agent python docker/render.py plugin-mcp
+   ```
+
 1. Rebuild the doc site to get accurate public counts:
    ```bash
    conda run -n base-agent python site/build_skills.py

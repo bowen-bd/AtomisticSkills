@@ -19,5 +19,261 @@
     "atomistic-simulation",
     "mlip",
     "dft"
-  ]
+  ],
+  "mcpServers": {
+    "atomate2": {
+      "command": "${user_config.container_runtime}",
+      "args": [
+        "run",
+        "--rm",
+        "--interactive",
+        "--volume",
+        "${user_config.work_dir}:/work",
+        "--workdir",
+        "/work",
+        "--volume",
+        "${CLAUDE_PLUGIN_DATA}/model-cache:/opt/model-cache",
+        "--env",
+        "HF_HOME=/opt/model-cache/huggingface",
+        "--env",
+        "TORCH_HOME=/opt/model-cache/torch",
+        "--env",
+        "MATGL_CACHE=/opt/model-cache/matgl",
+        "ghcr.io/learningmatter-mit/atomisticskills-lightweight:${user_config.image_tag}",
+        "atomate2"
+      ]
+    },
+    "base": {
+      "command": "${user_config.container_runtime}",
+      "args": [
+        "run",
+        "--rm",
+        "--interactive",
+        "--volume",
+        "${user_config.work_dir}:/work",
+        "--workdir",
+        "/work",
+        "--volume",
+        "${CLAUDE_PLUGIN_DATA}/model-cache:/opt/model-cache",
+        "--env",
+        "HF_HOME=/opt/model-cache/huggingface",
+        "--env",
+        "TORCH_HOME=/opt/model-cache/torch",
+        "--env",
+        "MATGL_CACHE=/opt/model-cache/matgl",
+        "ghcr.io/learningmatter-mit/atomisticskills-lightweight:${user_config.image_tag}",
+        "base"
+      ]
+    },
+    "drugdisc": {
+      "command": "${user_config.container_runtime}",
+      "args": [
+        "run",
+        "--rm",
+        "--interactive",
+        "--volume",
+        "${user_config.work_dir}:/work",
+        "--workdir",
+        "/work",
+        "--volume",
+        "${CLAUDE_PLUGIN_DATA}/model-cache:/opt/model-cache",
+        "--env",
+        "HF_HOME=/opt/model-cache/huggingface",
+        "--env",
+        "TORCH_HOME=/opt/model-cache/torch",
+        "--env",
+        "MATGL_CACHE=/opt/model-cache/matgl",
+        "ghcr.io/learningmatter-mit/atomisticskills-lightweight:${user_config.image_tag}",
+        "drugdisc"
+      ]
+    },
+    "smol": {
+      "command": "${user_config.container_runtime}",
+      "args": [
+        "run",
+        "--rm",
+        "--interactive",
+        "--volume",
+        "${user_config.work_dir}:/work",
+        "--workdir",
+        "/work",
+        "--volume",
+        "${CLAUDE_PLUGIN_DATA}/model-cache:/opt/model-cache",
+        "--env",
+        "HF_HOME=/opt/model-cache/huggingface",
+        "--env",
+        "TORCH_HOME=/opt/model-cache/torch",
+        "--env",
+        "MATGL_CACHE=/opt/model-cache/matgl",
+        "ghcr.io/learningmatter-mit/atomisticskills-lightweight:${user_config.image_tag}",
+        "smol"
+      ]
+    },
+    "mace": {
+      "command": "${user_config.container_runtime}",
+      "args": [
+        "run",
+        "--rm",
+        "--interactive",
+        "--volume",
+        "${user_config.work_dir}:/work",
+        "--workdir",
+        "/work",
+        "--volume",
+        "${CLAUDE_PLUGIN_DATA}/model-cache:/opt/model-cache",
+        "--env",
+        "HF_HOME=/opt/model-cache/huggingface",
+        "--env",
+        "TORCH_HOME=/opt/model-cache/torch",
+        "--env",
+        "MATGL_CACHE=/opt/model-cache/matgl",
+        "--gpus",
+        "all",
+        "ghcr.io/learningmatter-mit/atomisticskills-mace:${user_config.image_tag}",
+        "mace"
+      ]
+    },
+    "matgl": {
+      "command": "${user_config.container_runtime}",
+      "args": [
+        "run",
+        "--rm",
+        "--interactive",
+        "--volume",
+        "${user_config.work_dir}:/work",
+        "--workdir",
+        "/work",
+        "--volume",
+        "${CLAUDE_PLUGIN_DATA}/model-cache:/opt/model-cache",
+        "--env",
+        "HF_HOME=/opt/model-cache/huggingface",
+        "--env",
+        "TORCH_HOME=/opt/model-cache/torch",
+        "--env",
+        "MATGL_CACHE=/opt/model-cache/matgl",
+        "--gpus",
+        "all",
+        "ghcr.io/learningmatter-mit/atomisticskills-mace:${user_config.image_tag}",
+        "matgl"
+      ]
+    },
+    "fairchem": {
+      "command": "${user_config.container_runtime}",
+      "args": [
+        "run",
+        "--rm",
+        "--interactive",
+        "--volume",
+        "${user_config.work_dir}:/work",
+        "--workdir",
+        "/work",
+        "--volume",
+        "${CLAUDE_PLUGIN_DATA}/model-cache:/opt/model-cache",
+        "--env",
+        "HF_HOME=/opt/model-cache/huggingface",
+        "--env",
+        "TORCH_HOME=/opt/model-cache/torch",
+        "--env",
+        "MATGL_CACHE=/opt/model-cache/matgl",
+        "--gpus",
+        "all",
+        "ghcr.io/learningmatter-mit/atomisticskills-fairchem:${user_config.image_tag}",
+        "fairchem"
+      ]
+    },
+    "adit": {
+      "command": "${user_config.container_runtime}",
+      "args": [
+        "run",
+        "--rm",
+        "--interactive",
+        "--volume",
+        "${user_config.work_dir}:/work",
+        "--workdir",
+        "/work",
+        "--volume",
+        "${CLAUDE_PLUGIN_DATA}/model-cache:/opt/model-cache",
+        "--env",
+        "HF_HOME=/opt/model-cache/huggingface",
+        "--env",
+        "TORCH_HOME=/opt/model-cache/torch",
+        "--env",
+        "MATGL_CACHE=/opt/model-cache/matgl",
+        "--gpus",
+        "all",
+        "ghcr.io/learningmatter-mit/atomisticskills-generative:${user_config.image_tag}",
+        "adit"
+      ]
+    },
+    "diffcsp": {
+      "command": "${user_config.container_runtime}",
+      "args": [
+        "run",
+        "--rm",
+        "--interactive",
+        "--volume",
+        "${user_config.work_dir}:/work",
+        "--workdir",
+        "/work",
+        "--volume",
+        "${CLAUDE_PLUGIN_DATA}/model-cache:/opt/model-cache",
+        "--env",
+        "HF_HOME=/opt/model-cache/huggingface",
+        "--env",
+        "TORCH_HOME=/opt/model-cache/torch",
+        "--env",
+        "MATGL_CACHE=/opt/model-cache/matgl",
+        "--gpus",
+        "all",
+        "ghcr.io/learningmatter-mit/atomisticskills-generative:${user_config.image_tag}",
+        "diffcsp"
+      ]
+    },
+    "mattergen": {
+      "command": "${user_config.container_runtime}",
+      "args": [
+        "run",
+        "--rm",
+        "--interactive",
+        "--volume",
+        "${user_config.work_dir}:/work",
+        "--workdir",
+        "/work",
+        "--volume",
+        "${CLAUDE_PLUGIN_DATA}/model-cache:/opt/model-cache",
+        "--env",
+        "HF_HOME=/opt/model-cache/huggingface",
+        "--env",
+        "TORCH_HOME=/opt/model-cache/torch",
+        "--env",
+        "MATGL_CACHE=/opt/model-cache/matgl",
+        "--gpus",
+        "all",
+        "ghcr.io/learningmatter-mit/atomisticskills-generative:${user_config.image_tag}",
+        "mattergen"
+      ]
+    }
+  },
+  "userConfig": {
+    "container_runtime": {
+      "type": "string",
+      "title": "Container runtime",
+      "description": "Command used to run the server images. Use 'docker' or 'podman'.",
+      "default": "docker",
+      "required": true
+    },
+    "work_dir": {
+      "type": "directory",
+      "title": "Working directory",
+      "description": "Directory mounted into the containers at /work. Simulation inputs are read from here and all results are written back here, so it must be the project you want the skills to operate on.",
+      "required": true
+    },
+    "image_tag": {
+      "type": "string",
+      "title": "Image tag",
+      "description": "Tag of the atomisticskills-* images to run. Defaults to the plugin version so the images match the skills that call them.",
+      "default": "1.3.4",
+      "required": true
+    }
+  }
 }

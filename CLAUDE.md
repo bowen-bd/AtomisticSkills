@@ -87,3 +87,24 @@ python configure_mcp.py --scope global    # write to global user config
 ```
 
 See `README.md` for full installation instructions.
+
+### Containerised servers
+
+The same servers also ship as container images so the plugin can be installed
+without building the ~58 GB of conda environments. `docker/images.json` is the
+single source of truth mapping each server to its image; the Dockerfiles, the CI
+matrix, the in-image server table and the `mcpServers` block of
+`.claude-plugin/plugin.json` are all rendered from it.
+
+**When you change anything about a server's packaging**, re-render rather than
+hand-editing the derived files:
+```bash
+conda run -n base-agent python docker/render.py plugin-mcp   # plugin wiring
+conda run -n base-agent python docker/export_locks.py        # refresh lockfiles
+conda run -n base-agent python tools/sync_version.py --check # manifest versions
+```
+CI fails if any of those are stale. Read `docker/README.md` before touching the
+images — in particular, the GPU environments are installed from lockfiles with
+`--no-deps` because they cannot be resolved (`fairchem-core 2.19.0` declares
+`torch~=2.8.0` while the environment must run torch 2.10.0, since torch 2.8 has
+no sm_121 build). Do not "fix" that by relaxing the pins.

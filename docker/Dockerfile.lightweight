@@ -1,0 +1,80 @@
+# The CPU-only image: base, drugdisc, smol and atomate2 MCP servers.
+#
+# These four environments are the one group whose dependency union resolves
+# cleanly (verified with `uv pip compile --python-version 3.11`, 175 packages),
+# so this image builds a single merged conda env from a spec rather than from a
+# lockfile. That keeps it genuinely multi-arch: no torch, no CUDA, no wheels
+# that exist for only one platform.
+#
+# Build:
+#   docker buildx build -f docker/Dockerfile.lightweight \
+#     --platform linux/amd64,linux/arm64 \
+#     -t ghcr.io/learningmatter-mit/atomisticskills-lightweight:dev .
+FROM mambaorg/micromamba:2.0.5-debian12-slim
+
+# Provided by buildx: amd64 | arm64. Used only to gate fpocket, which
+# conda-forge publishes for linux-64 alone.
+ARG TARGETARCH
+ARG IMAGE_NAME=lightweight
+
+USER root
+ENV MAMBA_DOCKERFILE_ACTIVATE=1 \
+    REPO_DIR=/opt/atomisticskills \
+    PYTHONUNBUFFERED=1
+
+# git is needed for any `pip install git+...` pins; util-linux supplies setpriv,
+# which the entrypoint uses to write bind-mounted files as the calling user
+# rather than as root.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git ca-certificates util-linux \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR ${REPO_DIR}
+
+# Resolve the environment before copying the source tree, so edits to skills or
+# server code do not invalidate the expensive solve layer.
+#
+# The toolchain is installed and removed inside a single RUN because several
+# packages have no aarch64 wheel and compile from source -- smol fails with
+# "CompileError: No such file or directory: 'gcc'" without it. A layer records
+# only its net filesystem change, so purging here keeps ~300 MB of build tools
+# out of the published image instead of merely hiding them behind a later layer.
+COPY docker/specs/lightweight.yaml /tmp/lightweight.yaml
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends build-essential; \
+    micromamba create -y -n lightweight -f /tmp/lightweight.yaml; \
+    micromamba clean --all --yes; \
+    apt-get purge -y --auto-remove build-essential; \
+    rm -rf /var/lib/apt/lists/* /tmp/lightweight.yaml /root/.cache
+
+# fpocket has no linux-aarch64 build. Installing it only where it exists keeps
+# the arm64 image buildable; drug-pocket-detection then uses its P2Rank path.
+RUN if [ "${TARGETARCH}" = "amd64" ]; then \
+        micromamba install -y -n lightweight -c conda-forge fpocket \
+        && micromamba clean --all --yes ; \
+    else \
+        echo "fpocket skipped: no linux-aarch64 build on conda-forge" >&2 ; \
+    fi
+
+COPY src/ ${REPO_DIR}/src/
+COPY skills/ ${REPO_DIR}/skills/
+COPY docker/images.json docker/render.py docker/entrypoint.sh ${REPO_DIR}/docker/
+COPY pyproject.toml ${REPO_DIR}/
+
+# Bake the server table this image can serve, so the entrypoint can resolve a
+# server name without an interpreter on PATH.
+RUN micromamba run -n lightweight python ${REPO_DIR}/docker/render.py \
+        server-map "${IMAGE_NAME}" > ${REPO_DIR}/docker/server-map.txt \
+    && chmod +x ${REPO_DIR}/docker/entrypoint.sh \
+    && cat ${REPO_DIR}/docker/server-map.txt
+
+# Checkpoint and dataset caches belong on a mounted volume, not in the image.
+ENV HF_HOME=/opt/model-cache/huggingface \
+    TORCH_HOME=/opt/model-cache/torch
+RUN mkdir -p /opt/model-cache /work && chmod 777 /opt/model-cache /work
+
+VOLUME ["/opt/model-cache", "/work"]
+WORKDIR /work
+
+ENTRYPOINT ["/opt/atomisticskills/docker/entrypoint.sh"]

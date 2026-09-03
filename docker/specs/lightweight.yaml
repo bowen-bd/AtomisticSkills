@@ -1,0 +1,63 @@
+# Merged environment for the "lightweight" image: the union of base-agent,
+# drugdisc-agent, smol-agent and atomate2-agent.
+#
+# Unlike the MLIP and generative environments, this union resolves cleanly --
+# verified with `uv pip compile --python-version 3.11` over the four pip
+# sections (175 packages, no conflicts) -- so it is expressed as a spec rather
+# than a lockfile and can be built for both amd64 and arm64.
+#
+# The four source environments pin python 3.10 (smol, atomate2) and 3.11 (base,
+# drugdisc); 3.11 satisfies all four, and the union was verified at 3.11.
+#
+# fpocket is deliberately absent: conda-forge publishes it for linux-64 only.
+# The Dockerfile installs it on amd64 and skips it on arm64, where
+# drug-pocket-detection falls back to its P2Rank path.
+name: lightweight
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  # base-agent
+  - rdkit
+  - packmol
+  # drugdisc-agent (fpocket added per-arch by the Dockerfile)
+  - vina
+  - pdbfixer
+  - pip:
+      - mcp
+      # --- base-agent
+      - numpy
+      - pymatgen
+      - ase
+      - mp-api
+      - typing-extensions
+      - h5py
+      - pymupdf
+      - reaction-network
+      - pymatgen-analysis-diffusion
+      - optimade[client]
+      - beautifulsoup4
+      - phonopy
+      # --- drugdisc-agent
+      - meeko
+      - scipy
+      - gemmi
+      - openbabel-wheel
+      - biopython
+      - dimorphite_dl
+      - requests
+      - matplotlib
+      - posebusters
+      - MDAnalysis
+      # --- smol-agent
+      - smol
+      - scikit-learn
+      - pyyaml
+      - polytope
+      # --- atomate2-agent
+      - atomate2
+      - jobflow-remote
+      - amset
+      - lobsterpy
+      - ijson

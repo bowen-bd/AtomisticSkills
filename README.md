@@ -135,7 +135,34 @@ MatterGen (generative crystal design), MEGNet bandgap prediction, MLIP fine-tuni
 
 ## Quick Start & Setup
 
-AtomisticSkills is designed to be installed and operated by AI agents. For the fastest onboarding, follow these steps:
+### Option A — Install as a Claude Code plugin (no environment build)
+
+The fastest route. The skills and the MCP servers they call arrive together, with
+the servers running from prebuilt container images, so nothing has to be solved
+or compiled locally:
+
+```bash
+claude plugin marketplace add learningmatter-mit/AtomisticSkills
+claude plugin install atomistic-skills@atomisticskills
+```
+
+You are prompted for a container runtime (`docker` or `podman`) and a working
+directory, which is mounted into the servers as `/work` — simulation inputs are
+read from there and results written back to it. Model checkpoints download on
+first use into a cache that survives plugin updates.
+
+> [!IMPORTANT]
+> This requires a container runtime, and GPU-backed servers additionally need
+> the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
+> The GPU images are currently **arm64 only**; see
+> [`docker/README.md`](docker/README.md) for the image inventory, the reasoning
+> behind the four-image split, and the known limitations.
+
+### Option B — Full local install (development)
+
+Build the conda environments yourself. Choose this to develop skills, run the
+`scripts/` directly, or use the environments outside of MCP. It is the heavier
+path: the environments total roughly 58 GB.
 
 1. **Clone the repository**:
    *(Optional: Fork the repository on GitHub first if you plan to contribute, then clone your fork instead)*
