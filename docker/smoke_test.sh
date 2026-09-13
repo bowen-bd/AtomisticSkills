@@ -29,12 +29,19 @@ fi
 
 PROTOCOL_VERSION="${PROTOCOL_VERSION:-2024-11-05}"
 
+# The trailing sleep matters. Without it the heredoc ends, stdin closes, and the
+# server can treat EOF as a shutdown and exit before it has written the
+# tools/list response -- which reads as "no response to tools/list" and fails a
+# perfectly healthy image. Hold the pipe open long enough for the replies.
+REPLY_GRACE="${REPLY_GRACE:-8}"
+
 request_stream() {
     cat <<EOF
 {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"${PROTOCOL_VERSION}","capabilities":{},"clientInfo":{"name":"atomisticskills-smoke","version":"1"}}}
 {"jsonrpc":"2.0","method":"notifications/initialized","params":{}}
 {"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}
 EOF
+    sleep "$REPLY_GRACE"
 }
 
 failures=0
