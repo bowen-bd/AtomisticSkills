@@ -8,7 +8,7 @@ dependencies:
   - "pytorch=*=*cuda*"
   - pip
   - pip:
-    - mcp
+    - mcp<2
     - fairchem-core>=2.18.0
     - cython
     - pymatgen

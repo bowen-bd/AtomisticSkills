@@ -4,7 +4,7 @@ dependencies:
   - "pytorch=*=*cuda*"
   - pip
   - pip:
-    - mcp
+    - mcp<2
     - mace-torch==0.3.15
     - cython
     - pymatgen

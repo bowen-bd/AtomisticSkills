@@ -186,11 +186,21 @@ jobs:
       # Proves the image can actually start a server and speak MCP, rather than
       # only that it built. A green build with a broken entrypoint is exactly
       # the silent breakage the images exist to prevent.
+      # Restricted to the CPU image: the GPU images are tens of GB and would not
+      # fit alongside themselves on a runner, and their servers import CUDA
+      # builds of torch that a GPU-less runner cannot exercise meaningfully.
       - name: Smoke test the entrypoint
         if: github.event_name != 'pull_request' && matrix.image == 'lightweight'
         run: |
           IMAGE="${{ steps.tags.outputs.base }}:$(cat VERSION)${{ matrix.multiarch == true && format('-{0}', matrix.arch) || '' }}"
-          bash docker/smoke_test.sh "$IMAGE" base
+          SERVERS="$(python -c "
+          import json
+          spec = json.load(open('docker/images.json'))
+          img = next(i for i in spec['images'] if i['name'] == '${{ matrix.image }}')
+          print(' '.join(sorted(img['servers'])))
+          ")"
+          echo "smoke testing: $SERVERS"
+          bash docker/smoke_test.sh "$IMAGE" $SERVERS
 
   manifest:
     needs: build

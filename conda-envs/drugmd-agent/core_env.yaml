@@ -9,7 +9,7 @@ dependencies:
   - pymol-open-source
   - pip
   - pip:
-    - mcp
+    - mcp<2
     - openff-toolkit
     - openmmforcefields
     - openff-interchange

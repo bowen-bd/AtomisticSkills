@@ -3,7 +3,7 @@ dependencies:
   - python=3.10
   - pip
   - pip:
-    - mcp
+    - mcp<2
     - atomate2
     - pymatgen
     - typing-extensions

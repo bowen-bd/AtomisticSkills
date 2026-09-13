@@ -7,7 +7,7 @@ dependencies:
   - packmol
   - pip
   - pip:
-    - mcp
+    - mcp<2
     - numpy
     - pymatgen
     - ase
