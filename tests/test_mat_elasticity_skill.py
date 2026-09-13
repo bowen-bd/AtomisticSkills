@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 SKILL_SCRIPT = os.path.abspath(
     os.path.join(
         os.path.dirname(__file__),
-        "../.agents/skills/mat-elasticity/scripts/calculate_elasticity.py",
+        "../skills/mat-elasticity/scripts/calculate_elasticity.py",
     )
 )
 
@@ -30,6 +30,9 @@ def _load_skill_module():
 
 
 elasticity = _load_skill_module()
+
+
+from pymatgen.core.elasticity import ComplianceTensor, ElasticTensor
 
 
 def isotropic_voigt_stiffness(youngs: float, poisson: float) -> np.ndarray:
@@ -50,7 +53,7 @@ def isotropic_voigt_stiffness(youngs: float, poisson: float) -> np.ndarray:
 
 
 # --------------------------------------------------------------------------------------
-# Voigt -> full compliance expansion
+# Voigt -> full compliance expansion via pymatgen ComplianceTensor
 # --------------------------------------------------------------------------------------
 
 
@@ -58,7 +61,7 @@ def isotropic_voigt_stiffness(youngs: float, poisson: float) -> np.ndarray:
 def test_shear_compliance_carries_the_quarter_factor():
     """S_1212 = S_66/4 and S_1122 = S_12, per the engineering-strain convention."""
     compliance = np.linalg.inv(isotropic_voigt_stiffness(100.0, 0.3))
-    full = elasticity.full_compliance_tensor(compliance)
+    full = ComplianceTensor.from_voigt(compliance)
 
     assert full[0, 0, 1, 1] == pytest.approx(compliance[0, 1])  # normal-normal: 1
     assert full[1, 2, 1, 2] == pytest.approx(compliance[3, 3] / 4.0)  # shear-shear: 1/4
@@ -69,7 +72,7 @@ def test_shear_compliance_carries_the_quarter_factor():
 @pytest.mark.base
 def test_full_compliance_has_the_expected_index_symmetries():
     compliance = np.linalg.inv(isotropic_voigt_stiffness(100.0, 0.3))
-    full = elasticity.full_compliance_tensor(compliance)
+    full = ComplianceTensor.from_voigt(compliance)
     assert np.allclose(full, np.transpose(full, (1, 0, 2, 3)))  # i<->j
     assert np.allclose(full, np.transpose(full, (0, 1, 3, 2)))  # k<->l
     assert np.allclose(full, np.transpose(full, (2, 3, 0, 1)))  # pair exchange
@@ -85,7 +88,7 @@ def test_full_compliance_has_the_expected_index_symmetries():
 @pytest.mark.base
 def test_isotropic_youngs_modulus_is_direction_independent():
     youngs = 137.0
-    full = elasticity.full_compliance_tensor(
+    full = ComplianceTensor.from_voigt(
         np.linalg.inv(isotropic_voigt_stiffness(youngs, 0.27))
     )
     rng = np.random.default_rng(20260902)
@@ -98,7 +101,7 @@ def test_isotropic_youngs_modulus_is_direction_independent():
 @pytest.mark.base
 def test_isotropic_extrema_collapse_to_the_isotropic_modulus():
     youngs = 137.0
-    full = elasticity.full_compliance_tensor(
+    full = ComplianceTensor.from_voigt(
         np.linalg.inv(isotropic_voigt_stiffness(youngs, 0.27))
     )
     extrema = elasticity.youngs_modulus_extrema(full)
@@ -117,11 +120,12 @@ def test_mis_expanded_shear_compliance_is_detectably_wrong():
     """
     stiffness = isotropic_voigt_stiffness(137.0, 0.27)
     compliance = np.linalg.inv(stiffness)
-    correct = elasticity.full_compliance_tensor(compliance)
+    correct = ComplianceTensor.from_voigt(compliance)
 
+    voigt_pairs = ((0, 0), (1, 1), (2, 2), (1, 2), (0, 2), (0, 1))
     wrong = np.zeros((3, 3, 3, 3))
-    for row, (i, j) in enumerate(elasticity.VOIGT_PAIRS):
-        for col, (k, m) in enumerate(elasticity.VOIGT_PAIRS):
+    for row, (i, j) in enumerate(voigt_pairs):
+        for col, (k, m) in enumerate(voigt_pairs):
             factor = (1.0 if row >= 3 else 1.0) * (1.0 if col >= 3 else 1.0)
             for a, b in {(i, j), (j, i)}:
                 for c, d in {(k, m), (m, k)}:
@@ -156,7 +160,7 @@ def test_extrema_find_an_off_axis_maximum():
         ]
     )
     compliance = np.linalg.inv(stiffness)
-    full = elasticity.full_compliance_tensor(compliance)
+    full = ComplianceTensor.from_voigt(compliance)
     axial = [
         elasticity.youngs_modulus_along(full, ax)
         for ax in ((1, 0, 0), (0, 1, 0), (0, 0, 1))
@@ -171,27 +175,63 @@ def test_extrema_find_an_off_axis_maximum():
 
 
 # --------------------------------------------------------------------------------------
-# Anisotropy index
+# Anisotropy index and derived properties
 # --------------------------------------------------------------------------------------
 
 
 @pytest.mark.base
 def test_universal_anisotropy_index_vanishes_for_an_isotropic_solid():
-    bounds = elasticity.anisotropy_and_bounds(isotropic_voigt_stiffness(100.0, 0.3))
-    assert bounds["universal_anisotropy_index"] == pytest.approx(0.0, abs=1e-10)
-    assert bounds["bulk_modulus_voigt_GPa"] == pytest.approx(
-        bounds["bulk_modulus_reuss_GPa"]
+    from ase.build import bulk
+
+    atoms = bulk("Cu", "fcc", a=3.6)
+    stiffness = isotropic_voigt_stiffness(100.0, 0.3)
+    derived = elasticity.derived_elastic_properties(
+        stiffness, atoms, 100.0 / (3 * 0.4), 100.0 / (2 * 1.3)
     )
-    assert bounds["shear_modulus_voigt_GPa"] == pytest.approx(
-        bounds["shear_modulus_reuss_GPa"]
+    assert derived["universal_anisotropy_index"] == pytest.approx(0.0, abs=1e-10)
+    assert derived["bulk_modulus_voigt_GPa"] == pytest.approx(
+        derived["bulk_modulus_reuss_GPa"]
+    )
+    assert derived["shear_modulus_voigt_GPa"] == pytest.approx(
+        derived["shear_modulus_reuss_GPa"]
     )
 
 
 @pytest.mark.base
 def test_universal_anisotropy_index_is_positive_for_an_anisotropic_solid():
+    from ase.build import bulk
+
+    atoms = bulk("Cu", "fcc", a=3.6)
     stiffness = isotropic_voigt_stiffness(100.0, 0.3)
     stiffness[3, 3] *= 2.0  # break cubic/isotropic shear degeneracy
-    assert elasticity.anisotropy_and_bounds(stiffness)["universal_anisotropy_index"] > 0
+    derived = elasticity.derived_elastic_properties(stiffness, atoms, 100.0, 40.0)
+    assert derived["universal_anisotropy_index"] > 0
+
+
+@pytest.mark.base
+def test_derived_bounds_match_pymatgen_elastic_tensor():
+    from ase.build import bulk
+
+    atoms = bulk("Cu", "fcc", a=3.6)
+    stiffness = np.array(
+        [
+            [102.13, 24.33, 36.14, 0.0, 0.0, 0.0],
+            [24.33, 100.72, 23.42, 0.0, 0.0, 0.0],
+            [36.14, 23.42, 88.03, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 36.86, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 46.74, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 42.42],
+        ]
+    )
+    derived = elasticity.derived_elastic_properties(stiffness, atoms, 50.0, 35.0)
+    et = ElasticTensor.from_voigt(stiffness)
+    assert derived["bulk_modulus_voigt_GPa"] == pytest.approx(et.k_voigt)
+    assert derived["bulk_modulus_reuss_GPa"] == pytest.approx(et.k_reuss)
+    assert derived["shear_modulus_voigt_GPa"] == pytest.approx(et.g_voigt)
+    assert derived["shear_modulus_reuss_GPa"] == pytest.approx(et.g_reuss)
+    assert derived["universal_anisotropy_index"] == pytest.approx(
+        et.universal_anisotropy
+    )
 
 
 # --------------------------------------------------------------------------------------

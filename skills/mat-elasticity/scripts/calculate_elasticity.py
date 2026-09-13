@@ -23,7 +23,7 @@ from typing import Any
 import numpy as np
 
 # Add project root to sys.path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../"))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
@@ -34,8 +34,6 @@ from ase.io import read
 # Conversion factors
 EV_PER_A3_TO_GPA = 160.2176634  # 1 eV/ų = 160.2176634 GPa
 
-# Voigt index pairs, and constants for the Debye estimate.
-VOIGT_PAIRS = ((0, 0), (1, 1), (2, 2), (1, 2), (0, 2), (0, 1))
 HBAR_SI = 1.054571817e-34
 KB_SI = 1.380649e-23
 AMU_SI = 1.66053906660e-27
@@ -46,28 +44,7 @@ logger = logging.getLogger("Elasticity-Skill")
 
 
 from src.utils.mlips.loader import load_wrapper
-
-
-def full_compliance_tensor(voigt_compliance: np.ndarray) -> np.ndarray:
-    """Expand a 6x6 Voigt compliance matrix into the full S_ijkl.
-
-    The engineering-strain Voigt convention folds a factor of 2 into each shear index
-    pair of the *compliance*, so a shear-shear entry carries 1/4 and a normal-shear
-    entry 1/2: S_1122 = S_12, but S_1212 = S_66 / 4. Using S_66 directly where S_1212
-    belongs is the classic error in directional-modulus work, and it is not a small
-    one -- it can move the softest direction by tens of percent.
-
-    Note this factor structure is specific to the compliance. The stiffness expands
-    with no factors at all (C_1212 = C_66), which is why the two cannot share a helper.
-    """
-    tensor = np.zeros((3, 3, 3, 3))
-    for row, (i, j) in enumerate(VOIGT_PAIRS):
-        for col, (k, m) in enumerate(VOIGT_PAIRS):
-            factor = (0.5 if row >= 3 else 1.0) * (0.5 if col >= 3 else 1.0)
-            for a, b in {(i, j), (j, i)}:
-                for c, d in {(k, m), (m, k)}:
-                    tensor[a, b, c, d] = voigt_compliance[row, col] * factor
-    return tensor
+from pymatgen.core.elasticity import ElasticTensor
 
 
 def _sphere_directions(phi: np.ndarray, theta: np.ndarray) -> np.ndarray:
@@ -86,6 +63,8 @@ def youngs_modulus_along(full_compliance: np.ndarray, direction) -> float:
     """E(n) = 1 / (S_ijkl n_i n_j n_k n_l) for a unit direction n."""
     n = np.asarray(direction, dtype=float)
     n = n / np.linalg.norm(n)
+    if hasattr(full_compliance, "einsum_sequence"):
+        return float(1.0 / full_compliance.einsum_sequence([n] * 4))
     return float(1.0 / np.einsum("ijkl,i,j,k,l->", full_compliance, n, n, n, n))
 
 
@@ -137,46 +116,6 @@ def youngs_modulus_extrema(full_compliance: np.ndarray, n_coarse: int = 721) -> 
     return result
 
 
-def anisotropy_and_bounds(voigt_stiffness: np.ndarray) -> dict:
-    """Voigt and Reuss bounds, the VRH averages and the universal anisotropy index.
-
-    A^U = 5 G_V/G_R + B_V/B_R - 6 (Ranganathan & Ostoja-Starzewski, PRL 101, 055504
-    (2008)); zero only for an elastically isotropic crystal. It needs the Voigt and
-    Reuss bounds kept separate, so it cannot be recovered from the VRH averages alone.
-    """
-    c = np.asarray(voigt_stiffness, dtype=float)
-    s = np.linalg.inv(c)
-    bulk_voigt = (
-        c[0, 0] + c[1, 1] + c[2, 2] + 2.0 * (c[0, 1] + c[0, 2] + c[1, 2])
-    ) / 9.0
-    shear_voigt = (
-        c[0, 0]
-        + c[1, 1]
-        + c[2, 2]
-        - c[0, 1]
-        - c[0, 2]
-        - c[1, 2]
-        + 3.0 * (c[3, 3] + c[4, 4] + c[5, 5])
-    ) / 15.0
-    bulk_reuss = 1.0 / (
-        s[0, 0] + s[1, 1] + s[2, 2] + 2.0 * (s[0, 1] + s[0, 2] + s[1, 2])
-    )
-    shear_reuss = 15.0 / (
-        4.0 * (s[0, 0] + s[1, 1] + s[2, 2])
-        - 4.0 * (s[0, 1] + s[0, 2] + s[1, 2])
-        + 3.0 * (s[3, 3] + s[4, 4] + s[5, 5])
-    )
-    return {
-        "bulk_modulus_voigt_GPa": float(bulk_voigt),
-        "bulk_modulus_reuss_GPa": float(bulk_reuss),
-        "shear_modulus_voigt_GPa": float(shear_voigt),
-        "shear_modulus_reuss_GPa": float(shear_reuss),
-        "universal_anisotropy_index": float(
-            5.0 * (shear_voigt / shear_reuss) + (bulk_voigt / bulk_reuss) - 6.0
-        ),
-    }
-
-
 def debye_properties(bulk_gpa: float, shear_gpa: float, atoms) -> dict:
     """Anderson estimate: isotropic sound velocities, then the Debye temperature.
 
@@ -207,18 +146,20 @@ def derived_elastic_properties(
     voigt_stiffness_gpa: np.ndarray, atoms, bulk_gpa: float, shear_gpa: float
 ) -> dict:
     """Standard post-processing of an elastic tensor: bounds, anisotropy, directional
-    moduli and the acoustic/Debye estimates."""
-    compliance = np.linalg.inv(np.asarray(voigt_stiffness_gpa, dtype=float))
-    full = full_compliance_tensor(compliance)
-    out = dict(anisotropy_and_bounds(voigt_stiffness_gpa))
-    out.update(
-        {
-            "youngs_modulus_100_GPa": youngs_modulus_along(full, (1.0, 0.0, 0.0)),
-            "youngs_modulus_010_GPa": youngs_modulus_along(full, (0.0, 1.0, 0.0)),
-            "youngs_modulus_001_GPa": youngs_modulus_along(full, (0.0, 0.0, 1.0)),
-        }
-    )
-    out.update(youngs_modulus_extrema(full))
+    moduli and the acoustic/Debye estimates via pymatgen."""
+    et = ElasticTensor.from_voigt(voigt_stiffness_gpa)
+    compliance = et.compliance_tensor
+    out = {
+        "bulk_modulus_voigt_GPa": float(et.k_voigt),
+        "bulk_modulus_reuss_GPa": float(et.k_reuss),
+        "shear_modulus_voigt_GPa": float(et.g_voigt),
+        "shear_modulus_reuss_GPa": float(et.g_reuss),
+        "universal_anisotropy_index": float(et.universal_anisotropy),
+        "youngs_modulus_100_GPa": youngs_modulus_along(compliance, (1.0, 0.0, 0.0)),
+        "youngs_modulus_010_GPa": youngs_modulus_along(compliance, (0.0, 1.0, 0.0)),
+        "youngs_modulus_001_GPa": youngs_modulus_along(compliance, (0.0, 0.0, 1.0)),
+    }
+    out.update(youngs_modulus_extrema(compliance))
     out.update(debye_properties(bulk_gpa, shear_gpa, atoms))
     eigenvalues = np.linalg.eigvalsh(np.asarray(voigt_stiffness_gpa, dtype=float))
     out["elastic_eigenvalues_GPa"] = [float(x) for x in eigenvalues]
