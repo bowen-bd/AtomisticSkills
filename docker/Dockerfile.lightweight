@@ -35,17 +35,21 @@ WORKDIR ${REPO_DIR}
 # server code do not invalidate the expensive solve layer.
 #
 # The toolchain is installed and removed inside a single RUN because several
-# packages have no aarch64 wheel and compile from source -- smol fails with
-# "CompileError: No such file or directory: 'gcc'" without it. A layer records
-# only its net filesystem change, so purging here keeps ~300 MB of build tools
-# out of the published image instead of merely hiding them behind a later layer.
+# packages have no aarch64 wheel and compile from source:
+#   * smol      -- needs a C compiler ("CompileError: ... 'gcc'")
+#   * BoltzTraP2 (pulled in by amset) -- needs cmake, and conda-forge publishes
+#     boltztrap2 for linux-64 only, so there is no prebuilt route on arm64
+# A layer records only its net filesystem change, so purging here keeps the
+# build tools out of the published image rather than merely hiding them behind
+# a later layer.
 COPY docker/specs/lightweight.yaml /tmp/lightweight.yaml
 RUN set -eux; \
+    BUILD_DEPS="build-essential cmake pkg-config"; \
     apt-get update; \
-    apt-get install -y --no-install-recommends build-essential; \
+    apt-get install -y --no-install-recommends ${BUILD_DEPS}; \
     micromamba create -y -n lightweight -f /tmp/lightweight.yaml; \
     micromamba clean --all --yes; \
-    apt-get purge -y --auto-remove build-essential; \
+    apt-get purge -y --auto-remove ${BUILD_DEPS}; \
     rm -rf /var/lib/apt/lists/* /tmp/lightweight.yaml /root/.cache
 
 # fpocket has no linux-aarch64 build. Installing it only where it exists keeps
