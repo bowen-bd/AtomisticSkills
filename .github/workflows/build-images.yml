@@ -204,7 +204,11 @@ jobs:
 
   manifest:
     needs: build
-    if: github.event_name != 'pull_request'
+    # Runs even when some builds failed. The images are independent, and a
+    # multi-arch image whose variants all succeeded should still get its
+    # manifest list -- otherwise one failing GPU build leaves the working
+    # lightweight image reachable only by its per-arch tags.
+    if: always() && github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     permissions:
       packages: write
@@ -232,7 +236,21 @@ jobs:
               arches = [p.split("/")[1] for p in image["platforms"]]
               for tag in (version, "latest"):
                   srcs = " ".join(f"{base}:{tag}-{a}" for a in arches)
-                  print(f"docker buildx imagetools create -t {base}:{tag} {srcs}")
+                  print(f"{base}:{tag}|{srcs}")
           PY
-          cat /tmp/cmds.sh
-          bash /tmp/cmds.sh
+          # Skip any image whose per-arch tags are not all present, so a partial
+          # run stitches what it can instead of failing the job outright.
+          status=0
+          while IFS='|' read -r target srcs; do
+            missing=""
+            for s in $srcs; do
+              docker buildx imagetools inspect "$s" >/dev/null 2>&1 || missing="$missing $s"
+            done
+            if [ -n "$missing" ]; then
+              echo "skipping $target -- missing:$missing"
+              continue
+            fi
+            echo "creating $target from $srcs"
+            docker buildx imagetools create -t "$target" $srcs || status=1
+          done < /tmp/cmds.sh
+          exit $status

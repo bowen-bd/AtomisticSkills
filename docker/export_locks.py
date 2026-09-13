@@ -44,12 +44,26 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 IMAGES_SPEC = PROJECT_ROOT / "docker" / "images.json"
 
-# Local editable checkouts rewritten to their public origin. Keyed by the
-# distribution name pip reports for the editable install.
+# Local editable checkouts rewritten to something installable off this machine.
+# Keyed by the distribution name pip reports for the editable install.
+#
+# nvalchemi-toolkit is on PyPI, so pin it there rather than pointing at the git
+# repository. A `nvalchemi @ git+...` requirement fails: pip clones, builds the
+# metadata, finds the project is actually named nvalchemi-toolkit and refuses
+# with "Generating metadata for package nvalchemi produced metadata for project
+# name nvalchemi-toolkit". A plain PyPI pin avoids the clone and the mismatch.
 EDITABLE_ORIGINS = {
-    "nvalchemi": "nvalchemi @ git+https://github.com/NVIDIA/nvalchemi-toolkit",
-    "nvalchemi-toolkit": "nvalchemi @ git+https://github.com/NVIDIA/nvalchemi-toolkit",
+    "nvalchemi": "nvalchemi-toolkit==0.1.0",
+    "nvalchemi-toolkit": "nvalchemi-toolkit==0.1.0",
 }
+
+# Compiled PyTorch Geometric extensions are deliberately kept out of the pip
+# locks. They have no aarch64 + CUDA 13 wheels, and their build backends import
+# torch to generate metadata, so installing them in the same `pip install -r`
+# pass as torch fails with "Failed to build 'torch-scatter' when getting
+# requirements to build wheel". The Dockerfile builds them in a later, dedicated
+# step with --no-build-isolation, once torch is importable.
+SOURCE_BUILT = {"torch-scatter", "torch-cluster", "torch-sparse"}
 
 LOCAL_PATH_RE = re.compile(r"@\s*file://|^-e\s|^\s*-e\s")
 
@@ -84,6 +98,9 @@ def rewrite_editables(pins: list[str], env: str) -> tuple[list[str], list[str]]:
     kept, dropped = [], []
     for pin in pins:
         name = re.split(r"[=@\[]", pin, maxsplit=1)[0].strip().lower()
+        if name in SOURCE_BUILT:
+            # Compiled separately by the Dockerfile; see SOURCE_BUILT.
+            continue
         if LOCAL_PATH_RE.search(pin):
             if name in EDITABLE_ORIGINS:
                 kept.append(EDITABLE_ORIGINS[name])
