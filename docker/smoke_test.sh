@@ -29,29 +29,52 @@ fi
 
 PROTOCOL_VERSION="${PROTOCOL_VERSION:-2024-11-05}"
 
-# The trailing sleep matters. Without it the heredoc ends, stdin closes, and the
-# server can treat EOF as a shutdown and exit before it has written the
-# tools/list response -- which reads as "no response to tools/list" and fails a
-# perfectly healthy image. Hold the pipe open long enough for the replies.
-REPLY_GRACE="${REPLY_GRACE:-8}"
-
-request_stream() {
-    cat <<EOF
-{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"${PROTOCOL_VERSION}","capabilities":{},"clientInfo":{"name":"atomisticskills-smoke","version":"1"}}}
-{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}
-{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}
-EOF
-    sleep "$REPLY_GRACE"
-}
+# stdin must stay open until the replies arrive: an MCP server reads EOF as a
+# shutdown and can exit before flushing. A fixed sleep is the wrong instrument
+# for that -- 8s sufficed locally but not for atomate2 on a cold CI runner,
+# whose imports are slow, so a healthy image failed on timing alone. Hold the
+# pipe open through a FIFO instead and close it as soon as the responses land,
+# falling back to REPLY_DEADLINE only if they never do.
+REPLY_DEADLINE="${REPLY_DEADLINE:-120}"
 
 failures=0
 for server in "${SERVERS[@]}"; do
     printf '== %s :: %s\n' "$IMAGE" "$server"
-    out="$(request_stream | timeout "$TIMEOUT" "$RUNTIME" run --rm --interactive \
-             --volume "$PWD:/work" --workdir /work "$IMAGE" "$server" 2>/tmp/smoke.err)"
+
+    workdir="$(mktemp -d)"
+    fifo="$workdir/stdin"
+    mkfifo "$fifo"
+
+    timeout "$TIMEOUT" "$RUNTIME" run --rm --interactive \
+        --volume "$PWD:/work" --workdir /work "$IMAGE" "$server" \
+        < "$fifo" > "$workdir/out" 2>"$workdir/err" &
+    runner=$!
+
+    # Hold the write end open for the whole exchange.
+    exec {req}> "$fifo"
+    cat >&${req} <<EOF
+{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"${PROTOCOL_VERSION}","capabilities":{},"clientInfo":{"name":"atomisticskills-smoke","version":"1"}}}
+{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}
+{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}
+EOF
+
+    # Close as soon as the tools/list reply appears, rather than guessing.
+    waited=0
+    while [[ $waited -lt $REPLY_DEADLINE ]]; do
+        grep -q '"id":[[:space:]]*2' "$workdir/out" 2>/dev/null && break
+        kill -0 "$runner" 2>/dev/null || break
+        sleep 1
+        waited=$((waited + 1))
+    done
+    [[ $waited -ge $REPLY_DEADLINE ]] && echo "  (no reply after ${REPLY_DEADLINE}s)" >&2
+
+    exec {req}>&-
+    wait "$runner" 2>/dev/null
     rc=$?
 
-    printf '%s' "$out" > /tmp/smoke.out
+    cp "$workdir/out" /tmp/smoke.out
+    cp "$workdir/err" /tmp/smoke.err
+    rm -rf "$workdir"
 
     # A server that exits non-zero after answering is still a pass: it is
     # reacting to stdin closing, not to a protocol error.
