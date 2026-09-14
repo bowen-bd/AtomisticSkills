@@ -137,6 +137,21 @@ claude plugin install atomistic-skills@atomistic-skills \
   --config image_tag=1.3.4
 ```
 
+**Prepare the images first.** Claude Code probes every server in parallel and
+allows each 30 seconds to connect, while converting a 3.5 GB OCI image to a SIF
+takes minutes. Without a pre-build, every server times out on first run and the
+parallel probe starts several conversions at once -- an HPC test burned 29 GB of
+quota exactly that way. Run this once, before starting Claude Code:
+
+```bash
+bash docker/prepare_images.sh --runtime apptainer \
+  --registry ghcr.io/learningmatter-mit --tag 1.3.4
+```
+
+It builds only the images matching your architecture, sequentially, and reports
+the ones it skips. The launcher will still build on demand if you skip this
+step, but the first connections will time out until the build finishes.
+
 `docker/run_server.sh` translates between the two, because their arguments are
 not interchangeable:
 
@@ -147,11 +162,25 @@ not interchangeable:
 | workdir | `--workdir /work` | `--pwd /work` |
 | GPU | `--gpus all` | `--nv` |
 
-Two Apptainer specifics worth knowing. The OCI image is converted to a SIF on
-first use, and the launcher points `APPTAINER_CACHEDIR` at the model-cache
-directory so that conversion does not land on a small home quota. And Apptainer
-already runs as the invoking user, so the entrypoint's privilege drop is a
-no-op there -- files in `/work` are yours either way.
+Cached SIFs live in `<model-cache>/sif/` and are reused; the launcher takes a
+`flock` around the build so ten servers starting together cannot each convert
+the same image.
+
+Three further Apptainer specifics, all learned from a cluster:
+
+- **`mksquashfs` thread exhaustion.** It defaults to one thread per core. On a
+  448-core node with `ulimit -u` of 768 it dies with `FATAL ERROR: Failed to
+  create thread`. The launcher bounds `-processors` from the actual limit;
+  override with `ATOMISTIC_SQUASHFS_PROCS` if needed.
+- **`/tmp` mounted `nodev`.** Apptainer warns this can corrupt a build, so
+  `APPTAINER_TMPDIR` is pointed beside the cache instead.
+- **Architecture.** The launcher refuses an image built for another
+  architecture before downloading anything, so on an x86_64 cluster the six
+  arm64-only servers fail instantly with an explanation rather than pulling
+  gigabytes and then failing.
+
+Apptainer already runs as the invoking user, so the entrypoint's privilege drop
+is a no-op there -- files in `/work` are yours either way.
 
 ## Installing non-interactively
 

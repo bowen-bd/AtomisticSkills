@@ -29,6 +29,8 @@
       "env": {
         "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
         "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-lightweight:${user_config.image_tag}",
+        "ATOMISTIC_IMAGE_NAME": "lightweight",
+        "ATOMISTIC_PLATFORMS": "linux/amd64,linux/arm64",
         "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
         "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
         "ATOMISTIC_GPU": "0"
@@ -42,6 +44,8 @@
       "env": {
         "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
         "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-lightweight:${user_config.image_tag}",
+        "ATOMISTIC_IMAGE_NAME": "lightweight",
+        "ATOMISTIC_PLATFORMS": "linux/amd64,linux/arm64",
         "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
         "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
         "ATOMISTIC_GPU": "0"
@@ -55,6 +59,8 @@
       "env": {
         "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
         "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-lightweight:${user_config.image_tag}",
+        "ATOMISTIC_IMAGE_NAME": "lightweight",
+        "ATOMISTIC_PLATFORMS": "linux/amd64,linux/arm64",
         "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
         "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
         "ATOMISTIC_GPU": "0"
@@ -68,6 +74,8 @@
       "env": {
         "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
         "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-lightweight:${user_config.image_tag}",
+        "ATOMISTIC_IMAGE_NAME": "lightweight",
+        "ATOMISTIC_PLATFORMS": "linux/amd64,linux/arm64",
         "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
         "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
         "ATOMISTIC_GPU": "0"
@@ -81,6 +89,8 @@
       "env": {
         "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
         "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-mace:${user_config.image_tag}",
+        "ATOMISTIC_IMAGE_NAME": "mace",
+        "ATOMISTIC_PLATFORMS": "linux/arm64",
         "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
         "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
         "ATOMISTIC_GPU": "1"
@@ -94,6 +104,8 @@
       "env": {
         "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
         "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-mace:${user_config.image_tag}",
+        "ATOMISTIC_IMAGE_NAME": "mace",
+        "ATOMISTIC_PLATFORMS": "linux/arm64",
         "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
         "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
         "ATOMISTIC_GPU": "1"
@@ -107,6 +119,8 @@
       "env": {
         "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
         "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-fairchem:${user_config.image_tag}",
+        "ATOMISTIC_IMAGE_NAME": "fairchem",
+        "ATOMISTIC_PLATFORMS": "linux/arm64",
         "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
         "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
         "ATOMISTIC_GPU": "1"
@@ -120,6 +134,8 @@
       "env": {
         "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
         "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-generative:${user_config.image_tag}",
+        "ATOMISTIC_IMAGE_NAME": "generative",
+        "ATOMISTIC_PLATFORMS": "linux/arm64",
         "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
         "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
         "ATOMISTIC_GPU": "1"
@@ -133,6 +149,8 @@
       "env": {
         "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
         "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-generative:${user_config.image_tag}",
+        "ATOMISTIC_IMAGE_NAME": "generative",
+        "ATOMISTIC_PLATFORMS": "linux/arm64",
         "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
         "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
         "ATOMISTIC_GPU": "1"
@@ -146,6 +164,8 @@
       "env": {
         "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
         "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-generative:${user_config.image_tag}",
+        "ATOMISTIC_IMAGE_NAME": "generative",
+        "ATOMISTIC_PLATFORMS": "linux/arm64",
         "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
         "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
         "ATOMISTIC_GPU": "1"

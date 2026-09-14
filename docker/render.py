@@ -151,6 +151,10 @@ def cmd_plugin_mcp(spec: dict, args: argparse.Namespace) -> int:
                 "env": {
                     "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
                     "ATOMISTIC_IMAGE": ref,
+                    "ATOMISTIC_IMAGE_NAME": image["name"],
+                    # Lets the launcher refuse an image this architecture
+                    # cannot run before downloading gigabytes of it.
+                    "ATOMISTIC_PLATFORMS": ",".join(image["platforms"]),
                     "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
                     # Checkpoints are multi-GB and must outlive plugin updates.
                     "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
