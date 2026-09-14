@@ -60,13 +60,15 @@ case "$(uname -m)" in
     *)             HOST_ARCH="$(uname -m)" ;;
 esac
 
-# The cache must be the SAME directory the plugin will look in, or the pre-build
-# is silently wasted: plugin.json sets ATOMISTIC_MODEL_CACHE to
-# ${CLAUDE_PLUGIN_DATA}/model-cache, so a SIF built anywhere else is never found
-# and run_server.sh rebuilds it on demand -- reintroducing the connect timeouts
-# this script exists to prevent. Prefer an explicit --cache, then the
-# environment, then the installed plugin's data directory, and only then a
-# generic fallback.
+# Where to put the SIF. run_server.sh searches both this script's possible
+# choices, so the pre-build is found either way -- do not "fix" this by trying
+# harder to guess CLAUDE_PLUGIN_DATA, which is the mistake this replaced.
+#
+# The plugin's data directory is preferred when it exists, so the SIF sits
+# beside the model cache the servers use at runtime. It usually does NOT exist
+# yet: Claude Code creates CLAUDE_PLUGIN_DATA on the first session that loads
+# the plugin, and this script is meant to run before that session. The shared
+# fallback is then correct, not a degraded mode.
 if [[ -z "$CACHE" ]]; then
     if [[ -n "${ATOMISTIC_MODEL_CACHE:-}" ]]; then
         CACHE="$ATOMISTIC_MODEL_CACHE"
@@ -77,12 +79,13 @@ if [[ -z "$CACHE" ]]; then
         done
         if [[ -n "$plugin_data" ]]; then
             CACHE="${plugin_data}/model-cache"
-            log "using the installed plugin's cache: ${CACHE}"
+            log "using the plugin's data directory: ${CACHE}"
         else
             CACHE="$HOME/.cache/atomisticskills"
-            log "no installed plugin found; using ${CACHE}"
-            log "if you install the plugin later, re-run with --cache pointing at"
-            log "its model-cache directory, or the SIF will be rebuilt on demand."
+            log "the plugin's data directory does not exist yet (Claude Code"
+            log "creates it on the first session); using the shared cache:"
+            log "  ${CACHE}"
+            log "run_server.sh looks here too, so this pre-build will be used."
         fi
     fi
 fi

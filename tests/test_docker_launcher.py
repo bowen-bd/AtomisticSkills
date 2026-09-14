@@ -267,6 +267,77 @@ class TestApptainerInvocation:
         assert "building" not in result.stderr
         assert sif.read_text() == "pretend SIF", "existing SIF was overwritten"
 
+    def test_finds_a_sif_the_prebuild_left_in_the_shared_cache(
+        self, tmp_path, stub_runtime, monkeypatch
+    ):
+        """The pre-build and the launcher must agree without guessing paths.
+
+        prepare_images.sh runs before the first Claude Code session, so
+        CLAUDE_PLUGIN_DATA -- and therefore ATOMISTIC_MODEL_CACHE -- does not
+        exist yet and it falls back to ~/.cache/atomisticskills. An HPC test
+        then sat through four 30s connect timeouts with a valid 1.2 GB SIF
+        already on disk. The launcher must look there.
+        """
+        fake_home = tmp_path / "home"
+        shared = fake_home / ".cache" / "atomisticskills" / "sif"
+        shared.mkdir(parents=True)
+        (shared / "atomisticskills-lightweight-9.9.9.sif").write_text("prebuilt")
+
+        recorded = stub_runtime("apptainer")
+        result = run_launcher(
+            tmp_path,
+            stub_runtime.bindir,
+            ATOMISTIC_RUNTIME="apptainer",
+            HOME=str(fake_home),
+        )
+        assert result.returncode == 0, result.stderr
+        argv = recorded()
+        assert argv[0] == "exec", f"expected exec, not a rebuild: {argv}"
+        assert "building" not in result.stderr
+        sif_args = [a for a in argv if a.endswith(".sif")]
+        assert (
+            sif_args and str(shared) in sif_args[0]
+        ), f"launcher ignored the pre-built SIF at {shared}: {argv}"
+
+    def test_model_cache_wins_over_the_shared_fallback(self, tmp_path, stub_runtime):
+        """A SIF beside the runtime model cache is preferred when present."""
+        fake_home = tmp_path / "home"
+        shared = fake_home / ".cache" / "atomisticskills" / "sif"
+        shared.mkdir(parents=True)
+        (shared / "atomisticskills-lightweight-9.9.9.sif").write_text("shared")
+
+        primary = tmp_path / "cache" / "sif"
+        primary.mkdir(parents=True)
+        (primary / "atomisticskills-lightweight-9.9.9.sif").write_text("primary")
+
+        recorded = stub_runtime("apptainer")
+        result = run_launcher(
+            tmp_path,
+            stub_runtime.bindir,
+            ATOMISTIC_RUNTIME="apptainer",
+            HOME=str(fake_home),
+        )
+        assert result.returncode == 0, result.stderr
+        sif_args = [a for a in recorded() if a.endswith(".sif")]
+        assert sif_args and str(primary) in sif_args[0], sif_args
+
+    def test_builds_when_no_prebuild_exists_anywhere(self, tmp_path, stub_runtime):
+        """With nothing cached the launcher still builds into the model cache."""
+        fake_home = tmp_path / "home"
+        (fake_home / ".cache").mkdir(parents=True)
+
+        recorded = stub_runtime("apptainer")
+        result = run_launcher(
+            tmp_path,
+            stub_runtime.bindir,
+            ATOMISTIC_RUNTIME="apptainer",
+            HOME=str(fake_home),
+        )
+        assert result.returncode == 0, result.stderr
+        assert "building" in result.stderr
+        sif_args = [a for a in recorded() if a.endswith(".sif")]
+        assert sif_args and str(tmp_path / "cache") in sif_args[0], sif_args
+
     def test_gpu_uses_nv_not_gpus_flag(self, tmp_path, stub_runtime):
         recorded = stub_runtime("apptainer")
         run_launcher(

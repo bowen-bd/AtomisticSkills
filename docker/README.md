@@ -151,6 +151,21 @@ It builds only the images matching your architecture, sequentially, and reports
 the ones it skips. The launcher will still build on demand if you skip this
 step, but the first connections will time out until the build finishes.
 
+**Where the SIF lands, and why the launcher searches for it.** `plugin.json`
+points `ATOMISTIC_MODEL_CACHE` at `${CLAUDE_PLUGIN_DATA}/model-cache`, but
+Claude Code does not create that directory until the first session loads the
+plugin -- which is *after* the pre-build above. So `prepare_images.sh` normally
+writes to `~/.cache/atomisticskills` and says so. That is correct, not a
+degraded mode: `run_server.sh` checks the model cache first and then that
+shared location, so the pre-build is used either way.
+
+Earlier releases had the pre-build try to predict the plugin's data directory
+instead. It guessed wrong on every HPC install, and the node sat through four
+30-second connect timeouts with a valid 1.2 GB SIF already on disk. Do not
+reintroduce that by guessing harder at `CLAUDE_PLUGIN_DATA`; the search in the
+launcher is the part that makes the two agree. `ATOMISTIC_SIF_DIR` overrides the
+search if you keep SIFs somewhere else entirely.
+
 `docker/run_server.sh` translates between the two, because their arguments are
 not interchangeable:
 
@@ -212,6 +227,15 @@ binary by name, along with the runtimes it did find on the host.
 Cosmetic. The inventory counts servers declared through an external file, and
 this plugin declares them inline in `plugin.json`. `claude mcp list` is the
 accurate view -- the servers are registered and will show there.
+
+**A server keeps failing instantly, even after you fixed the cause**
+
+Claude Code caches a failed MCP connection for about 15 minutes:
+`Skipping connection (recent failure cached, retries automatically in 15 min,
+or edit the plugin config to retry now)`. After pre-building an image or
+changing the runtime, a retry inside that window will not even invoke the
+launcher. Either wait it out or touch the plugin configuration
+(`/plugin configure atomistic-skills@atomistic-skills`) to clear it.
 
 **Materials Project or literature tools return authentication errors**
 

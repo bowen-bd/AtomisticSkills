@@ -136,7 +136,27 @@ case "$RUNTIME" in
         export SINGULARITY_MKSQUASHFS_ARGS="$APPTAINER_MKSQUASHFS_ARGS"
 
         mkdir -p "$APPTAINER_CACHEDIR" "$APPTAINER_TMPDIR" "${MODEL_CACHE}/sif" 2>/dev/null || true
-        sif="${MODEL_CACHE}/sif/atomisticskills-${IMAGE_NAME}-${IMAGE##*:}.sif"
+
+        # Find a pre-built SIF wherever prepare_images.sh actually put it.
+        #
+        # That script cannot reliably predict this directory. plugin.json points
+        # ATOMISTIC_MODEL_CACHE at ${CLAUDE_PLUGIN_DATA}/model-cache, but Claude
+        # Code does not create CLAUDE_PLUGIN_DATA until the first session loads
+        # the plugin -- which is *after* the documented pre-build step. So the
+        # pre-build legitimately lands in the shared fallback, and an HPC test
+        # then sat through four 30s connect timeouts with a perfectly good SIF
+        # on disk. Searching from this side is what makes the two agree;
+        # predicting from the other side cannot.
+        sif_name="atomisticskills-${IMAGE_NAME}-${IMAGE##*:}.sif"
+        sif="${MODEL_CACHE}/sif/${sif_name}"
+        if [[ ! -f "$sif" ]]; then
+            for alt_dir in "${ATOMISTIC_SIF_DIR:-}" "$HOME/.cache/atomisticskills"; do
+                [[ -n "$alt_dir" && -f "${alt_dir}/sif/${sif_name}" ]] || continue
+                sif="${alt_dir}/sif/${sif_name}"
+                log "using pre-built SIF from ${alt_dir}/sif"
+                break
+            done
+        fi
 
         if [[ ! -f "$sif" ]]; then
             # Serialise: ten servers starting at once must not each build the
