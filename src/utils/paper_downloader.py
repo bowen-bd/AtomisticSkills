@@ -144,8 +144,51 @@ def download_springer(doi: str, output_dir: Path) -> str:
         return None
 
 
+BLOCKED_PUBLISHER_DOMAINS = {
+    "pubs.acs.org",
+    "acs.org",
+    "journals.aps.org",
+    "link.aps.org",
+    "aps.org",
+    "sciencedirect.com",
+    "elsevier.com",
+    "linkinghub.elsevier.com",
+    "nature.com",
+    "link.springer.com",
+    "springernature.com",
+    "onlinelibrary.wiley.com",
+    "wiley.com",
+    "pubs.rsc.org",
+    "rsc.org",
+    "iopscience.iop.org",
+    "iop.org",
+    "pubs.aip.org",
+    "aip.scitation.org",
+    "aip.org",
+    "ieeexplore.ieee.org",
+    "ieee.org",
+    "science.org",
+    "pnas.org",
+    "tandfonline.com",
+    "academic.oup.com",
+    "oup.com",
+    "cambridge.org",
+    "mdpi.com",
+    "chemrxiv.org",
+}
+
+
+def _is_url_blocked(url: str) -> bool:
+    if not url:
+        return False
+    from urllib.parse import urlparse
+
+    netloc = urlparse(url).netloc.lower()
+    return any(blocked in netloc for blocked in BLOCKED_PUBLISHER_DOMAINS)
+
+
 def download_unpaywall(doi: str, output_dir: Path) -> str:
-    """Download full text or preprint via Unpaywall API using DOI."""
+    """Download full text or preprint via Unpaywall API using DOI, skipping blocked publisher domains."""
     email = os.getenv("UNPAYWALL_EMAIL") or os.getenv("OPENALEX_EMAIL")
     if not email:
         logger.error(
@@ -162,64 +205,112 @@ def download_unpaywall(doi: str, output_dir: Path) -> str:
         response.raise_for_status()
         data = response.json()
 
-        oa_location = data.get("best_oa_location")
-        if not oa_location:
-            logger.warning(f"No Open Access location found for DOI {doi} on Unpaywall.")
+        oa_locations = data.get("oa_locations", [])
+        if not oa_locations and data.get("best_oa_location"):
+            oa_locations = [data.get("best_oa_location")]
+
+        # Filter out locations pointing to blocked publisher domains
+        candidate_urls = []
+        for loc in oa_locations:
+            cand_url = loc.get("url_for_pdf") or loc.get("url")
+            if not cand_url:
+                continue
+            if _is_url_blocked(cand_url):
+                logger.info(
+                    f"Skipping blocked publisher URL to prevent 403 / WAF ban: {cand_url}"
+                )
+                continue
+            candidate_urls.append(cand_url)
+
+        # Fallback to Europe PMC if no unblocked repository was found
+        if not candidate_urls:
+            logger.info(
+                f"No safe repository mirror on Unpaywall for {doi}. Trying Europe PMC..."
+            )
+            epmc_url = (
+                f"https://www.ebi.ac.uk/europepmc/webservices/rest/search"
+                f"?query=ext_id:{doi}%20src:med&format=json&resultType=core"
+            )
+            try:
+                epmc_resp = requests.get(epmc_url, timeout=15)
+                if epmc_resp.status_code == 200:
+                    results = epmc_resp.json().get("resultList", {}).get("result", [])
+                    if results and results[0].get("isOpenAccess") == "Y":
+                        pmcid = results[0].get("pmcid")
+                        if pmcid:
+                            candidate_urls.append(
+                                f"https://europepmc.org/backend/ptpmcrender.fcgi?accid={pmcid}&blobtype=pdf"
+                            )
+            except Exception as e:
+                logger.debug(f"Europe PMC query error for {doi}: {e}")
+
+        if not candidate_urls:
+            logger.warning(
+                f"No accessible open repository copy found for DOI {doi} outside blocked publisher paywalls."
+            )
             return None
 
-        pdf_url = oa_location.get("url_for_pdf")
-        if not pdf_url:
-            pdf_url = oa_location.get(
-                "url"
-            )  # Fallback to general URL if PDF specifically isn't marked
-            if not pdf_url:
-                logger.warning(f"No valid URL found in OA location for DOI {doi}.")
-                return None
-
-        # Download the content
-        logger.info(f"Fetching OA content from {pdf_url}")
-
-        # We need headers mimicking a browser as some institutional repos block bare requests
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         }
-        pdf_resp = requests.get(pdf_url, headers=headers, stream=True, timeout=60)
-        pdf_resp.raise_for_status()
 
-        content_type = pdf_resp.headers.get("Content-Type", "")
-
-        if "application/pdf" in content_type.lower() or pdf_url.lower().endswith(
-            ".pdf"
-        ):
-            # It's a PDF, save temporarily and parse with PyMuPDF
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
-                for chunk in pdf_resp.iter_content(chunk_size=8192):
-                    tmp_pdf.write(chunk)
-                tmp_pdf_path = tmp_pdf.name
-
+        for pdf_url in candidate_urls:
+            logger.info(f"Fetching OA content from safe mirror {pdf_url}")
             try:
-                text_content = ""
-                with fitz.open(tmp_pdf_path) as doc:
-                    for page in doc:
-                        text_content += page.get_text() + "\\n"
-
-                with open(output_file, "w", encoding="utf-8") as f:
-                    f.write(text_content)
-
-                logger.info(
-                    f"Successfully extracted text from OA PDF for {doi} to {output_file}"
+                pdf_resp = requests.get(
+                    pdf_url, headers=headers, stream=True, timeout=60
                 )
-                return str(output_file)
-            finally:
-                if os.path.exists(tmp_pdf_path):
-                    os.remove(tmp_pdf_path)
+                pdf_resp.raise_for_status()
+            except requests.exceptions.RequestException as req_err:
+                logger.warning(
+                    f"Failed to fetch {pdf_url}: {req_err}, trying next candidate..."
+                )
+                continue
 
-        else:
-            # Not a PDF, maybe raw text or HTML. Try to save directly
-            with open(output_file, "w", encoding="utf-8") as f:
-                f.write(pdf_resp.text)
-            logger.info(f"Downloaded non-PDF OA content for {doi} to {output_file}")
-            return str(output_file)
+            content_type = pdf_resp.headers.get("Content-Type", "")
+
+            if "application/pdf" in content_type.lower() or pdf_url.lower().endswith(
+                ".pdf"
+            ):
+                with tempfile.NamedTemporaryFile(
+                    delete=False, suffix=".pdf"
+                ) as tmp_pdf:
+                    for chunk in pdf_resp.iter_content(chunk_size=8192):
+                        tmp_pdf.write(chunk)
+                    tmp_pdf_path = tmp_pdf.name
+
+                try:
+                    text_content = ""
+                    with fitz.open(tmp_pdf_path) as doc:
+                        for page in doc:
+                            text_content += page.get_text() + "\n"
+
+                    if len(text_content.strip()) > 100:
+                        with open(output_file, "w", encoding="utf-8") as f:
+                            f.write(text_content)
+                        logger.info(
+                            f"Successfully extracted text from OA PDF for {doi} to {output_file}"
+                        )
+                        return str(output_file)
+                finally:
+                    if os.path.exists(tmp_pdf_path):
+                        os.remove(tmp_pdf_path)
+            else:
+                if (
+                    len(pdf_resp.text.strip()) > 500
+                    and "just a moment" not in pdf_resp.text.lower()
+                ):
+                    with open(output_file, "w", encoding="utf-8") as f:
+                        f.write(pdf_resp.text)
+                    logger.info(
+                        f"Downloaded non-PDF OA content for {doi} to {output_file}"
+                    )
+                    return str(output_file)
+
+        logger.warning(
+            f"All open access candidate mirrors failed or returned restricted content for {doi}."
+        )
+        return None
 
     except requests.exceptions.RequestException as e:
         logger.error(

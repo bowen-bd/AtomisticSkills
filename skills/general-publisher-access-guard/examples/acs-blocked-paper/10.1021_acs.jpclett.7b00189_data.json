@@ -1,0 +1,22 @@
+{
+  "doi": "10.1021/acs.jpclett.7b00189",
+  "publisher": "American Chemical Society (ACS)",
+  "publisher_policy": "blocked",
+  "title": "Methylammonium Lead Bromide Perovskite Battery Anodes Reversibly Host High Li-Ion Concentrations",
+  "authors": [
+    "Nuria Vicente",
+    "Germ\u00e0 Garc\u00eda-Belmonte"
+  ],
+  "year": 2017,
+  "journal": "The Journal of Physical Chemistry Letters",
+  "citations": 140,
+  "is_open_access": true,
+  "abstract": "Ions migrate through the hybrid halide perovskite lattice, allowing for a variety of electrochemical applications as perovskite-based electrodes for batteries. It is still unknown how extrinsic defects such as lithium ions interact with the hybrid perovskite structure during the charging process. It is shown here that Li + intake/release proceeds by topotactic insertion into the hybrid perovskite host, without drastic structural alterations or rearrangement. Even the perovskite electronic band structure remains basically unaltered upon cycling. The occurrence of conversion or alloying reactions producing metallic lead is discarded. Stable specific capacity \u223c200 mA h g \u20131 is delivered, which entails outstanding Li-ion molar concentration, x in Li x CH 3 NH 3 PbBr 3, approaching 3. Slight distortions of the perovskite lattice upon cycling explain the highly reversible Li + intercalation reaction that also exhibits an excellent rate capability.",
+  "fulltext_retrieved": false,
+  "pdf_path": null,
+  "text_path": null,
+  "retrieval_method": "OpenAlex Abstract",
+  "notes": [
+    "Publisher 'American Chemical Society (ACS)' actively bans automated bot scrapers (Cloudflare Turnstile / Managed Challenge). Direct web scraping was prevented."
+  ]
+}
