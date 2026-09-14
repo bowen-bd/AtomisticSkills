@@ -158,8 +158,7 @@ everything else is identical:
 claude plugin install atomistic-skills@atomistic-skills \
   --config container_runtime=apptainer \
   --config work_dir=$HOME/atomistic-work \
-  --config image_registry=ghcr.io/learningmatter-mit \
-  --config image_tag=1.3.4
+  --config image_registry=ghcr.io/learningmatter-mit
 ```
 
 Passing `--config` explicitly is also how to install in any non-interactive

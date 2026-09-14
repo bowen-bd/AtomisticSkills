@@ -197,7 +197,7 @@
       "type": "string",
       "title": "Image tag",
       "description": "Tag of the atomisticskills-* images to run. Defaults to the plugin version so the images match the skills that call them.",
-      "default": "1.3.4",
+      "default": "1.3.5",
       "required": true
     }
   }

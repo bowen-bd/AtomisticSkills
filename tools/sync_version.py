@@ -6,7 +6,8 @@ agreement -- ``server.json`` sat at 1.0.0 while the repository was tagged
 v1.3.4. ``VERSION`` at the repository root is now the single source, and this
 tool projects it into:
 
-  * ``.claude-plugin/plugin.json``      -> ``version``
+  * ``.claude-plugin/plugin.json``      -> ``version`` and
+    ``userConfig.image_tag.default``
   * ``.claude-plugin/marketplace.json`` -> every ``plugins[].version``
   * ``server.json``                     -> ``version`` and each package's
                                            image tag
@@ -82,6 +83,17 @@ def plan(version: str) -> list[tuple[Path, dict, list[str]]]:
     if plugin.get("version") != version:
         drift.append(f"plugin.json version {plugin.get('version')!r} != {version!r}")
         plugin["version"] = version
+    # The image tag decides which images a *default* install pulls. Leaving it
+    # behind pairs new plugin code with old images, and because entrypoint.sh
+    # and src/ are baked into the image, fixes shipped in this release would be
+    # silently absent for anyone who does not pass --config image_tag.
+    image_tag = plugin.get("userConfig", {}).get("image_tag", {})
+    if image_tag and image_tag.get("default") != version:
+        drift.append(
+            f"plugin.json userConfig.image_tag default "
+            f"{image_tag.get('default')!r} != {version!r}"
+        )
+        image_tag["default"] = version
     out.append((PLUGIN, plugin, drift))
 
     market = load(MARKETPLACE)

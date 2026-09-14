@@ -3,7 +3,7 @@
 #
 # Usage:
 #   bash docker/prepare_images.sh [--runtime apptainer] [--registry ghcr.io/...]
-#                                 [--tag 1.3.4] [--cache DIR] [image ...]
+#                                 [--tag VERSION] [--cache DIR] [image ...]
 #
 # Why this exists: Claude Code probes every MCP server in parallel and gives
 # each 30 seconds to connect. Converting a 3.5 GB OCI image to a SIF takes

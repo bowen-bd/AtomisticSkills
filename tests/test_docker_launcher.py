@@ -380,6 +380,23 @@ class TestManifestConsistency:
         """A non-executable launcher means every server fails to start."""
         assert os.access(LAUNCHER, os.X_OK), f"{LAUNCHER} is not executable"
 
+    def test_default_image_tag_matches_the_release(self):
+        """A default install must not pull images older than the plugin.
+
+        entrypoint.sh and src/ are baked into the image, so pairing 1.3.5
+        plugin code with a 1.3.4 default tag silently ships none of the fixes
+        in this release to anyone who does not pass --config image_tag.
+        """
+        version = (PROJECT_ROOT / "VERSION").read_text().strip()
+        manifest = json.loads(
+            (PROJECT_ROOT / ".claude-plugin" / "plugin.json").read_text()
+        )
+        default = manifest["userConfig"]["image_tag"]["default"]
+        assert default == version, (
+            f"userConfig.image_tag default {default!r} != VERSION {version!r}; "
+            "run python tools/sync_version.py"
+        )
+
 
 class TestWorkspaceResolution:
     """The container must not treat the read-only repository as a workspace."""

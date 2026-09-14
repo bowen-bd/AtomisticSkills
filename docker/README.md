@@ -98,7 +98,7 @@ bash docker/smoke_test.sh atomisticskills-lightweight:dev base drugdisc smol ato
 
 ```bash
 docker run -i --rm -v "$PWD:/work" -w /work \
-  ghcr.io/learningmatter-mit/atomisticskills-lightweight:1.3.4 base
+  ghcr.io/learningmatter-mit/atomisticskills-lightweight:1.3.5 base
 ```
 
 The first argument is the server name; run with none to list what an image
@@ -133,8 +133,7 @@ Clusters do not give users root and do not run a Docker daemon; Apptainer
 claude plugin install atomistic-skills@atomistic-skills \
   --config container_runtime=apptainer \
   --config work_dir=/home/<you>/atomistic-work \
-  --config image_registry=ghcr.io/learningmatter-mit \
-  --config image_tag=1.3.4
+  --config image_registry=ghcr.io/learningmatter-mit
 ```
 
 **Prepare the images first.** Claude Code probes every server in parallel and
@@ -145,7 +144,7 @@ quota exactly that way. Run this once, before starting Claude Code:
 
 ```bash
 bash docker/prepare_images.sh --runtime apptainer \
-  --registry ghcr.io/learningmatter-mit --tag 1.3.4
+  --registry ghcr.io/learningmatter-mit
 ```
 
 It builds only the images matching your architecture, sequentially, and reports
@@ -191,8 +190,7 @@ and reports the options as unset. Pass them explicitly:
 claude plugin install atomistic-skills@atomistic-skills \
   --config container_runtime=docker \
   --config work_dir=/path/to/workdir \
-  --config image_registry=ghcr.io/learningmatter-mit \
-  --config image_tag=1.3.4
+  --config image_registry=ghcr.io/learningmatter-mit
 ```
 
 Existing installs can be reconfigured with
