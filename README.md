@@ -143,7 +143,7 @@ or compiled locally:
 
 ```bash
 claude plugin marketplace add learningmatter-mit/AtomisticSkills
-claude plugin install atomistic-skills@atomisticskills
+claude plugin install atomistic-skills@atomistic-skills
 ```
 
 You are prompted for a container runtime (`docker` or `podman`) and a working
