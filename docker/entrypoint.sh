@@ -70,5 +70,21 @@ mkdir -p "$HF_HOME" "$TORCH_HOME" 2>/dev/null || true
 
 printf 'atomisticskills: starting %s (env=%s) \n' "$SERVER" "$ENV_NAME" >&2
 
-cd "$REPO_DIR"
+# Run from the mounted workspace, not the repository. Under Apptainer the
+# repository is a read-only SquashFS, so a tool given a relative output path
+# fails with "[Errno 30] Read-only file system". PYTHONPATH above already makes
+# the repository importable, so nothing depends on it being the cwd.
+WORKSPACE=/work
+if [[ -d "$WORKSPACE" && -w "$WORKSPACE" ]]; then
+    cd "$WORKSPACE"
+else
+    # No writable mount (a bare `docker run` with no -v): fall back to the
+    # repository, which is writable under Docker even if not under Apptainer.
+    WORKSPACE="$REPO_DIR"
+    cd "$REPO_DIR"
+    printf 'atomisticskills: /work is not writable; using %s\n' "$REPO_DIR" >&2
+fi
+# Tells src/utils/research_utils.py where research/ and .env belong.
+export ATOMISTIC_WORKSPACE="${ATOMISTIC_WORKSPACE:-$WORKSPACE}"
+
 exec micromamba run -n "$ENV_NAME" python -m "$MODULE" "${@:2}"

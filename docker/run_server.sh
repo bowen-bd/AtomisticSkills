@@ -32,7 +32,7 @@ set -euo pipefail
 
 SERVER="${1:-}"
 RUNTIME="${ATOMISTIC_RUNTIME:-docker}"
-IMAGE="${ATOMISTIC_IMAGE:?ATOMISTIC_IMAGE is not set}"
+IMAGE="${ATOMISTIC_IMAGE:-}"
 IMAGE_NAME="${ATOMISTIC_IMAGE_NAME:-image}"
 PLATFORMS="${ATOMISTIC_PLATFORMS:-}"
 WORK_DIR="${ATOMISTIC_WORK_DIR:-$PWD}"
@@ -62,6 +62,8 @@ if [[ -n "$PLATFORMS" ]] && [[ ",${PLATFORMS}," != *",linux/${HOST_ARCH},"* ]]; 
        Nothing is downloaded. The other servers in this plugin still work;
        see docker/README.md for which images cover which architectures."
 fi
+
+[[ -n "$IMAGE" ]] || die "ATOMISTIC_IMAGE is not set"
 
 if ! command -v "$RUNTIME" >/dev/null 2>&1; then
     # Claude Code's error sanitiser rewrites a missing binary name to "stdio",

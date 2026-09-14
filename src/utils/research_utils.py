@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from datetime import datetime
 from typing import Dict
@@ -5,6 +6,22 @@ from src.utils.config_utils import inject_config_into_env
 
 # Inject configuration from ~/.mlip_agent.yaml into environment
 inject_config_into_env()
+
+
+def workspace_root() -> Path:
+    """Return the directory that holds ``research/`` and ``.env``.
+
+    For a local checkout this is the repository root, derived from this file's
+    location. That derivation breaks inside a container: the repository lives on
+    a read-only filesystem, so creating a research directory fails with
+    ``[Errno 30] Read-only file system: '/opt/atomisticskills/research'``.
+    Containers therefore set ``ATOMISTIC_WORKSPACE`` to the writable mount, and
+    it takes precedence when present.
+    """
+    override = os.environ.get("ATOMISTIC_WORKSPACE")
+    if override:
+        return Path(override).expanduser().absolute()
+    return Path(__file__).parent.parent.parent.absolute()
 
 
 def load_env(project_root: Path) -> Dict[str, str]:
@@ -59,7 +76,7 @@ def get_current_research_dir() -> Path:
     5. Saves the choice to .env for persistence.
     """
     # Define project root relative to this file (src/utils/research_utils.py)
-    project_root = Path(__file__).parent.parent.parent.absolute()
+    project_root = workspace_root()
 
     # Try to load from .env first
     env_vars = load_env(project_root)
@@ -105,7 +122,7 @@ def create_new_research_dir(topic: str) -> Path:
     Returns:
         Path to the newly created directory.
     """
-    project_root = Path(__file__).parent.parent.parent.absolute()
+    project_root = workspace_root()
     research_root = project_root / "research"
 
     if not research_root.exists():

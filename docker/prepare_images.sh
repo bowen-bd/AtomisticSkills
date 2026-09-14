@@ -60,8 +60,31 @@ case "$(uname -m)" in
     *)             HOST_ARCH="$(uname -m)" ;;
 esac
 
+# The cache must be the SAME directory the plugin will look in, or the pre-build
+# is silently wasted: plugin.json sets ATOMISTIC_MODEL_CACHE to
+# ${CLAUDE_PLUGIN_DATA}/model-cache, so a SIF built anywhere else is never found
+# and run_server.sh rebuilds it on demand -- reintroducing the connect timeouts
+# this script exists to prevent. Prefer an explicit --cache, then the
+# environment, then the installed plugin's data directory, and only then a
+# generic fallback.
 if [[ -z "$CACHE" ]]; then
-    CACHE="${ATOMISTIC_MODEL_CACHE:-$HOME/.cache/atomisticskills}"
+    if [[ -n "${ATOMISTIC_MODEL_CACHE:-}" ]]; then
+        CACHE="$ATOMISTIC_MODEL_CACHE"
+    else
+        plugin_data=""
+        for d in "$HOME"/.claude/plugins/data/*atomistic-skills*/; do
+            [[ -d "$d" ]] && plugin_data="${d%/}"
+        done
+        if [[ -n "$plugin_data" ]]; then
+            CACHE="${plugin_data}/model-cache"
+            log "using the installed plugin's cache: ${CACHE}"
+        else
+            CACHE="$HOME/.cache/atomisticskills"
+            log "no installed plugin found; using ${CACHE}"
+            log "if you install the plugin later, re-run with --cache pointing at"
+            log "its model-cache directory, or the SIF will be rebuilt on demand."
+        fi
+    fi
 fi
 
 log "runtime:  $RUNTIME"

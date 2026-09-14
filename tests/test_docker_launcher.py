@@ -379,3 +379,74 @@ class TestManifestConsistency:
     def test_launcher_is_executable(self):
         """A non-executable launcher means every server fails to start."""
         assert os.access(LAUNCHER, os.X_OK), f"{LAUNCHER} is not executable"
+
+
+class TestWorkspaceResolution:
+    """The container must not treat the read-only repository as a workspace."""
+
+    def test_workspace_root_honours_the_override(self, tmp_path, monkeypatch):
+        """Inside a container the repository is read-only; /work is not.
+
+        Without this override create_research_dir fails on Apptainer with
+        "[Errno 30] Read-only file system: '/opt/atomisticskills/research'".
+        """
+        import importlib
+
+        monkeypatch.setenv("ATOMISTIC_WORKSPACE", str(tmp_path / "work"))
+        research_utils = importlib.import_module("src.utils.research_utils")
+        assert research_utils.workspace_root() == (tmp_path / "work").absolute()
+
+    def test_workspace_root_defaults_to_repo_for_local_checkouts(self, monkeypatch):
+        import importlib
+
+        monkeypatch.delenv("ATOMISTIC_WORKSPACE", raising=False)
+        research_utils = importlib.import_module("src.utils.research_utils")
+        assert research_utils.workspace_root() == PROJECT_ROOT
+
+    def test_research_dir_is_created_under_the_override(self, tmp_path, monkeypatch):
+        import importlib
+
+        workspace = tmp_path / "work"
+        workspace.mkdir()
+        monkeypatch.setenv("ATOMISTIC_WORKSPACE", str(workspace))
+        research_utils = importlib.import_module("src.utils.research_utils")
+        created = research_utils.create_new_research_dir("unit_test_topic")
+        assert (
+            workspace in created.parents
+        ), f"research dir {created} escaped the workspace {workspace}"
+        assert created.is_dir()
+
+
+class TestArchGateOrdering:
+    """The gate must fire before any other required-variable check."""
+
+    def test_refusal_does_not_require_the_image_reference(self, tmp_path, stub_runtime):
+        """Reported from HPC: the gate was unreachable without ATOMISTIC_IMAGE."""
+        recorded = stub_runtime("docker")
+        result = run_launcher(
+            tmp_path,
+            stub_runtime.bindir,
+            server="mace",
+            ATOMISTIC_RUNTIME="docker",
+            ATOMISTIC_IMAGE=None,
+            ATOMISTIC_IMAGE_NAME="mace",
+            ATOMISTIC_PLATFORMS=f"linux/{OTHER_ARCH}",
+        )
+        assert result.returncode != 0
+        assert "unavailable on this machine" in result.stderr
+        assert "ATOMISTIC_IMAGE is not set" not in result.stderr
+        assert recorded() == []
+
+    def test_missing_image_still_reported_when_arch_matches(
+        self, tmp_path, stub_runtime
+    ):
+        recorded = stub_runtime("docker")
+        result = run_launcher(
+            tmp_path,
+            stub_runtime.bindir,
+            ATOMISTIC_RUNTIME="docker",
+            ATOMISTIC_IMAGE=None,
+        )
+        assert result.returncode != 0
+        assert "ATOMISTIC_IMAGE is not set" in result.stderr
+        assert recorded() == []
