@@ -141,9 +141,29 @@ for row in "${rows[@]}"; do
             export SINGULARITY_MKSQUASHFS_ARGS="$APPTAINER_MKSQUASHFS_ARGS"
 
             mkdir -p "${CACHE}/sif" "$APPTAINER_CACHEDIR" "$APPTAINER_TMPDIR"
-            sif="${CACHE}/sif/atomisticskills-${name}-${TAG}.sif"
+            sif_name="atomisticskills-${name}-${TAG}.sif"
+            sif="${CACHE}/sif/${sif_name}"
             if [[ -f "$sif" ]]; then
                 log "have  ${name}  ($(du -h "$sif" | cut -f1))"
+                prepared=$((prepared + 1))
+                continue
+            fi
+            # The SIF may already exist somewhere else run_server.sh searches.
+            # This happens on any second run: the first pre-build lands in the
+            # shared cache (the plugin's data directory does not exist until
+            # Claude Code has run once), and afterwards CACHE resolves to that
+            # now-existing data directory. Without this check the two locations
+            # disagree and a perfectly good image is rebuilt -- 15 minutes on an
+            # HPC node, for nothing. Keep this list in step with run_server.sh.
+            found=""
+            for alt_dir in "${ATOMISTIC_SIF_DIR:-}" "$HOME/.cache/atomisticskills"; do
+                [[ -n "$alt_dir" && -f "${alt_dir}/sif/${sif_name}" ]] || continue
+                found="${alt_dir}/sif/${sif_name}"
+                break
+            done
+            if [[ -n "$found" ]]; then
+                log "have  ${name}  ($(du -h "$found" | cut -f1)) in ${found%/*}"
+                log "      run_server.sh searches there too; not rebuilding"
                 prepared=$((prepared + 1))
                 continue
             fi

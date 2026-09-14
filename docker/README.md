@@ -159,6 +159,11 @@ writes to `~/.cache/atomisticskills` and says so. That is correct, not a
 degraded mode: `run_server.sh` checks the model cache first and then that
 shared location, so the pre-build is used either way.
 
+`prepare_images.sh` searches the same list before building, so a second run --
+once Claude Code has created the data directory and the target therefore moves
+-- reports `have` instead of rebuilding. Without that, an HPC node spent 15m12s
+regenerating a 1.2 GB image it already had. Keep the two lists in step.
+
 Earlier releases had the pre-build try to predict the plugin's data directory
 instead. It guessed wrong on every HPC install, and the node sat through four
 30-second connect timeouts with a valid 1.2 GB SIF already on disk. Do not

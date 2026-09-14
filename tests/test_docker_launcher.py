@@ -538,3 +538,84 @@ class TestArchGateOrdering:
         assert result.returncode != 0
         assert "ATOMISTIC_IMAGE is not set" in result.stderr
         assert recorded() == []
+
+
+class TestPrebuildSifDiscovery:
+    """prepare_images.sh must not rebuild a SIF that already exists elsewhere.
+
+    The two scripts resolve the cache differently on a second run: the first
+    pre-build lands in the shared cache (the plugin's data directory does not
+    exist until Claude Code has run once), and afterwards that data directory
+    does exist and becomes the target. An HPC node spent 15m12s rebuilding a
+    1.2 GB image it already had, so both sides search the same list.
+    """
+
+    PREPARE = PROJECT_ROOT / "docker" / "prepare_images.sh"
+
+    @staticmethod
+    def _run(tmp_path, home, extra_env=None):
+        bindir = tmp_path / "bin"
+        bindir.mkdir(exist_ok=True)
+        log = tmp_path / "apptainer.log"
+        stub = bindir / "apptainer"
+        stub.write_text(
+            "#!/usr/bin/env bash\n"
+            f'printf "%s\\n" "$*" >> "{log}"\n'
+            'if [[ "${1:-}" == "build" ]]; then\n'
+            '  for a in "$@"; do case "$a" in *.sif|*.partial) : > "$a"; break;; esac; done\n'
+            "fi\nexit 0\n"
+        )
+        stub.chmod(0o755)
+        env = {
+            "HOME": str(home),
+            "PATH": f"{bindir}:/usr/bin:/bin",
+        }
+        env.update(extra_env or {})
+        result = subprocess.run(
+            [
+                "bash",
+                str(TestPrebuildSifDiscovery.PREPARE),
+                "--runtime",
+                "apptainer",
+                "--registry",
+                "ghcr.io/example",
+            ],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        invocations = log.read_text() if log.exists() else ""
+        return result, invocations
+
+    def test_does_not_rebuild_a_sif_present_in_the_shared_cache(self, tmp_path):
+        version = (PROJECT_ROOT / "VERSION").read_text().strip()
+        home = tmp_path / "home"
+        shared = home / ".cache" / "atomisticskills" / "sif"
+        shared.mkdir(parents=True)
+        (shared / f"atomisticskills-lightweight-{version}.sif").write_text("prebuilt")
+        # A prior session created the plugin data dir, so CACHE resolves there.
+        (
+            home
+            / ".claude"
+            / "plugins"
+            / "data"
+            / "atomistic-skills-atomistic-skills"
+            / "model-cache"
+        ).mkdir(parents=True)
+
+        result, invocations = self._run(tmp_path, home)
+        assert result.returncode == 0, result.stderr
+        assert "have  lightweight" in result.stderr, result.stderr
+        assert (
+            "atomisticskills-lightweight" not in invocations
+        ), f"rebuilt a SIF that already existed: {invocations}"
+
+    def test_builds_when_the_sif_is_genuinely_absent(self, tmp_path):
+        home = tmp_path / "home"
+        (home / ".cache").mkdir(parents=True)
+        result, invocations = self._run(tmp_path, home)
+        assert result.returncode == 0, result.stderr
+        assert (
+            "atomisticskills-lightweight" in invocations
+        ), "expected a build when nothing is cached"
