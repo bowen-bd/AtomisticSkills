@@ -151,9 +151,24 @@ directory, which is mounted into the servers as `/work` — simulation inputs ar
 read from there and results written back to it. Model checkpoints download on
 first use into a cache that survives plugin updates.
 
+On an HPC cluster, where there is no Docker daemon, use Apptainer instead --
+everything else is identical:
+
+```bash
+claude plugin install atomistic-skills@atomistic-skills \
+  --config container_runtime=apptainer \
+  --config work_dir=$HOME/atomistic-work \
+  --config image_registry=ghcr.io/learningmatter-mit \
+  --config image_tag=1.3.4
+```
+
+Passing `--config` explicitly is also how to install in any non-interactive
+shell, where the plugin cannot prompt.
+
 > [!IMPORTANT]
-> This requires a container runtime, and GPU-backed servers additionally need
-> the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
+> This requires a container runtime -- `docker`, `podman`, `apptainer` or
+> `singularity` -- and GPU-backed servers additionally need the
+> [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
 > The GPU images are currently **arm64 only**; see
 > [`docker/README.md`](docker/README.md) for the image inventory, the reasoning
 > behind the four-image split, and the known limitations.

@@ -127,11 +127,17 @@ def cmd_plugin_mcp(spec: dict, args: argparse.Namespace) -> int:
     """Write (or print) the plugin manifest's mcpServers block."""
     servers: dict[str, dict] = {}
 
-    # The registry is a user config value rather than a baked-in constant. CI
-    # publishes to ghcr.io/<repository_owner>, so a fork's images land under the
-    # fork's namespace; hardcoding the upstream owner would leave anyone testing
-    # from a fork pointing at images that do not exist there. The default in
-    # plugin.json's userConfig is the upstream registry from images.json.
+    # Every server goes through docker/run_server.sh rather than an inline
+    # `docker run` argument list. Docker and Apptainer take structurally
+    # different arguments, and one static list in this manifest cannot serve
+    # both -- which mattered the moment the plugin was tested on an HPC node,
+    # where there is no Docker daemon and Apptainer is the norm. The script
+    # picks the runtime and translates; configuration reaches it through env.
+    #
+    # The registry is a user config value, not a constant: CI publishes to
+    # ghcr.io/<repository_owner>, so a fork's images live in the fork's
+    # namespace and a hardcoded owner would point testers at images that do
+    # not exist for them.
     for image in spec["images"]:
         ref = (
             "${user_config.image_registry}"
@@ -139,34 +145,17 @@ def cmd_plugin_mcp(spec: dict, args: argparse.Namespace) -> int:
             ":${user_config.image_tag}"
         )
         for server in sorted(normalise_servers(image)):
-            docker_args = [
-                "run",
-                "--rm",
-                "--interactive",
-                # Bind the user's project so skills can read inputs and write
-                # results to a path that outlives the container.
-                "--volume",
-                "${user_config.work_dir}:/work",
-                "--workdir",
-                "/work",
-                # Model checkpoints are multi-GB and must survive both the
-                # container and plugin updates.
-                "--volume",
-                "${CLAUDE_PLUGIN_DATA}/model-cache:/opt/model-cache",
-                "--env",
-                "HF_HOME=/opt/model-cache/huggingface",
-                "--env",
-                "TORCH_HOME=/opt/model-cache/torch",
-                "--env",
-                "MATGL_CACHE=/opt/model-cache/matgl",
-            ]
-            if image["gpu"]:
-                docker_args += ["--gpus", "all"]
-            docker_args += [ref, server]
-
             servers[server] = {
-                "command": "${user_config.container_runtime}",
-                "args": docker_args,
+                "command": "${CLAUDE_PLUGIN_ROOT}/docker/run_server.sh",
+                "args": [server],
+                "env": {
+                    "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
+                    "ATOMISTIC_IMAGE": ref,
+                    "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
+                    # Checkpoints are multi-GB and must outlive plugin updates.
+                    "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
+                    "ATOMISTIC_GPU": "1" if image["gpu"] else "0",
+                },
             }
 
     if args.stdout:

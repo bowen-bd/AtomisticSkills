@@ -22,250 +22,148 @@
   ],
   "mcpServers": {
     "atomate2": {
-      "command": "${user_config.container_runtime}",
+      "command": "${CLAUDE_PLUGIN_ROOT}/docker/run_server.sh",
       "args": [
-        "run",
-        "--rm",
-        "--interactive",
-        "--volume",
-        "${user_config.work_dir}:/work",
-        "--workdir",
-        "/work",
-        "--volume",
-        "${CLAUDE_PLUGIN_DATA}/model-cache:/opt/model-cache",
-        "--env",
-        "HF_HOME=/opt/model-cache/huggingface",
-        "--env",
-        "TORCH_HOME=/opt/model-cache/torch",
-        "--env",
-        "MATGL_CACHE=/opt/model-cache/matgl",
-        "${user_config.image_registry}/atomisticskills-lightweight:${user_config.image_tag}",
         "atomate2"
-      ]
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
+        "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-lightweight:${user_config.image_tag}",
+        "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
+        "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
+        "ATOMISTIC_GPU": "0"
+      }
     },
     "base": {
-      "command": "${user_config.container_runtime}",
+      "command": "${CLAUDE_PLUGIN_ROOT}/docker/run_server.sh",
       "args": [
-        "run",
-        "--rm",
-        "--interactive",
-        "--volume",
-        "${user_config.work_dir}:/work",
-        "--workdir",
-        "/work",
-        "--volume",
-        "${CLAUDE_PLUGIN_DATA}/model-cache:/opt/model-cache",
-        "--env",
-        "HF_HOME=/opt/model-cache/huggingface",
-        "--env",
-        "TORCH_HOME=/opt/model-cache/torch",
-        "--env",
-        "MATGL_CACHE=/opt/model-cache/matgl",
-        "${user_config.image_registry}/atomisticskills-lightweight:${user_config.image_tag}",
         "base"
-      ]
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
+        "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-lightweight:${user_config.image_tag}",
+        "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
+        "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
+        "ATOMISTIC_GPU": "0"
+      }
     },
     "drugdisc": {
-      "command": "${user_config.container_runtime}",
+      "command": "${CLAUDE_PLUGIN_ROOT}/docker/run_server.sh",
       "args": [
-        "run",
-        "--rm",
-        "--interactive",
-        "--volume",
-        "${user_config.work_dir}:/work",
-        "--workdir",
-        "/work",
-        "--volume",
-        "${CLAUDE_PLUGIN_DATA}/model-cache:/opt/model-cache",
-        "--env",
-        "HF_HOME=/opt/model-cache/huggingface",
-        "--env",
-        "TORCH_HOME=/opt/model-cache/torch",
-        "--env",
-        "MATGL_CACHE=/opt/model-cache/matgl",
-        "${user_config.image_registry}/atomisticskills-lightweight:${user_config.image_tag}",
         "drugdisc"
-      ]
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
+        "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-lightweight:${user_config.image_tag}",
+        "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
+        "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
+        "ATOMISTIC_GPU": "0"
+      }
     },
     "smol": {
-      "command": "${user_config.container_runtime}",
+      "command": "${CLAUDE_PLUGIN_ROOT}/docker/run_server.sh",
       "args": [
-        "run",
-        "--rm",
-        "--interactive",
-        "--volume",
-        "${user_config.work_dir}:/work",
-        "--workdir",
-        "/work",
-        "--volume",
-        "${CLAUDE_PLUGIN_DATA}/model-cache:/opt/model-cache",
-        "--env",
-        "HF_HOME=/opt/model-cache/huggingface",
-        "--env",
-        "TORCH_HOME=/opt/model-cache/torch",
-        "--env",
-        "MATGL_CACHE=/opt/model-cache/matgl",
-        "${user_config.image_registry}/atomisticskills-lightweight:${user_config.image_tag}",
         "smol"
-      ]
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
+        "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-lightweight:${user_config.image_tag}",
+        "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
+        "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
+        "ATOMISTIC_GPU": "0"
+      }
     },
     "mace": {
-      "command": "${user_config.container_runtime}",
+      "command": "${CLAUDE_PLUGIN_ROOT}/docker/run_server.sh",
       "args": [
-        "run",
-        "--rm",
-        "--interactive",
-        "--volume",
-        "${user_config.work_dir}:/work",
-        "--workdir",
-        "/work",
-        "--volume",
-        "${CLAUDE_PLUGIN_DATA}/model-cache:/opt/model-cache",
-        "--env",
-        "HF_HOME=/opt/model-cache/huggingface",
-        "--env",
-        "TORCH_HOME=/opt/model-cache/torch",
-        "--env",
-        "MATGL_CACHE=/opt/model-cache/matgl",
-        "--gpus",
-        "all",
-        "${user_config.image_registry}/atomisticskills-mace:${user_config.image_tag}",
         "mace"
-      ]
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
+        "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-mace:${user_config.image_tag}",
+        "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
+        "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
+        "ATOMISTIC_GPU": "1"
+      }
     },
     "matgl": {
-      "command": "${user_config.container_runtime}",
+      "command": "${CLAUDE_PLUGIN_ROOT}/docker/run_server.sh",
       "args": [
-        "run",
-        "--rm",
-        "--interactive",
-        "--volume",
-        "${user_config.work_dir}:/work",
-        "--workdir",
-        "/work",
-        "--volume",
-        "${CLAUDE_PLUGIN_DATA}/model-cache:/opt/model-cache",
-        "--env",
-        "HF_HOME=/opt/model-cache/huggingface",
-        "--env",
-        "TORCH_HOME=/opt/model-cache/torch",
-        "--env",
-        "MATGL_CACHE=/opt/model-cache/matgl",
-        "--gpus",
-        "all",
-        "${user_config.image_registry}/atomisticskills-mace:${user_config.image_tag}",
         "matgl"
-      ]
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
+        "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-mace:${user_config.image_tag}",
+        "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
+        "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
+        "ATOMISTIC_GPU": "1"
+      }
     },
     "fairchem": {
-      "command": "${user_config.container_runtime}",
+      "command": "${CLAUDE_PLUGIN_ROOT}/docker/run_server.sh",
       "args": [
-        "run",
-        "--rm",
-        "--interactive",
-        "--volume",
-        "${user_config.work_dir}:/work",
-        "--workdir",
-        "/work",
-        "--volume",
-        "${CLAUDE_PLUGIN_DATA}/model-cache:/opt/model-cache",
-        "--env",
-        "HF_HOME=/opt/model-cache/huggingface",
-        "--env",
-        "TORCH_HOME=/opt/model-cache/torch",
-        "--env",
-        "MATGL_CACHE=/opt/model-cache/matgl",
-        "--gpus",
-        "all",
-        "${user_config.image_registry}/atomisticskills-fairchem:${user_config.image_tag}",
         "fairchem"
-      ]
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
+        "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-fairchem:${user_config.image_tag}",
+        "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
+        "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
+        "ATOMISTIC_GPU": "1"
+      }
     },
     "adit": {
-      "command": "${user_config.container_runtime}",
+      "command": "${CLAUDE_PLUGIN_ROOT}/docker/run_server.sh",
       "args": [
-        "run",
-        "--rm",
-        "--interactive",
-        "--volume",
-        "${user_config.work_dir}:/work",
-        "--workdir",
-        "/work",
-        "--volume",
-        "${CLAUDE_PLUGIN_DATA}/model-cache:/opt/model-cache",
-        "--env",
-        "HF_HOME=/opt/model-cache/huggingface",
-        "--env",
-        "TORCH_HOME=/opt/model-cache/torch",
-        "--env",
-        "MATGL_CACHE=/opt/model-cache/matgl",
-        "--gpus",
-        "all",
-        "${user_config.image_registry}/atomisticskills-generative:${user_config.image_tag}",
         "adit"
-      ]
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
+        "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-generative:${user_config.image_tag}",
+        "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
+        "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
+        "ATOMISTIC_GPU": "1"
+      }
     },
     "diffcsp": {
-      "command": "${user_config.container_runtime}",
+      "command": "${CLAUDE_PLUGIN_ROOT}/docker/run_server.sh",
       "args": [
-        "run",
-        "--rm",
-        "--interactive",
-        "--volume",
-        "${user_config.work_dir}:/work",
-        "--workdir",
-        "/work",
-        "--volume",
-        "${CLAUDE_PLUGIN_DATA}/model-cache:/opt/model-cache",
-        "--env",
-        "HF_HOME=/opt/model-cache/huggingface",
-        "--env",
-        "TORCH_HOME=/opt/model-cache/torch",
-        "--env",
-        "MATGL_CACHE=/opt/model-cache/matgl",
-        "--gpus",
-        "all",
-        "${user_config.image_registry}/atomisticskills-generative:${user_config.image_tag}",
         "diffcsp"
-      ]
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
+        "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-generative:${user_config.image_tag}",
+        "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
+        "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
+        "ATOMISTIC_GPU": "1"
+      }
     },
     "mattergen": {
-      "command": "${user_config.container_runtime}",
+      "command": "${CLAUDE_PLUGIN_ROOT}/docker/run_server.sh",
       "args": [
-        "run",
-        "--rm",
-        "--interactive",
-        "--volume",
-        "${user_config.work_dir}:/work",
-        "--workdir",
-        "/work",
-        "--volume",
-        "${CLAUDE_PLUGIN_DATA}/model-cache:/opt/model-cache",
-        "--env",
-        "HF_HOME=/opt/model-cache/huggingface",
-        "--env",
-        "TORCH_HOME=/opt/model-cache/torch",
-        "--env",
-        "MATGL_CACHE=/opt/model-cache/matgl",
-        "--gpus",
-        "all",
-        "${user_config.image_registry}/atomisticskills-generative:${user_config.image_tag}",
         "mattergen"
-      ]
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
+        "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-generative:${user_config.image_tag}",
+        "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
+        "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
+        "ATOMISTIC_GPU": "1"
+      }
     }
   },
   "userConfig": {
     "container_runtime": {
       "type": "string",
       "title": "Container runtime",
-      "description": "Command used to run the server images. Use 'docker' or 'podman'.",
+      "description": "Command used to run the server images: docker, podman, apptainer or singularity. On HPC clusters, where users have no root and no Docker daemon, use apptainer.",
       "default": "docker",
       "required": true
     },
     "work_dir": {
       "type": "directory",
       "title": "Working directory",
-      "description": "Directory mounted into the containers at /work. Simulation inputs are read from here and all results are written back here, so it must be the project you want the skills to operate on.",
+      "description": "Directory bound into the containers at /work. Simulation inputs are read from here and all results are written back here, so it must be the project you want the skills to operate on.",
       "required": true
     },
     "image_registry": {

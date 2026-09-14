@@ -123,6 +123,76 @@ The GHCR package is private on first publish. Make it public under
 *Packages → atomisticskills-\<image\> → Package settings → Change visibility*,
 otherwise anyone pulling it needs a token.
 
+## Running on HPC (Apptainer)
+
+Clusters do not give users root and do not run a Docker daemon; Apptainer
+(formerly Singularity) is the standard runtime there. It is supported directly
+-- set the runtime option and nothing else changes:
+
+```bash
+claude plugin install atomistic-skills@atomistic-skills \
+  --config container_runtime=apptainer \
+  --config work_dir=/home/<you>/atomistic-work \
+  --config image_registry=ghcr.io/learningmatter-mit \
+  --config image_tag=1.3.4
+```
+
+`docker/run_server.sh` translates between the two, because their arguments are
+not interchangeable:
+
+| | Docker / Podman | Apptainer / Singularity |
+| :--- | :--- | :--- |
+| invoke | `run --rm -i IMAGE srv` | `exec docker://IMAGE /entrypoint srv` |
+| bind | `--volume h:/work` | `--bind h:/work` |
+| workdir | `--workdir /work` | `--pwd /work` |
+| GPU | `--gpus all` | `--nv` |
+
+Two Apptainer specifics worth knowing. The OCI image is converted to a SIF on
+first use, and the launcher points `APPTAINER_CACHEDIR` at the model-cache
+directory so that conversion does not land on a small home quota. And Apptainer
+already runs as the invoking user, so the entrypoint's privilege drop is a
+no-op there -- files in `/work` are yours either way.
+
+## Installing non-interactively
+
+`claude plugin install` does not prompt in a non-interactive shell; it installs
+and reports the options as unset. Pass them explicitly:
+
+```bash
+claude plugin install atomistic-skills@atomistic-skills \
+  --config container_runtime=docker \
+  --config work_dir=/path/to/workdir \
+  --config image_registry=ghcr.io/learningmatter-mit \
+  --config image_tag=1.3.4
+```
+
+Existing installs can be reconfigured with
+`/plugin configure atomistic-skills@atomistic-skills` inside Claude Code.
+
+## Troubleshooting
+
+**`Failed to connect — ENOENT: Executable not found in $PATH: "stdio"`**
+
+The runtime binary is missing. Claude Code's error sanitiser replaces the
+command name with `"stdio"`, which makes this look like a protocol fault when
+it is simply "docker is not installed". Check with `command -v docker podman
+apptainer`, then set `container_runtime` to whatever the host actually has.
+The launcher checks for the runtime before invoking it and reports the missing
+binary by name, along with the runtimes it did find on the host.
+
+**`claude plugin details` reports `MCP servers (0)`**
+
+Cosmetic. The inventory counts servers declared through an external file, and
+this plugin declares them inline in `plugin.json`. `claude mcp list` is the
+accurate view -- the servers are registered and will show there.
+
+**Materials Project or literature tools return authentication errors**
+
+Those need credentials, which the launcher forwards from the host environment
+when they are set: `MP_API_KEY`, `HF_TOKEN`, `OPENALEX_EMAIL`,
+`ELSEVIER_API_KEY`, `ELSEVIER_INST_TOKEN`, `SPRINGER_API_KEY`,
+`UNPAYWALL_EMAIL`. Export them before starting Claude Code.
+
 ## Known limitations
 
 - **GPU images are arm64-only.** Their locks were frozen on `linux-aarch64` and
