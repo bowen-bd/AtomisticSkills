@@ -28,8 +28,17 @@ ARG TARGETARCH
 ARG IMAGE_NAME
 ARG CONDA_ENVS
 ARG CONDA_SUBDIR=linux-aarch64
-# GB10 is sm_121. Widen for other GPUs, e.g. "8.0;8.6;9.0;12.1".
+# GB10 is sm_121. The amd64 build targets datacenter and recent consumer cards.
 ARG TORCH_CUDA_ARCH_LIST="12.1"
+# "env=version" pairs, used only where no conda lock exists for CONDA_SUBDIR.
+# The aarch64 locks were frozen from built environments; the amd64 side resolves
+# its pip layer instead (docker/resolve_locks.py), so its conda layer is just
+# the interpreter -- the torch wheels carry their own CUDA runtime.
+ARG CONDA_ENV_PYTHON=""
+# The aarch64 wheels come from the PyTorch CUDA 13 index. The amd64 pins resolve
+# against PyPI, whose x86_64 torch wheels are already CUDA builds, and mixing a
+# second index there risks silently substituting a different build.
+ARG PIP_EXTRA_INDEX_URL="https://download.pytorch.org/whl/cu130"
 # Set to 1 for the generative image, whose PyG extensions have no prebuilt
 # wheels for aarch64 + CUDA 13 and must be compiled here.
 ARG PYG_FROM_SOURCE=0
@@ -69,9 +78,18 @@ COPY conda-envs/ ${REPO_DIR}/conda-envs/
 RUN set -eux; \
     for env in ${CONDA_ENVS}; do \
         lock="${REPO_DIR}/conda-envs/${env}/lock/conda-${CONDA_SUBDIR}.txt"; \
-        test -f "${lock}" || { echo "missing conda lock: ${lock}" >&2; exit 1; }; \
-        echo "== conda layer: ${env}"; \
-        micromamba create -y -n "${env}" -f "${lock}"; \
+        if [ -f "${lock}" ]; then \
+            echo "== conda layer: ${env} (from lock)"; \
+            micromamba create -y -n "${env}" -f "${lock}"; \
+        else \
+            py=$(printf '%s' "${CONDA_ENV_PYTHON}" | tr ' ' '\n' \
+                 | sed -n "s/^${env}=//p" | head -1); \
+            test -n "${py}" || { \
+                echo "no conda lock at ${lock} and no python version for ${env}" >&2; \
+                echo "add it to env_python in docker/images.json" >&2; exit 1; }; \
+            echo "== conda layer: ${env} (bare python ${py})"; \
+            micromamba create -y -n "${env}" -c conda-forge "python=${py}" pip; \
+        fi; \
     done; \
     micromamba clean --all --yes
 
@@ -82,9 +100,13 @@ RUN set -eux; \
         lock="${REPO_DIR}/conda-envs/${env}/lock/pip-${CONDA_SUBDIR}.txt"; \
         test -f "${lock}" || { echo "missing pip lock: ${lock}" >&2; exit 1; }; \
         echo "== pip layer: ${env}"; \
-        micromamba run -n "${env}" python -m pip install --no-cache-dir --no-deps \
-            --extra-index-url https://download.pytorch.org/whl/cu130 \
-            -r "${lock}"; \
+        if [ -n "${PIP_EXTRA_INDEX_URL}" ]; then \
+            micromamba run -n "${env}" python -m pip install --no-cache-dir --no-deps \
+                --extra-index-url "${PIP_EXTRA_INDEX_URL}" -r "${lock}"; \
+        else \
+            micromamba run -n "${env}" python -m pip install --no-cache-dir --no-deps \
+                -r "${lock}"; \
+        fi; \
     done
 
 # torch-scatter / torch-cluster / torch-sparse: no aarch64 + CUDA 13 wheels

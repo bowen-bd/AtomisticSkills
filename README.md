@@ -168,7 +168,9 @@ shell, where the plugin cannot prompt.
 > This requires a container runtime -- `docker`, `podman`, `apptainer` or
 > `singularity` -- and GPU-backed servers additionally need the
 > [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
-> The GPU images are currently **arm64 only**; see
+> Seven of the ten servers run on **amd64 and arm64**. The three generative
+> ones (`adit`, `diffcsp`, `mattergen`) are arm64 only; on x86_64 they refuse
+> with an explanation and download nothing. See
 > [`docker/README.md`](docker/README.md) for the image inventory, the reasoning
 > behind the four-image split, and the known limitations.
 

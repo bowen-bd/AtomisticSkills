@@ -88,6 +88,20 @@ def cmd_server_map(spec: dict, args: argparse.Namespace) -> int:
     return 0
 
 
+def per_platform(image: dict, key: str, platform: str, default):
+    """Return a setting that may be either shared or keyed by platform.
+
+    Build settings started out identical across architectures and were plain
+    scalars. GPU target lists are not: arm64 targets GB10 (sm_121) alone, while
+    amd64 has to cover a spread of datacenter and consumer cards. Accept both
+    shapes so the scalar form stays valid where nothing differs.
+    """
+    value = image.get(key, default)
+    if isinstance(value, dict):
+        return value.get(platform, default)
+    return value
+
+
 def cmd_matrix(spec: dict, args: argparse.Namespace) -> int:
     """Print the GitHub Actions matrix as JSON, one entry per image+platform."""
     runner = {"linux/amd64": "ubuntu-24.04", "linux/arm64": "ubuntu-24.04-arm"}
@@ -111,8 +125,27 @@ def cmd_matrix(spec: dict, args: argparse.Namespace) -> int:
                     "IMAGE_NAME": image["name"],
                     "CONDA_ENVS": " ".join(image["envs"]),
                     "CONDA_SUBDIR": subdir[platform],
-                    "PYG_FROM_SOURCE": "1" if image.get("pyg_from_source") else "0",
-                    "TORCH_CUDA_ARCH_LIST": image.get("torch_cuda_arch_list", "12.1"),
+                    "PYG_FROM_SOURCE": (
+                        "1"
+                        if per_platform(image, "pyg_from_source", platform, False)
+                        else "0"
+                    ),
+                    "TORCH_CUDA_ARCH_LIST": per_platform(
+                        image, "torch_cuda_arch_list", platform, "12.1"
+                    ),
+                    # Only consulted where no conda lock exists for the subdir.
+                    "CONDA_ENV_PYTHON": " ".join(
+                        f"{env}={py}" for env, py in image.get("env_python", {}).items()
+                    ),
+                    # The PyTorch CUDA index is for the aarch64 wheels. The
+                    # amd64 pins resolve against PyPI, whose x86_64 torch wheels
+                    # are already CUDA builds; adding a second index there can
+                    # silently substitute a different build of the same version.
+                    "PIP_EXTRA_INDEX_URL": (
+                        ""
+                        if platform == "linux/amd64"
+                        else "https://download.pytorch.org/whl/cu130"
+                    ),
                 },
                 # Only images built for more than one platform need a manifest
                 # list stitched together afterwards.

@@ -28,9 +28,17 @@
       "strategy": "merged",
       "python": "3.11",
       "gpu": false,
-      "platforms": ["linux/amd64", "linux/arm64"],
+      "platforms": [
+        "linux/amd64",
+        "linux/arm64"
+      ],
       "spec": "docker/specs/lightweight.yaml",
-      "envs": ["base-agent", "drugdisc-agent", "smol-agent", "atomate2-agent"],
+      "envs": [
+        "base-agent",
+        "drugdisc-agent",
+        "smol-agent",
+        "atomate2-agent"
+      ],
       "merged_env": "lightweight",
       "servers": {
         "base": "src.mcp_server.base_server",
@@ -44,40 +52,96 @@
       "name": "mace",
       "strategy": "locked",
       "gpu": true,
-      "platforms": ["linux/arm64"],
-      "envs": ["mace-agent", "matgl-agent"],
+      "platforms": [
+        "linux/amd64",
+        "linux/arm64"
+      ],
+      "envs": [
+        "mace-agent",
+        "matgl-agent"
+      ],
       "servers": {
-        "mace": {"env": "mace-agent", "module": "src.mcp_server.mace_server"},
-        "matgl": {"env": "matgl-agent", "module": "src.mcp_server.matgl_server"}
+        "mace": {
+          "env": "mace-agent",
+          "module": "src.mcp_server.mace_server"
+        },
+        "matgl": {
+          "env": "matgl-agent",
+          "module": "src.mcp_server.matgl_server"
+        }
       },
-      "env_vars": {"matgl": {"MATGL_BACKEND": "DGL"}},
-      "notes": "torch 2.12.0. Cannot host fairchem: mace-torch 0.3.15 pins e3nn==0.4.4, fairchem-core needs e3nn>=0.5."
+      "env_vars": {
+        "matgl": {
+          "MATGL_BACKEND": "DGL"
+        }
+      },
+      "notes": "torch 2.12 on both arches, resolved independently. Cannot host fairchem: mace-torch 0.3.15 pins e3nn==0.4.4, fairchem-core needs e3nn>=0.5 -- that conflict is architecture-independent.",
+      "env_python": {
+        "mace-agent": "3.12",
+        "matgl-agent": "3.12"
+      },
+      "torch_cuda_arch_list": {
+        "linux/arm64": "12.1",
+        "linux/amd64": "8.0;8.6;8.9;9.0;12.0"
+      }
     },
     {
       "name": "fairchem",
       "strategy": "locked",
       "gpu": true,
-      "platforms": ["linux/arm64"],
-      "envs": ["fairchem-agent"],
+      "platforms": [
+        "linux/amd64",
+        "linux/arm64"
+      ],
+      "envs": [
+        "fairchem-agent"
+      ],
       "servers": {
-        "fairchem": {"env": "fairchem-agent", "module": "src.mcp_server.fairchem_server"}
+        "fairchem": {
+          "env": "fairchem-agent",
+          "module": "src.mcp_server.fairchem_server"
+        }
       },
-      "notes": "torch 2.10.0 with e3nn 0.6.0. fairchem-core 2.19.0 declares torch~=2.8.0; the lock intentionally overrides it because torch 2.8 has no sm_121 build. Install pip layer with --no-deps."
+      "notes": "arm64 pins torch 2.10.0 and overrides fairchem-core's declared torch~=2.8.0, because torch 2.8 has no sm_121 build. amd64 has no such constraint and resolves to the declared torch 2.8.0.",
+      "env_python": {
+        "fairchem-agent": "3.12"
+      },
+      "torch_cuda_arch_list": {
+        "linux/arm64": "12.1",
+        "linux/amd64": "8.0;8.6;8.9;9.0;12.0"
+      }
     },
     {
       "name": "generative",
       "strategy": "locked",
       "gpu": true,
-      "platforms": ["linux/arm64"],
-      "envs": ["adit-agent", "diffcsp-agent", "mattergen-agent"],
+      "platforms": [
+        "linux/arm64"
+      ],
+      "envs": [
+        "adit-agent",
+        "diffcsp-agent",
+        "mattergen-agent"
+      ],
       "pyg_from_source": true,
-      "torch_cuda_arch_list": "12.1",
-      "servers": {
-        "adit": {"env": "adit-agent", "module": "src.mcp_server.adit_server"},
-        "diffcsp": {"env": "diffcsp-agent", "module": "src.mcp_server.diffcsp_server"},
-        "mattergen": {"env": "mattergen-agent", "module": "src.mcp_server.mattergen_server"}
+      "torch_cuda_arch_list": {
+        "linux/arm64": "12.1"
       },
-      "notes": "torch-scatter/cluster/sparse are compiled from source; prebuilt wheels do not exist for aarch64 + CUDA 13. TORCH_CUDA_ARCH_LIST targets GB10 (sm_121) and must be widened for other GPUs."
+      "servers": {
+        "adit": {
+          "env": "adit-agent",
+          "module": "src.mcp_server.adit_server"
+        },
+        "diffcsp": {
+          "env": "diffcsp-agent",
+          "module": "src.mcp_server.diffcsp_server"
+        },
+        "mattergen": {
+          "env": "mattergen-agent",
+          "module": "src.mcp_server.mattergen_server"
+        }
+      },
+      "notes": "arm64 only for now. adit/diffcsp/mattergen were assembled by hand -- adit-agent's spec declares only python, pip and uv -- so unlike mace and fairchem their pip layer cannot be resolved from a spec and an amd64 lock must be derived from a built environment. torch-scatter/cluster/sparse are compiled from source here; x86_64 CUDA wheels do exist, so the amd64 build will not need that."
     }
   ]
 }

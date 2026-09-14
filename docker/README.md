@@ -16,8 +16,8 @@ projections of it.
 | Image | Servers | Python | torch | Platforms |
 | :--- | :--- | :--- | :--- | :--- |
 | `atomisticskills-lightweight` | base, drugdisc, smol, atomate2 | 3.11 | none | amd64 + arm64 |
-| `atomisticskills-mace` | mace, matgl | 3.12 | 2.12.0 | arm64 |
-| `atomisticskills-fairchem` | fairchem | 3.12 | 2.10.0 | arm64 |
+| `atomisticskills-mace` | mace, matgl | 3.12 | 2.12 | amd64 + arm64 |
+| `atomisticskills-fairchem` | fairchem | 3.12 | 2.8 (amd64) / 2.10 (arm64) | amd64 + arm64 |
 | `atomisticskills-generative` | adit, diffcsp, mattergen | 3.10 | 2.9.1+cu130 | arm64 |
 
 Ten servers in four images, and the boundaries are forced rather than chosen:
@@ -46,6 +46,30 @@ torch 2.8 ships no sm_121 / aarch64 / CUDA 13 build, so a newer torch was
 force-installed. Any resolver asked to honour `torch~=2.8.0` on this platform
 fails — which is exactly what happens if you try to solve these environments,
 and why the yaml files carry "manual installation required" comments.
+
+That paragraph describes **aarch64**, and the distinction matters: the conflict
+is a property of the platform, not of the packages. torch 2.8 has no sm_121
+build, so the aarch64 environment had to override the pin. On x86_64 it is
+satisfiable, and `fairchem-agent` resolves to the declared torch 2.8.0 with no
+override at all.
+
+That is why the two architectures are locked by different means:
+
+- **aarch64** — frozen from the validated environments on the workstation that
+  has them, with `docker/export_locks.py`. These cannot be re-resolved.
+- **amd64** — resolved from each environment's declared spec with
+  `docker/resolve_locks.py`, which runs `uv pip compile` for
+  `x86_64-unknown-linux-gnu`. No amd64 machine is needed to produce them.
+
+Versions are therefore resolved independently per architecture and will not
+match exactly across them. That is deliberate: forcing amd64 to adopt aarch64's
+overrides would import constraint violations that only ever existed because of
+sm_121.
+
+`resolve_locks.py` covers `mace-agent`, `matgl-agent` and `fairchem-agent` only.
+The generative environments were assembled by hand -- `adit-agent`'s spec
+declares nothing but python, pip and uv -- so there is no spec to resolve and
+their amd64 locks must come from a built environment.
 
 So the GPU images install from exact locks with `--no-deps`:
 
@@ -194,9 +218,9 @@ Three further Apptainer specifics, all learned from a cluster:
 - **`/tmp` mounted `nodev`.** Apptainer warns this can corrupt a build, so
   `APPTAINER_TMPDIR` is pointed beside the cache instead.
 - **Architecture.** The launcher refuses an image built for another
-  architecture before downloading anything, so on an x86_64 cluster the six
-  arm64-only servers fail instantly with an explanation rather than pulling
-  gigabytes and then failing.
+  architecture before downloading anything, so on an x86_64 cluster the three
+  arm64-only generative servers fail instantly with an explanation rather than
+  pulling gigabytes and then failing.
 
 Apptainer already runs as the invoking user, so the entrypoint's privilege drop
 is a no-op there -- files in `/work` are yours either way.
@@ -251,10 +275,15 @@ when they are set: `MP_API_KEY`, `HF_TOKEN`, `OPENALEX_EMAIL`,
 
 ## Known limitations
 
-- **GPU images are arm64-only.** Their locks were frozen on `linux-aarch64` and
-  the generative image compiles PyG extensions for `TORCH_CUDA_ARCH_LIST=12.1`
-  (GB10, sm_121). amd64 variants need locks generated on an amd64 host and a
-  different arch list.
+- **The generative image is arm64-only.** `adit`, `diffcsp` and `mattergen`
+  therefore refuse on x86_64, with the architecture gate explaining why and
+  downloading nothing. The other seven servers run on both. Producing an amd64
+  generative image means deriving its locks from a built environment, since
+  those three have no resolvable spec.
+- **GPU target lists differ by architecture.** arm64 targets GB10 (sm_121)
+  alone; amd64 targets `8.0;8.6;8.9;9.0;12.0`, covering A100, A40/A6000,
+  L40S/RTX 40xx, H100/H200 and RTX 50xx. A GPU outside that list falls back to
+  JIT compilation on first use, or fails if the architecture is too new.
 - **`fpocket` is missing from the arm64 `lightweight` image.** conda-forge
   publishes it for linux-64 only, so `drug-pocket-detection` must use its
   P2Rank path on arm64.

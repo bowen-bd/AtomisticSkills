@@ -76,22 +76,36 @@ jobs:
         run: |
           python - <<'PY'
           import json, pathlib, sys
+          SUBDIR = {"linux/amd64": "linux-64", "linux/arm64": "linux-aarch64"}
           spec = json.loads(pathlib.Path("docker/images.json").read_text())
-          missing = []
+          problems, checked = [], 0
           for image in spec["images"]:
               if not image["gpu"]:
                   continue
-              for env in image["envs"]:
-                  for kind in ("conda", "pip"):
-                      p = pathlib.Path(f"conda-envs/{env}/lock/{kind}-linux-aarch64.txt")
-                      if not p.exists():
-                          missing.append(str(p))
-          if missing:
-              print("missing lockfiles:")
-              for m in missing: print("  -", m)
-              print("\nRun: python docker/export_locks.py")
+              env_python = image.get("env_python", {})
+              for platform in image["platforms"]:
+                  subdir = SUBDIR[platform]
+                  for env in image["envs"]:
+                      checked += 1
+                      pip = pathlib.Path(f"conda-envs/{env}/lock/pip-{subdir}.txt")
+                      if not pip.exists():
+                          problems.append(f"{pip} (missing)")
+                      # The conda layer may come from a lock or, where none was
+                      # frozen for this architecture, from a bare interpreter
+                      # env named by env_python. One or the other must be there.
+                      conda = pathlib.Path(f"conda-envs/{env}/lock/conda-{subdir}.txt")
+                      if not conda.exists() and env not in env_python:
+                          problems.append(
+                              f"{conda} (missing, and no env_python entry for "
+                              f"{env!r} in image {image['name']!r})"
+                          )
+          if problems:
+              print("lockfile problems:")
+              for m in problems: print("  -", m)
+              print("\nRun: python docker/export_locks.py (aarch64, from built envs)")
+              print("  or: python docker/resolve_locks.py (amd64, from specs)")
               sys.exit(1)
-          print("all lockfiles present")
+          print(f"all lockfiles present ({checked} env/platform combinations)")
           PY
 
       - name: Render build matrix

@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -619,3 +620,109 @@ class TestPrebuildSifDiscovery:
         assert (
             "atomisticskills-lightweight" in invocations
         ), "expected a build when nothing is cached"
+
+
+class TestMultiArchCoverage:
+    """Every declared platform must actually be buildable and reachable.
+
+    Six of ten servers were arm64-only, so an x86_64 cluster -- the common case
+    for HPC -- got four working servers and six architecture refusals. Declaring
+    a platform without the lockfiles to build it would turn that clear refusal
+    into a build failure, and declaring one the plugin never advertises would
+    leave the gate refusing an image that exists.
+    """
+
+    SUBDIR = {"linux/amd64": "linux-64", "linux/arm64": "linux-aarch64"}
+
+    def test_declared_platforms_have_their_lockfiles(self):
+        spec = json.loads(IMAGES_SPEC.read_text())
+        problems = []
+        for image in spec["images"]:
+            if not image["gpu"]:
+                continue
+            env_python = image.get("env_python", {})
+            for platform in image["platforms"]:
+                subdir = self.SUBDIR[platform]
+                for env in image["envs"]:
+                    pip = PROJECT_ROOT / f"conda-envs/{env}/lock/pip-{subdir}.txt"
+                    if not pip.exists():
+                        problems.append(f"{image['name']}/{platform}: {pip} missing")
+                    conda = PROJECT_ROOT / f"conda-envs/{env}/lock/conda-{subdir}.txt"
+                    if not conda.exists() and env not in env_python:
+                        problems.append(
+                            f"{image['name']}/{platform}: no conda lock for {env} "
+                            "and no env_python entry to build a bare one"
+                        )
+        assert not problems, "\n".join(problems)
+
+    def test_plugin_platforms_match_the_image_spec(self):
+        """The arch gate reads these; drift refuses an image that exists."""
+        spec = json.loads(IMAGES_SPEC.read_text())
+        manifest = json.loads(
+            (PROJECT_ROOT / ".claude-plugin" / "plugin.json").read_text()
+        )
+        for image in spec["images"]:
+            for server in image["servers"]:
+                declared = manifest["mcpServers"][server]["env"]["ATOMISTIC_PLATFORMS"]
+                assert declared == ",".join(image["platforms"]), (
+                    f"{server}: plugin says {declared!r}, images.json says "
+                    f"{','.join(image['platforms'])!r}; run render.py plugin-mcp"
+                )
+
+    def test_amd64_gpu_images_do_not_compile_pyg_from_source(self):
+        """x86_64 has prebuilt PyG CUDA wheels; compiling them wastes an hour."""
+        sys.path.insert(0, str(PROJECT_ROOT / "docker"))
+        import render
+
+        spec = json.loads(IMAGES_SPEC.read_text())
+        for image in spec["images"]:
+            if not image["gpu"] or "linux/amd64" not in image["platforms"]:
+                continue
+            assert not render.per_platform(
+                image, "pyg_from_source", "linux/amd64", False
+            ), f"{image['name']} would compile PyG from source on amd64"
+
+
+class TestPerPlatformSettings:
+    """Build settings are scalar where shared, keyed by platform where not."""
+
+    def test_scalar_applies_to_every_platform(self):
+        sys.path.insert(0, str(PROJECT_ROOT / "docker"))
+        import render
+
+        image = {"torch_cuda_arch_list": "12.1"}
+        assert (
+            render.per_platform(image, "torch_cuda_arch_list", "linux/amd64", "x")
+            == "12.1"
+        )
+        assert (
+            render.per_platform(image, "torch_cuda_arch_list", "linux/arm64", "x")
+            == "12.1"
+        )
+
+    def test_mapping_selects_by_platform(self):
+        sys.path.insert(0, str(PROJECT_ROOT / "docker"))
+        import render
+
+        image = {"torch_cuda_arch_list": {"linux/arm64": "12.1", "linux/amd64": "9.0"}}
+        assert (
+            render.per_platform(image, "torch_cuda_arch_list", "linux/amd64", "x")
+            == "9.0"
+        )
+        assert (
+            render.per_platform(image, "torch_cuda_arch_list", "linux/arm64", "x")
+            == "12.1"
+        )
+
+    def test_missing_key_falls_back_to_the_default(self):
+        sys.path.insert(0, str(PROJECT_ROOT / "docker"))
+        import render
+
+        assert (
+            render.per_platform({}, "absent", "linux/amd64", "fallback") == "fallback"
+        )
+        image = {"absent": {"linux/arm64": "only-arm"}}
+        assert (
+            render.per_platform(image, "absent", "linux/amd64", "fallback")
+            == "fallback"
+        )
