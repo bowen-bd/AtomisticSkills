@@ -18,8 +18,8 @@ To provide experimentally validated synthesis routes for target inorganic materi
 Search for synthesis recipes for a target material using the Materials Project API:
 
 ```bash
-# Env: base-agent
-python skills/mat-synthesis-recommendation/scripts/recommend_synthesis.py "LiFePO4" --limit 10 --output synthesis_recipes.json
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-synthesis-recommendation/scripts/recommend_synthesis.py "LiFePO4" --limit 10 --output synthesis_recipes.json
 ```
 
 **Parameters:**
@@ -63,8 +63,8 @@ python skills/mat-stability/scripts/calculate_stability.py target.cif --output s
 ### Example 1: Basic Query for LiFePO4
 
 ```bash
-# Env: base-agent
-python skills/mat-synthesis-recommendation/scripts/recommend_synthesis.py "LiFePO4" --limit 5
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-synthesis-recommendation/scripts/recommend_synthesis.py "LiFePO4" --limit 5
 ```
 
 **Expected output:**
@@ -76,17 +76,17 @@ python skills/mat-synthesis-recommendation/scripts/recommend_synthesis.py "LiFeP
 ### Example 2: Filter by Synthesis Type
 
 ```bash
-# Env: base-agent
+# Venv: venv/cpu
 # Query only hydrothermal synthesis routes for LiCoO2
-python skills/mat-synthesis-recommendation/scripts/recommend_synthesis.py "LiCoO2" --type hydrothermal --limit 10 --output LiCoO2_hydrothermal.json
+uv run --project venv/cpu python skills/mat-synthesis-recommendation/scripts/recommend_synthesis.py "LiCoO2" --type hydrothermal --limit 10 --output LiCoO2_hydrothermal.json
 ```
 
 ### Example 3: Temperature-Constrained Search
 
 ```bash
-# Env: base-agent
+# Venv: venv/cpu
 # Find low-temperature synthesis routes (< 600°C) for Li2CO3
-python skills/mat-synthesis-recommendation/scripts/recommend_synthesis.py "Li2CO3" --max-temp 600 --limit 10
+uv run --project venv/cpu python skills/mat-synthesis-recommendation/scripts/recommend_synthesis.py "Li2CO3" --max-temp 600 --limit 10
 ```
 
 ## Constraints

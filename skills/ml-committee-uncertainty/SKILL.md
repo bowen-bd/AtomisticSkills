@@ -32,10 +32,10 @@ A committee requires **N ≥ 3** independently trained MACE checkpoints covering
 Run [ml-mace-finetune](../ml-mace-finetune/SKILL.md) N times, varying only the random seed via the `--seed` flag in `generate_mace_config.py`. Save each checkpoint to a separate directory:
 
 ```bash
-# Env: mace-agent
+# Venv: venv/mlip
 # Run for seed=0, seed=1, seed=2 (at minimum)
 for SEED in 0 1 2; do
-    conda run -n mace-agent python skills/ml-mace-finetune/scripts/generate_mace_config.py \
+    uv run --project venv/mlip python skills/ml-mace-finetune/scripts/generate_mace_config.py \
         --train-file ./mace_data/train.xyz \
         --valid-file ./mace_data/valid.xyz \
         --model MACE-MH-1 \
@@ -45,7 +45,7 @@ for SEED in 0 1 2; do
         --freeze-backbone \
         --seed ${SEED} \
         --output-dir ./committee_models/seed_${SEED}
-    conda run -n mace-agent mace_run_train \
+    uv run --project venv/mlip mace_run_train \
         --config ./committee_models/seed_${SEED}/finetune_config.yaml
 done
 ```
@@ -65,8 +65,8 @@ mcp_base_search_model_registry(
 Pass all checkpoint paths to the inference script. It will run each model independently and compute mean ± std across the committee.
 
 ```bash
-# Env: mace-agent
-python skills/ml-committee-uncertainty/scripts/run_committee_inference.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/ml-committee-uncertainty/scripts/run_committee_inference.py \
     --structures /path/to/structures_dir_or_file.cif \
     --models ./committee_models/seed_0/mace_finetuned.model \
              ./committee_models/seed_1/mace_finetuned.model \

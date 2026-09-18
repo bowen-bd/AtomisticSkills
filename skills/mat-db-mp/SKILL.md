@@ -25,8 +25,8 @@ Use `query_mp.py` to search for materials by chemical system, formula, or elemen
 
 **Basic Query (Summary Endpoint)**:
 ```bash
-# Env: base-agent
-python skills/mat-db-mp/scripts/query_mp.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-db-mp/scripts/query_mp.py \
     --chemsys "Li-S" \
     --properties energy_above_hull formation_energy_per_atom band_gap \
     --e_above_hull_max 0.05 \
@@ -37,8 +37,8 @@ python skills/mat-db-mp/scripts/query_mp.py \
 
 **Detailed Thermodynamic Data (Thermo Endpoint)**:
 ```bash
-# Env: base-agent
-python skills/mat-db-mp/scripts/query_mp.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-db-mp/scripts/query_mp.py \
     --chemsys "Li-O" \
     --endpoint thermo \
     --limit 20 \
@@ -62,16 +62,16 @@ Use `get_elasticity.py` to retrieve bulk modulus, shear modulus, and elastic ten
 
 **Query Specific Material**:
 ```bash
-# Env: base-agent
-python skills/mat-db-mp/scripts/get_elasticity.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-db-mp/scripts/get_elasticity.py \
     --material_id mp-149 \
     --output si_elasticity.json
 ```
 
 **Filter by Bulk Modulus Range**:
 ```bash
-# Env: base-agent
-python skills/mat-db-mp/scripts/get_elasticity.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-db-mp/scripts/get_elasticity.py \
     --bulk_modulus_min 200 \
     --bulk_modulus_max 400 \
     --output high_bulk_modulus.json
@@ -90,16 +90,16 @@ Use `get_magnetism.py` to retrieve magnetic ordering, magnetization, and site-sp
 
 **Query Specific Material**:
 ```bash
-# Env: base-agent
-python skills/mat-db-mp/scripts/get_magnetism.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-db-mp/scripts/get_magnetism.py \
     --material_id mp-19770 \
     --output fe2o3_magnetism.json
 ```
 
 **Filter by Magnetic Ordering and Magnetization**:
 ```bash
-# Env: base-agent
-python skills/mat-db-mp/scripts/get_magnetism.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-db-mp/scripts/get_magnetism.py \
     --ordering FM \
     --total_magnetization_min 10.0 \
     --output ferromagnetic_materials.json
@@ -118,15 +118,15 @@ Use `get_structure_by_id.py` to retrieve crystal structures directly by their Ma
 
 **Single Structure Retrieval**:
 ```bash
-# Env: base-agent
-python skills/mat-db-mp/scripts/get_structure_by_id.py mp-149 \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-db-mp/scripts/get_structure_by_id.py mp-149 \
     --output Si_diamond.cif
 ```
 
 **Batch Retrieval**:
 ```bash
-# Env: base-agent
-python skills/mat-db-mp/scripts/get_structure_by_id.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-db-mp/scripts/get_structure_by_id.py \
     mp-149 mp-19017 mp-1143 \
     --output_dir structures/
 ```
@@ -145,8 +145,8 @@ Use `find_similar_structures.py` to find materials with similar crystal structur
 
 **Find Similar to MP Material**:
 ```bash
-# Env: base-agent
-python skills/mat-db-mp/scripts/find_similar_structures.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-db-mp/scripts/find_similar_structures.py \
     --material_id mp-149 \
     --top 15 \
     --output similar_to_si.json
@@ -154,8 +154,8 @@ python skills/mat-db-mp/scripts/find_similar_structures.py \
 
 **Find Similar to Custom Structure**:
 ```bash
-# Env: base-agent
-python skills/mat-db-mp/scripts/find_similar_structures.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-db-mp/scripts/find_similar_structures.py \
     --structure my_structure.cif \
     --top 20 \
     --output similar_structures.json
@@ -163,8 +163,8 @@ python skills/mat-db-mp/scripts/find_similar_structures.py \
 
 **Filter by Chemical System**:
 ```bash
-# Env: base-agent
-python skills/mat-db-mp/scripts/find_similar_structures.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-db-mp/scripts/find_similar_structures.py \
     --material_id mp-149 \
     --top 20 \
     --chemsys "C" \
@@ -262,7 +262,7 @@ Structures:
 ### When to Use MCP Tools vs Scripts
 
 **Use MCP Tools** when:
-- **Formula search**: Need the single most stable polymorph quickly
+- **Formula search**: Need the single most stable polymorph quickly — ALWAYS prefer this over guessing MP IDs: guessed IDs can silently return wrong-element structures (e.g. mp-540447 and mp-150 are a Ni-phosphate and Fe, not Li) and `get_structure_by_id.py` saves them without complaint
 - **Chemical system search**: Need all stable phases on the convex hull
 - Working from Python/Jupyter notebooks
 - Simple queries without complex property filtering

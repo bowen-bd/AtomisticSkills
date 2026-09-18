@@ -26,8 +26,8 @@ You will need:
 A standard run accepts the chemical inputs and saves outputs to a designated folder.
 
 ```bash
-# Env: atomistic-agent
-python skills/chem-docking-void/scripts/run_docking.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/chem-docking-void/scripts/run_docking.py \
   --smiles "CC12C3C4C5C6C1C7C2C3C4C5C67" \
   --host_cif /path/to/host/material.cif \
   --output_dir output/docked_poses \

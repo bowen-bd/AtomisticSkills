@@ -40,9 +40,9 @@ Decide which database to query and which element/identifier filters to apply.
 ### Step 2: Run the query
 
 ```bash
-# Env: base-agent
+# Venv: venv/cpu
 # QMOF — 10 Zn-containing MOFs
-MP_API_KEY=<your_key> python skills/chem-db-mof/scripts/query_mof_db.py \
+MP_API_KEY=<your_key> uv run --project venv/cpu python skills/chem-db-mof/scripts/query_mof_db.py \
     --database qmof \
     --formula Zn \
     --max-results 10 \
@@ -50,9 +50,9 @@ MP_API_KEY=<your_key> python skills/chem-db-mof/scripts/query_mof_db.py \
 ```
 
 ```bash
-# Env: base-agent
+# Venv: venv/cpu
 # ARC-MOF DB7 (Majumdar) — 20 Zn,O,C hypothetical MOFs
-python skills/chem-db-mof/scripts/query_mof_db.py \
+uv run --project venv/cpu python skills/chem-db-mof/scripts/query_mof_db.py \
     --database arcmof-majumdar \
     --elements Zn,O,C \
     --max-results 20 \
@@ -60,9 +60,9 @@ python skills/chem-db-mof/scripts/query_mof_db.py \
 ```
 
 ```bash
-# Env: base-agent
+# Venv: venv/cpu
 # ARC-MOF DB7 — retrieve a specific structure by identifier
-python skills/chem-db-mof/scripts/query_mof_db.py \
+uv run --project venv/cpu python skills/chem-db-mof/scripts/query_mof_db.py \
     --database arcmof-majumdar \
     --identifier DB7_00042 \
     --output-dir ./research/<date>_<task>/structures/arcmof_db7
@@ -105,9 +105,9 @@ Subsequent runs with the same `--output-dir` skip already-downloaded CIFs.
 
 **Example 1: Query Zn MOFs from QMOF for CO₂ screening pre-processing**
 ```bash
-# Env: base-agent
+# Venv: venv/cpu
 MP_API_KEY=<your_mp_api_key> \
-python skills/chem-db-mof/scripts/query_mof_db.py \
+uv run --project venv/cpu python skills/chem-db-mof/scripts/query_mof_db.py \
     --database qmof \
     --formula Zn \
     --max-results 10 \
@@ -116,23 +116,23 @@ python skills/chem-db-mof/scripts/query_mof_db.py \
 
 **Example 2: Query Zn, Ni, or Mg hypothetical MOFs from ARC-MOF DB7**
 ```bash
-# Env: base-agent
+# Venv: venv/cpu
 # Zn-based
-python skills/chem-db-mof/scripts/query_mof_db.py \
+uv run --project venv/cpu python skills/chem-db-mof/scripts/query_mof_db.py \
     --database arcmof-majumdar \
     --elements Zn,O,C \
     --max-results 50 \
     --output-dir ./research/2026-03-27_arcmof_zn
 
 # Ni-based
-python skills/chem-db-mof/scripts/query_mof_db.py \
+uv run --project venv/cpu python skills/chem-db-mof/scripts/query_mof_db.py \
     --database arcmof-majumdar \
     --elements Ni,O,C \
     --max-results 50 \
     --output-dir ./research/2026-03-27_arcmof_ni
 
 # Mg-based
-python skills/chem-db-mof/scripts/query_mof_db.py \
+uv run --project venv/cpu python skills/chem-db-mof/scripts/query_mof_db.py \
     --database arcmof-majumdar \
     --elements Mg,O,C \
     --max-results 50 \

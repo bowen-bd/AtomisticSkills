@@ -28,8 +28,8 @@ To determine the thermodynamic stability of a material at 0K by computing the en
 
 2.  **Query Materials Project Hull**: Retrieve all structures on the convex hull in the target material's chemical space.
     ```bash
-    # Env: base-agent
-    python skills/mat-stability/scripts/query_mp_hull.py \
+    # Venv: venv/cpu
+    uv run --project venv/cpu python skills/mat-stability/scripts/query_mp_hull.py \
         --formula "Li-Fe-P-O" \
         --target "LiFePO4" \
         --thermo_type "R2SCAN" \
@@ -45,7 +45,7 @@ To determine the thermodynamic stability of a material at 0K by computing the en
 
 3.  **Relax All Structures**: Perform structural relaxation on all hull structures using the same MLIP.
     ```bash
-    # Env: matgl-agent (if using MatGL)
+    # Venv: venv/mlip (if using MatGL)
     mcp_matgl_relax_structure(
         structure_data="hull_structures/",  # Pass directory containing all CIF files
         relax_cell=True,
@@ -65,8 +65,8 @@ To determine the thermodynamic stability of a material at 0K by computing the en
 
 4.  **Construct Convex Hull & Calculate Stability**: Build a pymatgen phase diagram using the relaxed energies.
     ```bash
-    # Env: base-agent
-    python skills/mat-stability/scripts/compute_ehull.py \
+    # Venv: venv/cpu
+    uv run --project venv/cpu python skills/mat-stability/scripts/compute_ehull.py \
         --hull_manifest hull_entries.json \
         --relaxed_dir relaxed/ \
         --target_material LiFePO4 \
@@ -94,8 +94,8 @@ To determine the thermodynamic stability of a material at 0K by computing the en
 ### Example 1: Integrated Stability and ECW Pipeline for Li3PS4
 ```bash
 # Step 1: Query Materials Project hull in Li-P-S space
-# Env: base-agent
-python skills/mat-stability/scripts/query_mp_hull.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-stability/scripts/query_mp_hull.py \
     --formula "Li-P-S" \
     --target "Li3PS4" \
     --thermo_type "R2SCAN" \
@@ -112,8 +112,8 @@ mcp_matgl_relax_structure(
 )
 
 # Step 3: Compute Integrated Stability and ECW
-# Env: base-agent
-python skills/mat-stability/scripts/compute_ehull.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-stability/scripts/compute_ehull.py \
     --hull_manifest hull_entries.json \
     --relaxed_dir relaxed/ \
     --target_material Li3PS4 \

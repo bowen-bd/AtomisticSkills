@@ -20,8 +20,8 @@ To determine the thermodynamic melting temperature ($T_m$) of a bulk material by
 2.  **Phase Preparation**:
     - **Solid**: Create a supercell using `create_supercell.py`.
     ```bash
-    # Env: base-agent
-    python skills/mat-melting-point/scripts/create_supercell.py [input_structure.cif] [solid_supercell.cif] --min_length 20.0
+    # Venv: venv/cpu
+    uv run --project venv/cpu python skills/mat-melting-point/scripts/create_supercell.py [input_structure.cif] [solid_supercell.cif] --min_length 20.0
     ```
     - **Liquid**: Melt a block using 1D-NPT (with mask) to ensure matching dimensions.
     ```bash
@@ -39,8 +39,8 @@ To determine the thermodynamic melting temperature ($T_m$) of a bulk material by
     - **Visual Inspection (CRITICAL)**: Sometimes the cell does not fully melt within the specified MD steps. You MUST use the `mcp_base_visualize_structure` tool to generate an image of the final `liquid.cif` structure (or trajectory) and have the VLM visually inspect the image to confirm that the long-range crystalline order has been destroyed and the cell is completely melted. If it has not, you must run the MD with a higher temperature or for more steps.
 3.  **Interface Creation**: Use `create_interface.py` to concatenate the two phases.
     ```bash
-    # Env: base-agent
-    python skills/mat-melting-point/scripts/create_interface.py solid.cif liquid.cif --axis 0 --output interface.cif
+    # Venv: venv/cpu
+    uv run --project venv/cpu python skills/mat-melting-point/scripts/create_interface.py solid.cif liquid.cif --axis 0 --output interface.cif
     ```
 4.  **Relaxation**: Perform an ionic relaxation using the `relax_structure` MCP tool with `relax_cell=True`. This allows the unit cell to adjust (shrink/expand) to match the density, and remove the interface energy created by stacking the two cells.
     ```bash
@@ -50,7 +50,7 @@ To determine the thermodynamic melting temperature ($T_m$) of a bulk material by
 
     First, extract reference atomic features:
     ```bash
-    # Env: mace-agent (or matgl-agent)
+    # Venv: venv/mlip (or venv/mlip)
     # Extract from pure solid - use explicit output path
     mcp_mace_predict_atomic_features(
         structure_data="solid_supercell.cif",
@@ -66,14 +66,14 @@ To determine the thermodynamic melting temperature ($T_m$) of a bulk material by
 
     Then verify phases:
     ```bash
-    # Env: base-agent
+    # Venv: venv/cpu
     # Solid should be ~100% solid
-    python skills/mat-melting-point/scripts/check_phase.py <research_dir>/solid_features.json \
+    uv run --project venv/cpu python skills/mat-melting-point/scripts/check_phase.py <research_dir>/solid_features.json \
         --solid_features <research_dir>/solid_features.json \
         --liquid_features <research_dir>/liquid_features.json
 
     # Liquid should be ~100% liquid
-    python skills/mat-melting-point/scripts/check_phase.py <research_dir>/liquid_features.json \
+    uv run --project venv/cpu python skills/mat-melting-point/scripts/check_phase.py <research_dir>/liquid_features.json \
         --solid_features <research_dir>/solid_features.json \
         --liquid_features <research_dir>/liquid_features.json
 
@@ -83,7 +83,7 @@ To determine the thermodynamic melting temperature ($T_m$) of a bulk material by
         structure_data="interface_relax/relaxed_structure.cif",
         output_path="<research_dir>/interface_features.json"
     )
-    python skills/mat-melting-point/scripts/check_phase.py <research_dir>/interface_features.json \
+    uv run --project venv/cpu python skills/mat-melting-point/scripts/check_phase.py <research_dir>/interface_features.json \
         --solid_features <research_dir>/solid_features.json \
         --liquid_features <research_dir>/liquid_features.json
     ```
@@ -136,8 +136,8 @@ To determine the thermodynamic melting temperature ($T_m$) of a bulk material by
     ```
     Then, classify the phase:
     ```bash
-    # Env: base-agent
-    python skills/mat-melting-point/scripts/check_phase.py production_md/final_structure_features.json \
+    # Venv: venv/cpu
+    uv run --project venv/cpu python skills/mat-melting-point/scripts/check_phase.py production_md/final_structure_features.json \
       --solid_features solid_features.json \
       --liquid_features liquid_features.json
     ```
@@ -151,8 +151,8 @@ To determine the thermodynamic melting temperature ($T_m$) of a bulk material by
 
 Creating a solid-liquid interface for Aluminum:
 ```bash
-# Env: base-agent
-python skills/mat-melting-point/scripts/create_interface.py Al_solid.cif Al_liquid.cif --axis 0 --output Al_interface.cif
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-melting-point/scripts/create_interface.py Al_solid.cif Al_liquid.cif --axis 0 --output Al_interface.cif
 ```
 
 ## Constraints

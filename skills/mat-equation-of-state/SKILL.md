@@ -34,8 +34,8 @@ Refer to the [foundation-potentials skill](../ml-foundation-potentials/SKILL.md)
 To calculate the equation of state, use the `calculate_eos.py` script:
 
 ```bash
-# Env: mace-agent
-python skills/mat-equation-of-state/scripts/calculate_eos.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/mat-equation-of-state/scripts/calculate_eos.py \
     --structure path/to/relaxed_structure.cif \
     --model_type mace \
     --model_name MACE-OMAT-0-small \

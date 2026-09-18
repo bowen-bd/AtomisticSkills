@@ -32,10 +32,10 @@ To keep the core MLIP wrappers clean, property prediction in AtomisticSkills is 
 MACE property training is handled by `scripts/train_mace_property.py`. It dynamically patches the `mace.cli.run_train` module to freeze the backbone (if requested) and inject a custom intensive/extensive property readout.
 
 ```bash
-# Env: mace-agent
+# Venv: venv/mlip
 
 # Run the standalone MACE property training script
-python skills/ml-property-predictor/scripts/train_mace_property.py \
+uv run --project venv/mlip python skills/ml-property-predictor/scripts/train_mace_property.py \
     --data_path .agents/test/mp_bulk_modulus.json \
     --model_name MACE-OMAT-0-small \
     --target_property bulk_modulus \
@@ -56,10 +56,10 @@ python skills/ml-property-predictor/scripts/train_mace_property.py \
 MatGL property training is handled by `scripts/train_matgl_property.py`. It loads a pretrained `M3GNet` model, replaces the data collater to safely handle graph caching, and trains the property explicitly.
 
 ```bash
-# Env: matgl-agent
+# Venv: venv/mlip
 
 # Run the standalone MatGL property training script
-python skills/ml-property-predictor/scripts/train_matgl_property.py \
+uv run --project venv/mlip python skills/ml-property-predictor/scripts/train_matgl_property.py \
     --data_path .agents/test/mp_bulk_modulus.json \
     --model_name M3GNet-MP-2021.2.8-PES \
     --target_property bulk_modulus \

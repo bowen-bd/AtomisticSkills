@@ -21,8 +21,8 @@ where $E$ is the total energy, $n$ is the number of intercalated ions, and $\mu_
     - Create the de-intercalated structure by removing intercalating ions:
 
     ```bash
-    # Env: base-agent
-    python skills/mat-intercalation-voltage/scripts/remove_atoms.py \
+    # Venv: venv/cpu
+    uv run --project venv/cpu python skills/mat-intercalation-voltage/scripts/remove_atoms.py \
         LiFePO4.cif \
         --remove Li \
         --output FePO4.cif
@@ -71,8 +71,8 @@ where $E$ is the total energy, $n$ is the number of intercalated ions, and $\mu_
 5.  **Calculate Voltage**:
 
     ```bash
-    # Env: base-agent
-    python skills/mat-intercalation-voltage/scripts/calculate_voltage.py \
+    # Venv: venv/cpu
+    uv run --project venv/cpu python skills/mat-intercalation-voltage/scripts/calculate_voltage.py \
         --e_full -123.45 \
         --e_empty -98.76 \
         --e_metal -1.23 \

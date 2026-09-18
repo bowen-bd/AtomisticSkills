@@ -54,8 +54,8 @@ Refer to the [foundation-potentials skill](../ml-foundation-potentials/SKILL.md)
 To calculate adsorption energies, use the `calculate_adsorption.py` script:
 
 ```bash
-# Env: fairchem-agent
-python skills/mat-surface-adsorption/scripts/calculate_adsorption.py \
+# Venv: venv/fairchem
+uv run --project venv/fairchem python skills/mat-surface-adsorption/scripts/calculate_adsorption.py \
     --bulk path/to/bulk_structure.cif \
     --adsorbate path/to/adsorbate.xyz \
     --miller_index '[1,1,1]' \
@@ -108,8 +108,8 @@ The calculation generates the following files in the output directory:
 Calculate the adsorption energy of CO on the (111) surface of Cu using an Open Catalyst trained model:
 
 ```bash
-# Env: fairchem-agent
-python skills/mat-surface-adsorption/scripts/calculate_adsorption.py \
+# Venv: venv/fairchem
+uv run --project venv/fairchem python skills/mat-surface-adsorption/scripts/calculate_adsorption.py \
     --bulk examples/CO_on_Cu111/Cu_bulk.cif \
     --adsorbate examples/CO_on_Cu111/CO.xyz \
     --miller_index '[1,1,1]' \
@@ -128,8 +128,8 @@ python skills/mat-surface-adsorption/scripts/calculate_adsorption.py \
 Use a SMILES string to define the adsorbate:
 
 ```bash
-# Env: matgl-agent
-python skills/mat-surface-adsorption/scripts/calculate_adsorption.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/mat-surface-adsorption/scripts/calculate_adsorption.py \
     --bulk Pt_bulk.cif \
     --adsorbate "O=C=O" \
     --miller_index '[1,1,1]' \
@@ -143,8 +143,8 @@ python skills/mat-surface-adsorption/scripts/calculate_adsorption.py \
 Calculate adsorption on a (100) surface:
 
 ```bash
-# Env: fairchem-agent
-python skills/mat-surface-adsorption/scripts/calculate_adsorption.py \
+# Venv: venv/fairchem
+uv run --project venv/fairchem python skills/mat-surface-adsorption/scripts/calculate_adsorption.py \
     --bulk Ni_bulk.cif \
     --adsorbate H2.xyz \
     --miller_index '[1,0,0]' \

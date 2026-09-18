@@ -36,8 +36,8 @@ Both paths give comparable GB rankings for typical drug-protein systems, but the
 For the 1-5 ns production runs typical in the [HTVS workflow](../../.agents/workflows/drug-hit-finding-htvs.md):
 
 ```bash
-# Env: drugmd-agent
-python skills/drug-mmpbsa-gbsa/scripts/compute_mmgbsa.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-mmpbsa-gbsa/scripts/compute_mmgbsa.py \
   --topology md/system/complex_solvated.pdb \
   --trajectory md/run/production.dcd \
   --ligand_sdf md/ligand.sdf \
@@ -61,8 +61,8 @@ Key parameters:
 When the receptor has a bound cofactor that should be part of the receptor subsystem, and the MD production was long enough (>=10 ns) to justify a longer equilibration skip:
 
 ```bash
-# Env: drugmd-agent
-python skills/drug-mmpbsa-gbsa/scripts/compute_mmgbsa.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-mmpbsa-gbsa/scripts/compute_mmgbsa.py \
   --topology md/system/complex_solvated.pdb \
   --trajectory md/run/production.dcd \
   --ligand_sdf md/ligand.sdf \
@@ -86,8 +86,8 @@ The interior dielectric of the solute (`--solute_dielectric`, OpenMM's `soluteDi
 Higher dielectrics damp electrostatic contributions and generally improve ranking agreement with experiment for charged systems, at the cost of losing sensitivity to directional electrostatic interactions. If you are unsure, run the rescoring at 1.0 and 2.0 on a small subset with known rank-order and pick the value that tracks better. The chosen value is recorded in `mmgbsa_summary.json` for provenance.
 
 ```bash
-# Env: drugmd-agent
-python skills/drug-mmpbsa-gbsa/scripts/compute_mmgbsa.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-mmpbsa-gbsa/scripts/compute_mmgbsa.py \
   --topology md/system/complex_solvated.pdb \
   --trajectory md/run/production.dcd \
   --ligand_sdf md/ligand.sdf \
@@ -101,8 +101,8 @@ python skills/drug-mmpbsa-gbsa/scripts/compute_mmgbsa.py \
 For non-standard residue naming or multi-chain receptors:
 
 ```bash
-# Env: drugmd-agent
-python skills/drug-mmpbsa-gbsa/scripts/compute_mmgbsa.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-mmpbsa-gbsa/scripts/compute_mmgbsa.py \
   --topology md/system/complex_solvated.pdb \
   --trajectory md/run/production.dcd \
   --ligand_sdf md/ligand.sdf \
@@ -140,8 +140,8 @@ More negative dG indicates stronger predicted binding. **Only relative ranking w
 When you need Poisson-Boltzmann (not just GB), or when you want a method that matches what reviewers expect from the MM-PBSA literature, use `compute_mmpbsa.py`. It builds the same dry-complex / receptor / ligand subsystems as the OpenMM path, then converts the systems to Amber prmtops via ParmEd, converts the trajectory to NetCDF via cpptraj, and hands everything to AmberTools `MMPBSA.py`.
 
 ```bash
-# Env: drugmd-agent
-python skills/drug-mmpbsa-gbsa/scripts/compute_mmpbsa.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-mmpbsa-gbsa/scripts/compute_mmpbsa.py \
   --topology md/system/complex_solvated.pdb \
   --trajectory md/run/production.dcd \
   --ligand_sdf md/ligand.sdf \

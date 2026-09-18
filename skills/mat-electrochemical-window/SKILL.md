@@ -31,8 +31,8 @@ In `pymatgen`, this exact analytical bounding is extracted using `PhaseDiagram.g
 To compute the intrinsic ECW of a material, utilize the `calculate_ecw.py` script. The script automatically handles Materials Project thermodynamic entries, phase diagram construction, and calculates the exact analytical grand-potential limits using `.get_transition_chempots()`.
 
 ```bash
-# Env: base-agent
-python skills/mat-electrochemical-window/scripts/calculate_ecw.py --mp-id mp-1183147 --mobile-ion Li
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-electrochemical-window/scripts/calculate_ecw.py --mp-id mp-1183147 --mobile-ion Li
 ```
 
 ### Script Arguments
@@ -46,8 +46,8 @@ python skills/mat-electrochemical-window/scripts/calculate_ecw.py --mp-id mp-118
 You can independently reproduce the exact intrinsic thermodynamic stability windows (Table 1) reported in the original Zhu et al. (2015) manuscript using the script provided in this skill.
 
 ```bash
-# Env: base-agent
-python skills/mat-electrochemical-window/scripts/reproduce_table1.py
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-electrochemical-window/scripts/reproduce_table1.py
 ```
 
 > [!NOTE]

@@ -22,8 +22,8 @@ To process porous frameworks (e.g., MOFs, COFs) for downstream molecular sorptio
 1. **Build Supercell (if necessary)**: Determine if the input framework needs to be expanded. Use the provided utility to read the input CIF, check interplanar distances, build a supercell if they are below the threshold, and save the result.
 
 ```bash
-# Env: base-agent
-python skills/chem-sorption-relax/scripts/build_supercell.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/chem-sorption-relax/scripts/build_supercell.py \
     --structure path/to/framework.cif \
     --min-plane-dist 12.0 \
     --output-cif ./out/framework_supercell.cif
@@ -35,7 +35,7 @@ python skills/chem-sorption-relax/scripts/build_supercell.py \
 2. **Relax the Framework**: Relax the output structure using the MCP server environment. Ensure that the correct MLIP is loaded first.
 
 ```python
-# Env: fairchem-agent (via MCP server)
+# Venv: venv/fairchem (via MCP server)
 mcp_fairchem_load_model(
     model_name="uma-s-1p2",
     device="auto"
@@ -72,8 +72,8 @@ The relaxed CIF file (e.g. `./out/relaxed_framework/<name>.relaxed.cif`) from st
 
 1. Build supercell:
 ```bash
-# Env: base-agent
-python skills/chem-sorption-relax/scripts/build_supercell.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/chem-sorption-relax/scripts/build_supercell.py \
     --structure my_cof.cif \
     --min-plane-dist 12.0 \
     --output-cif ./results/COF-1_supercell.cif

@@ -27,7 +27,7 @@ Generate transition state (TS) structures given reactant and product structures 
 This skill requires the `react-ot-agent` conda environment. Ensure it is installed:
 
 ```bash
-# Env: react-ot-agent
+# Venv: venv/mlip
 cd conda-envs/react-ot-agent
 bash install.sh
 ```
@@ -38,8 +38,8 @@ Before running the skill for the first time, download the pre-trained model weig
 
 ```bash
 # activate react-ot-agent first
-conda activate react-ot-agent
-python conda-envs/react-ot-agent/download_models.py
+# Venv: venv/mlip
+uv run --project venv/mlip python conda-envs/react-ot-agent/download_models.py
 ```
 
 The checkpoint is saved to `~/.cache/react-ot/checkpoints/sb-pretrained.ckpt`.
@@ -49,8 +49,8 @@ The checkpoint is saved to `~/.cache/react-ot/checkpoints/sb-pretrained.ckpt`.
 Run the generation script with reactant and product files (xyz, cif, pdb, etc. - anything ASE reads).
 
 ```bash
-# Env: react-ot-agent
-python skills/chem-react-ot/scripts/generate_ts.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/chem-react-ot/scripts/generate_ts.py \
     --reactants reactant.xyz \
     --products product.xyz \
     --output_dir results/ts_search
@@ -67,8 +67,8 @@ python skills/chem-react-ot/scripts/generate_ts.py \
 ## Example
 
 ```bash
-# Env: react-ot-agent
-python skills/chem-react-ot/scripts/generate_ts.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/chem-react-ot/scripts/generate_ts.py \
     --reactants skills/chem-react-ot/examples/oxadiazole_isomerization/reactant.xyz \
     --products skills/chem-react-ot/examples/oxadiazole_isomerization/product.xyz \
     --output_dir skills/chem-react-ot/examples/oxadiazole_isomerization/output

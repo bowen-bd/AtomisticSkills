@@ -17,8 +17,8 @@ To query experimental molecular spectra—such as Infrared (IR), Mass Spectromet
 Use the `query_spectra.py` script to fetch available spectrographic data for a given chemical formula. The script automatically searches the NIST Chemistry WebBook, resolves the compound, and downloads all available JCAMP-DX (`.jdx`) formatted spectra into the specified directory.
 
 ```bash
-# Env: base-agent
-python skills/chem-db-spectra/scripts/query_spectra.py <formula> <output_dir> [--type {IR,Mass,UVVis,All}]
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/chem-db-spectra/scripts/query_spectra.py <formula> <output_dir> [--type {IR,Mass,UVVis,All}]
 ```
 
 Parameters:

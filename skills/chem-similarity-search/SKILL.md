@@ -18,8 +18,8 @@ Adjust the `--threshold` (similarity cutoff 0-100, default is 95) to widen or na
 Adjust `--max_records` to limit the output length.
 
 ```bash
-# Env: base-agent
-python skills/chem-similarity-search/scripts/similarity_search.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/chem-similarity-search/scripts/similarity_search.py \
   --smiles "CC(=O)Oc1ccccc1C(=O)O" \
   --threshold 95 \
   --max_records 5 \
@@ -31,8 +31,8 @@ python skills/chem-similarity-search/scripts/similarity_search.py \
 Search directly using an exact compound's CID. This avoids translation steps for SMILES parsing.
 
 ```bash
-# Env: base-agent
-python skills/chem-similarity-search/scripts/similarity_search.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/chem-similarity-search/scripts/similarity_search.py \
   --cid 2244 \
   --threshold 90 \
   --max_records 10 \
@@ -45,8 +45,8 @@ python skills/chem-similarity-search/scripts/similarity_search.py \
 We can test extracting highly similar analogs (Threshold 95) for Aspirin (CID: 2244 or SMILES: `CC(=O)Oc1ccccc1C(=O)O`).
 
 ```bash
-# Env: base-agent
-python skills/chem-similarity-search/scripts/similarity_search.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/chem-similarity-search/scripts/similarity_search.py \
   --cid 2244 \
   --threshold 95 \
   --max_records 5 \

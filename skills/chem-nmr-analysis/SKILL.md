@@ -43,9 +43,9 @@ For end-to-end workflows that chain this skill with other skills, see: `.agents/
 The agent should use this script to predict reaction products from reactant and reagent SMILES via the ReactionT5 model.
 
 ```bash
-# Env: nmr-agent
+# Venv: venv/cpu
 export HF_TOKEN=<token>
-python skills/chem-nmr-analysis/scripts/predict_products.py \
+uv run --project venv/cpu python skills/chem-nmr-analysis/scripts/predict_products.py \
   --reactant_smiles "C1CCC(=O)C1" \
   --reagent_smiles "[BH3-]" \
   --output <research_dir>/predicted_products.json
@@ -56,8 +56,8 @@ python skills/chem-nmr-analysis/scripts/predict_products.py \
 The agent should use this script to determine mole fractions of known components in a mixture spectrum via Wasserstein-distance deconvolution.
 
 ```bash
-# Env: nmr-agent
-python skills/chem-nmr-analysis/scripts/deconvolve.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/chem-nmr-analysis/scripts/deconvolve.py \
   mixture.csv ref_borneol.xy ref_isoborneol.xy \
   --protons 18 18 \
   --names "borneol" "isoborneol" \
@@ -71,8 +71,8 @@ python skills/chem-nmr-analysis/scripts/deconvolve.py \
 The agent should use this script when the user has crude NMR spectra recorded at multiple time points during a reaction.
 
 ```bash
-# Env: nmr-agent
-python skills/chem-nmr-analysis/scripts/kinetics.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/chem-nmr-analysis/scripts/kinetics.py \
   --refs ref1.xy ref2.xy \
   --timepoints t0.csv t10.csv t20.csv \
   --times 0 10 20 \
@@ -88,8 +88,8 @@ python skills/chem-nmr-analysis/scripts/kinetics.py \
 The agent should use this script to overlay or stack spectra for visual inspection before or after deconvolution.
 
 ```bash
-# Env: nmr-agent
-python skills/chem-nmr-analysis/scripts/plot.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/chem-nmr-analysis/scripts/plot.py \
   mixture.csv ref_borneol.xy ref_isoborneol.xy \
   --labels "Mixture" "borneol" "isoborneol" \
   --title "Mixture vs References" \
@@ -146,7 +146,7 @@ All spectrum files must be two-column numeric data (ppm, intensity):
 
 All scripts in this skill use the `nmr-agent` conda environment:
 ```bash
-mamba activate nmr-agent
+# Venv: venv/cpu
 ```
 Install: `conda-envs/nmr-agent/install.sh`
 

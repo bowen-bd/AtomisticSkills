@@ -45,8 +45,8 @@ Use ASE's built-in molecule database or provide a structure file:
 ### Step 2: Run vibration analysis
 
 ```bash
-# Env: mace-agent
-python skills/chem-vibration/scripts/calculate_vibrations.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/chem-vibration/scripts/calculate_vibrations.py \
     --molecule H2O \
     --model_type mace \
     --model_name MACE-OMAT-0-small \
@@ -55,8 +55,8 @@ python skills/chem-vibration/scripts/calculate_vibrations.py \
 
 With a structure file instead:
 ```bash
-# Env: mace-agent
-python skills/chem-vibration/scripts/calculate_vibrations.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/chem-vibration/scripts/calculate_vibrations.py \
     --structure path/to/molecule.xyz \
     --model_type mace \
     --model_name MACE-OMAT-0-small \
@@ -88,8 +88,8 @@ python skills/chem-vibration/scripts/calculate_vibrations.py \
 See `examples/H2O/` for a water molecule vibration analysis.
 
 ```bash
-# Env: mace-agent
-python skills/chem-vibration/scripts/calculate_vibrations.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/chem-vibration/scripts/calculate_vibrations.py \
     --molecule H2O \
     --model_type mace \
     --model_name MACE-OMAT-0-small \

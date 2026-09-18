@@ -68,8 +68,8 @@ python skills/mat-dft-mixing-functionals/scripts/apply_correction.py /path/to/st
 
 To run on a specific file with known energy:
 ```bash
-# Env: base-agent
-python skills/mat-dft-mixing-functionals/scripts/apply_correction.py structure.cif --energy -123.45
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-dft-mixing-functionals/scripts/apply_correction.py structure.cif --energy -123.45
 ```
 
 ### 2. Batch Processing

@@ -16,8 +16,8 @@ To programmatically extract critical safety information from the PubChem PUG-VIE
 Provide the precise CID of the molecule to query safety metadata.
 
 ```bash
-# Env: base-agent
-python skills/chem-hazard-toxicity/scripts/get_safety_data.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/chem-hazard-toxicity/scripts/get_safety_data.py \
   --cid 2519 \
   --outdir research/caffeine_safety \
   --output safety_caffeine.json
@@ -27,8 +27,8 @@ python skills/chem-hazard-toxicity/scripts/get_safety_data.py \
 Use `--triage` to extract consensus GHS statements ($\ge 50\%$), lowest rat oral LD50, GHS acute oral category (1–5 or `unclassified`), and check oral hazard code consistency:
 
 ```bash
-# Env: base-agent
-python skills/chem-hazard-toxicity/scripts/get_safety_data.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/chem-hazard-toxicity/scripts/get_safety_data.py \
   --cid 2519 \
   --triage \
   --outdir research/caffeine_safety \

@@ -17,8 +17,8 @@ To query experimental crystal structures (e.g. from the Crystallography Open Dat
 Use the `query_optimade.py` script to fetch structure data based on standard OPTIMADE query language filters.
 
 ```bash
-# Env: base-agent
-python skills/mat-db-optimade/scripts/query_optimade.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-db-optimade/scripts/query_optimade.py \
     results.json \
     --filter 'elements HAS ALL "Na", "Cl"' \
     --provider cod \

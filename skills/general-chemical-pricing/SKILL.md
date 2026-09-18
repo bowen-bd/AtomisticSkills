@@ -16,8 +16,8 @@ To programmatically query averaged bulk commodity prices for pure chemical eleme
 Use this script to search for the pricing details of a given element or chemical compound. The script aggregates Wikipedia's USGS elemental data with PubChem's registered supplier vendor lists.
 
 ```bash
-# Env: base-agent
-python skills/general-chemical-pricing/scripts/get_pricing.py <Query Name or Symbol>
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/general-chemical-pricing/scripts/get_pricing.py <Query Name or Symbol>
 ```
 
 **Parameters:**

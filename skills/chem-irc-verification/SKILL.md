@@ -24,8 +24,8 @@ Runs forward/reverse IRC from the TS, optionally relaxes endpoints, then checks 
 ### Use with MACE
 
 ```bash
-# Env: mace-agent
-python skills/chem-irc-verification/scripts/verify_irc_sella.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/chem-irc-verification/scripts/verify_irc_sella.py \
   --reactant reactant_optimized.xyz \
   --product product_optimized.xyz \
   --ts ts_optimized.xyz \
@@ -42,8 +42,8 @@ python skills/chem-irc-verification/scripts/verify_irc_sella.py \
 ### Use with FAIRChem (UMA)
 
 ```bash
-# Env: fairchem-agent
-python skills/chem-irc-verification/scripts/verify_irc_sella.py \
+# Venv: venv/fairchem
+uv run --project venv/fairchem python skills/chem-irc-verification/scripts/verify_irc_sella.py \
   --reactant reactant_optimized.xyz \
   --product product_optimized.xyz \
   --ts ts_optimized.xyz \

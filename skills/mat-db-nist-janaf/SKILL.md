@@ -17,8 +17,8 @@ To query experimental temperature-dependent thermodynamic properties and standar
 Use the `query_janaf.py` script to fetch thermodynamic data for a given chemical formula. The script automatically searches the WebBook for the closest matching standard element or compound and parses the HTML tables to extract the gas-phase or condensed-phase standard thermochemistry values.
 
 ```bash
-# Env: base-agent
-python skills/mat-db-nist-janaf/scripts/query_janaf.py <formula> <output_json>
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-db-nist-janaf/scripts/query_janaf.py <formula> <output_json>
 ```
 
 Parameters:

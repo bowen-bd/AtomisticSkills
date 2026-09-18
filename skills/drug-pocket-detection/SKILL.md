@@ -48,8 +48,8 @@ Prepare inputs explicitly: strip unwanted waters, buffer ions, and ligands; keep
 ### 2. Detect pockets with fpocket (default)
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-pocket-detection/scripts/detect_pockets.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-pocket-detection/scripts/detect_pockets.py \
   --protein receptor_prepared.pdb \
   --backend fpocket \
   --top_n 10 \
@@ -80,8 +80,8 @@ default and always records the exact command line in the output JSON
 ### 3. Detect pockets with P2Rank (optional ML backend)
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-pocket-detection/scripts/detect_pockets.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-pocket-detection/scripts/detect_pockets.py \
   --protein receptor_prepared.pdb \
   --backend p2rank \
   --top_n 10 \
@@ -163,8 +163,8 @@ The broad qualitative interpretation (>0.5 promising, ~0 unlikely) is from fpock
 ### 5. Visualize the top pockets
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-pocket-detection/scripts/visualize_pockets.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-pocket-detection/scripts/visualize_pockets.py \
   --protein receptor_prepared.pdb \
   --pockets pockets.json \
   --top_n 3 \
@@ -178,8 +178,8 @@ Renders the protein as a transparent cartoon, draws a colored sphere at each poc
 Convert the chosen pocket into a docking-box JSON consumable by the downstream skills:
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-pocket-detection/scripts/pocket_to_box.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-pocket-detection/scripts/pocket_to_box.py \
   --pockets pockets.json \
   --rank 1 \
   --padding 6.0 \

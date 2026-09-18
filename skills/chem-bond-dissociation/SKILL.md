@@ -78,8 +78,8 @@ Refer to the [foundation-potentials skill](../ml-foundation-potentials/SKILL.md)
 
 **Homolytic only** (default, no charge/spin needed):
 ```bash
-# Env: mace-agent
-python skills/chem-bond-dissociation/scripts/calculate_bde.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/chem-bond-dissociation/scripts/calculate_bde.py \
     --smiles CCO \
     --all_bonds \
     --cleavage homolytic \
@@ -90,8 +90,8 @@ python skills/chem-bond-dissociation/scripts/calculate_bde.py \
 
 **Both homolytic and heterolytic** (MACE-OMOL):
 ```bash
-# Env: mace-agent
-python skills/chem-bond-dissociation/scripts/calculate_bde.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/chem-bond-dissociation/scripts/calculate_bde.py \
     --smiles CCO \
     --all_bonds \
     --cleavage both \
@@ -102,8 +102,8 @@ python skills/chem-bond-dissociation/scripts/calculate_bde.py \
 
 **Both homolytic and heterolytic** (FairChem UMA omol):
 ```bash
-# Env: fairchem-agent
-python skills/chem-bond-dissociation/scripts/calculate_bde.py \
+# Venv: venv/fairchem
+uv run --project venv/fairchem python skills/chem-bond-dissociation/scripts/calculate_bde.py \
     --smiles CCO \
     --all_bonds \
     --cleavage both \
@@ -115,8 +115,8 @@ python skills/chem-bond-dissociation/scripts/calculate_bde.py \
 
 **Heterolytic only** with FairChem UMA:
 ```bash
-# Env: fairchem-agent
-python skills/chem-bond-dissociation/scripts/calculate_bde.py \
+# Venv: venv/fairchem
+uv run --project venv/fairchem python skills/chem-bond-dissociation/scripts/calculate_bde.py \
     --smiles CCO \
     --all_bonds \
     --cleavage heterolytic \
@@ -171,8 +171,8 @@ python skills/chem-bond-dissociation/scripts/calculate_bde.py \
 ### Ethanol — Homolytic BDE (MACE-OFF23)
 
 ```bash
-# Env: mace-agent
-python skills/chem-bond-dissociation/scripts/calculate_bde.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/chem-bond-dissociation/scripts/calculate_bde.py \
     --smiles CCO \
     --all_bonds \
     --include_h_bonds \
@@ -185,8 +185,8 @@ python skills/chem-bond-dissociation/scripts/calculate_bde.py \
 ### Methanol — Both Homo and Heterolytic BDE (FairChem UMA omol)
 
 ```bash
-# Env: fairchem-agent
-python skills/chem-bond-dissociation/scripts/calculate_bde.py \
+# Venv: venv/fairchem
+uv run --project venv/fairchem python skills/chem-bond-dissociation/scripts/calculate_bde.py \
     --smiles CO \
     --all_bonds \
     --include_h_bonds \

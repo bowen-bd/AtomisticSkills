@@ -27,8 +27,8 @@ The substitution probability model is trained on the ICSD (Inorganic Crystal Str
 
 2. **Run the forward proposal script**:
    ```bash
-   # Env: base-agent
-   python skills/mat-ionic-substitution/scripts/propose_substitutions.py \
+   # Venv: venv/cpu
+   uv run --project venv/cpu python skills/mat-ionic-substitution/scripts/propose_substitutions.py \
        --structure source.cif \
        --threshold 0.001 \
        --output_dir proposed_substitutions/
@@ -47,8 +47,8 @@ The substitution probability model is trained on the ICSD (Inorganic Crystal Str
 
 1. **Run the reverse search script**:
    ```bash
-   # Env: base-agent
-   python skills/mat-ionic-substitution/scripts/find_structures_for_composition.py \
+   # Venv: venv/cpu
+   uv run --project venv/cpu python skills/mat-ionic-substitution/scripts/find_structures_for_composition.py \
        --composition LiCl \
        --threshold 0.001 \
        --output_dir structures_for_LiCl/
@@ -77,8 +77,8 @@ If you already know the exact substitution you want to make on a specific struct
 
 ### Example 1: Discover new Li-ion cathode from NaCoO₂
 ```bash
-# Env: base-agent
-python skills/mat-ionic-substitution/scripts/propose_substitutions.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-ionic-substitution/scripts/propose_substitutions.py \
     --structure NaCoO2.cif \
     --threshold 0.001 \
     --output_dir NaCoO2_substitutions/
@@ -87,8 +87,8 @@ Expected output includes: LiCoO₂, KCoO₂, NaNiO₂, NaMnO₂, LiNiO₂, etc.
 
 ### Example 2: Find all crystal structures for LiCl
 ```bash
-# Env: base-agent
-python skills/mat-ionic-substitution/scripts/find_structures_for_composition.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-ionic-substitution/scripts/find_structures_for_composition.py \
     --composition LiCl \
     --output_dir LiCl_structures/
 ```

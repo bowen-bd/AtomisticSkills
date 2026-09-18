@@ -21,16 +21,16 @@ Use the `match_structure.py` script to perform a symmetry-aware structural compa
 If you do not pass a second argument, the script will automatically query the Materials Project API for all theoretical and experimental polymorphs corresponding to the target formulas, and match your structures against them:
 
 ```bash
-# Env: base-agent
-python skills/mat-structure-novelty/scripts/match_structure.py generated_cifs/ --output batch_results.json
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-structure-novelty/scripts/match_structure.py generated_cifs/ --output batch_results.json
 ```
 
 **Option B: Local Candidate Matching**
 If you want to match against a specific subset of structures (like a local ICSD dump) or just compare two specific structures, pass the explicitly downloaded candidates directory or file:
 
 ```bash
-# Env: base-agent
-python skills/mat-structure-novelty/scripts/match_structure.py target_structure_1.cif target_structure_2.xyz --output match_results.json
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-structure-novelty/scripts/match_structure.py target_structure_1.cif target_structure_2.xyz --output match_results.json
 ```
 
 **Literature Fallback (Novel/Unmatched Structures):**
@@ -55,9 +55,9 @@ mcp_search_literature(
 
 Checking if a generated structure has been experimentally reported:
 ```bash
-# Env: base-agent
+# Venv: venv/cpu
 # This automatically searches MP for LiFePO4 structures and compares against generated_LFP.cif
-python skills/mat-structure-novelty/scripts/match_structure.py generated_LFP.cif --output match_results.json
+uv run --project venv/cpu python skills/mat-structure-novelty/scripts/match_structure.py generated_LFP.cif --output match_results.json
 ```
 
 ## Constraints

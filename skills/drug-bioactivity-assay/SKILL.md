@@ -16,8 +16,8 @@ To programmatically retrieve the testing history of a specific chemical compound
 Retrieve all assays for a given compound (CID), regardless of outcome:
 
 ```bash
-# Env: base-agent
-python skills/drug-bioactivity-assay/scripts/get_assays.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-bioactivity-assay/scripts/get_assays.py \
   --cid 2244 \
   --limit 50 \
   --outdir research/aspirin_assays \
@@ -28,8 +28,8 @@ python skills/drug-bioactivity-assay/scripts/get_assays.py \
 Use the `--active_only` flag to strictly return assays where the compound was marked as "Active" or showed positive binding/inhibition.
 
 ```bash
-# Env: base-agent
-python skills/drug-bioactivity-assay/scripts/get_assays.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-bioactivity-assay/scripts/get_assays.py \
   --cid 5291 \
   --active_only \
   --limit 50 \
@@ -49,8 +49,8 @@ python skills/drug-bioactivity-assay/scripts/get_assays.py \
 We can test extracting known active targets for the cancer drug Imatinib (CID: 5291).
 
 ```bash
-# Env: base-agent
-python skills/drug-bioactivity-assay/scripts/get_assays.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-bioactivity-assay/scripts/get_assays.py \
   --cid 5291 \
   --active_only \
   --limit 20 \

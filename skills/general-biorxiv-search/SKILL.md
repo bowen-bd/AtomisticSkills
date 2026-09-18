@@ -16,24 +16,24 @@ Search and retrieve preprint metadata (title, authors, abstract, DOI, category, 
 Search last 30 days for papers matching keywords in title/abstract.
 
 ```bash
-# Env: base-agent
-python skills/general-biorxiv-search/scripts/biorxiv_search.py "protein folding" --max_results 5 --output protein_folding.json
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/general-biorxiv-search/scripts/biorxiv_search.py "protein folding" --max_results 5 --output protein_folding.json
 ```
 
 ### 2. Date Range Search
 Retrieve preprints posted in a specific date range, with optional keyword/category filter.
 
 ```bash
-# Env: base-agent
-python skills/general-biorxiv-search/scripts/biorxiv_search.py "CRISPR" --start 2025-01-01 --end 2025-06-01 --max_results 10 --output crispr_2025.json
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/general-biorxiv-search/scripts/biorxiv_search.py "CRISPR" --start 2025-01-01 --end 2025-06-01 --max_results 10 --output crispr_2025.json
 ```
 
 ### 3. Category Filter
 Filter by subject category (use shortcuts or full names).
 
 ```bash
-# Env: base-agent
-python skills/general-biorxiv-search/scripts/biorxiv_search.py --category neuroscience --days 14 --max_results 10
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/general-biorxiv-search/scripts/biorxiv_search.py --category neuroscience --days 14 --max_results 10
 ```
 
 **Supported Category Shortcuts:**
@@ -53,30 +53,30 @@ python skills/general-biorxiv-search/scripts/biorxiv_search.py --category neuros
 Use `--server medrxiv` for medical preprints.
 
 ```bash
-# Env: base-agent
-python skills/general-biorxiv-search/scripts/biorxiv_search.py "COVID vaccine efficacy" --server medrxiv --max_results 5 --output covid_vaccine.json
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/general-biorxiv-search/scripts/biorxiv_search.py "COVID vaccine efficacy" --server medrxiv --max_results 5 --output covid_vaccine.json
 ```
 
 ### 5. DOI Lookup
 Retrieve metadata for a specific preprint by DOI.
 
 ```bash
-# Env: base-agent
-python skills/general-biorxiv-search/scripts/biorxiv_search.py --doi 10.1101/2021.01.01.000000 --output paper.json
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/general-biorxiv-search/scripts/biorxiv_search.py --doi 10.1101/2021.01.01.000000 --output paper.json
 ```
 
 ## Examples
 
 ### Recent Neuroscience Papers
 ```bash
-# Env: base-agent
-python skills/general-biorxiv-search/scripts/biorxiv_search.py --category neuroscience --days 7 --max_results 5
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/general-biorxiv-search/scripts/biorxiv_search.py --category neuroscience --days 7 --max_results 5
 ```
 
 ### Genomics Papers with Keyword Filter
 ```bash
-# Env: base-agent
-python skills/general-biorxiv-search/scripts/biorxiv_search.py "single cell sequencing" --category genomics --start 2024-01-01 --end 2024-12-31 --max_results 10 --output scrna_2024.json
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/general-biorxiv-search/scripts/biorxiv_search.py "single cell sequencing" --category genomics --start 2024-01-01 --end 2024-12-31 --max_results 10 --output scrna_2024.json
 ```
 
 ## Constraints

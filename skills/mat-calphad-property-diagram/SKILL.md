@@ -19,8 +19,8 @@ You must obtain a legitimate `.tdb` (Thermodynamic Data Base) file for the chemi
 Calculate what phases are present, and their molar fractions, across a cooling/heating schedule for a fixed composition.
 
 ```bash
-# Env: calphad-agent
-python skills/mat-calphad-property-diagram/scripts/plot_phase_fractions.py path/to/database.tdb --elements Element1 Element2 --composition Element2 0.3 --t-range 300 1000 10 --output research_dir/phase_fractions.png
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-calphad-property-diagram/scripts/plot_phase_fractions.py path/to/database.tdb --elements Element1 Element2 --composition Element2 0.3 --t-range 300 1000 10 --output research_dir/phase_fractions.png
 ```
 
 - `--composition`: The solute element and its molar fraction (e.g. `Zn 0.3` means 30 mol% Zn).
@@ -30,8 +30,8 @@ python skills/mat-calphad-property-diagram/scripts/plot_phase_fractions.py path/
 
 Evaluating phase fractions for an Al-40%Zn alloy as it cools:
 ```bash
-# Env: calphad-agent
-python skills/mat-calphad-property-diagram/scripts/plot_phase_fractions.py skills/mat-calphad-phase-diagram/examples/Al-Zn/alzn_mey.tdb --elements Al Zn --composition Zn 0.4 --t-range 300 900 10 --output phase_fractions.png
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-calphad-property-diagram/scripts/plot_phase_fractions.py skills/mat-calphad-phase-diagram/examples/Al-Zn/alzn_mey.tdb --elements Al Zn --composition Zn 0.4 --t-range 300 900 10 --output phase_fractions.png
 ```
 
 ## Constraints

@@ -19,8 +19,8 @@ Machine Learning Interatomic Potentials (MLIPs) only predict energies, forces, a
 Use the provided script to generate the sequence (DAG) of VASP computations targeting electronic transport. This automated DAG coordinates structure relaxation, uniform band structure extraction, evaluation of the elastic tensor, and calculations of deformation potentials.
 
 ```bash
-# Env: atomate2-agent
-python skills/mat-dft-electronic-transport/scripts/generate_inputs.py --output amset_flow.json
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-dft-electronic-transport/scripts/generate_inputs.py --output amset_flow.json
 ```
 
 ### 2. Job Execution (via jobflow/Fireworks)
@@ -41,9 +41,9 @@ Once completed, the final node wraps the `AMSET` runner. Resulting transport par
 Run the example demonstrating the DAG generation for GaAs transport calculations.
 
 ```bash
-# Env: atomate2-agent
+# Venv: venv/cpu
 cd skills/mat-dft-electronic-transport/examples/GaAs
-python ../../scripts/generate_inputs.py --output gaas_flow.json
+uv run --project venv/cpu python ../../scripts/generate_inputs.py --output gaas_flow.json
 ```
 
 ## Constraints

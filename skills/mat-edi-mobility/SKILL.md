@@ -130,8 +130,8 @@ with the helper, then splice it into the NSCF deck
 already contains the 144-point 12x12x1 card):
 
 ```bash
-# Env: base-agent
-python skills/mat-edi-mobility/scripts/gen_kgrid.py 12 12 1
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-edi-mobility/scripts/gen_kgrid.py 12 12 1
 ```
 
 ```bash
@@ -225,9 +225,9 @@ in cm^2/Vs) and `mos2_inv_tau.dat` (state-resolved
 `ik ibnd E inv_tau_SERTA inv_tau_MRTA tau_SERTA tau_MRTA`). Parse them:
 
 ```bash
-# Env: base-agent
-python skills/mat-edi-mobility/scripts/parse_transport.py mos2_transport.dat --output-dir results/
-python skills/mat-edi-mobility/scripts/parse_inv_tau.py mos2_inv_tau.dat --output-dir results/
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-edi-mobility/scripts/parse_transport.py mos2_transport.dat --output-dir results/
+uv run --project venv/cpu python skills/mat-edi-mobility/scripts/parse_inv_tau.py mos2_inv_tau.dat --output-dir results/
 ```
 
 Fine-grid convergence is cheap to sweep: because `edwread = .true.` reuses
@@ -271,9 +271,9 @@ This writes `mos2_edmat_direct.dat` (direct $M$, **absolute** NSCF band indices)
 `mos2_edmat_interp.dat` (interpolated $M$, Wannier-subspace indices 1-5). Compare:
 
 ```bash
-# Env: base-agent
-python skills/mat-edi-mobility/scripts/parse_edmat.py mos2_edmat_interp.dat --output-dir results/
-python skills/mat-edi-mobility/scripts/compare_edmat.py mos2_edmat_direct.dat mos2_edmat_interp.dat --band-offset 12 --band-sum --output-dir results/
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-edi-mobility/scripts/parse_edmat.py mos2_edmat_interp.dat --output-dir results/
+uv run --project venv/cpu python skills/mat-edi-mobility/scripts/compare_edmat.py mos2_edmat_direct.dat mos2_edmat_interp.dat --band-offset 12 --band-sum --output-dir results/
 ```
 
 `--band-offset 12` maps the two files' band conventions (direct = interp + number

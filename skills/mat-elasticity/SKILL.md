@@ -1,7 +1,8 @@
 ---
 name: mat-elasticity
 description: Calculate the full elastic tensor and mechanical properties (bulk modulus, shear modulus, Young's modulus, Poisson's ratio) using MLIPs.
-category: [materials]
+metadata:
+  category: [materials]
 ---
 
 # Elastic Tensor Skill
@@ -37,8 +38,8 @@ Refer to the [foundation-potentials skill](../ml-foundation-potentials/SKILL.md)
 To calculate the elastic tensor, use the `calculate_elasticity.py` script:
 
 ```bash
-# Env: mace-agent
-python skills/mat-elasticity/scripts/calculate_elasticity.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/mat-elasticity/scripts/calculate_elasticity.py \
     --structure path/to/structure.cif \
     --model_type mace \
     --model_name MACE-OMAT-0-small \
@@ -75,8 +76,8 @@ python skills/mat-elasticity/scripts/calculate_elasticity.py \
 See `examples/Cu/` for a copper elastic tensor calculation using MACE-OMAT-0-small.
 
 ```bash
-# Env: mace-agent
-python skills/mat-elasticity/scripts/calculate_elasticity.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/mat-elasticity/scripts/calculate_elasticity.py \
     --structure skills/mat-elasticity/examples/Cu/Cu.cif \
     --model_type mace \
     --model_name MACE-OMAT-0-small \

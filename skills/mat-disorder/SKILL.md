@@ -16,8 +16,8 @@ To generate clean, ordered atomic configurations from disordered starting struct
 2.  **Generate Ordered Candidates**: Use the ranking and sampling strategy based on Ewald energy to pick configurations that satisfy stoichiometry while minimizing electrostatic repulsion.
 
     ```bash
-    # Env: base-agent
-    python skills/mat-disorder/scripts/run_ordering.py disordered.cif \
+    # Venv: venv/cpu
+    uv run --project venv/cpu python skills/mat-disorder/scripts/run_ordering.py disordered.cif \
         --n_structures 50 --target_atoms 50 --output_dir ordered_results
     ```
 
@@ -56,8 +56,8 @@ For more accurate Cluster Expansions, use the iterative training workflow which 
 > **Train your CE model first**: Please refer to the [ml-cluster-expansion](../ml-cluster-expansion/SKILL.md) skill to train a robust Cluster Expansion model. This skill focuses on using that trained model for simulations.
 
 ```bash
-# Env: smol-agent
-python skills/mat-disorder/scripts/iterative_ce_training.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-disorder/scripts/iterative_ce_training.py \
     primordial.cif \
     --iterations 5 \
     --n_samples 20 \

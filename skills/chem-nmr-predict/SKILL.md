@@ -32,8 +32,8 @@ The agent should use this skill when:
 If the user provides compound names instead of SMILES, the agent should first resolve them:
 
 ```bash
-# Env: base-agent
-python skills/drug-db-pubchem/scripts/query_pubchem.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-db-pubchem/scripts/query_pubchem.py \
   --name "camphor" --outdir <research_dir>/pubchem/
 ```
 
@@ -44,8 +44,8 @@ The agent should extract `CanonicalSMILES` from the JSON output.
 ### Step 2 — Predict NMR Spectra
 
 ```bash
-# Env: nmr-agent
-python skills/chem-nmr-predict/scripts/predict_nmr.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/chem-nmr-predict/scripts/predict_nmr.py \
   --smiles "<smiles_1>" "<smiles_2>" \
   --names "compound1" "compound2" \
   --field_mhz 400 \
@@ -113,7 +113,7 @@ After prediction, the agent must:
 ## Environment
 
 ```bash
-mamba activate nmr-agent
+# Venv: venv/cpu
 ```
 
 Install: `conda-envs/nmr-agent/install.sh`

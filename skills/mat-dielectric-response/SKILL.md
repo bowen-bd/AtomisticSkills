@@ -74,8 +74,8 @@ mcp_atomate2_run_atomate2_vasp_calculation(
 After the calculation completes, parse the results and generate a dielectric-response plot:
 
 ```bash
-# Env: base-agent
-python skills/mat-dielectric-response/scripts/plot_dielectric.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-dielectric-response/scripts/plot_dielectric.py \
     optics_results \
     --output dielectric_function.png \
     --mode average
@@ -90,8 +90,8 @@ The script will:
 For anisotropic systems, plot the diagonal tensor components separately:
 
 ```bash
-# Env: base-agent
-python skills/mat-dielectric-response/scripts/plot_dielectric.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-dielectric-response/scripts/plot_dielectric.py \
     optics_results \
     --output dielectric_components.png \
     --mode diagonal
@@ -134,8 +134,8 @@ mcp_atomate2_run_atomate2_vasp_calculation(
 )
 
 # 3. Plot results
-# Env: base-agent
-python skills/mat-dielectric-response/scripts/plot_dielectric.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-dielectric-response/scripts/plot_dielectric.py \
     SiC_optics \
     --output SiC_dielectric.png \
     --mode average

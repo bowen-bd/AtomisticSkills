@@ -23,8 +23,8 @@ This skill combines script-based state enumeration with MCP-based 3D generation 
 Use the script to process SMILES/SDF files and enumerate protonation/tautomer states. This outputs 2D SDFs.
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-ligand-prep/scripts/prepare_ligand.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-ligand-prep/scripts/prepare_ligand.py \
   --smiles_file ligands.smi \
   --enumerate_protomers \
   --output_dir ligand_states/

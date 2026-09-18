@@ -51,8 +51,8 @@ Check the `phonon_results.json` file and phonon band structure to see if the pho
 ### Step Three: Calculate lattice thermal conductivity
 
 ```sh
-# Env: mace-agent
-python skills/mat-lattice-thermal-conductivity/scripts/calculate_thermal_conductivity.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/mat-lattice-thermal-conductivity/scripts/calculate_thermal_conductivity.py \
     --structure Si.cif \
     --model_type mace \
     --model_name MACE-OMAT-0-small \

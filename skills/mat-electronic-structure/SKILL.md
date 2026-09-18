@@ -54,8 +54,8 @@ The workflow automatically:
 Instead of running DFT calculations, you can retrieve existing electronic structure data from Materials Project:
 
 ```bash
-# Env: base-agent
-python skills/mat-electronic-structure/scripts/get_mp_electronic_structure.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-electronic-structure/scripts/get_mp_electronic_structure.py \
     --material_id mp-149 \
     --output si_mp_bands.json \
     --plot
@@ -76,8 +76,8 @@ python skills/mat-electronic-structure/scripts/get_mp_electronic_structure.py \
 After the calculation completes, parse the results and generate a band structure plot:
 
 ```bash
-# Env: base-agent
-python skills/mat-electronic-structure/scripts/plot_band_structure.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-electronic-structure/scripts/plot_band_structure.py \
     band_structure_results \
     --output band_structure.png
 ```
@@ -90,8 +90,8 @@ The script will:
 **For DOS (uniform mode)**:
 
 ```bash
-# Env: base-agent
-python skills/mat-electronic-structure/scripts/plot_dos.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-electronic-structure/scripts/plot_dos.py \
     dos_results \
     --output dos.png
 ```
@@ -147,8 +147,8 @@ mcp_atomate2_run_atomate2_vasp_calculation(
 )
 
 # 3. Plot results
-# Env: base-agent
-python skills/mat-electronic-structure/scripts/plot_band_structure.py Si_bands --output Si_bands.png
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-electronic-structure/scripts/plot_band_structure.py Si_bands --output Si_bands.png
 ```
 
 See [examples/](examples/) for a complete Si band structure calculation showing an indirect band gap of 0.581 eV.
@@ -169,8 +169,8 @@ mcp_atomate2_run_atomate2_vasp_calculation(
 )
 
 # 3. Plot DOS
-# Env: base-agent
-python skills/mat-electronic-structure/scripts/plot_dos.py Si_dos --output Si_dos.png
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-electronic-structure/scripts/plot_dos.py Si_dos --output Si_dos.png
 ```
 
 See [examples/](examples/) for the complete DOS calculation showing the distribution of electronic states.

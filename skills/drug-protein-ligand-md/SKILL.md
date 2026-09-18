@@ -28,8 +28,8 @@ Required from [drug-complex-system-builder](../drug-complex-system-builder/SKILL
 ### 2. Run the simulation
 
 ```bash
-# Env: drugmd-agent
-python skills/drug-protein-ligand-md/scripts/run_md.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-protein-ligand-md/scripts/run_md.py \
   --system_xml md/system/system.xml \
   --input_pdb md/system/complex_solvated.pdb \
   --temperature 300 \
@@ -73,9 +73,9 @@ The script produces:
 For statistical confidence, run multiple independent replicates with different random seeds:
 
 ```bash
-# Env: drugmd-agent
+# Venv: venv/cpu
 for i in 1 2 3; do
-  python skills/drug-protein-ligand-md/scripts/run_md.py \
+  uv run --project venv/cpu python skills/drug-protein-ligand-md/scripts/run_md.py \
     --system_xml md/system/system.xml \
     --input_pdb md/system/complex_solvated.pdb \
     --production_steps 2500000 \
@@ -97,8 +97,8 @@ After the run, verify:
 ### Example: 10 ns production MD of TYK2 complex
 
 ```bash
-# Env: drugmd-agent
-python skills/drug-protein-ligand-md/scripts/run_md.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-protein-ligand-md/scripts/run_md.py \
   --system_xml tyk2/md/system/system.xml \
   --input_pdb tyk2/md/system/complex_solvated.pdb \
   --temperature 300 \
@@ -110,8 +110,8 @@ python skills/drug-protein-ligand-md/scripts/run_md.py \
 ### Example: short 1 ns refinement for pose assessment
 
 ```bash
-# Env: drugmd-agent
-python skills/drug-protein-ligand-md/scripts/run_md.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-protein-ligand-md/scripts/run_md.py \
   --system_xml md/system/system.xml \
   --input_pdb md/system/complex_solvated.pdb \
   --production_steps 250000 \

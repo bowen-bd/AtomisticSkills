@@ -28,8 +28,8 @@ Outputs:
 This skill expects a ranked CSV produced by [drug-docking-vina](../drug-docking-vina/SKILL.md)'s `collect_results.py`. If you are starting from raw `drug-docking-vina` JSON output, run the collect step first:
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-docking-vina/scripts/collect_results.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-docking-vina/scripts/collect_results.py \
   --results docking/results/docking_results.json \
   --library_csv library/library_master.csv \
   --output_dir docking/analysis/
@@ -42,8 +42,8 @@ The collect step joins the docking scores with the library CSV to pull SMILES, l
 When you have docking results but no active/inactive labels:
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-docking-analysis/scripts/analyze_docking.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-docking-analysis/scripts/analyze_docking.py \
   --docking_csv docking/docking_ranked.csv \
   --output_dir docking/analysis/
 ```
@@ -55,8 +55,8 @@ This produces score KDE, score vs. MW, and ligand efficiency plots.
 When your library has known actives and inactives:
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-docking-analysis/scripts/analyze_docking.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-docking-analysis/scripts/analyze_docking.py \
   --docking_csv docking/docking_ranked.csv \
   --library_csv library/library_master.csv \
   --active_label active \
@@ -73,8 +73,8 @@ If the library contained enumerated protomers/tautomers (each parent compound ap
 Pass `--parent_id_col parent_compound_id` to opt in:
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-docking-analysis/scripts/analyze_docking.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-docking-analysis/scripts/analyze_docking.py \
   --docking_csv docking/docking_ranked.csv \
   --parent_id_col parent_compound_id \
   --output_dir docking/analysis/

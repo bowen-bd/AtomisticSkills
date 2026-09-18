@@ -31,7 +31,7 @@ To calculate the Raman spectrum of a crystalline material by:
 Before computing phonons, ensure the structure is fully relaxed. Use the MCP tool for your chosen MLIP:
 
 ```bash
-# Env: mace-agent
+# Venv: venv/mlip
 mcp_mace_load_model(model_name="MACE-MH-1")
 mcp_mace_relax_structure(
     structure_data="input_structure.cif",
@@ -49,8 +49,8 @@ mcp_mace_relax_structure(
 Use the [mat-phonon](../mat-phonon/SKILL.md) skill to compute Γ-point phonons. The output `phonon.yaml` is the required input for this skill.
 
 ```bash
-# Env: mace-agent
-python skills/mat-phonon/scripts/calculate_phonon.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/mat-phonon/scripts/calculate_phonon.py \
     --structure relaxation/relaxed_structure.cif \
     --model_type mace \
     --model_name MACE-MH-1 \
@@ -63,8 +63,8 @@ Verify the output: check `phonon_results/phonon.yaml` exists and there are no la
 ### 3. Analyse Raman-Active Modes and Simulate Spectrum (MLIP Tier)
 
 ```bash
-# Env: base-agent
-python skills/mat-raman-spectra/scripts/analyze_raman_modes.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-raman-spectra/scripts/analyze_raman_modes.py \
     --phonon-yaml phonon_results/phonon.yaml \
     --structure relaxation/relaxed_structure.cif \
     --output-dir raman_results/ \
@@ -98,7 +98,7 @@ This step uses VASP DFPT via atomate2 to obtain Born effective charges and the m
 **4a. Run VASP DFPT for Born charges + dielectric tensor:**
 
 ```bash
-# Env: atomate2-agent
+# Venv: venv/cpu
 mcp_atomate2_submit_vasp_job(
     structure_path="relaxation/relaxed_structure.cif",
     job_type="dfpt_dielectric",     # computes LEPSILON + Born charges
@@ -110,7 +110,7 @@ mcp_atomate2_submit_vasp_job(
 Wait for the job to complete, then retrieve results:
 
 ```bash
-# Env: atomate2-agent
+# Venv: venv/cpu
 mcp_atomate2_get_task_result(
     task_id="<task_id>",
     output_dir="vasp_dfpt/results/"
@@ -120,8 +120,8 @@ mcp_atomate2_get_task_result(
 **4b. Compute Raman intensities:**
 
 ```bash
-# Env: base-agent
-python skills/mat-raman-spectra/scripts/analyze_raman_modes.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-raman-spectra/scripts/analyze_raman_modes.py \
     --phonon-yaml phonon_results/phonon.yaml \
     --structure relaxation/relaxed_structure.cif \
     --born-charges vasp_dfpt/results/OUTCAR \

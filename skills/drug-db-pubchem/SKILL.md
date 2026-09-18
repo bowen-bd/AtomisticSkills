@@ -22,8 +22,8 @@ This skill is designed for reproducible, rate-limited queries suitable for autom
 Look up a compound by its common name. Use `--name_type complete` (default) for exact match or `--name_type word` for partial matching.
 
 ```bash
-# Env: base-agent
-python skills/drug-db-pubchem/scripts/query_pubchem.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-db-pubchem/scripts/query_pubchem.py \
   --name "aspirin" \
   --name_type complete \
   --max_results 5 \
@@ -34,8 +34,8 @@ python skills/drug-db-pubchem/scripts/query_pubchem.py \
 For partial name matching (can be noisier):
 
 ```bash
-# Env: base-agent
-python skills/drug-db-pubchem/scripts/query_pubchem.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-db-pubchem/scripts/query_pubchem.py \
   --name "atorvastatin" \
   --name_type word \
   --max_results 10 \
@@ -47,8 +47,8 @@ python skills/drug-db-pubchem/scripts/query_pubchem.py \
 SMILES may contain characters reserved by URL syntax; this script uses HTTP POST to avoid common failures.
 
 ```bash
-# Env: base-agent
-python skills/drug-db-pubchem/scripts/query_pubchem.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-db-pubchem/scripts/query_pubchem.py \
   --smiles "CC(=O)Oc1ccccc1C(=O)O" \
   --max_results 5 \
   --outdir research/pubchem/aspirin_smiles \
@@ -59,8 +59,8 @@ python skills/drug-db-pubchem/scripts/query_pubchem.py \
 Most unambiguous lookup method.
 
 ```bash
-# Env: base-agent
-python skills/drug-db-pubchem/scripts/query_pubchem.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-db-pubchem/scripts/query_pubchem.py \
   --cid 2244 \
   --outdir research/pubchem/CID_2244 \
   --output cid_2244.json
@@ -70,8 +70,8 @@ python skills/drug-db-pubchem/scripts/query_pubchem.py \
 InChI uses HTTP POST (like SMILES) to avoid URL syntax issues.
 
 ```bash
-# Env: base-agent
-python skills/drug-db-pubchem/scripts/query_pubchem.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-db-pubchem/scripts/query_pubchem.py \
   --inchikey "BSYNRYMUTXBXSQ-UHFFFAOYSA-N" \
   --outdir research/pubchem/aspirin_inchikey \
   --output aspirin_inchikey.json
@@ -81,8 +81,8 @@ python skills/drug-db-pubchem/scripts/query_pubchem.py \
 Uses `fastformula` for synchronous molecular formula search. Optionally allow additional elements for broader results.
 
 ```bash
-# Env: base-agent
-python skills/drug-db-pubchem/scripts/query_pubchem.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-db-pubchem/scripts/query_pubchem.py \
   --formula "C9H8O4" \
   --max_results 10 \
   --outdir research/pubchem/C9H8O4 \
@@ -92,8 +92,8 @@ python skills/drug-db-pubchem/scripts/query_pubchem.py \
 Allow other elements (broader search):
 
 ```bash
-# Env: base-agent
-python skills/drug-db-pubchem/scripts/query_pubchem.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-db-pubchem/scripts/query_pubchem.py \
   --formula "C6H12O6" \
   --allow_other_elements \
   --max_results 10 \
@@ -105,8 +105,8 @@ python skills/drug-db-pubchem/scripts/query_pubchem.py \
 PubChem 3D records are computationally generated and may be unavailable for some CIDs; the script falls back to 2D by default.
 
 ```bash
-# Env: base-agent
-python skills/drug-db-pubchem/scripts/query_pubchem.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-db-pubchem/scripts/query_pubchem.py \
   --name "ibuprofen" \
   --download_sdf \
   --sdf_record_type 3d \
@@ -118,8 +118,8 @@ python skills/drug-db-pubchem/scripts/query_pubchem.py \
 Synonyms require extra API calls; disable them for high-throughput workflows.
 
 ```bash
-# Env: base-agent
-python skills/drug-db-pubchem/scripts/query_pubchem.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-db-pubchem/scripts/query_pubchem.py \
   --cid 2244 \
   --no_synonyms \
   --outdir research/pubchem/CID_2244_minimal \
@@ -131,8 +131,8 @@ python skills/drug-db-pubchem/scripts/query_pubchem.py \
 Caffeine (download 3D SDF if available):
 
 ```bash
-# Env: base-agent
-python skills/drug-db-pubchem/scripts/query_pubchem.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-db-pubchem/scripts/query_pubchem.py \
   --name "caffeine" \
   --download_sdf \
   --sdf_record_type 3d \

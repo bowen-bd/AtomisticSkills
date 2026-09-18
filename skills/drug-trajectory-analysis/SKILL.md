@@ -29,8 +29,8 @@ Required:
 ### 2. Run trajectory analysis
 
 ```bash
-# Env: drugmd-agent
-python skills/drug-trajectory-analysis/scripts/analyze_trajectory.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-trajectory-analysis/scripts/analyze_trajectory.py \
   --topology md/system/complex_solvated.pdb \
   --trajectory md/run/production.dcd \
   --ligand_resname UNL \
@@ -70,8 +70,8 @@ Key indicators of a stable binding pose:
 For a fast assessment, check only ligand RMSD:
 
 ```bash
-# Env: drugmd-agent
-python skills/drug-trajectory-analysis/scripts/analyze_trajectory.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-trajectory-analysis/scripts/analyze_trajectory.py \
   --topology md/system/complex_solvated.pdb \
   --trajectory md/run/production.dcd \
   --ligand_resname UNL \
@@ -84,8 +84,8 @@ python skills/drug-trajectory-analysis/scripts/analyze_trajectory.py \
 ### Example: full analysis of TYK2 inhibitor trajectory
 
 ```bash
-# Env: drugmd-agent
-python skills/drug-trajectory-analysis/scripts/analyze_trajectory.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-trajectory-analysis/scripts/analyze_trajectory.py \
   --topology tyk2/md/system/complex_solvated.pdb \
   --trajectory tyk2/md/run/production.dcd \
   --ligand_resname UNL \

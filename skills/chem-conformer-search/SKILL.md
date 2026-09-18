@@ -44,8 +44,8 @@ Generate a diverse ensemble of low-energy conformers for a given molecule. The w
 Generate 30 conformers for a molecule (e.g., aspirin) and relax with MACE-OFF23:
 
 ```bash
-# Env: mace-agent
-python skills/chem-conformer-search/scripts/conformer_search.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/chem-conformer-search/scripts/conformer_search.py \
     --smiles "CC(=O)Oc1ccccc1C(=O)O" \
     --num_conformers 30 \
     --output_dir research/aspirin_conformers
@@ -54,8 +54,8 @@ python skills/chem-conformer-search/scripts/conformer_search.py \
 ### Advanced Usage (Structure File + Options)
 
 ```bash
-# Env: mace-agent
-python skills/chem-conformer-search/scripts/conformer_search.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/chem-conformer-search/scripts/conformer_search.py \
     --structure my_molecule.sdf \
     --num_conformers 100 \
     --rms_threshold 0.5 \

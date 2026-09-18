@@ -31,8 +31,8 @@ To accurately calculate the ionic diffusivity ($D$) and activation energy ($E_a$
 
 2.  **Individual Diffusivity Analysis**: For each temperature directory that did *not* hit the early stopping criteria, run the analysis script to extract the diffusivity and Mean Square Displacement (MSD).
     ```bash
-    # Env: base-agent
-    python skills/mat-diffusion-analysis/scripts/analyze_diffusion.py \
+    # Venv: venv/cpu
+    uv run --project venv/cpu python skills/mat-diffusion-analysis/scripts/analyze_diffusion.py \
         results/md_600K/trajectory.traj \
         --species Li \
         --temperature 600 \
@@ -44,8 +44,8 @@ To accurately calculate the ionic diffusivity ($D$) and activation energy ($E_a$
 
 3.  **Activation Energy Fitting**: Once all individual results are generated, use the fitting script to combine data and perform a weighted Arrhenius fit.
     ```bash
-    # Env: base-agent
-    python skills/mat-diffusion-analysis/scripts/calculate_activation_energy.py results/
+    # Venv: venv/cpu
+    uv run --project venv/cpu python skills/mat-diffusion-analysis/scripts/calculate_activation_energy.py results/
     ```
     - The script looks for `md_*K/diffusion_results.json` patterns.
     - It performs error propagation to calculate uncertainty in $E_a$ and extrapolated room-temperature conductivity.

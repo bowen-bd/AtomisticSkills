@@ -18,8 +18,8 @@ This is incredibly useful as an autonomous "novelty check" for generated molecul
 Provide the CID of the target molecule. By default, the script will output the absolute total number of hits but limits the JSON save array to `1000` to prevent memory flooding for ubiquitous molecules (like Aspirin, which has over 100,000 patents). Adjust `--limit` as needed.
 
 ```bash
-# Env: base-agent
-python skills/general-chemical-literature/scripts/get_xrefs.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/general-chemical-literature/scripts/get_xrefs.py \
   --cid 2244 \
   --limit 50 \
   --outdir research/aspirin_literature \
@@ -31,8 +31,8 @@ python skills/general-chemical-literature/scripts/get_xrefs.py \
 We can pull cross-references for Aspirin (CID: 2244), saving the top 50 identifiers.
 
 ```bash
-# Env: base-agent
-python skills/general-chemical-literature/scripts/get_xrefs.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/general-chemical-literature/scripts/get_xrefs.py \
   --cid 2244 \
   --limit 50 \
   --outdir skills/general-chemical-literature/examples/aspirin \

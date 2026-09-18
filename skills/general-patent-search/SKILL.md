@@ -21,22 +21,22 @@ Determine exactly what you are searching for.
 Use the python script to query Google Patents. It will return global patents matching your query string.
 
 ```bash
-# Env: base-agent
-python skills/general-patent-search/scripts/query_google_patents.py "query string" --limit 10
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/general-patent-search/scripts/query_google_patents.py "query string" --limit 10
 ```
 
 ## Examples
 
 Searching for recent global patents on a novel refrigerant by chemical name:
 ```bash
-# Env: base-agent
-python skills/general-patent-search/scripts/query_google_patents.py "tetrafluoropropene OR HFO-1234yf" --limit 5
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/general-patent-search/scripts/query_google_patents.py "tetrafluoropropene OR HFO-1234yf" --limit 5
 ```
 
 Searching for global patents assigned to SK Innovation regarding electrolytes:
 ```bash
-# Env: base-agent
-python skills/general-patent-search/scripts/query_google_patents.py "assignee:(SK Innovation) AND electrolyte" --limit 5
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/general-patent-search/scripts/query_google_patents.py "assignee:(SK Innovation) AND electrolyte" --limit 5
 ```
 
 ## Constraints

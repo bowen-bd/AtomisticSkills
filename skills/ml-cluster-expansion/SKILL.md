@@ -28,8 +28,8 @@ To automatically build and refine a Cluster Expansion (CE) model for a disordere
 Use `prepare_disordered.py` to handle symmetry refinement and disorder creation. It is highly recommended to save the primordial structure as a **JSON** file to preserve exact occupancy and species information, avoiding "unrecognized species" errors during matching.
 
 ```bash
-# Env: smol-agent
-python skills/ml-cluster-expansion/scripts/prepare_disordered.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/ml-cluster-expansion/scripts/prepare_disordered.py \
     input_structure.cif \
     Li \
     0.5 \

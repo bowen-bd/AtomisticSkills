@@ -45,8 +45,8 @@ If you already have a saved box JSON from a prior run, use Mode C to reload it.
 If you have a reference ligand already positioned in the binding site (PDB, SDF, MOL2, or PDBQT), compute the box automatically:
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-binding-site-definition/scripts/define_binding_site.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-binding-site-definition/scripts/define_binding_site.py \
   --mode ligand \
   --ligand_file docking/inputs/reference_ligand.sdf \
   --padding 6.0 \
@@ -65,8 +65,8 @@ The ligand **must** be in the same coordinate frame as the receptor. If it comes
 When no co-crystal ligand is available but you know the key binding-site residues (e.g., from literature or mutagenesis data):
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-binding-site-definition/scripts/define_binding_site.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-binding-site-definition/scripts/define_binding_site.py \
   --mode residues \
   --protein_file protein_prepared.pdb \
   --residues "A:ASP25,A:THR26,A:GLY27,A:ILE50,A:ASP124,A:THR125,A:GLY126" \
@@ -82,8 +82,8 @@ Residue format: comma-separated `chain:resname+resid` (e.g., `A:ASP25`). You can
 Re-use a previously computed box:
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-binding-site-definition/scripts/define_binding_site.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-binding-site-definition/scripts/define_binding_site.py \
   --mode json \
   --input_json docking/inputs/binding_site.json
 ```
@@ -114,8 +114,8 @@ All coordinates and dimensions are in Angstroms.
 Always verify that the box covers the expected pocket before docking. If PyMOL is available, use the included visualization script to render the box as a wireframe overlay:
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-binding-site-definition/scripts/visualize_box.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-binding-site-definition/scripts/visualize_box.py \
   --protein docking/inputs/protein_prepared.pdb \
   --box docking/inputs/binding_site.json \
   --ligand_resname MK1 \
@@ -164,8 +164,8 @@ If no structural or functional clues exist, you can define a box that covers the
 This target is a homodimer; make sure you use the biological assembly containing both chains.
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-binding-site-definition/scripts/define_binding_site.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-binding-site-definition/scripts/define_binding_site.py \
   --mode ligand \
   --ligand_file hiv_docking/inputs/indinavir_ref.sdf \
   --padding 6.0 \
@@ -175,8 +175,8 @@ python skills/drug-binding-site-definition/scripts/define_binding_site.py \
 ### Example: Box from known active-site residues
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-binding-site-definition/scripts/define_binding_site.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-binding-site-definition/scripts/define_binding_site.py \
   --mode residues \
   --protein_file hiv_docking/inputs/1HSG_prepared.pdb \
   --residues "A:ASP25,A:THR26,A:GLY27,A:ALA28,A:ILE50" \

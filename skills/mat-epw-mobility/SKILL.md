@@ -92,8 +92,8 @@ NSCF into its own `tmp/` so it does not overwrite the SCF save tree that DFPT
 needs. Deck: [`resources/inputs/nscf.in`](resources/inputs/nscf.in).
 
 ```bash
-# Env: base-agent
-python skills/mat-epw-mobility/scripts/gen_kpoints.py 12 12 1
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-epw-mobility/scripts/gen_kpoints.py 12 12 1
 ```
 
 ```bash
@@ -145,8 +145,8 @@ mpirun -np <ranks> ph.x -in ph_single_q.in > ph_q.out
 ```
 
 ```bash
-# Env: base-agent
-python skills/mat-epw-mobility/scripts/parse_prt.py ph_q.out --fermi -5.655843
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-epw-mobility/scripts/parse_prt.py ph_q.out --fermi -5.655843
 ```
 
 Compare on rank-sorted $|g|$ or the gauge-invariant $\sum |g|^2$ over the
@@ -178,8 +178,8 @@ mpirun -np <ranks> epw.x -npool <ranks> -in epw_write.in > epw_write.out
 ```
 
 ```bash
-# Env: base-agent
-python skills/mat-epw-mobility/scripts/parse_wout.py zrs2.wout
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-epw-mobility/scripts/parse_wout.py zrs2.wout
 ```
 
 `-npool N` with N = ranks is **mandatory** (EPW aborts in < 1 s otherwise). For
@@ -199,8 +199,8 @@ mpirun -np <ranks> epw.x -npool <ranks> -in epw_prtgkk.in > epw_prtgkk.out
 ```
 
 ```bash
-# Env: base-agent
-python skills/mat-epw-mobility/scripts/parse_epw_prtgkk.py epw_prtgkk.out --fermi -5.655843
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-epw-mobility/scripts/parse_epw_prtgkk.py epw_prtgkk.out --fermi -5.655843
 ```
 
 ### 9. SERTA carrier mobility

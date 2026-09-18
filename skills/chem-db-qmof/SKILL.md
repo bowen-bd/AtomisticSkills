@@ -22,8 +22,8 @@ To retrieve computational data and relaxed crystal structures (.cif) for roughly
 1. **Query Database**: Use the provided script `query_qmof.py` to search by formula or identifier.
 
 ```bash
-# Env: base-agent
-python skills/chem-db-qmof/scripts/query_qmof.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/chem-db-qmof/scripts/query_qmof.py \
     --formula "Zn" \
     --max-results 5 \
     --output-dir ./research/qmof_results
@@ -39,14 +39,14 @@ python skills/chem-db-qmof/scripts/query_qmof.py \
 
 **Example 1: Automated testing script (Zinc MOF)**
 ```bash
-# Env: base-agent
+# Venv: venv/cpu
 bash skills/chem-db-qmof/examples/test_qmof.sh
 ```
 
 **Example 2: Query for 5 MOFs containing Zinc manually**
 ```bash
-# Env: base-agent
-python skills/chem-db-qmof/scripts/query_qmof.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/chem-db-qmof/scripts/query_qmof.py \
     --formula "Zn" \
     --max-results 5 \
     --output-dir ./results/qmof_zn
@@ -54,8 +54,8 @@ python skills/chem-db-qmof/scripts/query_qmof.py \
 
 **Example 2: Retrieve a specific MOF by identifier**
 ```bash
-# Env: base-agent
-python skills/chem-db-qmof/scripts/query_qmof.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/chem-db-qmof/scripts/query_qmof.py \
     --identifier "KAXQIL" \
     --max-results 1 \
     --output-dir ./results/qmof_kaxqil

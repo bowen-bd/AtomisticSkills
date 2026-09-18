@@ -73,17 +73,17 @@ Important details:
 Use the native training path when you want all model weights updated:
 
 ```bash
-# Env: scd-agent
+# Venv: venv/mlip
 cd ../SelfConditionedDenoisingAtoms
-python train.py --conf configs/my_finetune.yaml --load-hf ct-scd-pcq --job-id my_run
+uv run --project venv/mlip python train.py --conf configs/my_finetune.yaml --load-hf ct-scd-pcq --job-id my_run
 ```
 
 or
 
 ```bash
-# Env: scd-agent
+# Venv: venv/mlip
 cd ../SelfConditionedDenoisingAtoms
-python train.py --conf configs/my_finetune.yaml --load-hf ct-scd-amp --job-id my_run
+uv run --project venv/mlip python train.py --conf configs/my_finetune.yaml --load-hf ct-scd-amp --job-id my_run
 ```
 
 Start from:
@@ -100,9 +100,9 @@ Full-model finetuning usually gives better results than the lightweight frozen-b
 Use the native training path:
 
 ```bash
-# Env: scd-agent
+# Venv: venv/mlip
 cd ../SelfConditionedDenoisingAtoms
-python train.py --conf configs/my_pretrain.yaml --job-id my_pretrain
+uv run --project venv/mlip python train.py --conf configs/my_pretrain.yaml --job-id my_pretrain
 ```
 
 Start from:

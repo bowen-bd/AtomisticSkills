@@ -65,8 +65,8 @@ volume. Read which convention a tool means before comparing windows across codes
 To calculate thermal expansion and temperature-dependent Gibbs energy, use `calculate_qha.py`.
 
 ```bash
-conda activate matgl-agent
-python skills/qha/scripts/calculate_qha.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/qha/scripts/calculate_qha.py \
     --structure path/to/relaxed_structure.cif \
     --model_type matgl \
     --eos vinet \

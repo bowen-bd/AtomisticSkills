@@ -25,8 +25,8 @@ Performs the NEB calculation between two endpoint structures.
 
 ### Use with MACE (periodic materials)
 ```bash
-# Env: mace-agent
-python skills/chem-neb-barrier/scripts/calculate_barrier.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/chem-neb-barrier/scripts/calculate_barrier.py \
     --start_structure <path_to_start.cif> \
     --end_structure <path_to_end.cif> \
     --model_type mace \
@@ -37,8 +37,8 @@ python skills/chem-neb-barrier/scripts/calculate_barrier.py \
 
 ### Use with MACE (non-periodic molecules)
 ```bash
-# Env: mace-agent
-python skills/chem-neb-barrier/scripts/calculate_barrier.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/chem-neb-barrier/scripts/calculate_barrier.py \
     --start_structure reactant.xyz \
     --end_structure product.xyz \
     --model_type mace \
@@ -50,8 +50,8 @@ python skills/chem-neb-barrier/scripts/calculate_barrier.py \
 
 ### Use with FairChem
 ```bash
-# Env: fairchem-agent
-python skills/chem-neb-barrier/scripts/calculate_barrier.py \
+# Venv: venv/fairchem
+uv run --project venv/fairchem python skills/chem-neb-barrier/scripts/calculate_barrier.py \
     --start_structure <path_to_start.cif> \
     --end_structure <path_to_end.cif> \
     --model_type fairchem \
@@ -62,8 +62,8 @@ python skills/chem-neb-barrier/scripts/calculate_barrier.py \
 
 ### Use with MatGL
 ```bash
-# Env: matgl-agent
-python skills/chem-neb-barrier/scripts/calculate_barrier.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/chem-neb-barrier/scripts/calculate_barrier.py \
     --start_structure <path_to_start.cif> \
     --end_structure <path_to_end.cif> \
     --model_type matgl \

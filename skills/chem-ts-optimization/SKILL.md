@@ -24,8 +24,8 @@ Runs Sella TS optimization followed by finite-difference vibrations.
 ### Use with MACE
 
 ```bash
-# Env: mace-agent
-python skills/chem-ts-optimization/scripts/optimize_ts_sella.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/chem-ts-optimization/scripts/optimize_ts_sella.py \
   --ts_guess ts_guess.xyz \
   --model_type mace \
   --model_name MACE-OFF23-small \
@@ -38,8 +38,8 @@ python skills/chem-ts-optimization/scripts/optimize_ts_sella.py \
 ### Use with FAIRChem (UMA)
 
 ```bash
-# Env: fairchem-agent
-python skills/chem-ts-optimization/scripts/optimize_ts_sella.py \
+# Venv: venv/fairchem
+uv run --project venv/fairchem python skills/chem-ts-optimization/scripts/optimize_ts_sella.py \
   --ts_guess ts_guess.xyz \
   --model_type fairchem \
   --model_name uma-s-1p1 \

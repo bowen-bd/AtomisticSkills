@@ -64,8 +64,8 @@ SMILES  ──► [Predictor]  ──► predicted spectrum (.xy / .jdx)
 #### Option A: Retrieve from catalog or public DB (fast, no prediction)
 
 ```bash
-# Env: nmr-agent
-python skills/chem-spectrum-matcher/scripts/match_spectrum.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/chem-spectrum-matcher/scripts/match_spectrum.py \
   --query experimental_spectrum.xy \
   --smiles "CCO" \
   --names "ethanol" \
@@ -81,15 +81,15 @@ Run the appropriate predictor for the modality, then register outputs into the c
 
 **1H NMR:**
 ```bash
-# Env: nmr-agent
-python skills/chem-nmr-predict/scripts/predict_nmr.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/chem-nmr-predict/scripts/predict_nmr.py \
   --smiles "CCO" \
   --names "ethanol" \
   --field_mhz 400 \
   --output_dir <research_dir>/nmr_predictions/
 
-# Env: nmr-agent
-python skills/chem-spectrum-matcher/scripts/register_spectrum.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/chem-spectrum-matcher/scripts/register_spectrum.py \
   --source_dir <research_dir>/nmr_predictions/ \
   --modality nmr_1h \
   --catalog_dir research/spectrum_catalog/
@@ -97,12 +97,12 @@ python skills/chem-spectrum-matcher/scripts/register_spectrum.py \
 
 **IR (from NIST WebBook):**
 ```bash
-# Env: base-agent
-python skills/chem-db-spectra/scripts/query_spectra.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/chem-db-spectra/scripts/query_spectra.py \
   C10H18O <research_dir>/ir_references/ --type IR
 
-# Env: base-agent
-python skills/chem-spectrum-matcher/scripts/register_spectrum.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/chem-spectrum-matcher/scripts/register_spectrum.py \
   --source_dir <research_dir>/ir_references/ \
   --modality ir \
   --catalog_dir research/spectrum_catalog/
@@ -110,7 +110,7 @@ python skills/chem-spectrum-matcher/scripts/register_spectrum.py \
 
 **IR (QM-backed, high accuracy):**
 ```bash
-# Env: orca-agent
+# Venv: venv/cpu
 # Run ORCA frequency calculation → extract IR spectrum → register
 # See conda-envs/orca-agent/ for ORCA setup.
 # After ORCA run, convert output with src/utils/dft/orca_utils.py
@@ -122,8 +122,8 @@ python skills/chem-spectrum-matcher/scripts/register_spectrum.py \
 `match_spectrum.py` retrieves reference spectra (catalog → public DB fallback) and computes similarity scores between the query and each candidate.
 
 ```bash
-# Env: nmr-agent
-python skills/chem-spectrum-matcher/scripts/match_spectrum.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/chem-spectrum-matcher/scripts/match_spectrum.py \
   --query experimental_spectrum.xy \
   --smiles "CCO" \
   --names "ethanol" \
@@ -198,13 +198,13 @@ chem-spectrum-matcher    → this skill: catalog + retrieval + similarity rankin
 
 **Primary (NMR matching):**
 ```bash
-mamba activate nmr-agent
+# Venv: venv/cpu
 ```
 Required packages: `numpy`, `scipy`, `rdkit`, `requests`, `matplotlib`.
 
 **IR prediction via QM (optional):**
 ```bash
-mamba activate orca-agent
+# Venv: venv/cpu
 ```
 Requires `ORCA_BINARY_PATH` environment variable. See `conda-envs/orca-agent/README.md`.
 

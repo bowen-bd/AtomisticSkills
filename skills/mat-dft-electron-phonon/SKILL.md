@@ -19,8 +19,8 @@ Standard DFT predicts bandgaps under the Born-Oppenheimer limit (fixed infinite 
 Generating the inputs uses the `ElectronPhononMaker`. You only need to provide the target primitive structure and the temperature list you want dynamically sampled.
 
 ```bash
-# Env: atomate2-agent
-python skills/mat-dft-electron-phonon/scripts/generate_inputs.py --output elph_flow.json
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-dft-electron-phonon/scripts/generate_inputs.py --output elph_flow.json
 ```
 
 ### 2. Job Execution
@@ -34,9 +34,9 @@ The termination node evaluates the mean and variance of the bandgap/band edges f
 Run the DAG generation for pristine primitive Silicon.
 
 ```bash
-# Env: atomate2-agent
+# Venv: venv/cpu
 cd skills/mat-dft-electron-phonon/examples/silicon
-python ../../scripts/generate_inputs.py --output si_flow.json
+uv run --project venv/cpu python ../../scripts/generate_inputs.py --output si_flow.json
 ```
 
 ## Constraints

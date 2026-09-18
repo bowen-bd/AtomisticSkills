@@ -18,13 +18,13 @@ When the user asks you to fetch, read, summarize, or analyze scientific literatu
 Before attempting to download or scrape any paper URL or DOI, inspect the domain against the curated publisher policy matrix.
 
 ```bash
-# Env: base-agent
-python skills/general-publisher-access-guard/scripts/check_publisher.py --url "https://pubs.acs.org/doi/10.1021/acs.chemmater.9b04758"
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/general-publisher-access-guard/scripts/check_publisher.py --url "https://pubs.acs.org/doi/10.1021/acs.chemmater.9b04758"
 ```
 Or with DOI:
 ```bash
-# Env: base-agent
-python skills/general-publisher-access-guard/scripts/check_publisher.py --doi "10.1103/PhysRevLett.120.145301" --json
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/general-publisher-access-guard/scripts/check_publisher.py --doi "10.1103/PhysRevLett.120.145301" --json
 ```
 
 **Decision Rule:**
@@ -41,8 +41,8 @@ Run the safe paper retriever to query legitimate APIs in priority order:
 5. **Preprint APIs**: Queries arXiv API or ChemRxiv API with required rate throttling (minimum 3 seconds delay).
 
 ```bash
-# Env: base-agent
-python skills/general-publisher-access-guard/scripts/safe_paper_retriever.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/general-publisher-access-guard/scripts/safe_paper_retriever.py \
     --doi "10.1103/PhysRevLett.120.145301" \
     --output_dir ./papers
 ```
@@ -62,13 +62,13 @@ If no open-access copy exists across repository mirrors:
 To test live publisher WAF defenses or verify if a publisher's bot policy has updated:
 
 ```bash
-# Env: base-agent
-python skills/general-publisher-access-guard/scripts/audit_publishers.py --publisher acs
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/general-publisher-access-guard/scripts/audit_publishers.py --publisher acs
 ```
 Or audit all major publishers:
 ```bash
-# Env: base-agent
-python skills/general-publisher-access-guard/scripts/audit_publishers.py --all
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/general-publisher-access-guard/scripts/audit_publishers.py --all
 ```
 
 ## Examples
@@ -76,8 +76,8 @@ python skills/general-publisher-access-guard/scripts/audit_publishers.py --all
 ### Example 1: Bypassing ACS Bot Block for Perovskite Battery Paper
 Handling an ACS paper (`10.1021/acs.jpclett.7b00189`) where direct web scraping returns Cloudflare Turnstile 403:
 ```bash
-# Env: base-agent
-python skills/general-publisher-access-guard/scripts/safe_paper_retriever.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/general-publisher-access-guard/scripts/safe_paper_retriever.py \
     --doi "10.1021/acs.jpclett.7b00189" \
     --output_dir examples/acs-blocked-paper
 ```
@@ -86,8 +86,8 @@ See [examples/acs-blocked-paper/README.md](examples/acs-blocked-paper/README.md)
 ### Example 2: Resolving APS Paper via Legal Open-Access Repository Mirror
 Handling an APS Physical Review Letters paper (`10.1103/PhysRevLett.120.145301`) by bypassing blocked `link.aps.org/pdf` and fetching the author manuscript from OSTI/MIT DSpace:
 ```bash
-# Env: base-agent
-python skills/general-publisher-access-guard/scripts/safe_paper_retriever.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/general-publisher-access-guard/scripts/safe_paper_retriever.py \
     --doi "10.1103/PhysRevLett.120.145301" \
     --output_dir examples/oa-repository-bypass
 ```

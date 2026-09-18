@@ -21,8 +21,8 @@ To predict the macroscopic adsorption uptake of a gas (or gas mixture) in a poro
 1. **Perform Single-Component GCMC (Optional)**: If you are investigating a single gas species, use `run_gcmc.py`.
 
 ```bash
-# Env: fairchem-agent (or other MLIP-specific env)
-python skills/chem-sorption-gcmc/scripts/run_gcmc.py \
+# Venv: venv/fairchem (or other MLIP-specific env)
+uv run --project venv/fairchem python skills/chem-sorption-gcmc/scripts/run_gcmc.py \
     --cif path/to/relaxed_supercell.cif \
     --calculator fairchem \
     --model-name uma-s-1p1 \
@@ -37,8 +37,8 @@ python skills/chem-sorption-gcmc/scripts/run_gcmc.py \
 2. **Perform Multi-Component GCMC (Optional)**: If you are simulating a gas mixture (e.g. flue gas separation 15% CO2 / 85% N2), use `run_gcmc_multi.py`.
 
 ```bash
-# Env: fairchem-agent
-python skills/chem-sorption-gcmc/scripts/run_gcmc_multi.py \
+# Venv: venv/fairchem
+uv run --project venv/fairchem python skills/chem-sorption-gcmc/scripts/run_gcmc_multi.py \
     --cif path/to/relaxed_supercell.cif \
     --calculator fairchem \
     --model-name uma-s-1p1 \
@@ -66,8 +66,8 @@ python skills/chem-sorption-gcmc/scripts/run_gcmc_multi.py \
 
 **Example 1: Generating an Isotherm Point (CO2, 0.1 bar, 298K) with UMA:**
 ```bash
-# Env: fairchem-agent
-python skills/chem-sorption-gcmc/scripts/run_gcmc.py \
+# Venv: venv/fairchem
+uv run --project venv/fairchem python skills/chem-sorption-gcmc/scripts/run_gcmc.py \
     --cif ./data/MOF-5_supercell.cif \
     --calculator fairchem \
     --model-name uma-s-1p1 \

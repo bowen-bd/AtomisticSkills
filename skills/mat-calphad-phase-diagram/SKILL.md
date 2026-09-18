@@ -20,8 +20,8 @@ You must obtain a legitimate `.tdb` (Thermodynamic Data Base) file for the chemi
 Use the provided python script to generate the $T-x$ boundary plot.
 
 ```bash
-# Env: calphad-agent
-python skills/mat-calphad-phase-diagram/scripts/plot_phase_diagram.py path/to/database.tdb --elements Element1 Element2 --t-range 300 1000 10 --output research_dir/phase_diagram.png
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-calphad-phase-diagram/scripts/plot_phase_diagram.py path/to/database.tdb --elements Element1 Element2 --t-range 300 1000 10 --output research_dir/phase_diagram.png
 ```
 
 - `--elements`: The two chemical symbols to plot. The script computes the binary system.
@@ -34,8 +34,8 @@ Use a visual inspection tool to verify the resulting `phase_diagram.png`. Ensure
 
 Plotting the classic Aluminum-Zinc Phase Diagram (Mey 1993):
 ```bash
-# Env: calphad-agent
-python skills/mat-calphad-phase-diagram/scripts/plot_phase_diagram.py skills/mat-calphad-phase-diagram/examples/Al-Zn/alzn_mey.tdb --elements Al Zn --t-range 300 1000 10 --output Al-Zn_diagram.png
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-calphad-phase-diagram/scripts/plot_phase_diagram.py skills/mat-calphad-phase-diagram/examples/Al-Zn/alzn_mey.tdb --elements Al Zn --t-range 300 1000 10 --output Al-Zn_diagram.png
 ```
 
 ## Constraints

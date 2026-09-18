@@ -16,8 +16,8 @@ To predict the optimal sequence of thermodynamically favorable chemical reaction
 Explore the landscape of competing reactions within a specific chemical system by explicitly generating balanced equations.
 
 ```bash
-# Env: base-agent
-python skills/mat-reaction-network/scripts/enumerate_reactions.py --chemsys Ba-Ti-O --enumerator-type basic_open --open-phases O2 --temperature 1000 --limit 10
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-reaction-network/scripts/enumerate_reactions.py --chemsys Ba-Ti-O --enumerator-type basic_open --open-phases O2 --temperature 1000 --limit 10
 ```
 - `--chemsys`: The chemical system to restrict search to.
 - `--enumerator-type`: The algorithm used to propose reactions (`basic`, `basic_open`, `minimize_gibbs`, `minimize_grand_potential`).
@@ -29,8 +29,8 @@ python skills/mat-reaction-network/scripts/enumerate_reactions.py --chemsys Ba-T
 To resolve a complete list of step-by-step reactions that convert specific starting precursors into a target compound, use the pathway solver script.
 
 ```bash
-# Env: base-agent
-python skills/mat-reaction-network/scripts/find_pathways.py --target BaTiO3 --precursors BaO TiO2 --temperature 1000 --k-paths 5
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-reaction-network/scripts/find_pathways.py --target BaTiO3 --precursors BaO TiO2 --temperature 1000 --k-paths 5
 ```
 - `--target`: The desired final functional material.
 - `--precursors`: One or more starting materials (e.g., oxides or carbonates).
@@ -41,8 +41,8 @@ python skills/mat-reaction-network/scripts/find_pathways.py --target BaTiO3 --pr
 
 Finding pathways to synthesize Yttrium Manganite from carbonates and chlorides:
 ```bash
-# Env: base-agent
-python skills/mat-reaction-network/scripts/find_pathways.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-reaction-network/scripts/find_pathways.py \
     --target YMnO3 \
     --precursors YCl3 Mn2O3 Li2CO3 \
     --byproducts LiCl CO2 \

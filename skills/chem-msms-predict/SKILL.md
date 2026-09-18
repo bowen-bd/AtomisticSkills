@@ -52,8 +52,8 @@ The `ms_pred` Python package is installed from GitHub automatically by the insta
 ### Step 1 — Run inference and generate spectrum
 
 ```bash
-# Env: ms-gen
-python skills/chem-msms-predict/scripts/predict_msms.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/chem-msms-predict/scripts/predict_msms.py \
     --smiles "c1ccccc1C(=O)OCCN" \
     --gen_ckpt downloads/iceberg_dag_gen_msg_best.ckpt \
     --inten_ckpt downloads/iceberg_dag_inten_msg_best.ckpt \
@@ -106,8 +106,8 @@ If an experimental spectrum is available, use the companion skill:
 ### 2-Aminoethyl benzoate (`c1ccccc1C(=O)OCCN`)
 
 ```bash
-# Env: ms-gen
-python skills/chem-msms-predict/examples/predict_smiles.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/chem-msms-predict/examples/predict_smiles.py \
     --gen_ckpt downloads/iceberg_dag_gen_msg_best.ckpt \
     --inten_ckpt downloads/iceberg_dag_inten_msg_best.ckpt \
     --output_dir .agents/test/msms_example

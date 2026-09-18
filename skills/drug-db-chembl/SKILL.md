@@ -18,8 +18,8 @@ ChEMBL activity data is curated and standardized, but downstream modeling still 
 Use this when you only have a gene/protein string and want candidate ChEMBL target IDs.
 
 ```bash
-# Env: base-agent
-python skills/drug-db-chembl/scripts/query_chembl.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py \
   --target "EGFR" \
   --max_results 20 \
   --output egfr_targets.json
@@ -29,8 +29,8 @@ python skills/drug-db-chembl/scripts/query_chembl.py \
 If you know a UniProt accession, this reduces ambiguity compared to free-text searching.
 
 ```bash
-# Env: base-agent
-python skills/drug-db-chembl/scripts/query_chembl.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py \
   --uniprot "P00533" \
   --target_type "SINGLE PROTEIN" \
   --max_results 10 \
@@ -49,8 +49,8 @@ Recommended for many QSAR/ML use cases:
 * require/compute pChEMBL (comparable negative log molar potency)
 
 ```bash
-# Env: base-agent
-python skills/drug-db-chembl/scripts/query_chembl.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py \
   --target_id "CHEMBL203" \
   --activity_type "IC50" \
   --assay_type "B" \
@@ -66,15 +66,15 @@ python skills/drug-db-chembl/scripts/query_chembl.py \
 Prefer **ChEMBL ID** or **InChIKey** for exact identity.
 
 ```bash
-# Env: base-agent
-python skills/drug-db-chembl/scripts/query_chembl.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py \
   --chembl_id "CHEMBL25" \
   --output aspirin_record.json
 ```
 
 ```bash
-# Env: base-agent
-python skills/drug-db-chembl/scripts/query_chembl.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py \
   --inchi_key "BSYNRYMUTXBXSQ-UHFFFAOYSA-N" \
   --output aspirin_record_by_inchikey.json
 ```
@@ -85,8 +85,8 @@ SMILES strings often differ by canonicalization; similarity/substructure search 
 Similarity search (default cutoff 70):
 
 ```bash
-# Env: base-agent
-python skills/drug-db-chembl/scripts/query_chembl.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py \
   --smiles "CC(=O)Oc1ccccc1C(=O)O" \
   --smiles_mode similarity \
   --similarity 80 \
@@ -97,8 +97,8 @@ python skills/drug-db-chembl/scripts/query_chembl.py \
 Substructure search:
 
 ```bash
-# Env: base-agent
-python skills/drug-db-chembl/scripts/query_chembl.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py \
   --smiles "CC(=O)Oc1ccccc1C(=O)O" \
   --smiles_mode substructure \
   --max_results 10 \
@@ -108,8 +108,8 @@ python skills/drug-db-chembl/scripts/query_chembl.py \
 ### 6. Export as CSV for quick inspection
 
 ```bash
-# Env: base-agent
-python skills/drug-db-chembl/scripts/query_chembl.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py \
   --target_id "CHEMBL203" \
   --activity_type "IC50" \
   --assay_type "B" \
@@ -125,11 +125,11 @@ python skills/drug-db-chembl/scripts/query_chembl.py \
 EGFR binding-potency dataset (IC50) with comparable pChEMBL values:
 
 ```bash
-# Env: base-agent
-python skills/drug-db-chembl/scripts/query_chembl.py --target "EGFR" --max_results 10 --output egfr_targets.json
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py --target "EGFR" --max_results 10 --output egfr_targets.json
 
-# Env: base-agent
-python skills/drug-db-chembl/scripts/query_chembl.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py \
   --target_id "CHEMBL203" \
   --activity_type "IC50" \
   --assay_type "B" \

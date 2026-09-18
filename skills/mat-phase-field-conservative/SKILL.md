@@ -21,8 +21,8 @@ Where $M$ is the mobility, and $F$ is the Ginzburg-Landau free energy functional
 Use the provided script to set up a 2D grid and solve the Cahn-Hilliard equation using FiPy.
 
 ```bash
-# Env: phasefield-agent
-python skills/mat-phase-field-conservative/scripts/run_spinodal_decomposition.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-phase-field-conservative/scripts/run_spinodal_decomposition.py \
     --grid-size 100 \
     --dx 0.25 \
     --steps 100 \
@@ -43,8 +43,8 @@ python skills/mat-phase-field-conservative/scripts/run_spinodal_decomposition.py
 To benchmark the solver and reproduce the classic interconnected "worm-like" bicontinuous morphology of spinodal decomposition:
 
 ```bash
-# Env: phasefield-agent
-python skills/mat-phase-field-conservative/scripts/run_spinodal_decomposition.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/mat-phase-field-conservative/scripts/run_spinodal_decomposition.py \
     --grid-size 100 \
     --steps 200 \
     --dt 1e-2 \

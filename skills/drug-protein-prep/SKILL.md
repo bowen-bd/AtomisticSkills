@@ -22,8 +22,8 @@ To prepare protein (and optionally nucleic acid) receptor structures for molecul
 This script manages missing atoms, nonstandard residues, and protonation.
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-protein-prep/scripts/prepare_protein.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-protein-prep/scripts/prepare_protein.py \
   --pdb_id 1iep \
   --chains A \
   --ph 7.0 \
@@ -47,8 +47,8 @@ mcp_drugdisc_convert_to_pdbqt(
 ### 3. Keep cofactors/metal ions
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-protein-prep/scripts/prepare_protein.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-protein-prep/scripts/prepare_protein.py \
   --pdb_id 1iep \
   --chains A \
   --heterogens non-water \
@@ -59,8 +59,8 @@ python skills/drug-protein-prep/scripts/prepare_protein.py \
 ### 4. Use a biological assembly (recommended when oligomerization matters)
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-protein-prep/scripts/prepare_protein.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-protein-prep/scripts/prepare_protein.py \
   --pdb_id 1iep \
   --assembly 1 \
   --chains A \
@@ -70,8 +70,8 @@ python skills/drug-protein-prep/scripts/prepare_protein.py \
 ### 5. Prepare from a local structure file
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-protein-prep/scripts/prepare_protein.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-protein-prep/scripts/prepare_protein.py \
   --pdb_file receptor.pdb \
   --heterogens none \
   --output_dir protein_prep_local/
@@ -97,8 +97,8 @@ If protonation is critical, consider a hydrogen optimization / pKa-aware tool (e
 1. Prepare the structure:
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-protein-prep/scripts/prepare_protein.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/drug-protein-prep/scripts/prepare_protein.py \
   --pdb_id 1hsg \
   --chains A B \
   --heterogens none \

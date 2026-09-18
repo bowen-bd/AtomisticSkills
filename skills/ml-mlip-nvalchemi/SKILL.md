@@ -135,7 +135,7 @@ Speedup comparison for a 100-step MD simulation under the `nvt_nose_hoover` ense
 ### Step 1 — Verify NValchemi is Available
 
 ```python
-# Env: mace-agent  (or matgl-agent, fairchem-agent)
+# Venv: venv/mlip (or venv/fairchem for FairChem models)
 from src.utils.mlips.nvalchemi.nvalchemi_utils import NVALCHEMI_AVAILABLE
 print(NVALCHEMI_AVAILABLE)  # must be True
 
@@ -151,7 +151,7 @@ print(nv)  # should be non-None MACEWrapper(nvalchemi)
 Pass a list of ASE Atoms objects to `static_calculation`. The result dict includes a `"backend": "nvalchemi"` key when the batch path was used:
 
 ```python
-# Env: mace-agent
+# Venv: venv/mlip
 from ase.build import bulk
 import numpy as np
 
@@ -165,7 +165,7 @@ result = wrapper.static_calculation(structures)
 Identical API for MatGL and FairChem wrappers:
 
 ```python
-# Env: matgl-agent
+# Venv: venv/mlip
 from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
 wrapper = MatGLWrapper(model_name="TensorNet-PES-MatPES-PBE-2025.2", device="cuda")
 wrapper.load()
@@ -173,7 +173,7 @@ result = wrapper.static_calculation(structures)
 ```
 
 ```python
-# Env: fairchem-agent
+# Venv: venv/fairchem
 from src.utils.mlips.fairchem.fairchem_wrapper import FAIRCHEMWrapper
 wrapper = FAIRCHEMWrapper(model_name="uma-s-1p2", device="cuda")
 wrapper.load()
@@ -183,7 +183,7 @@ result = wrapper.static_calculation(structures)
 ### Step 3 — Batch Geometry Relaxation
 
 ```python
-# Env: mace-agent
+# Venv: venv/mlip
 result = wrapper.relax_structure(
     structure_data=structures,   # list of ASE Atoms
     fmax=0.05,                   # eV/Å convergence
@@ -200,7 +200,7 @@ Per-structure `relax.log` files (ASE FIRE format) are written incrementally to `
 ### Step 4 — Batch Molecular Dynamics
 
 ```python
-# Env: mace-agent
+# Venv: venv/mlip
 result = wrapper.run_md(
     structure_data=structures,
     temperature=1000,
@@ -219,7 +219,7 @@ Unsupported (Berendsen, Andersen, inhomogeneous NPT) fall back to sequential aut
 To force sequential processing (e.g., debugging):
 
 ```python
-# Env: any
+# Venv: venv/cpu
 import src.utils.mlips.nvalchemi.nvalchemi_utils as _nv
 _nv.check_nvalchemi_available = lambda: False   # temporary
 result = wrapper.static_calculation(structures)  # sequential
@@ -231,20 +231,20 @@ _nv.check_nvalchemi_available = lambda: True    # restore
 To re-run the full accuracy and speed benchmark for any environment:
 
 ```bash
-# Env: mace-agent
-python skills/ml-mlip-nvalchemi/scripts/run_nvalchemi_benchmark.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/ml-mlip-nvalchemi/scripts/run_nvalchemi_benchmark.py \
     --env mace \
     --n-repeat 3 \
     --output results_mace.json
 
-# Env: matgl-agent
-python skills/ml-mlip-nvalchemi/scripts/run_nvalchemi_benchmark.py \
+# Venv: venv/mlip
+uv run --project venv/mlip python skills/ml-mlip-nvalchemi/scripts/run_nvalchemi_benchmark.py \
     --env matgl \
     --n-repeat 3 \
     --output results_matgl.json
 
-# Env: fairchem-agent
-python skills/ml-mlip-nvalchemi/scripts/run_nvalchemi_benchmark.py \
+# Venv: venv/fairchem
+uv run --project venv/mlip python skills/ml-mlip-nvalchemi/scripts/run_nvalchemi_benchmark.py \
     --env fairchem \
     --n-repeat 3 \
     --output results_fairchem.json

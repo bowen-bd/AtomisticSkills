@@ -57,8 +57,8 @@ objectives:
 Generate an initial space-filling design using Sobol sequences. Use a power-of-2 `batch_size` (4, 8, 16, …) for optimal Sobol balance:
 
 ```bash
-# Env: base-agent
-python skills/ml-bayesian-optimization/scripts/suggest_candidates.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/ml-bayesian-optimization/scripts/suggest_candidates.py \
     --config research_dir/search_space.yaml \
     --batch_size 8 \
     --output research_dir/candidates_round_0.csv \
@@ -92,8 +92,8 @@ x_Fe,formation_energy_eV_atom
 With evaluated results, fit the GP surrogate and suggest the next batch:
 
 ```bash
-# Env: base-agent
-python skills/ml-bayesian-optimization/scripts/suggest_candidates.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/ml-bayesian-optimization/scripts/suggest_candidates.py \
     --config research_dir/search_space.yaml \
     --results research_dir/evaluated.csv \
     --batch_size 4 \
@@ -114,8 +114,8 @@ The script will:
 ### Step 5: Convergence Check and Analysis
 
 ```bash
-# Env: base-agent
-python skills/ml-bayesian-optimization/scripts/plot_bo_results.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/ml-bayesian-optimization/scripts/plot_bo_results.py \
     --results research_dir/evaluated.csv \
     --config research_dir/search_space.yaml \
     --output_dir research_dir/
@@ -143,8 +143,8 @@ This generates:
 Validate the BO workflow on a known 2D benchmark with three global minima at $f^* = 0.3979$:
 
 ```bash
-# Env: base-agent
-python skills/ml-bayesian-optimization/scripts/suggest_candidates.py \
+# Venv: venv/cpu
+uv run --project venv/cpu python skills/ml-bayesian-optimization/scripts/suggest_candidates.py \
     --config skills/ml-bayesian-optimization/examples/branin-function/search_space.yaml \
     --batch_size 8 \
     --output /tmp/bo_test/candidates_round_0.csv \
