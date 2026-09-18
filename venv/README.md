@@ -21,6 +21,38 @@ uv run --project venv/mlip  python skills/<skill>/scripts/<script>.py ...
 Use the project the skill declares in its frontmatter. Do not assume support
 because two projects happen to contain the same package.
 
+## Which project replaced which conda environment
+
+| Former conda env | uv project | Note |
+| :--- | :--- | :--- |
+| `base-agent`, `drugdisc-agent`, `smol-agent`, `atomate2-agent` | `cpu` | |
+| `nmr-agent`, `phasefield-agent`, `calphad-agent`, `xrd-agent` | `cpu` | |
+| `drugmd-agent` | `cpu` | OpenMM; `pymol-open-source` is x86_64 only |
+| `orca-agent` | `cpu` | x86_64 only (SCINE wheels); needs a user-supplied ORCA binary |
+| `atomistic-agent` | `cpu` | VOID, from git |
+| `mace-agent`, `matgl-agent` | `mlip` | |
+| `scd-agent` | `mlip` | |
+| `react-ot-agent` | `mlip` | React-OT, from git |
+| `ms-gen` | `mlip` | ICEBERG, from git |
+| `fairchem-agent` | `fairchem` | separate; see the override below |
+| `adit-agent`, `diffcsp-agent`, `mattergen-agent` | *(none)* | container path; see below |
+
+## Packages that are not on PyPI
+
+Three are pulled from git and pinned to a commit in the lock. Two of them have
+a same-named but **unrelated** package on PyPI, so the git source is not a
+convenience -- depending on the PyPI name would silently install the wrong
+software:
+
+| Package | Source | PyPI name collision |
+| :--- | :--- | :--- |
+| `VOID` | `learningmatter-mit/VOID` | `void` is "Void object in Python" |
+| `ms-pred` (ICEBERG) | `coleygroup/ms-pred` | not published |
+| `oa-reactdiff` (React-OT) | `deepprinciple/react-ot` | not published; note the import is `reactot` but the distribution is `oa-reactdiff` |
+
+(For the same reason, do not add `adit` from PyPI: that name belongs to an
+unrelated ML prototyping toolbox, not the All-atom Diffusion Transformer.)
+
 ## Why three, and not one
 
 The boundaries are forced by the dependency graph, not chosen:

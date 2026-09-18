@@ -65,6 +65,10 @@ dependencies = [
   "torch",
   "mace-torch",
   "matgl",
+  "pytorch-lightning",
+  "wandb",
+  "ms-pred",
+  "oa-reactdiff",
 ]
 
 [tool.uv]
@@ -82,3 +86,10 @@ environments = [
 # conda-forge publishes boltztrap2 for linux-64 only, so it is built from
 # source here and needs cmake present at build time.
 boltztrap2 = ["cmake>=3.24"]
+
+[tool.uv.sources]
+# ICEBERG, behind chem-msms-predict. Not published to PyPI.
+ms-pred = { git = "https://github.com/coleygroup/ms-pred" }
+# React-OT, behind chem-react-ot. The import is `reactot` but the distribution
+# is named oa-reactdiff, so it must be requested under that name.
+oa-reactdiff = { git = "https://github.com/deepprinciple/react-ot" }

@@ -62,6 +62,7 @@ dependencies = [
   "tqdm",
   "vina",
   "xarray",
+  "VOID",
 ]
 
 [tool.uv]
@@ -79,3 +80,8 @@ environments = [
 # conda-forge publishes boltztrap2 for linux-64 only, so it is built from
 # source here and needs cmake present at build time.
 boltztrap2 = ["cmake>=3.24"]
+
+[tool.uv.sources]
+# The Voronoi docking library used by chem-docking-void. Not on PyPI -- the
+# package published there under the name "void" is an unrelated utility.
+VOID = { git = "https://github.com/learningmatter-mit/VOID.git" }
