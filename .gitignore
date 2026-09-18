@@ -44,7 +44,9 @@ wheels/
 *.egg
 
 # Virtual Environment
-venv/
+# venv/ holds the uv projects (pyproject.toml + uv.lock), which ARE tracked;
+# only the environments uv materialises inside them are ignored.
+venv/*/.venv/
 .venv/
 env/
 .env

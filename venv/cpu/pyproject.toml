@@ -1,0 +1,81 @@
+[project]
+name = "atomisticskills-venv-cpu"
+version = "0.1.0"
+description = "CPU scientific stack: materials, chemistry, drug discovery and analysis. No torch."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "mcp<2",
+  "ase",
+  "atomate2",
+  "amset",
+  "beautifulsoup4",
+  "biopython",
+  "cvxpy",
+  "dara-xrd",
+  "datasets",
+  "dimorphite-dl",
+  "fipy",
+  "gemmi",
+  "h5py>=3.12",
+  "huggingface-hub",
+  "ijson",
+  "imageio",
+  "jobflow",
+  "jobflow-remote",
+  "kaleido>=0.2.1,<0.3",
+  "lobsterpy",
+  "matcalc",
+  "matplotlib",
+  "mdanalysis",
+  "meeko",
+  "mp-api",
+  "nmrsim",
+  "nmrglue",
+  "numpy>=2,<3",
+  "openbabel-wheel",
+  "openmm",
+  "opencv-python-headless",
+  "optimade[client]",
+  "parmed",
+  "pandas<3",
+  "pdbfixer",
+  "pillow",
+  "polytope",
+  "posebusters",
+  "prolif",
+  "pymatgen",
+  "pymatgen-analysis-diffusion",
+  "pymol-open-source==3.2.0a0 ; platform_machine == 'x86_64'",
+  "pymupdf",
+  "pycalphad",
+  "pyyaml",
+  "reaction-network",
+  "rdkit",
+  "requests",
+  "scikit-learn",
+  "scipy",
+  "scine-utilities ; platform_machine == 'x86_64'",
+  "scine-readuct ; platform_machine == 'x86_64'",
+  "smol",
+  "sympy",
+  "tinydb",
+  "tqdm",
+  "vina",
+  "xarray",
+]
+
+[tool.uv]
+package = false
+# Both architectures are supported: amd64 for ordinary clusters and
+# workstations, arm64 for GB10-class hardware. Anything that genuinely has no
+# wheel for one of them carries a platform_machine marker in dependencies
+# above, rather than being dropped for everyone.
+environments = [
+  "sys_platform == 'linux' and platform_machine == 'x86_64'",
+  "sys_platform == 'linux' and platform_machine == 'aarch64'",
+]
+
+[tool.uv.extra-build-dependencies]
+# conda-forge publishes boltztrap2 for linux-64 only, so it is built from
+# source here and needs cmake present at build time.
+boltztrap2 = ["cmake>=3.24"]
