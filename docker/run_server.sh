@@ -130,7 +130,11 @@ case "$RUNTIME" in
             headroom=$(( (proc_limit - 256) / 8 ))
             (( headroom < 1 )) && headroom=1
             ATOMISTIC_SQUASHFS_PROCS=$(( nproc_count < headroom ? nproc_count : headroom ))
-            (( ATOMISTIC_SQUASHFS_PROCS > 8 )) && ATOMISTIC_SQUASHFS_PROCS=8
+            # Cap at 4, not 8. `ulimit -u` counts every process the user already
+            # has on the node, and mksquashfs spawns several threads per
+            # -processors unit, so 8 still died with "Failed to create thread"
+            # on a busy 448-core login node whose limit was 768.
+            (( ATOMISTIC_SQUASHFS_PROCS > 4 )) && ATOMISTIC_SQUASHFS_PROCS=4
         fi
         export APPTAINER_MKSQUASHFS_ARGS="${APPTAINER_MKSQUASHFS_ARGS:--processors ${ATOMISTIC_SQUASHFS_PROCS}}"
         export SINGULARITY_MKSQUASHFS_ARGS="$APPTAINER_MKSQUASHFS_ARGS"
@@ -171,10 +175,39 @@ case "$RUNTIME" in
             fi
             if [[ ! -f "$sif" ]]; then
                 tmp_sif="${sif}.$$.partial"
-                "$RUNTIME" build --force "$tmp_sif" "docker://${IMAGE}" >&2 \
-                    || die "failed to build SIF for ${IMAGE}.
-       If this reported 'Failed to create thread', mksquashfs exceeded the
-       thread limit; retry with ATOMISTIC_SQUASHFS_PROCS=2."
+                build_log="${tmp_sif}.log"
+
+                # No thread count can be predicted reliably: the limit is shared
+                # with every other process the user is running on the node, and
+                # that changes minute to minute. So try, and if the thread limit
+                # is what failed, fall back to single-threaded rather than
+                # guessing a smaller number that may also be too large.
+                build_sif() {
+                    APPTAINER_MKSQUASHFS_ARGS="-processors ${1}" \
+                    SINGULARITY_MKSQUASHFS_ARGS="-processors ${1}" \
+                    "$RUNTIME" build --force "$tmp_sif" "docker://${IMAGE}" \
+                        >"$build_log" 2>&1
+                    local rc=$?
+                    cat "$build_log" >&2
+                    return $rc
+                }
+
+                if ! build_sif "$ATOMISTIC_SQUASHFS_PROCS"; then
+                    if grep -qi "Failed to create thread" "$build_log" \
+                       && [[ "$ATOMISTIC_SQUASHFS_PROCS" != "1" ]]; then
+                        log "mksquashfs hit the thread limit at -processors ${ATOMISTIC_SQUASHFS_PROCS}; retrying single-threaded (slower)"
+                        rm -f "$tmp_sif"
+                        build_sif 1 || {
+                            rm -f "$tmp_sif" "$build_log"
+                            die "failed to build SIF for ${IMAGE} even single-threaded."
+                        }
+                    else
+                        rm -f "$tmp_sif" "$build_log"
+                        die "failed to build SIF for ${IMAGE}; see the output above.
+       To force a specific worker count, set ATOMISTIC_SQUASHFS_PROCS."
+                    fi
+                fi
+                rm -f "$build_log"
                 mv -f "$tmp_sif" "$sif"
             fi
             [[ -n "${lockfd:-}" ]] && exec {lockfd}>&-

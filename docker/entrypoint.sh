@@ -43,8 +43,23 @@ if [[ -z "${ATOMISTIC_UID_MATCHED:-}" && "$(id -u)" == "0" ]] && [[ -d /work ]];
 fi
 
 ROW="$(grep -v '^#' "$MAP_FILE" | grep "^${SERVER}:" || true)"
-[[ -n "$ROW" ]] || die "unknown server '${SERVER}' in this image
-servers in this image: $(available)"
+if [[ -z "$ROW" ]]; then
+    # Not a server name. If it names something runnable, run it. Inspecting an
+    # image with `docker run IMG bash`, or checking a stack with
+    # `docker run IMG micromamba run -n mace-agent python -c ...`, is the normal
+    # way to debug one; an ENTRYPOINT that only accepts server names turns both
+    # into a baffling "unknown server 'bash'". Say what is happening, so a
+    # mistyped server name can never silently become some other command.
+    if command -v "$SERVER" >/dev/null 2>&1; then
+        printf 'atomisticskills: %s is not a server here; running it as a command\n' \
+            "$SERVER" >&2
+        exec "$@"
+    fi
+    die "unknown server '${SERVER}' in this image
+servers in this image: $(available)
+to run something else, name an executable (e.g. bash) or override the
+entrypoint: docker run --entrypoint <cmd> <image> ..."
+fi
 
 ENV_NAME="$(cut -d: -f2 <<<"$ROW")"
 MODULE="$(cut -d: -f3 <<<"$ROW")"

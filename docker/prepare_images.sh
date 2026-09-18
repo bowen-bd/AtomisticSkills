@@ -135,7 +135,8 @@ for row in "${rows[@]}"; do
                 [[ "$proc_limit" == "unlimited" ]] && proc_limit=4096
                 headroom=$(( (proc_limit - 256) / 8 )); (( headroom < 1 )) && headroom=1
                 ATOMISTIC_SQUASHFS_PROCS=$(( nproc_count < headroom ? nproc_count : headroom ))
-                (( ATOMISTIC_SQUASHFS_PROCS > 8 )) && ATOMISTIC_SQUASHFS_PROCS=8
+                # See run_server.sh: 8 was still too many on a busy login node.
+                (( ATOMISTIC_SQUASHFS_PROCS > 4 )) && ATOMISTIC_SQUASHFS_PROCS=4
             fi
             export APPTAINER_MKSQUASHFS_ARGS="${APPTAINER_MKSQUASHFS_ARGS:--processors ${ATOMISTIC_SQUASHFS_PROCS}}"
             export SINGULARITY_MKSQUASHFS_ARGS="$APPTAINER_MKSQUASHFS_ARGS"
@@ -168,7 +169,28 @@ for row in "${rows[@]}"; do
                 continue
             fi
             log "build ${name}  <- ${image}  (mksquashfs -processors ${ATOMISTIC_SQUASHFS_PROCS})"
-            if "$RUNTIME" build --force "${sif}.partial" "docker://${image}" >&2; then
+            build_one() {
+                APPTAINER_MKSQUASHFS_ARGS="-processors ${1}" \
+                SINGULARITY_MKSQUASHFS_ARGS="-processors ${1}" \
+                "$RUNTIME" build --force "${sif}.partial" "docker://${image}" \
+                    >"${sif}.log" 2>&1
+                local rc=$?
+                cat "${sif}.log" >&2
+                return $rc
+            }
+            ok=0
+            if build_one "$ATOMISTIC_SQUASHFS_PROCS"; then
+                ok=1
+            elif grep -qi "Failed to create thread" "${sif}.log" \
+                 && [[ "$ATOMISTIC_SQUASHFS_PROCS" != "1" ]]; then
+                # The thread limit is shared with everything else the user is
+                # running, so it cannot be predicted -- retry single-threaded.
+                log "  mksquashfs hit the thread limit; retrying single-threaded"
+                rm -f "${sif}.partial"
+                build_one 1 && ok=1
+            fi
+            rm -f "${sif}.log"
+            if [[ "$ok" == "1" ]]; then
                 mv -f "${sif}.partial" "$sif"
                 log "  ok  $(du -h "$sif" | cut -f1)"
                 prepared=$((prepared + 1))

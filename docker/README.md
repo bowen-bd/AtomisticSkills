@@ -126,7 +126,14 @@ docker run -i --rm -v "$PWD:/work" -w /work \
 ```
 
 The first argument is the server name; run with none to list what an image
-serves. `docker/entrypoint.sh` resolves the name against the baked-in
+serves. Anything else that names an executable is run as a command instead, so
+an image can be inspected without fighting the entrypoint:
+
+```bash
+docker run --rm -it ghcr.io/learningmatter-mit/atomisticskills-mace:1.4.0 bash
+docker run --rm --gpus all ghcr.io/learningmatter-mit/atomisticskills-mace:1.4.0 \
+  micromamba run -n mace-agent python -c "import torch; print(torch.cuda.is_available())"
+``` `docker/entrypoint.sh` resolves the name against the baked-in
 `server-map.txt`, activates the right environment and execs the module.
 
 The entrypoint matches the owner of `/work` before starting, so results land in
@@ -213,8 +220,12 @@ Three further Apptainer specifics, all learned from a cluster:
 
 - **`mksquashfs` thread exhaustion.** It defaults to one thread per core. On a
   448-core node with `ulimit -u` of 768 it dies with `FATAL ERROR: Failed to
-  create thread`. The launcher bounds `-processors` from the actual limit;
-  override with `ATOMISTIC_SQUASHFS_PROCS` if needed.
+  create thread`. Capping `-processors` is not sufficient on its own -- the
+  limit counts every process the user already has on the node, not just this
+  build, so a cap of 8 still failed on a busy login node. Both scripts now cap
+  at 4 *and* retry single-threaded when that specific error appears. Other build
+  failures are not retried, so real problems still surface. Force a count with
+  `ATOMISTIC_SQUASHFS_PROCS` if you need to.
 - **`/tmp` mounted `nodev`.** Apptainer warns this can corrupt a build, so
   `APPTAINER_TMPDIR` is pointed beside the cache instead.
 - **Architecture.** The launcher refuses an image built for another

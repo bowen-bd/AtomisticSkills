@@ -726,3 +726,129 @@ class TestPerPlatformSettings:
             render.per_platform(image, "absent", "linux/amd64", "fallback")
             == "fallback"
         )
+
+
+class TestEntrypointDispatch:
+    """The entrypoint takes a server name, which makes the image hard to inspect.
+
+    `docker run IMG micromamba run -n mace-agent python -c ...` is how you check
+    what a stack actually contains, and an ENTRYPOINT that only accepts server
+    names answers it with "unknown server 'micromamba'". A GPU tester lost time
+    to exactly that. Runnable names now fall through to exec.
+    """
+
+    ENTRYPOINT = PROJECT_ROOT / "docker" / "entrypoint.sh"
+
+    @staticmethod
+    def _run(tmp_path, *args):
+        repo = tmp_path / "repo" / "docker"
+        repo.mkdir(parents=True, exist_ok=True)
+        (repo / "server-map.txt").write_text(
+            "# server:env:module\n"
+            "mace:mace-agent:src.mcp_server.mace_server\n"
+            "matgl:matgl-agent:src.mcp_server.matgl_server\n"
+        )
+        env = dict(os.environ)
+        env["ATOMISTIC_REPO_DIR"] = str(tmp_path / "repo")
+        # Skip the privilege-drop re-exec; it is not what these tests cover.
+        env["ATOMISTIC_UID_MATCHED"] = "1"
+        return subprocess.run(
+            ["bash", str(TestEntrypointDispatch.ENTRYPOINT), *args],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+
+    def test_runnable_name_is_executed_as_a_command(self, tmp_path):
+        result = self._run(tmp_path, "bash", "-c", "echo EXECUTED")
+        assert result.returncode == 0, result.stderr
+        assert "EXECUTED" in result.stdout
+        # The fallback must announce itself, so a mistyped server name is never
+        # silently some other command.
+        assert "not a server here" in result.stderr
+
+    def test_unknown_non_runnable_name_still_errors(self, tmp_path):
+        result = self._run(tmp_path, "definitely-not-a-real-binary-xyz")
+        assert result.returncode != 0
+        assert "unknown server" in result.stderr
+        assert "mace matgl" in result.stderr
+        assert "--entrypoint" in result.stderr, "should point at the escape hatch"
+
+    def test_no_argument_lists_the_servers(self, tmp_path):
+        result = self._run(tmp_path)
+        assert result.returncode != 0
+        assert "mace matgl" in result.stderr
+
+
+class TestSquashfsThreadRetry:
+    """A thread count that works cannot be predicted, so failure must recover.
+
+    `ulimit -u` counts every process the user has on the node, not just this
+    build, and mksquashfs spawns several threads per -processors unit. A cap of
+    8 still died with "Failed to create thread" on a busy 448-core login node
+    whose limit was 768. Guessing a smaller constant is the same mistake; the
+    launcher retries single-threaded instead.
+    """
+
+    @staticmethod
+    def _stub(tmp_path, succeed_only_at: str):
+        bindir = tmp_path / "bin"
+        bindir.mkdir(exist_ok=True)
+        log = tmp_path / "apptainer.log"
+        stub = bindir / "apptainer"
+        stub.write_text(
+            "#!/usr/bin/env bash\n"
+            # Log builds only; the final exec also inherits the env var.
+            'if [[ "${1:-}" == "build" ]]; then\n'
+            f'  printf "%s\\n" "$APPTAINER_MKSQUASHFS_ARGS" >> "{log}"\n'
+            f'  if [[ "$APPTAINER_MKSQUASHFS_ARGS" != "{succeed_only_at}" ]]; then\n'
+            '    echo "FATAL: while creating squashfs: mksquashfs command failed: '
+            'exit status 1: FATAL ERROR: Failed to create thread" >&2\n'
+            "    exit 255\n  fi\n"
+            '  for a in "$@"; do case "$a" in *.sif|*.partial) : > "$a"; break;; esac; done\n'
+            "fi\nexit 0\n"
+        )
+        stub.chmod(0o755)
+        return bindir, log
+
+    def test_falls_back_to_single_threaded(self, tmp_path):
+        bindir, log = self._stub(tmp_path, succeed_only_at="-processors 1")
+        result = run_launcher(
+            tmp_path, bindir, ATOMISTIC_RUNTIME="apptainer", HOME=str(tmp_path / "home")
+        )
+        assert result.returncode == 0, result.stderr
+        assert "retrying single-threaded" in result.stderr
+        attempts = [a for a in log.read_text().splitlines() if a.strip()]
+        assert attempts[-1] == "-processors 1", attempts
+        assert len(attempts) >= 2, "should have tried a higher count first"
+
+    def test_first_attempt_is_bounded_well_below_the_core_count(self, tmp_path):
+        bindir, log = self._stub(tmp_path, succeed_only_at="-processors 1")
+        run_launcher(
+            tmp_path, bindir, ATOMISTIC_RUNTIME="apptainer", HOME=str(tmp_path / "home")
+        )
+        first = log.read_text().splitlines()[0]
+        procs = int(first.rsplit(None, 1)[1])
+        assert 1 <= procs <= 4, f"first attempt used {procs}; cap is 4"
+
+    def test_a_non_thread_failure_is_not_retried(self, tmp_path):
+        """Only the thread limit is recoverable; masking other errors would hide bugs."""
+        bindir = tmp_path / "bin"
+        bindir.mkdir(exist_ok=True)
+        log = tmp_path / "apptainer.log"
+        stub = bindir / "apptainer"
+        stub.write_text(
+            "#!/usr/bin/env bash\n"
+            'if [[ "${1:-}" == "build" ]]; then '
+            f'printf "%s\\n" "$APPTAINER_MKSQUASHFS_ARGS" >> "{log}"; '
+            'echo "FATAL: no space left on device" >&2; exit 255; fi\n'
+            "exit 0\n"
+        )
+        stub.chmod(0o755)
+        result = run_launcher(
+            tmp_path, bindir, ATOMISTIC_RUNTIME="apptainer", HOME=str(tmp_path / "home")
+        )
+        assert result.returncode != 0
+        assert "retrying single-threaded" not in result.stderr
+        assert len([a for a in log.read_text().splitlines() if a.strip()]) == 1
