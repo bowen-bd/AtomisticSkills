@@ -5,9 +5,9 @@ bot headers, detects WAF signatures (Cloudflare, Akamai, Radware, Imperva), and
 outputs a diagnostic status report.
 
 Usage:
-    python skills/general-publisher-access-guard/scripts/audit_publishers.py --all
-    python skills/general-publisher-access-guard/scripts/audit_publishers.py --publisher acs
-    python skills/general-publisher-access-guard/scripts/audit_publishers.py --url "https://pubs.acs.org"
+    python .agents/skills/general-publisher-access-guard/scripts/audit_publishers.py --all
+    python .agents/skills/general-publisher-access-guard/scripts/audit_publishers.py --publisher acs
+    python .agents/skills/general-publisher-access-guard/scripts/audit_publishers.py --url "https://pubs.acs.org"
 """
 
 import argparse

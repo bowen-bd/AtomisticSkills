@@ -13,8 +13,8 @@ Safe Cascade Flow:
     6. Formatted markdown summary + graceful paywall notice if no open copy exists.
 
 Usage:
-    python skills/general-publisher-access-guard/scripts/safe_paper_retriever.py --doi "10.1103/PhysRevLett.120.145301" --output_dir ./papers
-    python skills/general-publisher-access-guard/scripts/safe_paper_retriever.py --url "https://pubs.acs.org/doi/10.1021/acs.chemmater.9b04758"
+    python .agents/skills/general-publisher-access-guard/scripts/safe_paper_retriever.py --doi "10.1103/PhysRevLett.120.145301" --output_dir ./papers
+    python .agents/skills/general-publisher-access-guard/scripts/safe_paper_retriever.py --url "https://pubs.acs.org/doi/10.1021/acs.chemmater.9b04758"
 """
 
 import argparse
