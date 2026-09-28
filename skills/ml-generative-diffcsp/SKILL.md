@@ -17,7 +17,7 @@ Generate novel crystal structures using DiffCSP++ (ICLR 2024), a diffusion model
 > **GPU Required**: DiffCSP++ inference is significantly faster on GPU.
 
 - The `diffcsp-agent` conda environment must be installed.
-- DiffCSP++ repo cloned to `/home/bdeng/projects/DiffCSP-PP`.
+- DiffCSP++ repo (`git clone https://github.com/jiaor17/DiffCSP-PP`) cloned next to this project as `../DiffCSP-PP`, or anywhere with `DIFFCSP_REPO` pointing to it.
 - Pre-trained checkpoints downloaded to `checkpoints/` directory.
 
 ## 2. Available Models

@@ -11,9 +11,10 @@ Usage:
 
 import sys
 import json
+from pathlib import Path
 
 # Add project root to path
-sys.path.insert(0, "/home/bdeng/projects/simulation_mcp")
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
 from src.utils.mlips.mace.mace_wrapper import MACEWrapper
 

@@ -7,7 +7,7 @@ This environment contains DiffCSP++ for space-group-constrained crystal structur
 - Conda/miniforge3 installed
 - Python 3.11
 - CUDA 13.0 compatible GPU (for GPU acceleration)
-- DiffCSP++ repo cloned to `/home/bdeng/projects/DiffCSP-PP`
+- DiffCSP++ repo (`git clone https://github.com/jiaor17/DiffCSP-PP`) cloned next to this project as `../DiffCSP-PP`, or anywhere with `DIFFCSP_REPO` pointing to it
 
 ## Installation
 
@@ -45,7 +45,7 @@ pip install --no-build-isolation --no-cache-dir git+https://github.com/rusty1s/p
 5. Download pre-trained checkpoints:
 ```bash
 pip install gdown
-cd /home/bdeng/projects/DiffCSP-PP
+cd "${DIFFCSP_REPO:-../DiffCSP-PP}"
 gdown --folder https://drive.google.com/drive/folders/1FQ_b6CE09KtyGaU_r6uO8_I5JhrQmUFB --remaining-ok -O checkpoints
 ```
 

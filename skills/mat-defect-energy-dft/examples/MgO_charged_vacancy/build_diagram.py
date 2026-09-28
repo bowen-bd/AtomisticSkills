@@ -21,9 +21,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-BASE = Path(
-    "/home/bdeng/projects/AtomisticSkills/research/2026-02-17_MgO_charged_vacancy/dft_atomate2"
-)
+BASE = Path(__file__).resolve().parent
 
 # Load DFT energies
 with open(BASE / "dft_energies.json") as f:

@@ -17,7 +17,6 @@ Requirements:
 """
 
 import argparse
-import os
 import sys
 from pathlib import Path
 
@@ -25,7 +24,6 @@ from pathlib import Path
 project_root = str(Path(__file__).resolve().parents[3])
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
-os.environ.setdefault("PROJECT_ROOT", "/home/bdeng/projects/DiffCSP-PP")
 
 
 def main(args: argparse.Namespace) -> None:
