@@ -15,4 +15,4 @@ dependencies:
     - setuptools-scm
     - sella
     - typing-extensions
-    - "-e /home/bdeng/projects/nvalchemi-toolkit[mace]"
+    - "-e ../../../nvalchemi-toolkit[mace]"

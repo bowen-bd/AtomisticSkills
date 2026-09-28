@@ -8,6 +8,7 @@ from pathlib import Path
 import json
 import torch
 import numpy as np
+import yaml
 from ase.io import read, write
 
 logging.basicConfig(
@@ -132,6 +133,10 @@ def main():
     output_path = Path(output_dir).absolute()
     output_path.mkdir(parents=True, exist_ok=True)
 
+    # Save input configs for reproducibility
+    with open(output_path / "input_configs.yaml", "w") as f:
+        yaml.dump(vars(args), f, default_flow_style=False, sort_keys=False)
+
     train_xyz_path = output_path / "train_prop.xyz"
     write(str(train_xyz_path), atoms_list, format="extxyz")
 
@@ -207,30 +212,13 @@ def main():
     wrapper_script_path = output_path / "mace_prop_train_wrapper.py"
 
     # Locate freeze_patch.py (it lives in src/utils/mlips/mace/freeze_patch.py)
-    # Assuming script is run from project root, this path is correct.
-    project_root = Path(__file__).parent.parent.parent.parent.absolute()
+    project_root = Path(__file__).resolve().parents[3]
     patch_script_path = (
         project_root / "src" / "utils" / "mlips" / "mace" / "freeze_patch.py"
     )
 
-    if not patch_script_path.exists():
-        # Fallback search path if not found relative to script
-        patch_script_path = Path(
-            "/home/bdeng/projects/AtomisticSkills/src/utils/mlips/mace/freeze_patch.py"
-        )
-
     with open(wrapper_script_path, "w") as f:
         f.write(f"""
-
-    try:
-        # Save input configs for reproducibility
-        import yaml as _yaml
-        _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
-        Path(args.output_dir).mkdir(parents=True, exist_ok=True)
-        with open(Path(args.output_dir) / "input_configs.yaml", 'w') as _f:
-            _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
-    except Exception as _e:
-        print(f"Warning: Failed to save input_configs.yaml: {_e}")
 import sys
 sys.path.append(r"{str(patch_script_path.parent)}")
 import freeze_patch

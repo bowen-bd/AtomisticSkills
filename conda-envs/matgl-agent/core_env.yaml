@@ -11,4 +11,4 @@ dependencies:
     - matcalc
     - typing-extensions
     - pytest
-    - "-e /home/bdeng/projects/nvalchemi-toolkit"
+    - "-e ../../../nvalchemi-toolkit"

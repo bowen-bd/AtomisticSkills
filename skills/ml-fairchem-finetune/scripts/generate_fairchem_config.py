@@ -135,6 +135,9 @@ def _create_finetune_yaml(
     with open(final_yaml_path, "w") as f:
         yaml.dump(template_ft, f, default_flow_style=False, sort_keys=False)
 
+    run_dir = output_dir / "runs"
+    timestamp_id = f"run_{args.epochs}ep"
+
     run_script_path = output_dir / "run_fairchem_finetuning.py"
     run_code = f"""#!/usr/bin/env python
 import sys

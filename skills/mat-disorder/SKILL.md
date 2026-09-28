@@ -61,13 +61,13 @@ uv run --project venv/cpu python skills/mat-disorder/scripts/iterative_ce_traini
     primordial.cif \
     --iterations 5 \
     --n_samples 20 \
-    --mlip_model mace \
+    --mlip_model MACE-MP-medium \
     --output_dir ce_results
 ```
 
 ### Workflow
 1.  **Initial Sampling**: Generates random ordered structures from the primordial structure.
-2.  **Relaxation**: Relaxes structures using an MLIP (MACE or CHGNet) to get accurate energies.
+2.  **Relaxation**: Relaxes structures using a MACE MLIP to get accurate energies.
 3.  **Mapping Check**: Verifies if relaxed structures still map to the initial lattice configuration.
 4.  **Training**: Fits a Cluster Expansion model to the valid training data.
 5.  **Active Learning**: Runs Monte Carlo simulations with the current model to find new low-energy configurations.

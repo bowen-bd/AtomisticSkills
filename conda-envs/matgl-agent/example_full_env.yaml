@@ -163,4 +163,3 @@ dependencies:
       - uvicorn==0.48.0
       - xxhash==3.7.0
       - yarl==1.24.2
-prefix: /home/bdeng/miniforge3/envs/matgl-agent

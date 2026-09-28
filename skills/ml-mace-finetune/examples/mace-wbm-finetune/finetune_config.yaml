@@ -1,6 +1,6 @@
 name: mace-omat-0-small_fine_tuned
-train_file: /home/bdeng/projects/AtomisticSkills/skills/ml-mace-finetune/examples/mace-wbm-finetune/output/train.xyz
-valid_file: /home/bdeng/projects/AtomisticSkills/skills/ml-mace-finetune/examples/mace-wbm-finetune/output/valid.xyz
+train_file: output/train.xyz
+valid_file: output/valid.xyz
 max_num_epochs: 10
 lr: 0.0001
 batch_size: 2
@@ -9,9 +9,9 @@ energy_key: REF_energy
 forces_key: REF_forces
 device: cuda
 seed: 42
-checkpoints_dir: /home/bdeng/projects/AtomisticSkills/skills/ml-mace-finetune/examples/mace-wbm-finetune/output/checkpoints
-results_dir: /home/bdeng/projects/AtomisticSkills/skills/ml-mace-finetune/examples/mace-wbm-finetune/output/results
-log_dir: /home/bdeng/projects/AtomisticSkills/skills/ml-mace-finetune/examples/mace-wbm-finetune/output/logs
+checkpoints_dir: output/checkpoints
+results_dir: output/results
+log_dir: output/logs
 plot: true
 plot_frequency: 1
 multiheads_finetuning: false

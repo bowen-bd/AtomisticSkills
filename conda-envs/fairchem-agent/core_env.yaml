@@ -19,4 +19,4 @@ dependencies:
     - sella
     - typing-extensions
     - ase>=3.23
-    - "-e /home/bdeng/projects/nvalchemi-toolkit"
+    - "-e ../../../nvalchemi-toolkit"

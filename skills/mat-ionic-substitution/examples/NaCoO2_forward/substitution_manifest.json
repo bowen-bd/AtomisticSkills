@@ -1,5 +1,5 @@
 {
-  "source_structure": "/home/bdeng/projects/AtomisticSkills/.agents/test/NaCoO2_test.cif",
+  "source_structure": "NaCoO2.cif",
   "source_formula": "NaCoO2",
   "threshold": 0.001,
   "num_substitutions": 47,

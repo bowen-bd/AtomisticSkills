@@ -91,7 +91,7 @@ bash conda-envs/mattergen-agent/install_pyg_aarch64.sh
 
 ### 5. Apply MatterGen Patch for CUDA 13.0
 
-**File**: `/home/bdeng/projects/mattergen/pyproject.toml`
+**File**: `<mattergen-repo>/pyproject.toml`
 
 Edit the dependencies section:
 
@@ -128,7 +128,7 @@ Edit the dependencies section:
 ### 6. Install MatterGen
 
 ```bash
-cd /home/bdeng/projects/mattergen  # Or your MatterGen repository path
+cd /path/to/mattergen  # your MatterGen repository path
 pip install -e . --no-deps
 
 # Install remaining dependencies
@@ -239,11 +239,11 @@ pip install --no-build-isolation --no-cache-dir git+https://github.com/rusty1s/p
 pip install --no-build-isolation --no-cache-dir git+https://github.com/rusty1s/pytorch_cluster.git
 pip install --no-build-isolation --no-cache-dir git+https://github.com/rusty1s/pytorch_sparse.git || true
 
-# 5. Apply patch to /home/bdeng/projects/mattergen/pyproject.toml
+# 5. Apply patch to <mattergen-repo>/pyproject.toml
 # (See "Apply MatterGen Patch" section above)
 
 # 6. Install MatterGen
-cd /home/bdeng/projects/mattergen
+cd /path/to/mattergen
 pip install -e . --no-deps
 pip install ase pymatgen hydra-core omegaconf pytorch-lightning==2.0.6 \
     huggingface-hub lmdb mattersim wandb SMACT emmet-core seaborn \

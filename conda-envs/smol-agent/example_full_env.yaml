@@ -111,4 +111,3 @@ dependencies:
       - uncertainties==3.2.3
       - urllib3==2.6.3
       - uvicorn==0.40.0
-prefix: /home/bdeng/miniforge3/envs/smol-agent

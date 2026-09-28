@@ -1,6 +1,6 @@
 {
-  "train_lmdb_path": "/home/bdeng/projects/AtomisticSkills/skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune/output/lmdb_output/train",
-  "val_lmdb_path": "/home/bdeng/projects/AtomisticSkills/skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune/output/lmdb_output/val",
+  "train_lmdb_path": "skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune/output/lmdb_output/train",
+  "val_lmdb_path": "skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune/output/lmdb_output/val",
   "force_rms": 0.9032217353147075,
   "linref_coeff": [
     1.948206879354622e-17,

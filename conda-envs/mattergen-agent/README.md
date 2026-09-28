@@ -116,7 +116,7 @@ Or use the automated script:
 bash conda-envs/mattergen-agent/install_pyg_aarch64.sh
 ```
 
-For installing MatterGen on ARM/aarch64 machine, see [`INSTALL_BLACKWELL.md`](file:///home/bdeng/projects/AtomisticSkills/conda-envs/mattergen-agent/INSTALL_BLACKWELL.md) in this directory
+For installing MatterGen on ARM/aarch64 machine, see [`INSTALL_BLACKWELL.md`](INSTALL_BLACKWELL.md) in this directory
 
 ## Notes
 

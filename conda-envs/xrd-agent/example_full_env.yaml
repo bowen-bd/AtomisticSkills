@@ -144,4 +144,3 @@ dependencies:
       - uvicorn==0.41.0
       - wrapt==2.1.1
       - xmltodict==1.0.3
-prefix: /home/gridsan/nsegal/.conda/envs/xrd-agent

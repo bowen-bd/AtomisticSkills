@@ -1,10 +1,19 @@
-import os
 import argparse
 import logging
 import numpy as np
 from pathlib import Path
 from ase.io import read
+from pymatgen.core import Structure
+from pymatgen.entries.computed_entries import ComputedStructureEntry
+from pymatgen.io.ase import AseAtomsAdaptor
+from sklearn.linear_model import LassoCV
+from smol.cofe import ClusterExpansion, ClusterSubspace, StructureWrangler
+from smol.moca import Ensemble, Sampler
 import sys
+
+# Local sampler module lives next to this script
+sys.path.append(str(Path(__file__).resolve().parent))
+from order_disorder_sampler import OrderDisorderSampler  # noqa: E402
 
 # Configure logging
 logging.basicConfig(
@@ -27,9 +36,8 @@ def parse_args():
     )
     parser.add_argument(
         "--mlip_model",
-        default="mace",
-        choices=["mace", "chgnet", "m3gnet"],
-        help="MLIP model to use for relaxation",
+        default="MACE-MP-medium",
+        help="MACE model name used for relaxation (e.g. MACE-MP-medium)",
     )
     parser.add_argument(
         "--temperature", type=float, default=1000, help="MC temperature for sampling"
@@ -37,24 +45,55 @@ def parse_args():
     parser.add_argument(
         "--output_dir", default="iterative_ce_results", help="Output directory"
     )
+    parser.add_argument(
+        "--supercell_size",
+        default="num_sites",
+        help="smol ClusterSubspace supercell_size: 'num_sites', or a species "
+        "to normalize by (e.g. 'O2-' for oxides)",
+    )
     return parser.parse_args()
 
 
 def relax_structures(structures, mlip_model, output_dir):
     """
     Relax structures using the specified MLIP model.
-    This function handles the environment switching/subprocess calls.
-    """
-    # Construct command to run relaxation using dedicated wrapper script
-    relax_script = Path(
-        "/home/bdeng/projects/AtomisticSkills/skills/mat-disorder/scripts/relax_wrapper.py"
-    )
 
-    # Determine python executable for mace-agent
-    python_exe = "/home/bdeng/miniforge3/envs/mace-agent/bin/python"
+    The relaxation runs in a subprocess under the ``venv/mlip`` uv project,
+    because the MLIP stack is not part of the ``venv/cpu`` project this
+    script runs in.
+
+    Args:
+        structures: List of ASE Atoms to relax.
+        mlip_model: MACE model name passed to ``relax_wrapper.py``.
+        output_dir: Directory for relaxation inputs and outputs.
+
+    Returns:
+        List of relaxed ASE Atoms carrying their relaxed energy; structures
+        whose relaxation produced no output are skipped.
+    """
+    import subprocess
+
+    from ase.calculators.singlepoint import SinglePointCalculator
+    from ase.io import write
+
+    project_root = Path(__file__).resolve().parents[3]
+    relax_script = Path(__file__).resolve().parent / "relax_wrapper.py"
+
+    output_dir = Path(output_dir)
+    relax_input_dir = output_dir / "relax_input"
+    relax_output_dir = output_dir / "relax_output"
+    relax_input_dir.mkdir(parents=True, exist_ok=True)
+
+    names = [f"structure_{i:04d}" for i in range(len(structures))]
+    for name, atoms in zip(names, structures):
+        write(str(relax_input_dir / f"{name}.cif"), atoms)
 
     cmd = [
-        python_exe,
+        "uv",
+        "run",
+        "--project",
+        str(project_root / "venv" / "mlip"),
+        "python",
         str(relax_script),
         "--input_dir",
         str(relax_input_dir),
@@ -64,8 +103,6 @@ def relax_structures(structures, mlip_model, output_dir):
         mlip_model,
     ]
 
-    import subprocess
-
     logger.info(f"Running relaxation: {' '.join(cmd)}")
     ret = subprocess.run(cmd, capture_output=True, text=True)
 
@@ -74,44 +111,20 @@ def relax_structures(structures, mlip_model, output_dir):
         print(ret.stdout)  # Print stdout for debugging
         return []
 
-    # Read back results
+    # Batch relaxation writes <relax_output_dir>/<name>/relaxed_structure.cif
+    # and relaxed_energy.txt for each input structure
     relaxed_atoms = []
-    # wrapper saves with same basename
-    # MACEWrapper saves as .xyz (extxyz) or .json depending on implementation.
-    # MACEWrapper.relax_structure typically saves as .xyz or .cif depending on source?
-    # Actually MACEWrapper relax_structure implementation saves as .xyz by default or preserves extension?
-    # Let's check potential output files.
-
-    # Check for both .cif and .xyz files in output dir
-    found_files = list(relax_output_dir.glob("*"))
-    logger.info(f"Found {len(found_files)} files in output dir")
-
-    # We iterate over input_paths to maintain order if possible, but relax wrapper might change names slightly?
-    # Typically name is preserved.
-    for p in input_paths:
-        basename = os.path.basename(p)
-        # Try finding the file with likely extensions
-        stem = Path(basename).stem
-        candidates = [
-            relax_output_dir / basename,
-            relax_output_dir / f"{stem}.xyz",
-            relax_output_dir / f"{stem}.extxyz",
-        ]
-
-        found = False
-        for outfile in candidates:
-            if outfile.exists():
-                try:
-                    # Use ASE to read, which supports extxyz and preserves energy/stress
-                    atoms = read(str(outfile))
-                    relaxed_atoms.append(atoms)
-                    found = True
-                    break
-                except Exception as e:
-                    logger.warning(f"Failed to read {outfile}: {e}")
-
-        if not found:
-            logger.warning(f"Result for {basename} not found.")
+    for name in names:
+        cif_path = relax_output_dir / name / "relaxed_structure.cif"
+        energy_path = relax_output_dir / name / "relaxed_energy.txt"
+        if not (cif_path.exists() and energy_path.exists()):
+            logger.warning(f"Result for {name} not found.")
+            continue
+        atoms = read(str(cif_path))
+        atoms.calc = SinglePointCalculator(
+            atoms, energy=float(energy_path.read_text().strip())
+        )
+        relaxed_atoms.append(atoms)
 
     return relaxed_atoms
 
@@ -127,7 +140,7 @@ def compute_bic(mse, n_samples, n_features):
     return n_samples * np.log(mse) + n_features * np.log(n_samples)
 
 
-def sweep_cutoffs(structure, entries, supercell_matrix):
+def sweep_cutoffs(structure, entries, supercell_matrix, supercell_size="num_sites"):
     """
     Sweep over 2-body, 3-body, and 4-body cutoffs to find best CE model.
     """
@@ -142,7 +155,7 @@ def sweep_cutoffs(structure, entries, supercell_matrix):
     for r2 in two_body_range:
         cutoffs = {2: r2}
         subspace = ClusterSubspace.from_cutoffs(
-            structure, cutoffs=cutoffs, basis="sinusoid", supercell_size="O2-"
+            structure, cutoffs=cutoffs, basis="sinusoid", supercell_size=supercell_size
         )
 
         # We need to process entries for this subspace
@@ -158,8 +171,6 @@ def sweep_cutoffs(structure, entries, supercell_matrix):
             # Fit and Evaluate
             feature_matrix = wrangler.feature_matrix
             energies = wrangler.get_property_vector("energy")
-
-            from sklearn.linear_model import LassoCV
 
             # Use LassoCV for robust CV score inside the sweep
             model = LassoCV(cv=5, n_jobs=1)  # 5-fold CV
@@ -206,7 +217,10 @@ def sweep_cutoffs(structure, entries, supercell_matrix):
         # ... (Duplicate logic, consider helper function if time, but linear flow is fine)
         try:
             subspace = ClusterSubspace.from_cutoffs(
-                structure, cutoffs=cutoffs, basis="sinusoid", supercell_size="O2-"
+                structure,
+                cutoffs=cutoffs,
+                basis="sinusoid",
+                supercell_size=supercell_size,
             )
             wrangler = StructureWrangler(subspace)
             for entry in entries:
@@ -250,7 +264,10 @@ def sweep_cutoffs(structure, entries, supercell_matrix):
             cutoffs = {2: best_2b, 3: best_3b, 4: r4}
             try:
                 subspace = ClusterSubspace.from_cutoffs(
-                    structure, cutoffs=cutoffs, basis="sinusoid", supercell_size="O2-"
+                    structure,
+                    cutoffs=cutoffs,
+                    basis="sinusoid",
+                    supercell_size=supercell_size,
                 )
                 wrangler = StructureWrangler(subspace)
                 for entry in entries:
@@ -286,7 +303,10 @@ def sweep_cutoffs(structure, entries, supercell_matrix):
 
     # Return final wrangler fitted with these cutoffs
     subspace = ClusterSubspace.from_cutoffs(
-        structure, cutoffs=final_cutoffs, basis="sinusoid", supercell_size="O2-"
+        structure,
+        cutoffs=final_cutoffs,
+        basis="sinusoid",
+        supercell_size=supercell_size,
     )
     wrangler = StructureWrangler(subspace)
     for entry in entries:
@@ -298,22 +318,6 @@ def main():
     args = parse_args()
     output_dir = Path(args.output_dir)
     output_dir.mkdir(exist_ok=True)
-
-    # 1. Initialize Sampler & Smol wrapper
-    try:
-        from smol.cofe import ClusterSubspace, StructureWrangler, ClusterExpansion
-        from smol.moca import Ensemble, Sampler
-        from pymatgen.core import Structure
-        from pymatgen.io.ase import AseAtomsAdaptor
-
-        # Add local scripts to path to import OrderDisorderSampler
-        sys.path.append(str(Path(__file__).parent))
-        from order_disorder_sampler import OrderDisorderSampler
-    except ImportError:
-        logger.error(
-            "Failed to import smol or local modules. Make sure you are in the 'smol-agent' environment."
-        )
-        return
 
     prim_structure = Structure.from_file(args.primordial_structure)
     all_entries = []  # Master list of entries
@@ -347,14 +351,12 @@ def main():
             try:
                 # Check if it maps to valid correlation
                 subspace_check = ClusterSubspace.from_cutoffs(
-                    prim_structure, cutoffs={2: 5.0}, supercell_size="O2-"
+                    prim_structure, cutoffs={2: 5.0}, supercell_size=args.supercell_size
                 )
-                corr = subspace_check.corr_from_structure(struct, scmatrix=sc_matrix)
+                subspace_check.corr_from_structure(struct, scmatrix=sc_matrix)
 
                 # Compute energy
                 energy = atoms.get_potential_energy()
-
-                from pymatgen.entries.computed_entries import ComputedStructureEntry
 
                 c_entry = ComputedStructureEntry(struct, energy)
                 all_entries.append(c_entry)
@@ -371,11 +373,11 @@ def main():
             continue
 
         # 3. Sweep Cutoffs and Select Best Model
-        wrangler, subspace = sweep_cutoffs(prim_structure, all_entries, sc_matrix)
+        wrangler, subspace = sweep_cutoffs(
+            prim_structure, all_entries, sc_matrix, args.supercell_size
+        )
 
         # Fit final model with LassoCV for error reporting and getting coefficients
-        from sklearn.linear_model import LassoCV
-
         feature_matrix = wrangler.feature_matrix
         energies = wrangler.get_property_vector("energy")
 
@@ -405,7 +407,6 @@ def main():
 
         # 5. Coverage Check
         samples = mc_sampler.samples
-        new_candidates = []
 
         occus = samples.get_occupancies(flat=True)
         unique_occus = np.unique(occus, axis=0)
@@ -443,169 +444,6 @@ def main():
         logger.info("Saved final Cluster Expansion.")
     else:
         logger.warning("No expansion created, nothing to save.")
-
-    all_entries = []
-
-    # Initial Pool Generation
-
-    # Initial Pool Generation
-    logger.info("Generating initial pool of structures...")
-    sampler = OrderDisorderSampler(prim_structure, n_structures=args.n_samples)
-    sampler = OrderDisorderSampler(prim_structure, n_structures=args.n_samples)
-    initial_pool = sampler.sample(output_dir=str(output_dir / "initial_pool"))
-
-    # Store the supercell matrix used for sampling
-    sc_matrix = sampler.supercell_matrix
-    if sc_matrix is None:
-        # Fallback if accessed before sample (unlikley) or if not set?
-        # It should be set after sample()
-        logger.warning("Sampler supercell matrix not found. Mapping might fail.")
-    else:
-        logger.info(f"Using supercell matrix from sampler: {sc_matrix.tolist()}")
-
-    # Iteration Loop
-    for iteration in range(args.iterations):
-        logger.info(f"=== Iteration {iteration+1}/{args.iterations} ===")
-
-        # 1. Relax Pool
-        relaxed_structures = relax_structures(
-            initial_pool, args.mlip_model, output_dir / f"iter_{iteration}"
-        )
-
-        # 2. Check Mapping & Add to Wrangler
-        added_count = 0
-        for atoms in relaxed_structures:
-            struct = AseAtomsAdaptor.get_structure(atoms)
-            try:
-                # Check if it maps to valid correlation
-                # Pass the explicit supercell matrix to avoid StructureMatcher guessing issues
-                corr = subspace.corr_from_structure(struct, scmatrix=sc_matrix)
-                # Compute energy (dummy extraction, assuming 'energy' or 'free_energy' in info/calc)
-                # For ASE atoms read from file, energy might be in get_potential_energy() if saved correctly
-                # or we need to parse it.
-                # The relax script above uses write(..., atoms), which nicely preserves results in extxyz/json,
-                # but might be tricky in CIF. CIF usually doesn't store energy.
-                # Let's update relax script to save as .xyz or .json/traj for energy preservation.
-                # Just assuming 'energy' property for now.
-                energy = atoms.get_potential_energy()
-
-                # Check if configuration changed (optional but requested)
-                # We need the initial unrelaxed structure to compare.
-                # Using 'info' to track provenance would be good.
-
-                entry = {"structure": struct, "energy": energy}
-                # In real usage, use ComputedStructureEntry
-                from pymatgen.entries.computed_entries import ComputedStructureEntry
-
-                c_entry = ComputedStructureEntry(struct, energy)
-                wrangler.add_entry(c_entry)
-                added_count += 1
-            except Exception as e:
-                logger.warning(f"Failed to map structure: {e}")
-
-        logger.info(f"Added {added_count} structures to training set.")
-
-        if added_count == 0 and len(wrangler.entries) == 0:
-            logger.warning("No structures available for training. Skipping iteration.")
-            continue
-
-        # 3. Train CE
-        if len(wrangler.entries) < 10:
-            logger.warning(
-                f"Not enough data to train CE (have {len(wrangler.entries)}). Skipping fit."
-            )
-            continue
-
-        # 3. Sweep Cutoffs and Select Best Model
-        # We need to preserve the entries and re-initialize the wrangler with best cutoffs
-        current_entries = wrangler.entries
-        wrangler, subspace = sweep_cutoffs(prim_structure, current_entries, sc_matrix)
-
-        # Fit final model with LassoCV for error reporting
-        from sklearn.linear_model import LassoCV
-
-        feature_matrix = wrangler.feature_matrix
-        energies = wrangler.get_property_vector("energy")
-
-        model = LassoCV(cv=5)  # 5-fold CV
-        model.fit(feature_matrix, energies)
-
-        # Report Metrics
-        mse = np.min(model.mse_path_.mean(axis=1))
-        rmse = np.sqrt(mse)
-        n_feat = np.sum(model.coef_ != 0)
-
-        logger.info(
-            f"Iteration {iteration} Final Model: CV-RMSE={rmse:.4f} eV/prim, Features={n_feat}"
-        )
-
-        # 4. Run MC & Active Learning
-        # Setup Ensemble
-        sc_matrix = np.diag([2, 2, 2])  # Example supercell
-        ensemble = Ensemble.from_cluster_expansion(
-            expansion, supercell_matrix=sc_matrix
-        )
-
-        mc_sampler = Sampler.from_ensemble(ensemble, temperature=args.temperature)
-        mc_sampler.run(steps=10000)
-
-        # 5. Coverage Check
-        # Get sampled structures (unique)
-        samples = mc_sampler.samples
-        # Extract unique structures from samples?
-        # Actually simplest is to just take the final few or random samples
-        # and check if their correlation vectors are close to any in feature_matrix
-
-        new_candidates = []
-        # Get flattened correlations from samples
-        sampled_corrs = samples.get_feature_vectors(flat=True)
-        # sampled_corrs shape: (n_samples, n_features)
-
-        # Check against training set (feature_matrix)
-        # We want to find samples where min_dist(sample, train) > threshold
-
-        # Logic to pick coverage...
-        # For simplicity in this script:
-        # Just pick a few random ones and if they are "different" add them.
-        # "Different" = dist > 1e-4
-
-        # If we find new unique ones, we generate their unrelaxed versions (from occupancy)
-        # convert to structure, and add to 'initial_pool' for next iteration
-
-        initial_pool = []  # Reset for next batch
-
-        # Convert sampled correlations back to structures?
-        # Ensembe has processor.structure_from_occupancy(occu)
-
-        occus = samples.get_occupancies(flat=True)
-        unique_occus = np.unique(occus, axis=0)
-
-        found_new = 0
-        for occu in unique_occus:
-            if len(initial_pool) >= args.n_samples:
-                break
-
-            # Check if this occu exists in training data
-            # occu -> feature vector
-            feat = ensemble.compute_feature_vector(occu)
-
-            # Dist to training
-            dists = np.linalg.norm(feature_matrix - feat, axis=1)
-            if np.min(dists) > 1e-4:
-                # It's new!
-                struct = ensemble.processor.structure_from_occupancy(occu)
-                initial_pool.append(AseAtomsAdaptor.get_atoms(struct))
-                found_new += 1
-
-        logger.info(f"Found {found_new} new configurations from MC coverage check.")
-
-        if found_new == 0:
-            logger.info("Convergence reached! No new structures found.")
-            break
-
-    # Save final CE
-    expansion.save(str(output_dir / "final_cluster_expansion.json"))
-    logger.info("Saved final Cluster Expansion.")
 
 
 if __name__ == "__main__":

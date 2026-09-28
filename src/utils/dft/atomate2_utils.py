@@ -6,6 +6,7 @@ import os
 import json
 import logging
 import pickle
+import shutil
 from datetime import datetime
 from pathlib import Path
 from src.utils.research_utils import get_current_research_dir
@@ -45,9 +46,9 @@ class Atomate2Handler:
         if vasp_cmd:
             checks["vasp"] = True
         else:
-            # Check common location
-            vasp_bin = Path("/home/bdeng/Packages/vasp.6.4.2/bin/vasp_std")
-            if vasp_bin.exists():
+            # Fall back to a vasp_std binary on PATH
+            vasp_bin = shutil.which("vasp_std")
+            if vasp_bin:
                 checks["vasp"] = True
                 os.environ["ATOMATE2_VASP_CMD"] = f"mpirun -np 1 {vasp_bin}"
             else:

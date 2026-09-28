@@ -40,7 +40,7 @@ pip install mcp fastmcp
 
 5. Clone the AADT repository:
 ```bash
-git clone https://github.com/facebookresearch/all-atom-diffusion-transformer /home/bdeng/projects/adit
+git clone https://github.com/facebookresearch/all-atom-diffusion-transformer ../adit  # next to this project
 ```
 
 ## MCP Tool
