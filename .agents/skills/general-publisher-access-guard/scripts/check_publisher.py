@@ -5,9 +5,9 @@ to determine whether automated scraping/fetching will be blocked (e.g., by Cloud
 Akamai, Radware, or 403/429 status codes) and outputs the recommended legal API route.
 
 Usage:
-    python skills/general-publisher-access-guard/scripts/check_publisher.py --url "https://pubs.acs.org/doi/10.1021/jacs.3c01234"
-    python skills/general-publisher-access-guard/scripts/check_publisher.py --doi "10.1103/PhysRevLett.120.145301"
-    python skills/general-publisher-access-guard/scripts/check_publisher.py --domain "sciencedirect.com"
+    python .agents/skills/general-publisher-access-guard/scripts/check_publisher.py --url "https://pubs.acs.org/doi/10.1021/jacs.3c01234"
+    python .agents/skills/general-publisher-access-guard/scripts/check_publisher.py --doi "10.1103/PhysRevLett.120.145301"
+    python .agents/skills/general-publisher-access-guard/scripts/check_publisher.py --domain "sciencedirect.com"
 """
 
 import argparse

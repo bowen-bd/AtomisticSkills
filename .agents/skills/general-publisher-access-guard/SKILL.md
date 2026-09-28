@@ -19,12 +19,12 @@ Before attempting to download or scrape any paper URL or DOI, inspect the domain
 
 ```bash
 # Env: base-agent
-python skills/general-publisher-access-guard/scripts/check_publisher.py --url "https://pubs.acs.org/doi/10.1021/acs.chemmater.9b04758"
+python .agents/skills/general-publisher-access-guard/scripts/check_publisher.py --url "https://pubs.acs.org/doi/10.1021/acs.chemmater.9b04758"
 ```
 Or with DOI:
 ```bash
 # Env: base-agent
-python skills/general-publisher-access-guard/scripts/check_publisher.py --doi "10.1103/PhysRevLett.120.145301" --json
+python .agents/skills/general-publisher-access-guard/scripts/check_publisher.py --doi "10.1103/PhysRevLett.120.145301" --json
 ```
 
 **Decision Rule:**
@@ -42,7 +42,7 @@ Run the safe paper retriever to query legitimate APIs in priority order:
 
 ```bash
 # Env: base-agent
-python skills/general-publisher-access-guard/scripts/safe_paper_retriever.py \
+python .agents/skills/general-publisher-access-guard/scripts/safe_paper_retriever.py \
     --doi "10.1103/PhysRevLett.120.145301" \
     --output_dir ./papers
 ```
@@ -63,12 +63,12 @@ To test live publisher WAF defenses or verify if a publisher's bot policy has up
 
 ```bash
 # Env: base-agent
-python skills/general-publisher-access-guard/scripts/audit_publishers.py --publisher acs
+python .agents/skills/general-publisher-access-guard/scripts/audit_publishers.py --publisher acs
 ```
 Or audit all major publishers:
 ```bash
 # Env: base-agent
-python skills/general-publisher-access-guard/scripts/audit_publishers.py --all
+python .agents/skills/general-publisher-access-guard/scripts/audit_publishers.py --all
 ```
 
 ## Examples
@@ -77,7 +77,7 @@ python skills/general-publisher-access-guard/scripts/audit_publishers.py --all
 Handling an ACS paper (`10.1021/acs.jpclett.7b00189`) where direct web scraping returns Cloudflare Turnstile 403:
 ```bash
 # Env: base-agent
-python skills/general-publisher-access-guard/scripts/safe_paper_retriever.py \
+python .agents/skills/general-publisher-access-guard/scripts/safe_paper_retriever.py \
     --doi "10.1021/acs.jpclett.7b00189" \
     --output_dir examples/acs-blocked-paper
 ```
@@ -87,7 +87,7 @@ See [examples/acs-blocked-paper/README.md](examples/acs-blocked-paper/README.md)
 Handling an APS Physical Review Letters paper (`10.1103/PhysRevLett.120.145301`) by bypassing blocked `link.aps.org/pdf` and fetching the author manuscript from OSTI/MIT DSpace:
 ```bash
 # Env: base-agent
-python skills/general-publisher-access-guard/scripts/safe_paper_retriever.py \
+python .agents/skills/general-publisher-access-guard/scripts/safe_paper_retriever.py \
     --doi "10.1103/PhysRevLett.120.145301" \
     --output_dir examples/oa-repository-bypass
 ```

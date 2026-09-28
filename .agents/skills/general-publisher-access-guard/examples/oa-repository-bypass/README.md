@@ -8,7 +8,7 @@ To demonstrate how an agent retrieves the full text of an American Physical Soci
 ### 1. Pre-Flight Domain Check
 ```bash
 # Env: base-agent
-python skills/general-publisher-access-guard/scripts/check_publisher.py \
+python .agents/skills/general-publisher-access-guard/scripts/check_publisher.py \
     --doi "10.1103/PhysRevLett.120.145301"
 ```
 
@@ -31,9 +31,9 @@ Safe Mirrors / APIs:   arxiv, openalex, unpaywall_filtered
 ### 2. Execute Safe Paper Retrieval
 ```bash
 # Env: base-agent
-python skills/general-publisher-access-guard/scripts/safe_paper_retriever.py \
+python .agents/skills/general-publisher-access-guard/scripts/safe_paper_retriever.py \
     --doi "10.1103/PhysRevLett.120.145301" \
-    --output_dir skills/general-publisher-access-guard/examples/oa-repository-bypass
+    --output_dir .agents/skills/general-publisher-access-guard/examples/oa-repository-bypass
 ```
 
 **Execution Trace:**

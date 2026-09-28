@@ -9,7 +9,7 @@ To demonstrate how an agent safely handles a paper published in an American Chem
 Run the publisher policy validator:
 ```bash
 # Env: base-agent
-python skills/general-publisher-access-guard/scripts/check_publisher.py \
+python .agents/skills/general-publisher-access-guard/scripts/check_publisher.py \
     --url "https://pubs.acs.org/doi/10.1021/acs.jpclett.7b00189"
 ```
 
@@ -33,9 +33,9 @@ Safe Mirrors / APIs:   openalex, unpaywall_filtered, europe_pmc
 Run the safe paper retriever:
 ```bash
 # Env: base-agent
-python skills/general-publisher-access-guard/scripts/safe_paper_retriever.py \
+python .agents/skills/general-publisher-access-guard/scripts/safe_paper_retriever.py \
     --doi "10.1021/acs.jpclett.7b00189" \
-    --output_dir skills/general-publisher-access-guard/examples/acs-blocked-paper
+    --output_dir .agents/skills/general-publisher-access-guard/examples/acs-blocked-paper
 ```
 
 ## Literature Validation
