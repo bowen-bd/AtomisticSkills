@@ -335,7 +335,8 @@ class SmolWrapper:
         Fit the cluster expansion using the data in the wrangler.
         methods: 'ls' (least squares), 'lasso', 'ridge', 'sgl' (Sparse Group Lasso)
         """
-        from sklearn.linear_model import Lasso, Ridge, LassoCV
+        from sklearn.linear_model import Lasso, Ridge, LassoCV, LinearRegression
+        from sklearn.metrics import mean_squared_error
         from sklearn.model_selection import LeaveOneOut
         from smol.cofe import ClusterExpansion
 
@@ -469,7 +470,8 @@ class SmolWrapper:
         Returns:
             Dictionary containing the fitting results, method used, RMSEs, and coefficient count.
         """
-        from sklearn.linear_model import Lasso, Ridge, LassoCV
+        from sklearn.linear_model import Lasso, Ridge, LassoCV, LinearRegression
+        from sklearn.metrics import mean_squared_error
         from sklearn.model_selection import train_test_split
 
         X = np.load(feature_matrix_path)

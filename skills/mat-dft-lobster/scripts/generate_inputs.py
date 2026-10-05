@@ -47,11 +47,10 @@ def main():
     )
 
     # Save input configs for reproducibility
+    from pathlib import Path
     from src.utils.config_utils import save_skill_inputs
 
-    save_skill_inputs(args, args.output_dir)
-    _params_path.parent.mkdir(parents=True, exist_ok=True)
-    _params_path.write_text(json.dumps(_config, indent=2, default=str))
+    save_skill_inputs(args, Path(args.output).parent)
 
 
 if __name__ == "__main__":

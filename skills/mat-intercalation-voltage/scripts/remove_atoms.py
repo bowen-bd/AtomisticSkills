@@ -103,13 +103,6 @@ def main():
 
     args = parser.parse_args()
 
-    # Save input configs for reproducibility
-    from src.utils.config_utils import save_skill_inputs
-
-    save_skill_inputs(args, args.output_dir)
-    _params_path.parent.mkdir(parents=True, exist_ok=True)
-    _params_path.write_text(_json.dumps(_config, indent=2, default=str))
-
     # Auto-generate output filename if not provided
     if args.output is None:
         input_path = Path(args.input)
@@ -117,6 +110,11 @@ def main():
         args.output = str(
             input_path.parent / f"{input_path.stem}_no{elements_str}{input_path.suffix}"
         )
+
+    # Save input configs for reproducibility
+    from src.utils.config_utils import save_skill_inputs
+
+    save_skill_inputs(args, Path(args.output).parent)
 
     remove_atoms(
         input_file=args.input, elements_to_remove=args.remove, output_file=args.output

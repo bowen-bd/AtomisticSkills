@@ -20,6 +20,23 @@ from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 from ase.md.verlet import VelocityVerlet
 from ase import units
 
+DEFAULT_MODELS = {
+    "mace": [
+        "MACE-MP-small",
+        "MACE-MP-medium",
+        "MACE-MH-1",
+    ],
+    "matgl": [
+        "M3GNet",
+        "TensorNet",
+    ],
+    "fairchem": [
+        "uma-s-1p1",
+        "uma-m-1p1",
+    ],
+}
+default_models = DEFAULT_MODELS
+
 
 # Optional imports will be handled within the benchmark loop
 def get_hardware_name():

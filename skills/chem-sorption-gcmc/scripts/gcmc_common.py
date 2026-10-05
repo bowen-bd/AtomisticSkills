@@ -933,6 +933,13 @@ def _mol_per_kg_from_nmols(eq_nmols: float, host_mass_kg: float) -> float:
     return (float(eq_nmols) / NA) / float(host_mass_kg)
 
 
+def _format_temperature_key(temperature: float) -> str:
+    rounded = round(temperature)
+    if abs(temperature - rounded) < 1e-6:
+        return f"{int(rounded)}K"
+    return f"{temperature:g}K"
+
+
 def update_properties_json_gcmc_single(
     properties_path: Path,
     *,

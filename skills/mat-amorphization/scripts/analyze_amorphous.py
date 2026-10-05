@@ -41,7 +41,7 @@ def check_cn(atoms):
         try:
             cn = cnn.get_cn(struct, i)
             cns.append(cn)
-        except:
+        except Exception:
             pass
     return np.mean(cns), np.bincount(cns).tolist()
 
@@ -94,8 +94,6 @@ def main():
     from src.utils.config_utils import save_skill_inputs
 
     save_skill_inputs(args, args.output_dir)
-    _params_path.parent.mkdir(parents=True, exist_ok=True)
-    _params_path.write_text(_json.dumps(_config, indent=2, default=str))
 
 
 if __name__ == "__main__":

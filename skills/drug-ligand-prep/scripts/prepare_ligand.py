@@ -604,8 +604,6 @@ def main() -> None:
         from src.utils.config_utils import save_skill_inputs
 
         save_skill_inputs(args, args.output_dir)
-        _params_path.parent.mkdir(parents=True, exist_ok=True)
-        _params_path.write_text(json.dumps(_config, indent=2, default=str))
 
     ok = sum(1 for r in results if r.success)
     LOGGER.info(

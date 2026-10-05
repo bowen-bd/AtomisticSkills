@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Optional, Dict, Any
 
 from mp_api.client import MPRester
+from pymatgen.electronic_structure.dos import CompleteDos
 from pymatgen.electronic_structure.plotter import BSPlotter, DosPlotter
 
 
