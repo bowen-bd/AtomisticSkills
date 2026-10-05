@@ -21,6 +21,7 @@ Requirements:
 
 import argparse
 import json
+import os
 import sys
 import yaml
 from pathlib import Path
@@ -46,6 +47,10 @@ def run_iceberg(
     """Run ICEBERG two-stage inference on the CPU. Returns (save_dir, precursor_mass)."""
     from ms_pred.iceberg.iceberg_elucidation import iceberg_prediction
 
+    # torch >= 2.6 loads checkpoints weights-only by default, which rejects the
+    # pathlib objects in ICEBERG's saved hyperparameters. The weights come from
+    # the ms-pred authors, so the prediction subprocess may unpickle them fully.
+    os.environ.setdefault("TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD", "1")
     save_dir, precursor_mass = iceberg_prediction(
         candidate_smiles=[smiles],
         collision_energies=collision_energies,
