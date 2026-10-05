@@ -1,5 +1,6 @@
-import sys
+import argparse
 import os
+import sys
 from pymatgen.core import Composition
 from pymatgen.entries.computed_entries import ComputedEntry
 from pymatgen.analysis.phase_diagram import PhaseDiagram
@@ -11,9 +12,10 @@ sys.path.append(
 from calculate_ecw import get_electrochemical_window
 
 if __name__ == "__main__":
-    """
-    Reproduces Table 1 from Zhu et al. (2015) using exact MP queries.
-    """
+    argparse.ArgumentParser(
+        description="Reproduce Table 1 of Zhu et al. (2015) from Materials Project "
+        "data (needs MP_API_KEY)."
+    ).parse_args()
     table1_data = {
         "Li2S": {"formula": "Li2S", "reported": [0.00, 2.01], "chemsys": "Li-S"},
         "LGPS": {

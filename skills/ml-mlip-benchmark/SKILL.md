@@ -97,12 +97,12 @@ If the model is performing poorly on the labeled data, suggest fine-tuning it ut
 Evaluating state-of-the-art MatPES-r2SCAN Foundation Models directly against f-block filtered analytical DFT data from the Materials Project:
 
 ```bash
-# Fetch 100 random r2SCAN structures from MP API (excluding Lanthanides/Actinides)
+# Fetch 100 random r2SCAN structures from MP API (excluding Lanthanides/Actinides) into ./r2scan_data.json
 ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/examples/fetch_r2scan.py
 
 # Benchmark MACE foundation potential
 ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_benchmark.py \
-    --data_path research/2026-03-03_r2SCAN_benchmark/r2scan_data.json \
+    --data_path r2scan_data.json \
     --model MACE-MATPES-R2SCAN-0 \
     --backend mace \
     --output research/2026-03-03_r2SCAN_benchmark/mace_results.json

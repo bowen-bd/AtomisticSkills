@@ -38,25 +38,25 @@ Execute inference testing across each model in their respective environments:
 # MACE Potential Benchmark (Env: mace-agent)
 venv/run mlip python skills/ml-mlip-benchmark/scripts/run_benchmark.py \
     --model MACE-MATPES-R2SCAN-0 --backend mace \
-    --data_path research/2026-03-03_r2SCAN_benchmark/r2scan_data.json \
+    --data_path r2scan_data.json \
     --output research/2026-03-03_r2SCAN_benchmark/mace_results.json
 
 # CHGNet Potential Benchmark (Env: matgl-agent)
 venv/run mlip python skills/ml-mlip-benchmark/scripts/run_benchmark.py \
     --model CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES --backend matgl \
-    --data_path research/2026-03-03_r2SCAN_benchmark/r2scan_data.json \
+    --data_path r2scan_data.json \
     --output research/2026-03-03_r2SCAN_benchmark/chgnet_results.json
 
 # M3GNet Potential Benchmark (Env: matgl-agent)
 venv/run mlip python skills/ml-mlip-benchmark/scripts/run_benchmark.py \
     --model M3GNet-MatPES-r2SCAN-v2025.1-PES --backend matgl \
-    --data_path research/2026-03-03_r2SCAN_benchmark/r2scan_data.json \
+    --data_path r2scan_data.json \
     --output research/2026-03-03_r2SCAN_benchmark/m3gnet_results.json
 
 # TensorNet Potential Benchmark (Env: matgl-agent)
 venv/run mlip python skills/ml-mlip-benchmark/scripts/run_benchmark.py \
     --model TensorNet-MatPES-r2SCAN-v2025.1-PES --backend matgl \
-    --data_path research/2026-03-03_r2SCAN_benchmark/r2scan_data.json \
+    --data_path r2scan_data.json \
     --output research/2026-03-03_r2SCAN_benchmark/tensornet_results.json
 ```
 

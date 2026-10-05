@@ -1,9 +1,9 @@
-import os
+import argparse
 import json
 from mp_api.client import MPRester
 
 
-def fetch_r2scan_data(limit=100):
+def fetch_r2scan_data(limit=100, out_path="r2scan_data.json"):
     dataset = []
 
     with MPRester() as mpr:
@@ -64,11 +64,21 @@ def fetch_r2scan_data(limit=100):
             traceback.print_exc()
             print(f"Error querying API: {e}")
 
-    out_path = os.path.join(os.path.dirname(__file__), "r2scan_data.json")
     with open(out_path, "w") as f:
         json.dump(dataset, f)
     print(f"Saved dataset to {out_path}")
 
 
 if __name__ == "__main__":
-    fetch_r2scan_data(100)
+    parser = argparse.ArgumentParser(
+        description="Fetch r2SCAN energies and structures from Materials Project "
+        "(needs MP_API_KEY) into a JSON dataset for ml-mlip-benchmark."
+    )
+    parser.add_argument("--limit", type=int, default=100, help="materials to fetch")
+    parser.add_argument(
+        "--output",
+        default="r2scan_data.json",
+        help="output JSON (default: ./r2scan_data.json)",
+    )
+    args = parser.parse_args()
+    fetch_r2scan_data(args.limit, args.output)
