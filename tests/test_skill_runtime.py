@@ -10,8 +10,7 @@ make all of those work:
 * the venvs and extras named exist, and ``metadata.venv`` lists exactly the
   venvs a skill uses;
 * scripts a command names exist;
-* nothing points at the repository root or at a conda environment, except
-  for the few stacks that have no uv project (``metadata.conda_env``);
+* nothing points at the repository root or at a conda environment;
 * every MCP tool written ``server.tool`` exists on that server.
 
 ``tools/migrate_skill_commands.py`` rewrites skills into this form, and the last
@@ -148,7 +147,6 @@ def test_named_scripts_exist(skill):
 
 @pytest.mark.parametrize("skill", SKILLS, ids=ids)
 def test_no_repository_relative_or_conda_commands(skill):
-    conda_env = frontmatter(skill).get("metadata", {}).get("conda_env")
     problems = []
     for line in code_lines(skill):
         stripped = line.strip()
@@ -158,8 +156,8 @@ def test_no_repository_relative_or_conda_commands(skill):
             problems.append(f"repository-relative path: {stripped[:90]}")
         if "uv run --project" in stripped:
             problems.append(f"bare uv command (use venv/run): {stripped[:90]}")
-        if re.search(r"\b(conda|mamba) (run|activate)\b", stripped) and not conda_env:
-            problems.append(f"conda command in a uv skill: {stripped[:90]}")
+        if re.search(r"\b(conda|mamba) (run|activate)\b", stripped):
+            problems.append(f"conda command (use venv/run): {stripped[:90]}")
         if re.match(r"#\s*(Env|Venv):", stripped):
             problems.append(f"obsolete annotation: {stripped[:90]}")
     assert not problems, "\n".join(problems)
@@ -187,15 +185,14 @@ def test_mcp_tools_exist(skill):
     assert not missing, f"unknown MCP tools: {sorted(missing)}"
 
 
-def test_conda_skills_are_declared():
-    """A conda environment is the exception, and must be named where it is used."""
-    for skill in SKILLS:
-        meta = frontmatter(skill).get("metadata", {})
-        uses_conda = any(re.search(r"\bconda run\b", ln) for ln in code_lines(skill))
-        if uses_conda:
-            assert meta.get(
-                "conda_env"
-            ), f"{skill.name} runs conda but declares no metadata.conda_env"
+def test_no_skill_declares_a_conda_environment():
+    """Since 2.0.0 every skill runs from a uv project; conda is gone."""
+    declared = [
+        skill.name
+        for skill in SKILLS
+        if "conda_env" in frontmatter(skill).get("metadata", {})
+    ]
+    assert not declared, declared
 
 
 def test_migration_tool_converges():

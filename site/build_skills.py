@@ -926,10 +926,14 @@ def build_skills():
     servers_count = 0
     server_tools_count = {}
 
-    # Count conda envs
-    conda_envs_dir = PROJECT_ROOT / "conda-envs"
-    if conda_envs_dir.exists():
-        servers_count = len([d for d in conda_envs_dir.iterdir() if d.is_dir()])
+    # Count MCP servers (venv/servers.tsv, rendered from docker/images.json)
+    servers_table = PROJECT_ROOT / "venv" / "servers.tsv"
+    if servers_table.exists():
+        servers_count = sum(
+            1
+            for line in servers_table.read_text().splitlines()
+            if line and not line.startswith("#")
+        )
 
     mcp_dir = PROJECT_ROOT / "src" / "mcp_server"
     if mcp_dir.exists():

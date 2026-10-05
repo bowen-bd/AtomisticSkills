@@ -55,9 +55,9 @@ Environments support optional extras specified as `<venv>+<extra>` (e.g., `cpu+o
 
 The generative servers run from their uv projects on x86_64; PyG publishes no aarch64 wheels for their compiled extensions, so on aarch64 `venv/run` uses the `generative` container image (linux/arm64), built with those extensions compiled from source.
 
-## 3. Conda
+## 3. No Conda
 
-Only `mat-lammps-md` still uses conda: `install_lammps.sh` compiles LAMMPS against each MLIP's C++ library in `mace-agent`, `matgl-agent` and `fairchem-agent` (declared via `metadata.conda_env`). The `adit-agent`, `diffcsp-agent` and `mattergen-agent` lockfiles only build the arm64 `generative` image. `conda-envs/README.md` describes both.
+Since 2.0.0 nothing runs from conda. Stacks that cannot share an environment get their own pinned uv project (the research stacks above); host builds use a uv extra (`mlip+lammps` provides what `mat-lammps-md` needs to compile LAMMPS against the `mlip` environment, `fairchem+lammps` the LAMMPS wheel and `fairchem-lammps`).
 
 ## 4. Runtime Selection and Launcher Backend
 

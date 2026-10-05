@@ -18,11 +18,11 @@ flat 6-component Voigt vector ``[xx, yy, zz, yz, xz, xy]`` before comparing.
 
 Run commands
 ------------
-    conda run -n mace-agent pytest tests/utils/test_nvalchemi_accuracy_and_speed.py -k mace -v -s
-    conda run -n matgl-agent pytest tests/utils/test_nvalchemi_accuracy_and_speed.py -k matgl -v -s
-    conda run -n fairchem-agent pytest tests/utils/test_nvalchemi_accuracy_and_speed.py -k fairchem -v -s
+    venv/run mlip python -m pytest tests/utils/test_nvalchemi_accuracy_and_speed.py -k mace -v -s
+    venv/run mlip python -m pytest tests/utils/test_nvalchemi_accuracy_and_speed.py -k matgl -v -s
+    venv/run fairchem python -m pytest tests/utils/test_nvalchemi_accuracy_and_speed.py -k fairchem -v -s
     # standalone timing table:
-    conda run -n mace-agent python tests/utils/test_nvalchemi_accuracy_and_speed.py
+    venv/run mlip python tests/utils/test_nvalchemi_accuracy_and_speed.py
 """
 
 from __future__ import annotations

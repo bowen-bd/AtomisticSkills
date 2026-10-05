@@ -91,10 +91,10 @@ seconds on a GPU.
 
 - **Platforms**: native environments need Linux on x86_64 or aarch64; other hosts
   use the container fallback. PyMOL, SCINE/ORCA and fpocket exist for x86_64 only.
-- **Conda stacks**: skills that declare `metadata.conda_env` (generative models,
-  React-OT, ICEBERG, LAMMPS builds) need that conda environment from
-  `conda-envs/<env>/install.sh`, or for the generative MCP servers on aarch64, the
-  `generative` container image.
+- **Research stacks**: the generative models, ICEBERG, React-OT and SCD each have
+  their own uv project, created on first use like the shared ones; several are
+  x86_64 only, and on aarch64 the generative MCP servers run from the
+  `generative` container image. `venv/run --doctor` lists what this host runs.
 - **Installing software**: ask the user before installing uv, a container runtime or
   system packages, and before downloading multi-GB environments.
 

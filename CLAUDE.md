@@ -72,9 +72,7 @@ venv/run <venv>[+<extra>] python skills/<skill-name>/scripts/<script>.py ...
 ```
 Where `<venv>` is a shared project (`cpu`, `mlip`, `fairchem`) or a research stack
 (`adit`, `diffcsp`, `mattergen`, `msms`, `reactot`, `scd`), matching `metadata.venv`
-in the skill's `SKILL.md`, with optional extras if needed (e.g. `cpu+openmm`, `cpu+docking`).
-Only `mat-lammps-md` still uses conda, to compile LAMMPS against each MLIP
-(`metadata.conda_env`).
+in the skill's `SKILL.md`, with optional extras if needed (e.g. `cpu+openmm`, `mlip+lammps`).
 
 ### MCP tool calls
 
@@ -100,12 +98,11 @@ See `README.md` for full installation instructions.
 
 ### Containerised servers and images
 
-The `cpu`, `mlip`, and `fairchem` container images (for linux/amd64 and linux/arm64)
-are built directly from their respective `venv/<name>/uv.lock` files via `docker/Dockerfile`,
-guaranteeing identical package environments natively and in containers without `--no-deps`.
-The `generative` image (arm64 only) is built via `docker/Dockerfile.cuda` from conda locks;
-on x86_64 the generative servers run from their uv projects (`venv/adit`, `venv/diffcsp`,
-`venv/mattergen`).
+Every container image is built from committed `venv/<name>/uv.lock` files, so a container
+runs the same environment as a native install: `cpu`, `mlip` and `fairchem` (linux/amd64 and
+linux/arm64) via `docker/Dockerfile`, and `generative` (linux/arm64) via `docker/Dockerfile.cuda`,
+which installs `adit`, `diffcsp` and `mattergen` side by side and compiles their PyG extensions
+with CUDA. On x86_64 the generative servers run from their uv projects on the host.
 
 `docker/images.json` is the single source of truth mapping each server to its runtime image.
 The server table `venv/servers.tsv`, the `mcpServers` block of `.claude-plugin/plugin.json`,
@@ -119,5 +116,4 @@ python docker/render.py plugin-mcp --check     # plugin wiring in .claude-plugin
 python docker/render.py matrix                 # CI build matrix for build-images.yml
 venv/run cpu python tools/sync_version.py --check           # manifest versions match VERSION
 ```
-Run `docker/export_locks.py` to refresh conda locks for the generative conda-lock image only.
 CI validates that rendered files and version manifests are current.

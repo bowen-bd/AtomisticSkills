@@ -208,7 +208,6 @@ def process_structure(atoms: Atoms, threshold: float = 0.5) -> dict:
 ### 1. Explicit Specification
 Every skill must declare its environment in its `SKILL.md` frontmatter:
 - `metadata.venv: [<venv>]` for standard uv environments (`cpu`, `mlip`, or `fairchem`). Commands use `${CLAUDE_SKILL_DIR}/../../venv/run <venv>[+<extra>] ...` (or `venv/run ...`).
-- `metadata.conda_env: <name>` only where a build needs conda (`mat-lammps-md`, which compiles LAMMPS against each MLIP). Commands use `conda run -n <name> ...`.
 
 ### 2. Environment Mapping
 Refer to `mcp-environments.md` for standard environment mapping:
@@ -218,7 +217,7 @@ Refer to `mcp-environments.md` for standard environment mapping:
 
 ### 3. Documentation Consistency
 The required environment must be consistent across:
-- The `metadata.venv` or `metadata.conda_env` frontmatter in `SKILL.md`.
+- The `metadata.venv` frontmatter in `SKILL.md`.
 - The `venv/run <venv>` invocation in command examples.
 - The `Requirements` section in the script's module-level docstring.
 - The `Constraints` section of `SKILL.md`.

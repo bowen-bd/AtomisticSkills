@@ -25,9 +25,6 @@ The same pass:
   a note saying how to call them with or without an MCP connection;
 * records the environments a skill uses as ``metadata.venv`` in its frontmatter.
 
-Skills whose stack has no uv project (React-OT, ICEBERG, the generative models)
-keep a conda environment, named in ``metadata.conda_env``.
-
 Usage:
     venv/run cpu python tools/migrate_skill_commands.py --check   # report, change nothing
     venv/run cpu python tools/migrate_skill_commands.py           # rewrite in place
@@ -51,13 +48,6 @@ SERVERS_TABLE = PROJECT_ROOT / "venv" / "servers.tsv"
 
 LAUNCHER = "${CLAUDE_SKILL_DIR}/../../venv/run"
 SKILL_DIR = "${CLAUDE_SKILL_DIR}"
-
-# Skills whose dependencies cannot live in a uv project; their commands run in
-# the named conda environment from conda-envs/.
-CONDA_SKILLS = {
-    # LAMMPS is compiled against each MLIP's conda environment.
-    "mat-lammps-md": "[mace-agent, matgl-agent, fairchem-agent]",
-}
 
 # Optional extras of the uv projects, keyed by the modules that need them.
 EXTRA_FOR_MODULE = {
@@ -166,7 +156,7 @@ def rewrite_command(
     SKILL.md already use, so a bare ``python script.py`` line agrees with them.
     """
     launched = LAUNCHED.search(line) if in_code else None
-    if launched and skill not in CONDA_SKILLS:
+    if launched:
         # Already a launcher command: keep its venv, refresh the extras its
         # script needs (they can change when a script's imports do).
         venv, *extras = launched.group("spec").split("+")
@@ -182,15 +172,12 @@ def rewrite_command(
     bare = BARE_PYTHON.match(line) if in_code else None
     if bare and LAUNCHER not in line:
         script = bare.group("script")
-        if skill in CONDA_SKILLS:
-            prefix = f"conda run --no-capture-output -n {CONDA_SKILLS[skill]} "
-        else:
-            spec = (known or {}).get(script)
-            if spec is None:
-                rel = script.replace("${CLAUDE_SKILL_DIR}/", f"skills/{skill}/")
-                extras = extras_for(str(Path(rel)))
-                spec = "+".join([venv_for_script(script, skill), *extras])
-            prefix = f"{LAUNCHER} {spec} "
+        spec = (known or {}).get(script)
+        if spec is None:
+            rel = script.replace("${CLAUDE_SKILL_DIR}/", f"skills/{skill}/")
+            extras = extras_for(str(Path(rel)))
+            spec = "+".join([venv_for_script(script, skill), *extras])
+        prefix = f"{LAUNCHER} {spec} "
         return bare.group("indent") + prefix + line[len(bare.group("indent")) :]
     m = UV_RUN.search(line)
     if m:
@@ -199,11 +186,8 @@ def rewrite_command(
         script = SCRIPT.search(line[m.end() - 1 :])
         if script:
             extras += extras_for(script.group("path"))
-        if skill in CONDA_SKILLS:
-            prefix = f"conda run --no-capture-output -n {CONDA_SKILLS[skill]} "
-        else:
-            spec = "+".join([venv, *sorted(set(extras))])
-            prefix = f"{LAUNCHER} {spec} "
+        spec = "+".join([venv, *sorted(set(extras))])
+        prefix = f"{LAUNCHER} {spec} "
         line = line[: m.start()] + prefix + line[m.end() :]
     return rewrite_paths(line, skill, in_code=in_code)
 
@@ -222,7 +206,7 @@ def mcp_note(calls: list[tuple[str, str]], servers: dict[str, str]) -> str:
         f"> `mcp__plugin_atomistic-skills_{server}__{tool}` when installed as a plugin).",
     ]
     used = list(dict.fromkeys(s for s, _ in calls))
-    shell = [s for s in used if servers.get(s, "-") != "-"]
+    shell = [s for s in used if s in servers]
     if shell:
         lines += [
             "> Without a connected server, run the same tools from the shell. Tools named in",
@@ -237,18 +221,11 @@ def mcp_note(calls: list[tuple[str, str]], servers: dict[str, str]) -> str:
                 f"> {LAUNCHER} {servers[s]} python -m src.mcp_server.cli {s} {example}"
             )
         lines.append("> ```")
-    container_only = [s for s in used if servers.get(s, "-") == "-"]
-    if container_only:
-        lines.append(
-            "> "
-            + ", ".join(f"`{s}`" for s in container_only)
-            + " run only as MCP servers, from their container image."
-        )
     return "\n".join(lines)
 
 
-def set_metadata(text: str, venvs: list[str], conda_env: str | None) -> str:
-    """Write metadata.venv (and metadata.conda_env) into the frontmatter."""
+def set_metadata(text: str, venvs: list[str]) -> str:
+    """Write metadata.venv into the frontmatter (dropping a 1.x conda_env)."""
     m = re.match(r"^---\n(.*?)\n---\n", text, re.S)
     if not m:
         return text
@@ -259,10 +236,7 @@ def set_metadata(text: str, venvs: list[str], conda_env: str | None) -> str:
         idx = next(i for i, ln in enumerate(lines) if re.match(r"^  category:", ln))
     except StopIteration:
         return text
-    new = [f"  venv: [{', '.join(venvs)}]"]
-    if conda_env:
-        new.append(f"  conda_env: {conda_env}")
-    lines[idx + 1 : idx + 1] = new
+    lines[idx + 1 : idx + 1] = [f"  venv: [{', '.join(venvs)}]"]
     return "---\n" + "\n".join(lines) + "\n---\n" + text[m.end() :]
 
 
@@ -325,7 +299,7 @@ def migrate(path: Path, servers: dict[str, str]) -> str:
             )
 
     venvs = sorted(set(re.findall(re.escape(LAUNCHER) + r" (\w+)", text)))
-    return set_metadata(text, venvs, CONDA_SKILLS.get(skill))
+    return set_metadata(text, venvs)
 
 
 def main() -> int:

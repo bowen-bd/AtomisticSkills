@@ -102,7 +102,7 @@ Use them as `venv/run cpu+openmm ...` or `venv/run cpu+docking ...`.
 | `react-ot-agent` | `reactot` | |
 | `scd-agent` | `scd` | |
 
-`mat-lammps-md` still builds LAMMPS with ML plugins against the `mace-agent`, `matgl-agent` and `fairchem-agent` conda environments; see `conda-envs/README.md`.
+`mat-lammps-md` builds LAMMPS against the `mlip` environment (its `lammps` extra adds Cython and, on x86_64, the MKL headers) and runs FairChem through the `lammps` extra of `fairchem` (the LAMMPS wheel and `fairchem-lammps`). Nothing uses conda.
 
 ## Architectures and Container Fallback
 
