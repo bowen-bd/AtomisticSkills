@@ -48,16 +48,8 @@ def get_nvalchemi_matgl_model(wrapper: "MatGLWrapper") -> Optional[Any]:
 
         if isinstance(inner, TensorNet):
             nv_model = TensorNetWrapper.from_potential(wrapper.model)
+            # Inflight batching gives wrong energies (see M3GNetWrapper).
             nv_model._nvalchemi_supports_inflight = False
-            # Batch MD is disabled for TensorNet: its light forward pass races
-            # the asynchronous Warp neighbor-list kernel inside the per-step
-            # NeighborListHook (num_neighbors.max() reads a garbage count and
-            # raises NeighborOverflowError, corrupting the CUDA context).
-            # Working around it would require patching nvalchemi-toolkit, and the
-            # batched path is slower than sequential for TensorNet anyway
-            # (~0.9x), so MD falls back to sequential. Batch static/relax are
-            # unaffected (they build the neighbor list once, off the hook).
-            nv_model._nvalchemi_supports_batch_md = False
         elif isinstance(inner, M3GNet):
             nv_model = M3GNetWrapper.from_potential(wrapper.model)
         elif isinstance(inner, CHGNet):

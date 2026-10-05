@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Any, Callable, Optional
+from contextlib import contextmanager
+from typing import TYPE_CHECKING, Any, Callable, Iterator, Optional
 
 try:
     import torch
     from nvalchemi.data import AtomicData
+    from nvalchemi.dynamics.base import ConvergenceHook, _ConvergenceCriterion
     from nvalchemi.dynamics.sinks import HostMemory
     from nvalchemi.dynamics.optimizers.fire2 import FIRE2VariableCell
 
@@ -16,6 +18,9 @@ except ImportError:
     NVALCHEMI_AVAILABLE = False
 
     class AtomicData:  # type: ignore
+        pass
+
+    class _ConvergenceCriterion:  # type: ignore
         pass
 
     class HostMemory:  # type: ignore
@@ -34,6 +39,34 @@ if TYPE_CHECKING:
 def check_nvalchemi_available() -> bool:
     """Return True if nvalchemi-toolkit is importable."""
     return NVALCHEMI_AVAILABLE
+
+
+@contextmanager
+def warp_on_torch_stream(device: Any) -> Iterator[None]:
+    """Launch every Warp kernel inside the block on PyTorch's current CUDA stream.
+
+    Entering an nvalchemi dynamics object (``with optimizer:``) switches PyTorch
+    to a dedicated CUDA stream, but several Warp kernels -- nvalchemiops' batched
+    cell list among them (0.4) -- launch on Warp's stream, which stays the
+    default one. The PyTorch op that reads the cell list's output,
+    ``num_neighbors.max()`` in ``NeighborListHook``, then races the kernel: the
+    hook sizes its neighbor matrix from a partial count and overflows on a later
+    step ("number of neighbors is larger than the maximum allowed"), or turns a
+    half-filled matrix into an edge list with neighbors missing. Enter this
+    *after* the dynamics object, so Warp follows the dynamics stream and every
+    launch is ordered with the PyTorch ops around it.
+
+    Args:
+        device: The device the batch lives on; CPU devices are a no-op.
+    """
+    torch_device = torch.device(device)
+    if torch_device.type != "cuda":
+        yield
+        return
+    import warp as wp
+
+    with wp.ScopedStream(wp.stream_from_torch(torch.cuda.current_stream(torch_device))):
+        yield
 
 
 def atoms_to_atomic_data(
@@ -770,6 +803,48 @@ class ForceStressClippingHook:
             batch.stress.copy_(
                 torch.clamp(batch.stress, min=-self.max_stress, max=self.max_stress)
             )
+
+
+class CellForceCriterion(_ConvergenceCriterion):
+    """Variable-cell convergence test equal to ASE's ``FrechetCellFilter``.
+
+    ``ConvergenceHook.from_fmax`` tests atomic forces only, so a variable-cell
+    relaxation of a crystal whose forces vanish by symmetry "converges" at step
+    0 with its cell untouched. ASE folds the cell into ``fmax`` as the rows of
+    the virial divided by the number of atoms -- the scaling
+    :class:`ScaledFIRE2VariableCell` applies to the cell force -- and this
+    criterion applies the same test to every system in the batch.
+    """
+
+    key: str = "stress"
+
+    def __call__(self, batch: Any) -> "torch.Tensor":
+        stress = batch.stress.view(-1, 3, 3)
+        volume = torch.linalg.det(batch.cell).abs()
+        n_atoms = torch.clamp(batch.num_nodes_per_graph.to(stress.dtype), min=1.0)
+        virial = stress * (volume / n_atoms).view(-1, 1, 1)
+        row_norm = torch.linalg.vector_norm(virial, dim=-1)
+        return row_norm.amax(dim=-1) <= self.threshold
+
+
+def relax_convergence_hook(fmax: float, relax_cell: bool) -> "ConvergenceHook":
+    """Return the convergence hook of a batched FIRE relaxation.
+
+    Atomic forces must fall to ``fmax`` (eV/Å); with ``relax_cell`` the cell
+    force must as well (see :class:`CellForceCriterion`). Converged systems move
+    from status 0 to status 1.
+
+    Args:
+        fmax: Force threshold in eV/Å, applied to atoms and cell alike.
+        relax_cell: Whether the cell is a degree of freedom.
+
+    Returns:
+        A ConvergenceHook to pass as ``convergence_hook`` to the optimizer.
+    """
+    hook = ConvergenceHook.from_fmax(threshold=fmax, source_status=0, target_status=1)
+    if relax_cell:
+        hook.criteria.append(CellForceCriterion(threshold=fmax))
+    return hook
 
 
 class ScaledFIRE2VariableCell(FIRE2VariableCell):

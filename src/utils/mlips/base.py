@@ -545,12 +545,13 @@ class MLIPModel(ABC):
             PositionWrappingHook,
             atoms_to_atomic_data,
             extract_batch_results as extract_batch_results_fn,
+            relax_convergence_hook,
+            warp_on_torch_stream,
         )
 
-        os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
         try:
             from nvalchemi.data import Batch
-            from nvalchemi.dynamics.base import DynamicsStage, ConvergenceHook
+            from nvalchemi.dynamics.base import DynamicsStage
             from nvalchemi.dynamics.optimizers.fire import FIRE
             from src.utils.mlips.nvalchemi.nvalchemi_utils import (
                 ScaledFIRE2VariableCell,
@@ -600,9 +601,7 @@ class MLIPModel(ABC):
             atoms_list.append(atoms)
 
         # Switch to inflight mode when all structures would exceed GPU memory.
-        # Models that set _nvalchemi_supports_inflight=False (e.g. CHGNet, M3GNet)
-        # skip inflight: their COO-format NeighborListHook triggers a CUDA OOB
-        # during graduation, a known limitation of the custom wrappers.
+        # A model wrapper can opt out with _nvalchemi_supports_inflight=False.
         total_atoms = sum(len(a) for a in atoms_list)
         if max_batch_atoms is None:
             max_batch_atoms = self._estimate_max_batch_atoms(device, model=nv_model)
@@ -641,9 +640,7 @@ class MLIPModel(ABC):
                 model=nv_model,
                 dt=0.05,
                 n_steps=steps,
-                convergence_hook=ConvergenceHook.from_fmax(
-                    threshold=fmax, source_status=0, target_status=1
-                ),
+                convergence_hook=relax_convergence_hook(fmax, relax_cell=True),
             )
             optimizer_obj._mutable_fields = ("positions", "velocities", "cell")
         else:
@@ -651,9 +648,7 @@ class MLIPModel(ABC):
                 model=nv_model,
                 dt=0.5,
                 n_steps=steps,
-                convergence_hook=ConvergenceHook.from_fmax(
-                    threshold=fmax, source_status=0, target_status=1
-                ),
+                convergence_hook=relax_convergence_hook(fmax, relax_cell=False),
             )
 
         if optimizer_obj.convergence_hook is not None:
@@ -719,7 +714,9 @@ class MLIPModel(ABC):
         if memory_sink is not None:
             memory_sink.write(batch)
 
-        with optimizer_obj:
+        # Entering the optimizer switches PyTorch to a dedicated CUDA stream;
+        # bind Warp to it second so the neighbor-list kernels follow.
+        with optimizer_obj, warp_on_torch_stream(device):
             final_batch = optimizer_obj.run(batch)
 
         # Reconstruct trajectory and log for each structure using unified extraction helper
@@ -804,11 +801,14 @@ class MLIPModel(ABC):
         import os
         import torch
 
-        os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
         from nvalchemi.dynamics import SizeAwareSampler
-        from nvalchemi.dynamics.base import ConvergenceHook, DynamicsStage, FusedStage
+        from nvalchemi.dynamics.base import DynamicsStage, FusedStage
         from nvalchemi.dynamics.optimizers.fire import FIRE
-        from src.utils.mlips.nvalchemi.nvalchemi_utils import ScaledFIRE2VariableCell
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import (
+            ScaledFIRE2VariableCell,
+            relax_convergence_hook,
+            warp_on_torch_stream,
+        )
         from nvalchemi.hooks.neighbor_list import NeighborListHook
         from pymatgen.io.ase import AseAtomsAdaptor
         from src.utils.mlips.nvalchemi.nvalchemi_utils import (
@@ -893,9 +893,7 @@ class MLIPModel(ABC):
                 # Per-system step budget: structures graduate after `steps` FIRE
                 # steps even if fmax never drops below threshold.
                 n_steps=steps,
-                convergence_hook=ConvergenceHook.from_fmax(
-                    threshold=fmax, source_status=0, target_status=1
-                ),
+                convergence_hook=relax_convergence_hook(fmax, relax_cell=True),
             )
         else:
             fire_stage = FIRE(
@@ -904,9 +902,7 @@ class MLIPModel(ABC):
                 # Per-system step budget: structures graduate after `steps` FIRE
                 # steps even if fmax never drops below threshold.
                 n_steps=steps,
-                convergence_hook=ConvergenceHook.from_fmax(
-                    threshold=fmax, source_status=0, target_status=1
-                ),
+                convergence_hook=relax_convergence_hook(fmax, relax_cell=False),
             )
 
         neighbor_config = getattr(nv_model.model_config, "neighbor_config", None)
@@ -956,7 +952,7 @@ class MLIPModel(ABC):
         )
 
         nv_model.eval()
-        with fused:
+        with fused, warp_on_torch_stream(device):
             remaining_batch = fused.run(batch=None, n_steps=total_step_budget)
 
         if remaining_batch is None:
@@ -1374,12 +1370,12 @@ class MLIPModel(ABC):
         from src.utils.mlips.nvalchemi.nvalchemi_utils import (
             atoms_to_atomic_data,
             extract_batch_results as extract_batch_results_fn,
+            warp_on_torch_stream,
         )
 
-        # Models that set _nvalchemi_supports_batch_md=False (e.g. TensorNet)
-        # opt out of batched MD: their light forward pass races the asynchronous
-        # Warp neighbor-list kernel inside the per-step NeighborListHook, raising
-        # NeighborOverflowError. Fall back to sequential MD.
+        # Models that set _nvalchemi_supports_batch_md=False (e.g. FairChem,
+        # where a batched step is slower than sequential) fall back to
+        # sequential MD.
         if not getattr(nv_model, "_nvalchemi_supports_batch_md", True):
             return {
                 "error": (
@@ -1523,7 +1519,7 @@ class MLIPModel(ABC):
                 # Write initial step 0 state
                 memory_sink.write(batch)
 
-            with integrator:
+            with integrator, warp_on_torch_stream(device):
                 final_batch = integrator.run(batch)
 
             # Reconstruct trajectory and log for each structure using unified extraction helper
