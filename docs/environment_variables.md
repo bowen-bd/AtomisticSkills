@@ -25,7 +25,7 @@ ORCA_BINARY_PATH: "/path/to/orca_directory/orca"
 
 # Optional container image registry and tag (for testing forks or custom images)
 ATOMISTIC_IMAGE_REGISTRY: "ghcr.io/learningmatter-mit"
-ATOMISTIC_IMAGE_TAG: "1.5.0"
+ATOMISTIC_IMAGE_TAG: "2.0.0"
 ```
 
 ## Runtime & Launcher Variables
@@ -36,7 +36,7 @@ ATOMISTIC_IMAGE_TAG: "1.5.0"
 | `ATOMISTIC_WORKSPACE` | Workspace directory where simulation results and research folders are saved. Defaults to current checkout inside a repo, or the working directory. | `$PWD` or repo root | `/home/user/my-atomistic-project` |
 | `ATOMISTIC_MODEL_CACHE` | Directory for downloaded model checkpoints and Apptainer SIF container files. | `~/.cache/atomisticskills` | `/scratch/user/atomistic-cache` |
 | `ATOMISTIC_IMAGE_REGISTRY` | Container image registry namespace. | `ghcr.io/learningmatter-mit` | `ghcr.io/myfork` |
-| `ATOMISTIC_IMAGE_TAG` | Tag for the container images. | Matches release version (`1.5.0`) | `1.5.0` |
+| `ATOMISTIC_IMAGE_TAG` | Tag for the container images. | Matches release version (`2.0.0`) | `2.0.0` |
 | `UV_CACHE_DIR` | Cache directory for `uv` downloads and wheels. | uv standard default | `/scratch/user/uv-cache` |
 | `CURRENT_RESEARCH_DIR` | Active research directory for the current session. Automatically managed by tools. | (set at runtime) | `/path/to/research/2026-10-04_melting_point` |
 

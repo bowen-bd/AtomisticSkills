@@ -63,7 +63,7 @@ All skills and servers execute through the `venv/run` launcher:
 - `venv/run --doctor` (checks runtime status and diagnostics)
 
 The runtime backend is controlled by `ATOMISTIC_RUNTIME` (or `~/.config/atomistic_skills.yaml`):
-- `auto` (default): Uses native `uv` if the machine is Linux x86_64/aarch64 with compatible glibc (per `venv/platforms.tsv`) and a C compiler (`gcc`). Otherwise, automatically falls back to container images (`ghcr.io/learningmatter-mit/atomisticskills-<name>:1.5.0`).
+- `auto` (default): Uses native `uv` if the machine is Linux x86_64/aarch64 with compatible glibc (per `venv/platforms.tsv`) and a C compiler (`gcc`). Otherwise, automatically falls back to container images (`ghcr.io/learningmatter-mit/atomisticskills-<name>:2.0.0`).
 - `uv`: Enforces host `uv` execution.
 - `docker`, `podman`, `apptainer`, `singularity`: Enforces container execution with host paths mounted at identical locations.
 

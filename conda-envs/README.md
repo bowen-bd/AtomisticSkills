@@ -1,6 +1,6 @@
 # Conda Environments in AtomisticSkills
 
-With version 1.5.0, AtomisticSkills has transitioned from maintaining ~20 isolated Conda environments to **three unified uv projects** (`venv/cpu`, `venv/mlip`, and `venv/fairchem`) launched via `venv/run`.
+With version 2.0.0, AtomisticSkills has transitioned from maintaining ~20 isolated Conda environments to **three unified uv projects** (`venv/cpu`, `venv/mlip`, and `venv/fairchem`) launched via `venv/run`.
 
 Most directories in `conda-envs/` are now retained for **historical reference only**. Only a few specialized environments remain active for skills that cannot yet be represented in a modern `uv` project.
 

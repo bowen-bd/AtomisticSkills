@@ -176,6 +176,8 @@ All skills and MCP servers run through the unified `venv/run` launcher across th
 
 For full configuration options, HPC instructions, and API key setup, see the [**Setup Guide**](docs/setup.md).
 
+**Upgrading from 1.x?** 2.0.0 is not backward compatible (uv environments replace conda, skills moved to `skills/`, MatGL 4 drops DGL). See [**Upgrading to 2.0.0**](docs/changes/2.0.0-migration.md).
+
 ---
 
 ## Agent Intelligence & Automation

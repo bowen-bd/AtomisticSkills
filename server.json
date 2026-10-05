@@ -7,11 +7,11 @@
     "url": "https://github.com/learningmatter-mit/AtomisticSkills",
     "source": "github"
   },
-  "version": "1.5.0",
+  "version": "2.0.0",
   "packages": [
     {
       "registryType": "oci",
-      "identifier": "ghcr.io/learningmatter-mit/atomisticskills-cpu:1.5.0",
+      "identifier": "ghcr.io/learningmatter-mit/atomisticskills-cpu:2.0.0",
       "transport": {
         "type": "stdio"
       },
@@ -88,7 +88,7 @@
     },
     {
       "registryType": "oci",
-      "identifier": "ghcr.io/learningmatter-mit/atomisticskills-mlip:1.5.0",
+      "identifier": "ghcr.io/learningmatter-mit/atomisticskills-mlip:2.0.0",
       "transport": {
         "type": "stdio"
       },
@@ -163,7 +163,7 @@
     },
     {
       "registryType": "oci",
-      "identifier": "ghcr.io/learningmatter-mit/atomisticskills-fairchem:1.5.0",
+      "identifier": "ghcr.io/learningmatter-mit/atomisticskills-fairchem:2.0.0",
       "transport": {
         "type": "stdio"
       },
@@ -237,7 +237,7 @@
     },
     {
       "registryType": "oci",
-      "identifier": "ghcr.io/learningmatter-mit/atomisticskills-generative:1.5.0",
+      "identifier": "ghcr.io/learningmatter-mit/atomisticskills-generative:2.0.0",
       "transport": {
         "type": "stdio"
       },
