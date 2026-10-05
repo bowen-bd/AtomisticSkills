@@ -2,124 +2,49 @@
 
 ## Overview
 
-This project uses **pytest** with a multi-environment testing strategy. Different MCP servers require different conda environments, so tests are organized by environment.
+This project uses **pytest** with a multi-environment strategy: the MCP servers
+run in different uv projects (`venv/<name>`), so each server's tests run in its
+environment, through the launcher. `tests/conftest.py` skips tests whose marker
+needs another environment.
 
 ## Test Structure
 
 ```
 tests/
 ├── conftest.py              # Shared fixtures and environment detection
-├── base/                    # Tests for base utilities (base-agent env)
-│   ├── conftest.py
-│   ├── test_structure_utils.py
-│   └── test_base_mlip.py
-├── mace/                    # Tests for MACE wrapper (mace-agent env)
-│   ├── conftest.py
-│   ├── test_mace_wrapper.py
-│   └── test_mace_server.py
-├── matgl/                   # Tests for MatGL wrapper (matgl-agent env)
-│   ├── conftest.py
-│   ├── test_matgl_wrapper.py
-│   └── test_matgl_server.py
-├── fairchem/                # Tests for FairChem wrapper (fairchem-agent env)
-│   ├── conftest.py
-│   └── test_fairchem_server.py
-├── atomate2/                # Tests for Atomate2 integration (atomate2-agent env)
-│   ├── conftest.py
-│   ├── test_atomate2_local.py
-│   ├── test_atomate2_remote.py
-│   ├── test_atomate2_utils.py
-│   ├── test_remote_submission_check.py
-│   └── submit_remote_test.py
-├── smol/                    # Tests for Smol integration (smol-agent env)
-│   └── test_smol_enumeration.py
-└── README.md                # Testing guide
+├── test_*.py                # Launcher, skills, uv projects, images, tool CLI (cpu)
+├── base/ atomate2/ drugdisc/ smol/ orca/   # CPU-stack servers (cpu)
+├── mace/ matgl/             # MLIP servers (mlip)
+├── fairchem/                # FairChem server (fairchem)
+├── adit/ diffcsp/ mattergen/  # Generative servers (their own environments)
+└── utils/                   # Shared utilities, incl. NValchemi batch tests (mlip, fairchem)
 ```
 
 ## Running Tests
 
-### 1. Run Base Tests (base-agent)
-
 ```bash
-conda activate base-agent
-pytest tests/base/ -v
-```
+# Launcher, skill conventions, uv projects, images and the tool CLI (what CI runs)
+venv/run cpu python -m pytest tests/test_launcher.py tests/test_skill_runtime.py \
+    tests/test_uv_projects.py tests/test_images_and_manifests.py tests/test_tool_cli.py
 
-Or using markers:
-```bash
-conda activate base-agent
-pytest -m base -v
-```
+# One server's tests, in its environment
+venv/run cpu python -m pytest tests/base tests/atomate2 tests/drugdisc tests/smol
+venv/run mlip python -m pytest tests/mace tests/matgl
+venv/run fairchem python -m pytest tests/fairchem
+venv/run mattergen python -m pytest tests/mattergen
 
-### 2. Run MACE Tests (mace-agent)
-
-```bash
-conda activate mace-agent
-pytest tests/mace/ -v
-```
-
-Or using markers:
-```bash
-conda activate mace-agent
-pytest -m mace -v
-```
-
-### 3. Run MatGL Tests (matgl-agent)
-
-```bash
-conda activate matgl-agent
-pytest tests/matgl/ -v
-```
-
-Or using markers:
-```bash
-conda activate matgl-agent
-pytest -m matgl -v
-```
-
-### 4. Run All Tests (Sequential Multi-Environment)
-
-Create a script `run_all_tests.sh`:
-
-```bash
-#!/bin/bash
-
-echo "Running base tests..."
-conda activate base-agent
-pytest tests/base/ -v
-
-echo "Running MACE tests..."
-conda activate mace-agent
-pytest tests/mace/ -v
-
-echo "Running MatGL tests..."
-conda activate matgl-agent
-pytest tests/matgl/ -v
-
-echo "Running FairChem tests..."
-conda activate fairchem-agent
-pytest tests/fairchem/ -v
-
-echo "Running Atomate2 tests..."
-conda activate atomate2-agent
-pytest tests/atomate2/ -v
-
-echo "Running Smol tests..."
-conda activate smol-agent
-pytest tests/smol/ -v
-
-echo "All tests complete!"
+# Or by marker
+venv/run mlip python -m pytest -m mace
 ```
 
 ## Test Markers
 
-Tests are marked by required environment:
+Tests are marked by the server they cover:
 
-- `@pytest.mark.base` - Base utilities (base-agent)
-- `@pytest.mark.mace` - MACE-specific tests (mace-agent)
-- `@pytest.mark.matgl` - MatGL-specific tests (matgl-agent)
-- `@pytest.mark.fairchem` - FairChem-specific tests (fairchem-agent)
-- `@pytest.mark.smol` - Smol-specific tests (smol-agent)
+- `@pytest.mark.base`, `atomate2`, `drugdisc`, `smol`, `orca` - CPU-stack servers (`cpu`; also `mlip`, `fairchem`)
+- `@pytest.mark.mace`, `matgl` - MLIP servers (`mlip`)
+- `@pytest.mark.fairchem` - FairChem server (`fairchem`)
+- `@pytest.mark.adit`, `diffcsp`, `mattergen` - generative servers (their own environments)
 
 ## Auto-Skip Behavior
 
@@ -127,8 +52,9 @@ Tests automatically skip if run in the wrong environment:
 
 ```python
 @pytest.mark.mace
-def test_mace_feature(skip_if_wrong_env):
-    # Will skip if not in mace-agent environment
+def test_mace_feature():
+    # Skipped unless run in the mlip environment:
+    #   venv/run mlip python -m pytest tests/mace
     ...
 ```
 
@@ -168,7 +94,7 @@ def test_mace_feature(skip_if_wrong_env):
 
 Available in all tests via `conftest.py`:
 
-- `current_env` - Current conda environment name
+- `current_env` - The uv project running the tests (`venv/<name>`)
 - `skip_if_wrong_env` - Auto-skip if wrong environment
 - `tmp_cif_file` - Temporary Si2 CIF structure
 - `sample_structure` - Pymatgen Structure (Si2)

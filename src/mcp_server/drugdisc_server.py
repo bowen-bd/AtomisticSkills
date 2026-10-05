@@ -434,6 +434,7 @@ def compute_molecular_fingerprints(
             fp_result["n_clusters"] = len(clusters)
 
         # Save heatmap if requested
+        heatmap_path = None
         if save_heatmap and compute_similarity:
             import matplotlib.pyplot as plt
             import numpy as np

@@ -4,7 +4,8 @@ from src.mcp_server import drugdisc_server
 def test_parse_smiles_input(skip_if_wrong_env):
     res = drugdisc_server.parse_smiles_input(smiles="CC")
     assert "error" not in res
-    assert "smiles" in res
+    assert res["n_molecules"] == 1
+    assert res["molecules"][0]["smiles"] == "CC"
 
 
 def test_standardize_molecule(skip_if_wrong_env):
@@ -13,16 +14,16 @@ def test_standardize_molecule(skip_if_wrong_env):
     assert "standardized_smiles" in res
 
 
-def test_convert_to_pdbqt(skip_if_wrong_env):
+def test_convert_to_pdbqt(tmp_path, skip_if_wrong_env):
     res = drugdisc_server.convert_to_pdbqt(
-        input_data="CC", input_type="smiles", output_path="test.pdbqt"
+        input_data="CC", input_type="smiles", output_path=str(tmp_path / "test.pdbqt")
     )
     assert "error" not in res
 
 
-def test_compute_molecular_descriptors(skip_if_wrong_env):
+def test_compute_molecular_descriptors(tmp_path, skip_if_wrong_env):
     res = drugdisc_server.compute_molecular_descriptors(
-        smiles="CC", output_file="test_desc.json"
+        smiles="CC", output_file=str(tmp_path / "test_desc.json")
     )
     assert "error" not in res
 
@@ -31,6 +32,7 @@ def test_compute_molecular_fingerprints(tmp_path, skip_if_wrong_env):
     smiles_file = tmp_path / "test.smi"
     smiles_file.write_text("CC\nCCO\n")
     res = drugdisc_server.compute_molecular_fingerprints(
-        smiles_file=str(smiles_file), output_file="test_fp.json"
+        smiles_file=str(smiles_file), output_file=str(tmp_path / "test_fp.json")
     )
-    assert "error" not in res
+    assert "error" not in res, res
+    assert res["heatmap_path"] is None

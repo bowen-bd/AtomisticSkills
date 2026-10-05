@@ -3,9 +3,9 @@ Shared pytest fixtures and utilities for multi-environment testing.
 
 This conftest.py provides:
 - Project root path setup
-- Environment detection
+- Detection of the uv project (venv/<name>) running the tests
 - Shared test fixtures (temporary structures, directories)
-- Auto-skip logic for wrong environment tests
+- Auto-skip of tests whose marker needs another environment
 """
 
 import pytest
@@ -19,55 +19,63 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 
-def detect_conda_env() -> str:
+# The uv projects (venv/<name>) whose tests each marker selects. The GPU
+# projects carry the CPU stack as well.
+CPU_STACK = {"cpu", "mlip", "fairchem"}
+MARKER_ENVS = {
+    "base": CPU_STACK,
+    "atomate2": CPU_STACK,
+    "drugdisc": CPU_STACK,
+    "smol": CPU_STACK,
+    "orca": CPU_STACK,
+    "mace": {"mlip"},
+    "matgl": {"mlip"},
+    "fairchem": {"fairchem"},
+    "adit": {"adit"},
+    "diffcsp": {"diffcsp"},
+    "mattergen": {"mattergen"},
+}
+
+
+def detect_venv() -> str:
     """
-    Detect the current conda environment.
+    Detect the uv project this interpreter belongs to.
 
     Returns:
-        Environment name (e.g., 'mace-agent', 'base-agent')
+        The project name (e.g. 'mlip') for venv/<name>/.venv, on the host or in
+        an image; else $ATOMISTIC_VENV; else 'unknown'.
     """
-    conda_env = os.environ.get("CONDA_DEFAULT_ENV", "unknown")
-    return conda_env
+    prefix = Path(sys.prefix).resolve()
+    if prefix.name == ".venv" and prefix.parent.parent.name == "venv":
+        return prefix.parent.name
+    return os.environ.get("ATOMISTIC_VENV", "unknown")
 
 
 @pytest.fixture(scope="session")
 def current_env() -> str:
-    """Fixture that returns the current conda environment name."""
-    return detect_conda_env()
+    """Fixture that returns the current uv project name."""
+    return detect_venv()
 
 
 @pytest.fixture(scope="class", autouse=True)
 def skip_if_wrong_env(request, current_env):
     """
-    Auto-skip test if running in wrong environment.
+    Auto-skip a test whose marker needs another environment.
 
     Usage:
         @pytest.mark.mace
-        def test_mace_feature(skip_if_wrong_env):
-            # This will auto-skip if not in mace-agent environment
+        def test_mace_feature():
+            # Skipped unless run in the mlip environment:
+            #   venv/run mlip python -m pytest tests/mace
             pass
     """
     markers = [m.name for m in request.node.iter_markers()]
-
-    # Define environment requirements
-    env_map = {
-        "mace": "mace-agent",
-        "matgl": "matgl-agent",
-        "fairchem": "fairchem-agent",
-        "atomate2": "atomate2-agent",
-        "base": "base-agent",
-        "drugdisc": "drugdisc-agent",
-        "diffcsp": "diffcsp-agent",
-        "adit": "adit-agent",
-        "mattergen": "mattergen-agent",
-        "smol": "smol-agent",
-        "orca": "orca-agent-test",
-    }
-
-    for marker, required_env in env_map.items():
-        if marker in markers and current_env != required_env:
+    for marker, envs in MARKER_ENVS.items():
+        if marker in markers and current_env not in envs:
+            wanted = sorted(envs)[0] if len(envs) == 1 else "cpu"
             pytest.skip(
-                f"Test requires {required_env} environment, but running in {current_env}"
+                f"{marker} tests run in the {'/'.join(sorted(envs))} environment, "
+                f"not {current_env}: venv/run {wanted} python -m pytest ..."
             )
 
 

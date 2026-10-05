@@ -24,11 +24,23 @@ MATGL_AVAILABLE = False
 
 try:
     import matgl
+    import numpy as np
+    from matgl.data.transformer import Normalizer
     from matgl.ext.ase import PESCalculator, Atoms2Graph
     from matgl.layers import AtomRef
 
-    if hasattr(torch.serialization, "add_safe_globals"):
-        torch.serialization.add_safe_globals([AtomRef])
+    # torch >= 2.6 loads checkpoints weights-only. MatGL's pretrained models
+    # also pickle these (the QET and TensorNet "-m" models numpy arrays, the
+    # Eform models a Normalizer), named as numpy 1 wrote them.
+    torch.serialization.add_safe_globals(
+        [
+            AtomRef,
+            Normalizer,
+            np.ndarray,
+            np.dtype,
+            (np._core.multiarray._reconstruct, "numpy.core.multiarray._reconstruct"),
+        ]
+    )
 
     MATGL_AVAILABLE = True
 except ImportError as e:
