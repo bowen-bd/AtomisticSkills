@@ -2,9 +2,8 @@
 
 plugin.json, venv/servers.tsv and the in-image server maps are rendered from
 images.json; drift between them is silent until a server fails to start on a
-user's machine. Image definitions must also point at things that exist: a uv
-project for a uv image, lockfiles for a conda-lock image, a module for every
-server.
+user's machine. Image definitions must also point at things that exist: the uv
+projects an image installs, and a module for every server.
 
 Requirements:
     - Environment: cpu (run with: venv/run cpu python -m pytest tests/test_images_and_manifests.py)
@@ -24,7 +23,6 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SPEC = json.loads((PROJECT_ROOT / "docker" / "images.json").read_text())
 PLUGIN = json.loads((PROJECT_ROOT / ".claude-plugin" / "plugin.json").read_text())
 VERSION = (PROJECT_ROOT / "VERSION").read_text().strip()
-SUBDIR = {"linux/amd64": "linux-64", "linux/arm64": "linux-aarch64"}
 
 sys.path.insert(0, str(PROJECT_ROOT / "docker"))
 import render  # noqa: E402
@@ -47,31 +45,32 @@ def test_every_server_has_a_module():
             assert module.is_file(), f"{server}: {module} missing"
 
 
-def test_uv_images_name_real_projects():
+def test_images_name_real_projects():
+    """Every image installs uv projects that exist, one per server or one for all."""
     for image in SPEC["images"]:
-        if image["build"] == "uv":
-            assert (PROJECT_ROOT / "venv" / image["venv"] / "uv.lock").is_file(), image[
-                "name"
-            ]
+        assert image["build"] == "uv", image["name"]
+        venvs = image.get("venvs", [image.get("venv")])
+        for venv in venvs:
+            assert (PROJECT_ROOT / "venv" / venv / "uv.lock").is_file(), (
+                image["name"],
+                venv,
+            )
+        envs = {info["env"] for info in render.normalise_servers(image).values()}
+        assert envs <= set(venvs), image["name"]
 
 
-def test_conda_lock_images_have_their_lockfiles():
-    problems = []
+def test_multi_project_images_lock_their_platforms():
+    """The generative image syncs its projects there, so each must be locked for
+    the image's platforms, even where hosts do not run it natively."""
+    arch = {"linux/amd64": "x86_64", "linux/arm64": "aarch64"}
     for image in SPEC["images"]:
-        if image["build"] != "conda-lock":
-            continue
-        for platform in image["platforms"]:
-            for env in image["envs"]:
-                for kind in ("pip", "conda"):
-                    lock = (
-                        PROJECT_ROOT
-                        / f"conda-envs/{env}/lock/{kind}-{SUBDIR[platform]}.txt"
-                    )
-                    if not lock.exists() and not (
-                        kind == "conda" and env in image.get("env_python", {})
-                    ):
-                        problems.append(str(lock.relative_to(PROJECT_ROOT)))
-    assert not problems, problems
+        for venv in image.get("venvs", []):
+            lock = (PROJECT_ROOT / "venv" / venv / "uv.lock").read_text()
+            for platform in image["platforms"]:
+                assert f"platform_machine == '{arch[platform]}'" in lock, (
+                    venv,
+                    platform,
+                )
 
 
 def test_plugin_servers_go_through_the_launcher():

@@ -548,6 +548,11 @@ class TestDockerInvocation:
         assert f"ATOMISTIC_WORKSPACE={host.workspace}" in envs
         assert argv[-2:] == ["python", "x.py"]
 
+    def test_a_command_names_its_environment(self, host):
+        """An image may carry several environments (generative)."""
+        argv, _ = self.run_in_docker(host, "mlip", "python", "x.py")
+        assert "ATOMISTIC_VENV=mlip" in flag_value(argv, "--env")
+
     def test_repository_is_writable_when_it_is_the_workspace(self, host):
         argv, _ = self.run_in_docker(
             host, "cpu", "python", "x.py", ATOMISTIC_WORKSPACE=str(host.repo)
@@ -555,8 +560,9 @@ class TestDockerInvocation:
         assert f"{host.repo}:{host.repo}:rw" in flag_value(argv, "--volume")
 
     def test_source_checkouts_are_mounted(self, host):
-        """ADiT and DiffCSP++ import repositories that no image carries: the
-        default checkout next to the repository, or the one a variable names."""
+        """ADiT, DiffCSP++ and MatterGen import repositories that no image
+        carries: the default checkout next to the repository, or the one a
+        variable names."""
         adit = host.repo.parent / "adit"
         adit.mkdir()
         diffcsp = host.tmp / "elsewhere" / "DiffCSP-PP"
@@ -566,6 +572,7 @@ class TestDockerInvocation:
         )
         volumes, envs = flag_value(argv, "--volume"), flag_value(argv, "--env")
         assert f"{adit}:{adit}" in volumes and f"ADIT_REPO={adit}" in envs
+        assert not any(e.startswith("MATTERGEN_REPO=") for e in envs), "none here"
         assert f"{diffcsp}:{diffcsp}" in volumes
         assert f"DIFFCSP_REPO={diffcsp}" in envs
 
@@ -640,12 +647,18 @@ class TestApptainerInvocation:
         assert argv[-1] == "base"
         assert not any(a.startswith("docker://") for a in argv)
 
-    def test_command_mode_runs_the_command_directly(self, host):
+    def test_command_mode_runs_through_the_entrypoint(self, host):
+        """`apptainer exec` skips the ENTRYPOINT, which puts the command's
+        environment on PATH (the generative image carries several)."""
         result, calls = self.run_apptainer(host, "cpu", "python", "x.py")
         assert result.returncode == 0, result.stderr
         argv = calls[-1]
-        assert argv[-2:] == ["python", "x.py"]
-        assert "/opt/atomisticskills/docker/entrypoint.sh" not in argv
+        assert argv[-3:] == [
+            "/opt/atomisticskills/docker/entrypoint.sh",
+            "python",
+            "x.py",
+        ]
+        assert "ATOMISTIC_VENV=cpu" in flag_value(argv, "--env")
 
     def test_reuses_an_existing_sif(self, host):
         sif = host.tmp / "cache" / "sif" / f"atomisticskills-cpu-{VERSION}.sif"

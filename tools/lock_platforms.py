@@ -56,9 +56,18 @@ def python_minor(project: str) -> int:
 
 
 def arches_of(project: str) -> set[str]:
-    """Return the architectures a project resolves for (tool.uv.environments)."""
+    """Return the architectures where hosts run a project natively.
+
+    That is ``tool.atomisticskills.native-arches`` when set -- a project can be
+    locked for an architecture only so that its container image builds there --
+    else the architectures it resolves for (``tool.uv.environments``).
+    """
     data = tomllib.loads((VENV_DIR / project / "pyproject.toml").read_text())
-    envs = data.get("tool", {}).get("uv", {}).get("environments", [])
+    tool = data.get("tool", {})
+    native = tool.get("atomisticskills", {}).get("native-arches")
+    if native is not None:
+        return set(native) & set(ARCHES)
+    envs = tool.get("uv", {}).get("environments", [])
     return {a for a in ARCHES if any(a in e for e in envs)} or set(ARCHES)
 
 

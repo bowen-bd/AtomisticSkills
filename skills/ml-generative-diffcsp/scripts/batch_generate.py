@@ -25,7 +25,8 @@ JSON format:
     ]
 
 Requirements:
-    - Conda environment: diffcsp-agent
+    - Environment: diffcsp (run with: venv/run diffcsp python ...)
+    - DiffCSP++ checkout next to this project, or at $DIFFCSP_REPO
     - Required packages: torch, pyxtal, pymatgen, hydra-core
 """
 

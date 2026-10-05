@@ -65,8 +65,10 @@ is looked up through a variable, with a default location:
 | :--- | :--- | :--- | :--- |
 | `ADIT_REPO` | ADiT (all-atom-diffusion-transformer) | `adit` next to this project | `adit` server, `ml-generative-adit` |
 | `DIFFCSP_REPO` | DiffCSP++ (DiffCSP-PP) | `DiffCSP-PP` next to this project | `diffcsp` server, `ml-generative-diffcsp` |
+| `MATTERGEN_REPO` | MatterGen (its distributions omit the data files it needs) | `mattergen` next to this project | `mattergen` server, `ml-generative-mattergen` |
 | `REACT_OT_DIR` | React-OT | `~/.cache/atomisticskills/react-ot` | `chem-react-ot` |
 | `SCD_REPO_DIR` | SelfConditionedDenoisingAtoms | `~/.cache/atomisticskills/SelfConditionedDenoisingAtoms` | `ml-property-predict-scd` |
 
-When a server runs in a container, `venv/run` passes `ADIT_REPO` and
-`DIFFCSP_REPO` on and mounts those checkouts at the same path.
+When a server runs in a container, `venv/run` passes `ADIT_REPO`,
+`DIFFCSP_REPO` and `MATTERGEN_REPO` on and mounts those checkouts at the same
+path.

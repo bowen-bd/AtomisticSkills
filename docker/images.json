@@ -6,16 +6,15 @@
     "server map and the build matrix of .github/workflows/build-images.yml.",
     "Adding a server means editing this file and re-rendering.",
     "",
-    "Two build strategies, chosen by what the dependency graph allows:",
+    "Every image installs uv projects from their venv/<venv>/uv.lock, the same",
+    "locks a host install uses, so a container is the same environment with a",
+    "newer glibc and the build tools already present:",
     "",
-    "  uv          - the image installs one uv project from venv/<venv>/uv.lock,",
-    "                the same lock a host install uses. A container is then the",
-    "                same environment with a newer glibc and the build tools",
-    "                already present, so a command behaves identically in both.",
-    "  conda-lock  - the generative stack. mattergen hard-pins torch 2.2.1+cu118",
-    "                wheels that never existed for aarch64, and ADiT/DiffCSP++",
-    "                are not published packages, so it cannot be a uv project.",
-    "                Each env is installed side by side from its exact lockfile."
+    "  venv   - one project (docker/Dockerfile).",
+    "  venvs  - several projects side by side, one per server, on a CUDA",
+    "           toolkit image that compiles what has no wheel for the platform",
+    "           (docker/Dockerfile.cuda): the generative stacks' PyG extensions",
+    "           on arm64."
   ],
   "registry": "ghcr.io/learningmatter-mit",
   "repo_path": "/opt/atomisticskills",
@@ -50,7 +49,7 @@
         "mace": "src.mcp_server.mace_server",
         "matgl": "src.mcp_server.matgl_server"
       },
-      "notes": "torch 2.10.0: the CUDA 12.8 build on amd64, CUDA 13 on arm64 (GB10). Cannot host fairchem: mace-torch pins e3nn==0.4.4, fairchem-core needs e3nn>=0.5."
+      "notes": "torch 2.14 with the CUDA 13 build (the host picks CUDA 12.6 on older drivers). Cannot host fairchem: mace-torch pins e3nn==0.4.4, fairchem-core needs e3nn>=0.5."
     },
     {
       "name": "fairchem",
@@ -64,42 +63,36 @@
       "servers": {
         "fairchem": "src.mcp_server.fairchem_server"
       },
-      "notes": "Same torch as mlip. fairchem-core 2.19.0 declares torch~=2.8.0; the override to 2.10.0 is recorded in venv/fairchem/pyproject.toml."
+      "notes": "torch 2.13 (fairchem-core requires torch~=2.13) with the CUDA 13 build."
     },
     {
       "name": "generative",
-      "build": "conda-lock",
+      "build": "uv",
+      "venvs": [
+        "adit",
+        "diffcsp",
+        "mattergen"
+      ],
       "gpu": true,
       "platforms": [
         "linux/arm64"
       ],
-      "envs": [
-        "adit-agent",
-        "diffcsp-agent",
-        "mattergen-agent"
-      ],
-      "pyg_from_source": true,
-      "torch_cuda_arch_list": {
-        "linux/arm64": "12.1"
-      },
+      "torch_cuda_arch_list": "12.1",
       "servers": {
         "adit": {
-          "env": "adit-agent",
-          "module": "src.mcp_server.adit_server",
-          "venv": "adit"
+          "venv": "adit",
+          "module": "src.mcp_server.adit_server"
         },
         "diffcsp": {
-          "env": "diffcsp-agent",
-          "module": "src.mcp_server.diffcsp_server",
-          "venv": "diffcsp"
+          "venv": "diffcsp",
+          "module": "src.mcp_server.diffcsp_server"
         },
         "mattergen": {
-          "env": "mattergen-agent",
-          "module": "src.mcp_server.mattergen_server",
-          "venv": "mattergen"
+          "venv": "mattergen",
+          "module": "src.mcp_server.mattergen_server"
         }
       },
-      "notes": "arm64 only for now. adit/diffcsp/mattergen were assembled by hand -- adit-agent's spec declares only python, pip and uv -- so unlike the uv images their environments cannot be resolved from a spec. torch-scatter/cluster/sparse are compiled from source here. On amd64 these servers need the conda envs under conda-envs/."
+      "notes": "arm64 only: on x86_64 these servers run from their uv projects on the host (PyG publishes x86_64 wheels). The image compiles torch-scatter/sparse/cluster with CUDA for TORCH_CUDA_ARCH_LIST (GB10: sm_121)."
     }
   ]
 }

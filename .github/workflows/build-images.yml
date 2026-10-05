@@ -1,13 +1,13 @@
 name: Build MCP server images
 
-# Publishes the container images that back the MCP servers, so installing the
-# plugin gives working servers instead of ten commands pointing at conda
-# environments the user has not built.
+# Publishes the container images that back the MCP servers, for hosts that
+# cannot run an environment natively. Every image installs uv projects from
+# their venv/<venv>/uv.lock, the locks a host install uses.
 #
 # The matrix comes from docker/images.json via docker/render.py, so adding a
-# server means editing that one file. GPU images are arm64-only for now: their
-# lockfiles were frozen on linux-aarch64 and the PyG extensions are compiled
-# for sm_121. Producing amd64 variants needs locks generated on an amd64 host.
+# server means editing that one file. The generative image is arm64-only: on
+# x86_64 its stacks install natively, and on arm64 it compiles their PyG
+# extensions with CUDA (sm_121 by default).
 
 on:
   push:
@@ -17,7 +17,6 @@ on:
       - "docker/**"
       - "venv/*/pyproject.toml"
       - "venv/*/uv.lock"
-      - "conda-envs/*/lock/**"
       - "src/mcp_server/**"
       - ".github/workflows/build-images.yml"
   pull_request:
@@ -25,7 +24,6 @@ on:
       - "docker/**"
       - "venv/*/pyproject.toml"
       - "venv/*/uv.lock"
-      - "conda-envs/*/lock/**"
       - ".github/workflows/build-images.yml"
   workflow_dispatch:
     inputs:
@@ -80,41 +78,21 @@ jobs:
         run: |
           python - <<'PY'
           import json, pathlib, sys
-          SUBDIR = {"linux/amd64": "linux-64", "linux/arm64": "linux-aarch64"}
           spec = json.loads(pathlib.Path("docker/images.json").read_text())
           problems, checked = [], 0
           for image in spec["images"]:
-              # A uv image installs one uv project from its lock.
-              if image["build"] == "uv":
+              # An image installs one uv project (venv) or several (venvs).
+              for venv in image.get("venvs", [image.get("venv")]):
                   checked += 1
-                  lock = pathlib.Path(f"venv/{image['venv']}/uv.lock")
+                  lock = pathlib.Path(f"venv/{venv}/uv.lock")
                   if not lock.exists():
                       problems.append(f"{lock} (missing)")
-                  continue
-              env_python = image.get("env_python", {})
-              for platform in image["platforms"]:
-                  subdir = SUBDIR[platform]
-                  for env in image["envs"]:
-                      checked += 1
-                      pip = pathlib.Path(f"conda-envs/{env}/lock/pip-{subdir}.txt")
-                      if not pip.exists():
-                          problems.append(f"{pip} (missing)")
-                      # The conda layer may come from a lock or, where none was
-                      # frozen for this architecture, from a bare interpreter
-                      # env named by env_python. One or the other must be there.
-                      conda = pathlib.Path(f"conda-envs/{env}/lock/conda-{subdir}.txt")
-                      if not conda.exists() and env not in env_python:
-                          problems.append(
-                              f"{conda} (missing, and no env_python entry for "
-                              f"{env!r} in image {image['name']!r})"
-                          )
           if problems:
               print("lockfile problems:")
               for m in problems: print("  -", m)
-              print("\nuv images: run `uv lock` in venv/<name>/")
-              print("conda-lock images: python docker/export_locks.py (from built envs)")
+              print("\nrun `uv lock` in venv/<name>/")
               sys.exit(1)
-          print(f"all lockfiles present ({checked} env/platform combinations)")
+          print(f"all lockfiles present ({checked} projects)")
           PY
 
       - name: Render build matrix

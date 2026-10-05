@@ -9,9 +9,8 @@
 # reads and writes exactly the paths the host does.
 #
 # The server name is resolved against docker/server-map.txt, generated at build
-# time by `docker/render.py server-map <image>`. In a uv image the environment
-# is venv/<venv>/.venv and already on PATH; in the conda-lock (generative)
-# image each server has its own micromamba environment.
+# time by `docker/render.py server-map <image>`. Each server runs in its uv
+# environment, venv/<venv>/.venv; the generative image carries several.
 #
 # stdout is the MCP transport and must carry nothing but protocol frames, so
 # every diagnostic here goes to stderr.
@@ -40,6 +39,19 @@ if [[ -z "${ATOMISTIC_UID_MATCHED:-}" && "$(id -u)" == "0" && -d /work ]]; then
         chown "$WORK_UID:$WORK_GID" /opt/model-cache 2>/dev/null || true
         exec setpriv --reuid "$WORK_UID" --regid "$WORK_GID" --clear-groups "$0" "$@"
     fi
+fi
+
+# A command runs in one environment: the one ATOMISTIC_VENV names (venv/run
+# passes it), else the image's first. An image may carry several (generative).
+VENV_NAME="${ATOMISTIC_VENV:-}"
+if [[ -z "$VENV_NAME" ]]; then
+    for d in "$REPO_DIR"/venv/*/.venv; do
+        [[ -d "$d" ]] && { VENV_NAME="$(basename "$(dirname "$d")")"; break; }
+    done
+fi
+if [[ -n "$VENV_NAME" && -x "${REPO_DIR}/venv/${VENV_NAME}/.venv/bin/python" ]]; then
+    export VIRTUAL_ENV="${REPO_DIR}/venv/${VENV_NAME}/.venv"
+    export PATH="${VIRTUAL_ENV}/bin:${PATH}"
 fi
 
 ROW="$(grep -v '^#' "$MAP_FILE" | grep "^${SERVER}:" || true)"
@@ -81,7 +93,6 @@ export ATOMISTIC_WORKSPACE="$WORKSPACE"
 
 printf 'atomisticskills: starting %s (env=%s, workspace=%s)\n' "$SERVER" "$ENV_NAME" "$WORKSPACE" >&2
 
-if [[ -x "${REPO_DIR}/venv/${ENV_NAME}/.venv/bin/python" ]]; then
-    exec "${REPO_DIR}/venv/${ENV_NAME}/.venv/bin/python" -m "$MODULE" "${@:2}"
-fi
-exec micromamba run -n "$ENV_NAME" python -m "$MODULE" "${@:2}"
+[[ -x "${REPO_DIR}/venv/${ENV_NAME}/.venv/bin/python" ]] \
+    || die "environment ${ENV_NAME} for server ${SERVER} missing from this image"
+exec "${REPO_DIR}/venv/${ENV_NAME}/.venv/bin/python" -m "$MODULE" "${@:2}"

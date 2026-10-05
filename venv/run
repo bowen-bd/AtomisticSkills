@@ -438,11 +438,13 @@ run_container() {
         "MATGL_CACHE=/opt/model-cache/matgl"
     )
     for v in "${CREDENTIALS[@]}"; do [[ -n "${!v:-}" ]] && envs+=("${v}=${!v}"); done
-    # Source checkouts that servers import but no image carries (ADiT's and
-    # DiffCSP++'s repositories): the variable naming one, else its default
-    # next to this repository, is passed on and the checkout mounted in place.
+    [[ -n "${CONTAINER_VENV:-}" ]] && envs+=("ATOMISTIC_VENV=${CONTAINER_VENV}")
+    # Source checkouts that servers import but no image carries (ADiT's,
+    # DiffCSP++'s and MatterGen's repositories): the variable naming one, else
+    # its default next to this repository, is passed on and the checkout
+    # mounted in place.
     local spec dir src_dirs=()
-    for spec in ADIT_REPO=adit DIFFCSP_REPO=DiffCSP-PP; do
+    for spec in ADIT_REPO=adit DIFFCSP_REPO=DiffCSP-PP MATTERGEN_REPO=mattergen; do
         v="${spec%%=*}"
         dir="${!v:-$(dirname "$ROOT")/${spec#*=}}"
         [[ -d "$dir" ]] || continue
@@ -479,12 +481,9 @@ run_container() {
             args+=(${binds[@]+"${binds[@]}"} --bind "${MODEL_CACHE}:/opt/model-cache")
             for v in "${envs[@]}"; do args+=(--env "$v"); done
             [[ "$gpu_ok" == 1 ]] && args+=(--nv)
-            if [[ "$mode" == server ]]; then
-                # `exec` bypasses the image ENTRYPOINT, so name it.
-                args+=("$sif" /opt/atomisticskills/docker/entrypoint.sh "$@")
-            else
-                args+=("$sif" "$@")
-            fi
+            # `exec` bypasses the image ENTRYPOINT, so name it: it starts the
+            # server, or puts the command's environment on PATH.
+            args+=("$sif" /opt/atomisticskills/docker/entrypoint.sh "$@")
             exec "$rt" "${args[@]}"
             ;;
     esac
@@ -566,6 +565,8 @@ run_command() {
         [[ "$venv" != cpu ]] && gpu=1
         local image; image="$(venv_image "$venv")"
         [[ -n "$image" ]] || die "'${venv}' cannot run natively here and no container image carries it."
+        # The generative image carries several environments; name this one.
+        CONTAINER_VENV="$venv"
         run_container "$backend" "$image" "$gpu" command "$@"
     fi
 

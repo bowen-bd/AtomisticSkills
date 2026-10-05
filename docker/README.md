@@ -11,15 +11,15 @@ These container images serve as the automatic fallback runtime for the `venv/run
 | `atomisticskills-cpu` | `uv` (from `venv/cpu/uv.lock`) | `atomate2`, `base`, `drugdisc`, `smol` | linux/amd64, linux/arm64 | No |
 | `atomisticskills-mlip` | `uv` (from `venv/mlip/uv.lock`) | `mace`, `matgl` | linux/amd64, linux/arm64 | Yes |
 | `atomisticskills-fairchem` | `uv` (from `venv/fairchem/uv.lock`) | `fairchem` | linux/amd64, linux/arm64 | Yes |
-| `atomisticskills-generative` | `conda-lock` (from conda locks) | `adit`, `diffcsp`, `mattergen` | linux/arm64 | Yes |
+| `atomisticskills-generative` | `uv` (from `venv/{adit,diffcsp,mattergen}/uv.lock`) | `adit`, `diffcsp`, `mattergen` | linux/arm64 | Yes |
 
 ### Build Strategies
 
-1. **`uv` projects (`cpu`, `mlip`, `fairchem`)**:
-   Built directly from their committed `venv/<name>/uv.lock` by `docker/Dockerfile`. This ensures that the container runtime runs the exact same pinned environment as a native host `uv` install, with the build tools, system libraries (OpenMM dependencies, Boost, fpocket), and Ubuntu 24.04 runtime pre-packaged.
+Every image is built from committed `venv/<name>/uv.lock` files, so a container runs the same pinned environment as a native host install.
 
-2. **`conda-lock` (`generative`)**:
-   Built by `docker/Dockerfile.cuda` for linux/arm64. The generative models (ADiT, DiffCSP++, MatterGen) rely on non-PyPI packages and specific PyTorch/PyG combinations compiled from source.
+1. **One project (`cpu`, `mlip`, `fairchem`)**: `docker/Dockerfile`, on Ubuntu 24.04 with the build tools and system programs some skills call (Boost, Packmol, fpocket).
+
+2. **Several projects (`generative`)**: `docker/Dockerfile.cuda` installs `adit`, `diffcsp` and `mattergen` side by side on a CUDA toolkit image, for linux/arm64. PyG publishes no aarch64 wheels for `torch-scatter`, `torch-sparse` and `torch-cluster`, so the image compiles them against each environment's torch with `FORCE_CUDA=1` for `TORCH_CUDA_ARCH_LIST` (default `12.1`, GB10 / DGX Spark), and the build fails if they lack their CUDA kernels. Each server runs in its own environment; a command runs in the one `ATOMISTIC_VENV` names (`venv/run` passes it). The ADiT, DiffCSP++ and MatterGen source checkouts are not in the image: `venv/run` mounts them from the host (see `docs/environment_variables.md`).
 
 ## Building Images Locally
 
@@ -57,9 +57,12 @@ docker buildx build -f docker/Dockerfile \
 ```bash
 docker buildx build -f docker/Dockerfile.cuda \
   --platform linux/arm64 \
-  --build-arg IMAGE_NAME=generative \
+  --build-arg VENVS="adit diffcsp mattergen" --build-arg IMAGE_NAME=generative \
+  --build-arg TORCH_CUDA_ARCH_LIST="12.1" --build-arg MAX_JOBS=4 \
   -t ghcr.io/learningmatter-mit/atomisticskills-generative:dev .
 ```
+
+Compiling the extensions with CUDA takes a while; `MAX_JOBS` bounds the parallel `nvcc` jobs (a few GB of memory each).
 
 ## Manifest Rendering (`docker/render.py`)
 
@@ -80,14 +83,9 @@ python docker/render.py servers --check
 python docker/render.py plugin-mcp --check
 ```
 
-To refresh conda locks for the generative image:
-```bash
-python docker/export_locks.py
-```
-
 ## Running Servers and Commands Through Containers
 
-The unified launcher `venv/run` automatically mounts the active workspace to `/work` inside the container and manages user identity and GPU passthrough:
+The unified launcher `venv/run` mounts the repository, the workspace and the current directory at their own paths inside the container, runs as the calling user, and passes the GPU through:
 
 ```bash
 # Run via Docker backend
@@ -108,6 +106,6 @@ venv/run --setup
 
 ## Known Limitations
 
-- **Generative stack is arm64 only**: The `generative` image (`adit`, `diffcsp`, `mattergen`) is built for linux/arm64. On x86_64, these servers report that containers are arm64-only and exit cleanly.
+- **Generative image is arm64 only**: on x86_64 the `adit`, `diffcsp` and `mattergen` servers run from their uv projects on the host, which install PyG's wheels; a host too old for those (glibc < 2.28) cannot run them.
 - **GPU Driver Requirements**: On aarch64, CUDA 13 wheels require NVIDIA driver ≥ 580.
 - **Model Checkpoints**: Model weights are downloaded on first use into the mounted cache directory (`ATOMISTIC_MODEL_CACHE` or `~/.cache/atomisticskills`), so they persist across container restarts and updates.

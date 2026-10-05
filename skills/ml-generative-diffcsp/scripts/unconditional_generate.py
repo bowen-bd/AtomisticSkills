@@ -11,7 +11,8 @@ Usage:
         --output_dir outputs
 
 Requirements:
-    - Conda environment: diffcsp-agent
+    - Environment: diffcsp (run with: venv/run diffcsp python ...)
+    - DiffCSP++ checkout next to this project, or at $DIFFCSP_REPO
     - Required packages: torch, pyxtal, pymatgen, hydra-core
     - A generation model (mp_gen, perov_gen, or carbon_gen)
 """

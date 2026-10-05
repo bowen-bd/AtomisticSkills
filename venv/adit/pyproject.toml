@@ -222,10 +222,16 @@ cu130 = ["torch==2.9.1", "torchvision==0.24.1", "torch-scatter==2.1.2", "torch-s
 [tool.uv]
 package = false
 conflicts = [[{ extra = "cu126" }, { extra = "cu130" }]]
-# x86_64 only: PyG publishes its compiled extensions (torch-scatter, ...) for
-# x86_64; on aarch64 venv/run uses the `generative` image, whose extensions are
-# compiled with CUDA at image build time.
-environments = ["sys_platform == 'linux' and platform_machine == 'x86_64'"]
+# Locked for x86_64 and aarch64. PyG publishes its compiled extensions
+# (torch-scatter, ...) for x86_64 only; on aarch64 they are built from source,
+# which needs the CUDA toolkit and FORCE_CUDA=1 (without it the build silently
+# lacks the CUDA kernels). The `generative` image does that build, so aarch64
+# hosts run this stack from the image ([tool.atomisticskills] below).
+environments = [
+  "sys_platform == 'linux' and platform_machine == 'x86_64'",
+  "sys_platform == 'linux' and platform_machine == 'aarch64'",
+]
+# Every package has a wheel on x86_64; aarch64 builds the three PyG extensions.
 required-environments = ["sys_platform == 'linux' and platform_machine == 'x86_64'"]
 # The verified environment was installed as a closed set (pip --no-deps) that
 # deliberately violates some upstream pins, so every pin is also an override.
@@ -434,6 +440,32 @@ override-dependencies = [
   "zipp==3.23.0",
 ]
 
+[tool.uv.extra-build-dependencies]
+# The aarch64 source builds compile against the environment's own torch.
+torch-scatter = [{ requirement = "torch", match-runtime = true }, "ninja"]
+torch-sparse = [{ requirement = "torch", match-runtime = true }, "ninja"]
+torch-cluster = [{ requirement = "torch", match-runtime = true }, "ninja"]
+
+# Static metadata for those source builds, which match-runtime requires.
+[[tool.uv.dependency-metadata]]
+name = "torch-scatter"
+version = "2.1.2"
+requires-dist = []
+
+[[tool.uv.dependency-metadata]]
+name = "torch-sparse"
+version = "0.6.18"
+requires-dist = ["scipy"]
+
+[[tool.uv.dependency-metadata]]
+name = "torch-cluster"
+version = "1.6.3"
+requires-dist = ["scipy"]
+
+[tool.atomisticskills]
+# Hosts run this stack natively here only; elsewhere venv/run uses the image.
+native-arches = ["x86_64"]
+
 [[tool.uv.index]]
 name = "pytorch-cu130"
 url = "https://download.pytorch.org/whl/cu130"
@@ -468,14 +500,14 @@ torchvision = [
   { index = "pytorch-cu130", extra = "cu130" },
 ]
 torch-scatter = [
-  { index = "pyg-cu126", extra = "cu126" },
-  { index = "pyg-cu130", extra = "cu130" },
+  { index = "pyg-cu126", extra = "cu126", marker = "platform_machine == 'x86_64'" },
+  { index = "pyg-cu130", extra = "cu130", marker = "platform_machine == 'x86_64'" },
 ]
 torch-sparse = [
-  { index = "pyg-cu126", extra = "cu126" },
-  { index = "pyg-cu130", extra = "cu130" },
+  { index = "pyg-cu126", extra = "cu126", marker = "platform_machine == 'x86_64'" },
+  { index = "pyg-cu130", extra = "cu130", marker = "platform_machine == 'x86_64'" },
 ]
 torch-cluster = [
-  { index = "pyg-cu126", extra = "cu126" },
-  { index = "pyg-cu130", extra = "cu130" },
+  { index = "pyg-cu126", extra = "cu126", marker = "platform_machine == 'x86_64'" },
+  { index = "pyg-cu130", extra = "cu130", marker = "platform_machine == 'x86_64'" },
 ]
