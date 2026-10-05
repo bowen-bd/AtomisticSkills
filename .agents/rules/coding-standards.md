@@ -19,8 +19,8 @@ These rules are universally applied across all aspects of this project. **You MU
 10. **URL Validation**: After generating any URLs, always test whether the URL is valid by verifying it directly (e.g., curling).
 
 ## 2. Environment and Dependency Management
-- **Environment Isolation**: You must use the appropriate environment (`cpu`, `mlip`, `fairchem`) via the `venv/run` launcher depending on the task (see `.agents/rules/mcp-environments.md`). The `cpu` environment serves as the generic fallback for standard processing without torch. For remaining standalone conda environments (e.g., generative models), use the declared environment in `metadata.conda_env`.
-- **Dependency Versions**: Dependencies are rigorously managed per uv project in `venv/{cpu,mlip,fairchem}/pyproject.toml` and committed `uv.lock`. Never arbitrarily force or install package versions globally. Optional extras (`openmm`, `docking`, `pymol`, `void`, `transport`) handle system-dependent packages.
+- **Environment Isolation**: You must use the appropriate environment via the `venv/run` launcher depending on the task: a shared project (`cpu`, `mlip`, `fairchem`) or the research stack a skill declares in `metadata.venv` (see `.agents/rules/mcp-environments.md`). The `cpu` environment serves as the generic fallback for standard processing without torch.
+- **Dependency Versions**: Dependencies are rigorously managed per uv project in `venv/<project>/pyproject.toml` and committed `uv.lock`. Never arbitrarily force or install package versions globally. Optional extras (`openmm`, `docking`, `pymol`, `void`, `transport`) handle system-dependent packages.
 - **Failures**: NEVER implement fallback functions when package imports fail. Debug the root cause and fix the environment configuration.
 
 
