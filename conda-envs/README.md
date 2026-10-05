@@ -1,24 +1,25 @@
 # Conda environments
 
-Since 2.0.0, AtomisticSkills runs on three uv projects (`venv/cpu`, `venv/mlip`,
-`venv/fairchem`) through `venv/run`. The conda environments here are the few
-stacks that do not fit a modern uv project. Each directory has an `install.sh`.
-Skills that need one declare it as `metadata.conda_env` in their `SKILL.md`.
+Since 2.0.0, every skill and MCP server runs from a uv project under `venv/`
+through `venv/run`: the shared projects `cpu`, `mlip` and `fairchem`, and one
+pinned project per research stack (`adit`, `diffcsp`, `mattergen`, `msms`,
+`reactot`, `scd`). Nothing here is needed to run them.
 
-| Environment | Used by | Why it stays on conda |
+Two things still use conda:
+
+| Environment | Used by | Why |
 | :--- | :--- | :--- |
-| `adit-agent`, `diffcsp-agent`, `mattergen-agent` | the arm64 `generative` container image | their lockfiles build that image; on x86_64 the servers run from the uv projects `venv/adit`, `venv/diffcsp`, `venv/mattergen` |
-| `scd-agent` | `ml-property-predict-scd` examples | the example training runs relaunch inside it (migration to uv in progress) |
-| `mace-agent`, `matgl-agent`, `fairchem-agent` | `mat-lammps-md` | `install_lammps.sh` builds LAMMPS with each MLIP's C++ plugin |
+| `mace-agent`, `matgl-agent`, `fairchem-agent` | `mat-lammps-md` | `install_lammps.sh` compiles LAMMPS against each MLIP's C++ library in these environments |
+| `adit-agent`, `diffcsp-agent`, `mattergen-agent` | building the arm64 `generative` container image | PyG publishes no aarch64 wheels, so the image compiles the extensions with CUDA from these lockfiles; on x86_64 the same servers run from `venv/adit`, `venv/diffcsp` and `venv/mattergen` |
 
-The generative servers do not need these environments on a host: `venv/run`
-runs them from their uv projects on x86_64 and from the `generative` image on
-aarch64. `docker/Dockerfile.cuda` builds that image from the lockfiles in
-`<env>/lock/`, which `docker/export_locks.py` writes.
+Each directory has an `install.sh`. `docker/Dockerfile.cuda` builds the
+`generative` image from the lockfiles in `<env>/lock/`, which
+`docker/export_locks.py` writes. Users do not build these environments: on
+aarch64, `venv/run` pulls the published `generative` image.
 
-The environments that the uv projects replaced (`base-agent`, `atomate2-agent`,
-`drugdisc-agent`, `smol-agent`, `nmr-agent`, `phasefield-agent`,
-`calphad-agent`, `xrd-agent`, `orca-agent`, `drugmd-agent`, `void-agent`, and
-`react-ot-agent`, now `venv/reactot`, and `msms-agent`, now `venv/msms`) were removed in 2.0.0. They remain in the git history of the 1.x releases. See
-[docs/changes/2.0.0-migration.md](../docs/changes/2.0.0-migration.md) for the
-mapping to uv projects and extras.
+The other 1.x environments (`base-agent`, `atomate2-agent`, `drugdisc-agent`,
+`smol-agent`, `nmr-agent`, `phasefield-agent`, `calphad-agent`, `xrd-agent`,
+`orca-agent`, `drugmd-agent`, `void-agent`, `react-ot-agent`, `msms-agent`
+and `scd-agent`) were removed in 2.0.0; they remain in the git history of the
+1.x releases. See [docs/changes/2.0.0-migration.md](../docs/changes/2.0.0-migration.md)
+for the mapping to uv projects and extras.

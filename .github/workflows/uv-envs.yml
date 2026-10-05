@@ -71,6 +71,8 @@ jobs:
           - { runner: ubuntu-24.04, venv: reactot, torch: cu130 }
           - { runner: ubuntu-24.04-arm, venv: reactot, torch: cu130 }
           - { runner: ubuntu-24.04, venv: msms, torch: cu130 }
+          - { runner: ubuntu-24.04, venv: scd, torch: cu130 }
+          - { runner: ubuntu-24.04, venv: scd, torch: cu126 }
     env:
       ATOMISTIC_TORCH_CUDA: ${{ matrix.torch }}
     steps:

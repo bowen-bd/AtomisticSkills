@@ -1,4 +1,5 @@
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -13,10 +14,16 @@ def resolve_repo_root(user_value):
     if user_value is not None:
         candidates.append(Path(user_value).expanduser())
 
+    if os.environ.get("SCD_REPO_DIR"):
+        candidates.append(Path(os.environ["SCD_REPO_DIR"]).expanduser())
     cwd = Path.cwd()
     this_file = Path(__file__).resolve()
     candidates.extend(
         [
+            Path.home()
+            / ".cache"
+            / "atomisticskills"
+            / "SelfConditionedDenoisingAtoms",
             cwd,
             cwd / "SelfConditionedDenoisingAtoms",
             this_file.parents[4] / "SelfConditionedDenoisingAtoms",

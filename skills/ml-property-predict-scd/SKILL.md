@@ -3,7 +3,7 @@ name: ml-property-predict-scd
 description: Train a model to predict custom properties of molecules or periodic materials using pretrained SelfConditionedDenoisingAtoms (SCD) foundation models.
 metadata:
   category: [machine-learning, materials, chemistry]
-  venv: [mlip]
+  venv: [scd]
 ---
 
 # ml-property-predict-scd
@@ -19,8 +19,26 @@ Use `SelfConditionedDenoisingAtoms` for four related workflows:
 
 ## First Checks
 
-1. Commands run in the `mlip` environment through `venv/run`, as shown below.
-2. Confirm the upstream repo exists at `$SCD_REPO_DIR` (default: `SelfConditionedDenoisingAtoms` next to the AtomisticSkills checkout), or clone it with `${CLAUDE_SKILL_DIR}/../../conda-envs/scd-agent/install.sh`.
+1. Commands run in the `scd` environment through `venv/run`, as shown below. It
+   is created on first use, on x86_64 Linux only (PyG publishes its compiled
+   extensions, which the upstream code imports, for x86_64), with a CUDA 12.6 or
+   13 torch build chosen by driver.
+2. Confirm the upstream repo exists at `$SCD_REPO_DIR` (default:
+   `~/.cache/atomisticskills/SelfConditionedDenoisingAtoms`), or clone it at the
+   verified commit:
+
+   ```bash
+   SCD_REPO_DIR="${SCD_REPO_DIR:-$HOME/.cache/atomisticskills/SelfConditionedDenoisingAtoms}"
+   git clone https://github.com/TyJPerez/SelfConditionedDenoisingAtoms "$SCD_REPO_DIR"
+   git -C "$SCD_REPO_DIR" checkout 528c13ead7cc2b1c2b3dfddc0d167248e670746b
+   ```
+
+   Optionally build the faster TorchMD graph kernel for non-periodic runs
+   (needs the CUDA toolkit); without it, use `noise_in_loader: true`:
+
+   ```bash
+   cd "$SCD_REPO_DIR/models/ET_models" && ${CLAUDE_SKILL_DIR}/../../venv/run scd python setup.py build_ext --inplace
+   ```
 3. Read the upstream `README.md` and `examples.ipynb`.
 4. Then read the local references in this skill:
    - `references/repo-map.md`
@@ -74,15 +92,15 @@ Important details:
 Use the native training path when you want all model weights updated:
 
 ```bash
-cd "${SCD_REPO_DIR:-${CLAUDE_SKILL_DIR}/../../../SelfConditionedDenoisingAtoms}"
-${CLAUDE_SKILL_DIR}/../../venv/run mlip python train.py --conf configs/my_finetune.yaml --load-hf ct-scd-pcq --job-id my_run
+cd "${SCD_REPO_DIR:-$HOME/.cache/atomisticskills/SelfConditionedDenoisingAtoms}"
+${CLAUDE_SKILL_DIR}/../../venv/run scd python train.py --conf configs/my_finetune.yaml --load-hf ct-scd-pcq --job-id my_run
 ```
 
 or
 
 ```bash
-cd "${SCD_REPO_DIR:-${CLAUDE_SKILL_DIR}/../../../SelfConditionedDenoisingAtoms}"
-${CLAUDE_SKILL_DIR}/../../venv/run mlip python train.py --conf configs/my_finetune.yaml --load-hf ct-scd-amp --job-id my_run
+cd "${SCD_REPO_DIR:-$HOME/.cache/atomisticskills/SelfConditionedDenoisingAtoms}"
+${CLAUDE_SKILL_DIR}/../../venv/run scd python train.py --conf configs/my_finetune.yaml --load-hf ct-scd-amp --job-id my_run
 ```
 
 Start from:
@@ -99,8 +117,8 @@ Full-model finetuning usually gives better results than the lightweight frozen-b
 Use the native training path:
 
 ```bash
-cd "${SCD_REPO_DIR:-${CLAUDE_SKILL_DIR}/../../../SelfConditionedDenoisingAtoms}"
-${CLAUDE_SKILL_DIR}/../../venv/run mlip python train.py --conf configs/my_pretrain.yaml --job-id my_pretrain
+cd "${SCD_REPO_DIR:-$HOME/.cache/atomisticskills/SelfConditionedDenoisingAtoms}"
+${CLAUDE_SKILL_DIR}/../../venv/run scd python train.py --conf configs/my_pretrain.yaml --job-id my_pretrain
 ```
 
 Start from:
@@ -155,7 +173,7 @@ Check the detailed, reproducible examples in the `examples/` directory:
 
 ## Constraints
 
-- **Environments**: Scripts require the `scd-agent` Conda environment. Each code block MUST specify the environment.
+- **Environment**: Scripts run in the `scd` environment (`venv/run scd`, x86_64 Linux only). Each code block MUST go through `venv/run`.
 
 - `train.py` always creates a `WandbLogger`.
 - For finetuning runs, `train.py` derives the W&B project from the config `dataset` field, currently as `SCD_bench_{dataset}`.

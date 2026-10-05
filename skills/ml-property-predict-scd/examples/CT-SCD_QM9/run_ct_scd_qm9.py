@@ -25,7 +25,6 @@ QM9_PROPERTIES = [
     "h298_atom",
     "g298_atom",
 ]
-DEFAULT_CONDA_ENV = "scd-agent"
 
 
 def resolve_repo_root(user_value=None):
@@ -33,10 +32,16 @@ def resolve_repo_root(user_value=None):
     if user_value is not None:
         candidates.append(Path(user_value).expanduser())
 
+    if os.environ.get("SCD_REPO_DIR"):
+        candidates.append(Path(os.environ["SCD_REPO_DIR"]).expanduser())
     cwd = Path.cwd()
     this_file = Path(__file__).resolve()
     candidates.extend(
         [
+            Path.home()
+            / ".cache"
+            / "atomisticskills"
+            / "SelfConditionedDenoisingAtoms",
             cwd,
             cwd / "SelfConditionedDenoisingAtoms",
             this_file.parents[5] / "SelfConditionedDenoisingAtoms",
@@ -100,11 +105,6 @@ def build_parser():
     )
     parser.add_argument("--job-id", default=None, help="Optional explicit job id.")
     parser.add_argument(
-        "--conda-env",
-        default=os.environ.get("SCD_EXAMPLE_CONDA_ENV", DEFAULT_CONDA_ENV),
-        help="Conda environment used to run SelfConditionedDenoisingAtoms.",
-    )
-    parser.add_argument(
         "--wandb-mode",
         choices=("online", "offline", "disabled"),
         default=os.environ.get("SCD_EXAMPLE_WANDB_MODE"),
@@ -148,18 +148,6 @@ def build_parser():
     return parser
 
 
-def maybe_restart_in_conda_env(target_env):
-    current_env = os.environ.get("CONDA_DEFAULT_ENV", "")
-    if current_env == target_env:
-        return
-    print(f"Restarting CT-SCD_QM9 example in {target_env} environment...", flush=True)
-    subprocess.run(
-        ["conda", "run", "-n", target_env, "python", __file__, *sys.argv[1:]],
-        check=True,
-    )
-    raise SystemExit(0)
-
-
 def ensure_runtime_env(args):
     env = os.environ.copy()
     if args.wandb_mode:
@@ -191,7 +179,7 @@ def require_cuda_for_training():
         return
 
     raise RuntimeError(
-        "No CUDA GPUs are available in the active the 'mlip' environment. "
+        "No CUDA GPUs are available in the 'scd' environment. "
         "The upstream SelfConditionedDenoisingAtoms train.py entrypoint hard-codes "
         "GPU training, so use --dry-run on CPU-only hosts or rerun this example on a CUDA machine."
     )
@@ -221,7 +209,6 @@ def build_device_args(args):
 
 def main():
     args = build_parser().parse_args()
-    maybe_restart_in_conda_env(args.conda_env)
     runtime_env = ensure_runtime_env(args)
     apply_runtime_env_locally(runtime_env)
 
@@ -236,7 +223,7 @@ def main():
             job_id += "_smoke"
 
     cmd = [
-        "python",
+        sys.executable,
         "train.py",
         "--conf",
         config_path,
@@ -264,7 +251,7 @@ def main():
     device_args, visible_count = build_device_args(args)
     cmd.extend(device_args)
 
-    print(f"Using conda environment: {args.conda_env}")
+    print(f"Using Python: {sys.executable}")
     print(f"Running CT-SCD QM9 command from {repo_root}:")
     print(shlex.join(cmd))
     if args.wandb_mode:

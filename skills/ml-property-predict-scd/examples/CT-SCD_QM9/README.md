@@ -10,26 +10,27 @@ python train.py --conf configs/finetune_qm9.yaml --load-hf ct-scd-pcq --job-id s
 
 ## Contents
 
-1. `run_ct_scd_qm9.py`: a wrapper script that locates the `SelfConditionedDenoisingAtoms` checkout, relaunches itself inside the `scd-agent` environment when needed, and runs a safe smoke test by default.
+1. `run_ct_scd_qm9.py`: a wrapper script that locates the `SelfConditionedDenoisingAtoms` checkout, runs the upstream `train.py` there with its own interpreter, and runs a safe smoke test by default.
 
 ## Running the Example
 
-From a general environment, let the script restart itself inside `scd-agent`:
+Run it in the `scd` environment from the AtomisticSkills checkout; `venv/run`
+creates the environment on first use (x86_64 Linux):
 
 ```bash
-python run_ct_scd_qm9.py --dry-run
+venv/run scd python skills/ml-property-predict-scd/examples/CT-SCD_QM9/run_ct_scd_qm9.py --dry-run
 ```
 
-Inside `scd-agent`, you can run it directly:
+Without `--dry-run` it launches a short smoke-test training run:
 
 ```bash
-python run_ct_scd_qm9.py
+venv/run scd python skills/ml-property-predict-scd/examples/CT-SCD_QM9/run_ct_scd_qm9.py
 ```
 
 For first-run smoke tests, prefer observing live stdout instead of launching through buffered wrappers. This is general guidance for SCD runs, not just this example. A good pattern is:
 
 ```bash
-venv/run mlip env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=0 python -u run_ct_scd_qm9.py --num-steps 2 --val-interval 1
+venv/run scd env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=0 python -u skills/ml-property-predict-scd/examples/CT-SCD_QM9/run_ct_scd_qm9.py --num-steps 2 --val-interval 1
 ```
 
 This makes checkpoint downloads, dataset downloads, split creation, and normalization startup visible in the terminal.
@@ -45,33 +46,33 @@ On shared machines, prefer a GPU with no active compute job and low memory usage
 If you want one selected GPU, expose it explicitly:
 
 ```bash
-venv/run mlip env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=2 python -u run_ct_scd_qm9.py --num-steps 2 --val-interval 1
+venv/run scd env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=2 python -u skills/ml-property-predict-scd/examples/CT-SCD_QM9/run_ct_scd_qm9.py --num-steps 2 --val-interval 1
 ```
 
 If you want all selected visible GPUs, expose them and tell the wrapper to use them all:
 
 ```bash
-venv/run mlip env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=0,1,2,3 python -u run_ct_scd_qm9.py --num-steps 2 --val-interval 1 --use-all-visible-gpus
+venv/run scd env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=0,1,2,3 python -u skills/ml-property-predict-scd/examples/CT-SCD_QM9/run_ct_scd_qm9.py --num-steps 2 --val-interval 1 --use-all-visible-gpus
 ```
 
 The wrapper defaults to a single visible GPU unless `--use-all-visible-gpus` is requested.
 
-Use `--dry-run` first to verify the resolved command, repo root, and conda environment without launching training:
+Use `--dry-run` first to verify the resolved command, repo root, and interpreter without launching training:
 
 ```bash
-python run_ct_scd_qm9.py --dry-run --property gap
+venv/run scd python skills/ml-property-predict-scd/examples/CT-SCD_QM9/run_ct_scd_qm9.py --dry-run --property gap
 ```
 
 For smoke tests on a machine where you do not want to log into W&B, pass:
 
 ```bash
-python run_ct_scd_qm9.py --wandb-mode offline
+venv/run scd python skills/ml-property-predict-scd/examples/CT-SCD_QM9/run_ct_scd_qm9.py --wandb-mode offline
 ```
 
 By default this example performs a short smoke test with `--num-steps 100`. To launch the full upstream schedule instead:
 
 ```bash
-python run_ct_scd_qm9.py --full-run
+venv/run scd python skills/ml-property-predict-scd/examples/CT-SCD_QM9/run_ct_scd_qm9.py --full-run
 ```
 
 For the quickest smoke tests, consider copying `configs/finetune_qm9.yaml` into a task-specific smoke config and setting `parity_plot: false`. The upstream QM9 recipe enables parity plots, which can add noticeable extra runtime even after `max_steps` is reached.
@@ -81,9 +82,9 @@ For the quickest smoke tests, consider copying `configs/finetune_qm9.yaml` into 
 The script exposes `--property`, which maps directly to `--dataset-arg` for the QM9 loader. For example:
 
 ```bash
-python run_ct_scd_qm9.py --property lumo
-python run_ct_scd_qm9.py --property gap
-python run_ct_scd_qm9.py --property cv
+venv/run scd python skills/ml-property-predict-scd/examples/CT-SCD_QM9/run_ct_scd_qm9.py --property lumo
+venv/run scd python skills/ml-property-predict-scd/examples/CT-SCD_QM9/run_ct_scd_qm9.py --property gap
+venv/run scd python skills/ml-property-predict-scd/examples/CT-SCD_QM9/run_ct_scd_qm9.py --property cv
 ```
 
 Common QM9 property names from `data/datasets/qm9.py` include:
@@ -110,7 +111,7 @@ For most QM9 targets, changing `--property` is the main change. For targets with
 If you create a task-specific config, pass it with `--config`:
 
 ```bash
-python run_ct_scd_qm9.py --property lumo --config configs/finetune_qm9_lumo.yaml
+venv/run scd python skills/ml-property-predict-scd/examples/CT-SCD_QM9/run_ct_scd_qm9.py --property lumo --config configs/finetune_qm9_lumo.yaml
 ```
 
 ## Notes
@@ -118,7 +119,7 @@ python run_ct_scd_qm9.py --property lumo --config configs/finetune_qm9_lumo.yaml
 - Actual training requires a CUDA-visible GPU. On CPU-only hosts the wrapper now exits early with a clear message instead of letting `train.py` fail later inside PyTorch Lightning.
 - If the default Matplotlib config directory is not writable, the wrapper automatically uses a temporary `MPLCONFIGDIR`.
 - If the TorchMD compiled graph kernel is not built, the wrapper automatically adds `--noise_in_loader True`, matching the upstream README guidance.
-- The default target environment is `scd-agent`, matching the environment created in `AtomisticSkills/conda-envs/scd-agent`.
+- Runs in the `scd` environment. The upstream checkout is found at `--repo-root`, `$SCD_REPO_DIR`, or `~/.cache/atomisticskills/SelfConditionedDenoisingAtoms` (see the skill's First Checks).
 - Training outputs are written under `SelfConditionedDenoisingAtoms/experiments/<job_id>`.
 - The W&B project for this example is derived by `train.py` from `dataset: QM9`, so it appears as `SCD_bench_QM9`.
 - In practice, QM9 smoke runs can spend substantial startup time computing dataset normalization statistics before the short training loop begins.

@@ -14,26 +14,27 @@ The public `SelfConditionedDenoisingAtoms/README.md` explicitly notes that `conf
 
 ## Contents
 
-1. `run_ct_scd_matbench.py`: a wrapper script that locates the `SelfConditionedDenoisingAtoms` checkout, relaunches itself inside the `scd-agent` environment when needed, and runs a safe smoke test by default.
+1. `run_ct_scd_matbench.py`: a wrapper script that locates the `SelfConditionedDenoisingAtoms` checkout, runs the upstream `train.py` there with its own interpreter, and runs a safe smoke test by default.
 
 ## Running the Example
 
-From a general environment, let the script restart itself inside `scd-agent`:
+Run it in the `scd` environment from the AtomisticSkills checkout; `venv/run`
+creates the environment on first use (x86_64 Linux):
 
 ```bash
-python run_ct_scd_matbench.py --dry-run
+venv/run scd python skills/ml-property-predict-scd/examples/CT-SCD_matbench/run_ct_scd_matbench.py --dry-run
 ```
 
-Inside `scd-agent`, you can run it directly:
+Without `--dry-run` it launches a short smoke-test training run:
 
 ```bash
-python run_ct_scd_matbench.py
+venv/run scd python skills/ml-property-predict-scd/examples/CT-SCD_matbench/run_ct_scd_matbench.py
 ```
 
 Use `--dry-run` first to confirm the resolved config, fold, and dataset wrapper without launching training:
 
 ```bash
-python run_ct_scd_matbench.py --dry-run --fold 2
+venv/run scd python skills/ml-property-predict-scd/examples/CT-SCD_matbench/run_ct_scd_matbench.py --dry-run --fold 2
 ```
 
 Before launching, check GPU availability and current usage. As with the QM9 example, preferring live stdout over buffered wrappers is general guidance for SCD runs, not just this script:
@@ -47,13 +48,13 @@ On shared machines, prefer a GPU with no active compute job and low memory usage
 To run on one selected GPU:
 
 ```bash
-venv/run mlip env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=2 python -u run_ct_scd_matbench.py --num-steps 2 --val-interval 1
+venv/run scd env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=2 python -u skills/ml-property-predict-scd/examples/CT-SCD_matbench/run_ct_scd_matbench.py --num-steps 2 --val-interval 1
 ```
 
 To run on all selected visible GPUs:
 
 ```bash
-venv/run mlip env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=0,1,2,3 python -u run_ct_scd_matbench.py --num-steps 2 --val-interval 1 --use-all-visible-gpus
+venv/run scd env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=0,1,2,3 python -u skills/ml-property-predict-scd/examples/CT-SCD_matbench/run_ct_scd_matbench.py --num-steps 2 --val-interval 1 --use-all-visible-gpus
 ```
 
 The wrapper defaults to a single visible GPU unless `--use-all-visible-gpus` is requested.
@@ -61,13 +62,13 @@ The wrapper defaults to a single visible GPU unless `--use-all-visible-gpus` is 
 For smoke tests without a live W&B session, pass:
 
 ```bash
-python run_ct_scd_matbench.py --wandb-mode offline
+venv/run scd python skills/ml-property-predict-scd/examples/CT-SCD_matbench/run_ct_scd_matbench.py --wandb-mode offline
 ```
 
-For W&B online mode, first log in inside `scd-agent`:
+For W&B online mode, first log in from the `scd` environment:
 
 ```bash
-venv/run mlip wandb login
+venv/run scd wandb login
 ```
 
 Then launch without `WANDB_MODE=offline`, or set `WANDB_MODE=online` explicitly.
@@ -75,7 +76,7 @@ Then launch without `WANDB_MODE=offline`, or set `WANDB_MODE=online` explicitly.
 By default this example performs a short smoke test with `--num-steps 100`. To launch the full upstream schedule instead:
 
 ```bash
-python run_ct_scd_matbench.py --full-run
+venv/run scd python skills/ml-property-predict-scd/examples/CT-SCD_matbench/run_ct_scd_matbench.py --full-run
 ```
 
 For the quickest smoke tests, consider copying `configs/finetune_matbench.yaml` into a task-specific smoke config and disabling expensive reporting such as `parity_plot` if you add it. Short `max_steps` runs can still spend significant time in evaluation or plotting callbacks.
@@ -83,8 +84,8 @@ For the quickest smoke tests, consider copying `configs/finetune_matbench.yaml` 
 The example uses Matbench fold `0` by default. To change folds:
 
 ```bash
-python run_ct_scd_matbench.py --fold 1
-python run_ct_scd_matbench.py --fold 2
+venv/run scd python skills/ml-property-predict-scd/examples/CT-SCD_matbench/run_ct_scd_matbench.py --fold 1
+venv/run scd python skills/ml-property-predict-scd/examples/CT-SCD_matbench/run_ct_scd_matbench.py --fold 2
 ```
 
 ## Other Matbench Properties
@@ -101,7 +102,7 @@ To train on another Matbench property:
 For example, once a new wrapper is exported:
 
 ```bash
-python run_ct_scd_matbench.py --dataset-class MBdielectric --config configs/finetune_matbench_dielectric.yaml
+venv/run scd python skills/ml-property-predict-scd/examples/CT-SCD_matbench/run_ct_scd_matbench.py --dataset-class MBdielectric --config configs/finetune_matbench_dielectric.yaml
 ```
 
 ## Notes
@@ -109,7 +110,7 @@ python run_ct_scd_matbench.py --dataset-class MBdielectric --config configs/fine
 - Actual training requires a CUDA-visible GPU. On CPU-only hosts the wrapper now exits early with a clear message instead of letting `train.py` fail later inside PyTorch Lightning.
 - If the default Matplotlib config directory is not writable, the wrapper automatically uses a temporary `MPLCONFIGDIR`.
 - This example follows the upstream material finetuning settings: `noise_in_loader=True`, `allow_periodic=True`, and `set_head_agg: mean`.
-- The default target environment is `scd-agent`, matching the environment created in `AtomisticSkills/conda-envs/scd-agent`.
+- Runs in the `scd` environment. The upstream checkout is found at `--repo-root`, `$SCD_REPO_DIR`, or `~/.cache/atomisticskills/SelfConditionedDenoisingAtoms` (see the skill's First Checks).
 - Training outputs are written under `SelfConditionedDenoisingAtoms/experiments/<job_id>`.
 - The W&B project is derived by `train.py` from the dataset class name, so the default `MBgap` run appears under `SCD_bench_MBgap`.
 - On this public checkout, the Matbench dataset path still depends on `StructureCloud`, so W&B login alone is not enough to make the example runnable.

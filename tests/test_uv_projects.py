@@ -35,9 +35,10 @@ STACKS = tuple(
     )
 )
 ALL = PROJECTS + STACKS
-# Stacks that install an upstream package pinned to a commit, with its own
-# requirements, rather than a closed set: their uv.lock is the pin.
-LOCK_PINNED = ("msms",)
+# Stacks resolved from upstream's own requirements (ms-pred at a pinned commit;
+# SelfConditionedDenoisingAtoms' requirements.txt) rather than a verified closed
+# set: their uv.lock is the pin.
+LOCK_PINNED = ("msms", "scd")
 ARCHES = {
     "sys_platform == 'linux' and platform_machine == 'x86_64'",
     "sys_platform == 'linux' and platform_machine == 'aarch64'",
