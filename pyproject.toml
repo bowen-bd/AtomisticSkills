@@ -1,3 +1,29 @@
+# The repository root is an installable package so that `src` is importable
+# from every uv project in venv/, whatever the working directory. Each project
+# depends on it as an editable path dependency; nothing is published.
+#
+# Without this, a skill script run as `python skills/<skill>/scripts/x.py` has
+# only its own folder on sys.path, and `from src.utils... import ...` fails --
+# usually at the very end of a run, after the computation has finished.
+[project]
+name = "atomisticskills"
+dynamic = ["version"]
+description = "Shared library (src/) behind the AtomisticSkills skill scripts and MCP servers."
+requires-python = ">=3.10"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+# VERSION stays the single source of the release number. A dynamic version
+# also keeps the venv/*/uv.lock files from going stale on every release.
+path = "VERSION"
+pattern = "(?P<version>\\d+\\.\\d+\\.\\d+)"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
 [tool.ruff]
 target-version = "py310"
 

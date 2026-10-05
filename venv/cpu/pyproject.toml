@@ -4,10 +4,12 @@ version = "0.1.0"
 description = "CPU scientific stack: materials, chemistry, drug discovery and analysis. No torch."
 requires-python = ">=3.12,<3.13"
 dependencies = [
+  # The repository itself, so `src` is importable from any directory.
+  "atomisticskills",
+  "feedparser",
   "mcp<2",
   "ase",
   "atomate2",
-  "amset",
   "beautifulsoup4",
   "biopython",
   "cvxpy",
@@ -22,36 +24,39 @@ dependencies = [
   "imageio",
   "jobflow",
   "jobflow-remote",
-  "kaleido>=0.2.1,<0.3",
+  # Static plotly export. kaleido >= 1 drives an installed Chrome/Chromium
+  # (plotly 7 no longer accepts the bundled-Chromium 0.x releases); on x86_64
+  # it can fetch one itself with `plotly_get_chrome`.
+  "kaleido",
   "lobsterpy",
   "matcalc",
   "matplotlib",
   "mdanalysis",
   "meeko",
   "mp-api",
+  "mpcontribs-client",
   "nmrsim",
   "nmrglue",
-  "numpy>=2,<3",
+  "numpy>=2",
   "openbabel-wheel",
-  "openmm",
   "opencv-python-headless",
-  "optimade[client]",
-  "parmed",
-  "pandas<3",
-  "pdbfixer",
+  "optimade[http-client]",
+  "pandas",
   "pillow",
   "polytope",
   "posebusters",
   "prolif",
   "pymatgen",
+  "pymatgen-analysis-defects",
   "pymatgen-analysis-diffusion",
-  "pymol-open-source==3.2.0a0 ; platform_machine == 'x86_64'",
   "pymupdf",
+  "python-pptx",
   "pycalphad",
   "pyyaml",
   "reaction-network",
   "rdkit",
   "requests",
+  "rxn4chemistry",
   "scikit-learn",
   "scipy",
   "scine-utilities ; platform_machine == 'x86_64'",
@@ -60,18 +65,48 @@ dependencies = [
   "sympy",
   "tinydb",
   "tqdm",
-  "vina",
   "xarray",
-  "VOID",
 ]
+
+[project.optional-dependencies]
+# Kept out of the base set because every OpenMM wheel on PyPI needs glibc 2.34
+# (RHEL 9, Ubuntu 22.04 or newer) and there is no source distribution. In the
+# base set it would stop the whole project from installing on RHEL 8-era
+# clusters. Skills that need it run with `--extra openmm`.
+openmm = ["openmm", "pdbfixer", "parmed"]
+# PyMOL is published for x86_64 only, as a pre-release, and needs glibc 2.35.
+# Only the structure-rendering scripts use it.
+pymol = ["pymol-open-source==3.2.0a0 ; platform_machine == 'x86_64'"]
+# AutoDock Vina publishes no aarch64 wheel for Python 3.12; there it builds
+# from source and needs the Boost headers (apt: libboost-all-dev). As an
+# extra, a host without Boost loses docking only, not the whole project.
+docking = ["vina"]
+# VOID (chem-docking-void) comes from git; as an extra, only that skill needs a
+# git executable on the host.
+void = ["VOID"]
+# AMSET runs inside the transport workflow's worker, not where the flow is
+# built (atomate2 imports it only when the job executes). Its BoltzTraP2
+# dependency compiles from source and clones GoogleTest with git at build time,
+# so it stays out of the base set; install it to run AMSET jobs locally.
+transport = ["amset"]
+
+[dependency-groups]
+dev = ["pytest", "pytest-timeout"]
 
 [tool.uv]
 package = false
 # Both architectures are supported: amd64 for ordinary clusters and
 # workstations, arm64 for GB10-class hardware. Anything that genuinely has no
-# wheel for one of them carries a platform_machine marker in dependencies
-# above, rather than being dropped for everyone.
+# wheel for one of them carries a platform_machine marker above, rather than
+# being dropped for everyone.
 environments = [
+  "sys_platform == 'linux' and platform_machine == 'x86_64'",
+  "sys_platform == 'linux' and platform_machine == 'aarch64'",
+]
+# `environments` only limits what the resolver considers; it does not check
+# that a wheel exists. This does, so `uv lock` fails instead of producing a lock
+# that cannot be installed (as happened with kaleido 0.2.1.post1).
+required-environments = [
   "sys_platform == 'linux' and platform_machine == 'x86_64'",
   "sys_platform == 'linux' and platform_machine == 'aarch64'",
 ]
@@ -82,6 +117,7 @@ environments = [
 boltztrap2 = ["cmake>=3.24"]
 
 [tool.uv.sources]
+atomisticskills = { path = "../..", editable = true }
 # The Voronoi docking library used by chem-docking-void. Not on PyPI -- the
 # package published there under the name "void" is an unrelated utility.
 VOID = { git = "https://github.com/learningmatter-mit/VOID.git" }
