@@ -85,12 +85,16 @@ ${CLAUDE_SKILL_DIR}/../../venv/run msms python ${CLAUDE_SKILL_DIR}/scripts/predi
 
 ### Step 2 — Inspect fragment assignments (optional)
 
-`fragments.json` maps each predicted peak to the fragment ion SMILES responsible for it:
+`fragments.json` maps each predicted peak to the fragment ICEBERG assigns it,
+as the Kekulé SMILES of the heavy-atom substructure (hydrogen shifts are not
+shown). There is one entry per fragment, so fragments with the same formula
+repeat an m/z; `spectrum.png` sums them. For 2-aminoethyl benzoate at 20 eV:
 
 ```json
 {
   "20": [
-    {"mz": 122.0600, "intensity": 1.0, "fragment_smiles": "c1ccccc1C=O"},
+    {"mz": 149.0597, "intensity": 1.0, "fragment_smiles": "CCOC(=O)C1=CC=CC=C1"},
+    {"mz": 105.0335, "intensity": 0.944, "fragment_smiles": "O=CC1=CC=CC=C1"},
     ...
   ]
 }
@@ -118,7 +122,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run msms python ${CLAUDE_SKILL_DIR}/examples/pred
 Expected output:
 - `spectrum.png` — two-panel spectrum (20 eV + 40 eV)
 - `fragments.json` — fragment assignments for both energies
-- Precursor `[M+H]+` ≈ 166.087 Da
+- Precursor `[M+H]+` ≈ 166.086 Da
 
 ## Constraints
 

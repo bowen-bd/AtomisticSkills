@@ -14,7 +14,7 @@ One worked example demonstrating LC-MS/MS spectrum prediction via ICEBERG for a 
 
 **Script**: `predict_smiles.py`
 **Molecule**: 2-aminoethyl benzoate — `c1ccccc1C(=O)OCCN`
-**Precursor**: `[M+H]+` ≈ 166.087 Da
+**Precursor**: `[M+H]+` ≈ 166.086 Da
 
 Runs inference at collision energies 20 eV and 40 eV and writes results to `.agents/test/msms_example/`.
 

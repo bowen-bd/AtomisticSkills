@@ -121,8 +121,11 @@ def plot_spectrum(
 
     for ax, ce in zip(axes[:, 0], ces):
         spec = spec_dict[ce]
-        mz = spec[:, 0]
-        inten = spec[:, 1] / spec[:, 1].max()
+        # ICEBERG lists each fragment as its own peak, so fragments of the same
+        # formula share an m/z; the measured spectrum would show their sum.
+        mz, peak = np.unique(spec[:, 0].round(4), return_inverse=True)
+        inten = np.bincount(peak, weights=spec[:, 1])
+        inten = inten / inten.max()
 
         _, stemlines, _ = ax.stem(mz, inten, linefmt="C0-", markerfmt=" ", basefmt="k-")
         plt.setp(stemlines, linewidth=0.8)
