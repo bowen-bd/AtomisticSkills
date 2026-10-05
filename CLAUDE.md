@@ -70,11 +70,11 @@ Or from the repository root:
 ```bash
 venv/run <venv>[+<extra>] python skills/<skill-name>/scripts/<script>.py ...
 ```
-Where `<venv>` is `cpu`, `mlip`, or `fairchem` (matching `metadata.venv` in the skill's `SKILL.md`), with optional extras if needed (e.g. `cpu+openmm`, `cpu+docking`).
-For skills that remain on specialized conda stacks (declared via `metadata.conda_env`):
-```bash
-conda run -n <env-name> python ...
-```
+Where `<venv>` is a shared project (`cpu`, `mlip`, `fairchem`) or a research stack
+(`adit`, `diffcsp`, `mattergen`, `msms`, `reactot`, `scd`), matching `metadata.venv`
+in the skill's `SKILL.md`, with optional extras if needed (e.g. `cpu+openmm`, `cpu+docking`).
+Only `mat-lammps-md` still uses conda, to compile LAMMPS against each MLIP
+(`metadata.conda_env`).
 
 ### MCP tool calls
 
@@ -103,7 +103,9 @@ See `README.md` for full installation instructions.
 The `cpu`, `mlip`, and `fairchem` container images (for linux/amd64 and linux/arm64)
 are built directly from their respective `venv/<name>/uv.lock` files via `docker/Dockerfile`,
 guaranteeing identical package environments natively and in containers without `--no-deps`.
-The `generative` image (arm64 only) is built via `docker/Dockerfile.cuda` from conda locks.
+The `generative` image (arm64 only) is built via `docker/Dockerfile.cuda` from conda locks;
+on x86_64 the generative servers run from their uv projects (`venv/adit`, `venv/diffcsp`,
+`venv/mattergen`).
 
 `docker/images.json` is the single source of truth mapping each server to its runtime image.
 The server table `venv/servers.tsv`, the `mcpServers` block of `.claude-plugin/plugin.json`,

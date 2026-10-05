@@ -4,7 +4,7 @@ trigger: always_on
 
 # MCP Server and Environment Runtime Rules
 
-AtomisticSkills runs all skill scripts and MCP servers through the unified launcher `venv/run`. The runtime uses three primary `uv` projects under `venv/`, with pre-built container images as an automatic fallback when host requirements are not met.
+AtomisticSkills runs all skill scripts and MCP servers through the unified launcher `venv/run`. The runtime uses three shared `uv` projects under `venv/` plus one pinned project per research stack, with pre-built container images as an automatic fallback when host requirements are not met.
 
 ## 1. Environments Overview
 
@@ -14,7 +14,18 @@ AtomisticSkills runs all skill scripts and MCP servers through the unified launc
 | `mlip` | PyTorch 2.14.1, MACE-torch 0.3.16, MatGL 4.1.0, nvalchemi-toolkit 0.2.0 | Yes | `mace`, `matgl` |
 | `fairchem` | PyTorch 2.13.0, fairchem-core 2.23.0, nvalchemi-toolkit 0.2.0 | Yes | `fairchem` |
 
-### Why Three Environments?
+### Research Stacks
+
+Pinned to the versions they were verified with, rather than tracking the latest releases:
+
+| Environment | Used by | Platforms |
+| :--- | :--- | :--- |
+| `adit`, `diffcsp`, `mattergen` | the generative MCP servers and skills | x86_64 natively (CUDA 12.6 or 13 by driver); aarch64 through the `generative` image |
+| `msms` | `chem-msms-predict` (ICEBERG 2.1, CPU) | x86_64 only |
+| `reactot` | `chem-react-ot` | x86_64 and aarch64 |
+| `scd` | `ml-property-predict-scd` | x86_64 only |
+
+### Why Three Shared Environments?
 1. **Package conflicts**: `mace-torch` pins `e3nn==0.4.4`, whereas `fairchem-core` requires `e3nn>=0.5`.
 2. **PyTorch versions**: `fairchem-core` 2.23 requires `torch~=2.13`, while `mlip` runs PyTorch 2.14.1.
 3. **NumPy constraints**: `nvalchemi-toolkit` 0.2 requires `numpy<2.4`, so GPU environments use NumPy 2.3.5 while `cpu` uses NumPy 2.5+.
@@ -38,21 +49,15 @@ Environments support optional extras specified as `<venv>+<extra>` (e.g., `cpu+o
 | `mace` | `mlip` | `mlip` | Yes | MACE foundation models (relax, MD, features) |
 | `matgl` | `mlip` | `mlip` | Yes | MatGL models (CHGNet, TensorNet, M3GNet) |
 | `fairchem` | `fairchem` | `fairchem` | Yes | FairChem models (UMA, eSEN) |
-| `adit` | — | `generative` | Yes | ADiT all-atom diffusion transformer |
-| `diffcsp` | — | `generative` | Yes | DiffCSP++ crystal structure generation |
-| `mattergen` | — | `generative` | Yes | MatterGen generative diffusion model |
+| `adit` | `adit` | `generative` | Yes | ADiT all-atom diffusion transformer |
+| `diffcsp` | `diffcsp` | `generative` | Yes | DiffCSP++ crystal structure generation |
+| `mattergen` | `mattergen` | `generative` | Yes | MatterGen generative diffusion model |
 
-The generative servers (`adit`, `diffcsp`, `mattergen`) have no uv project. Through the plugin they run from the `generative` container image (linux/arm64 only); `configure_mcp.py` instead points them at their conda environments (`<conda>/envs/<name>-agent`) when it finds them, on either architecture.
+The generative servers run from their uv projects on x86_64; PyG publishes no aarch64 wheels for their compiled extensions, so on aarch64 `venv/run` uses the `generative` container image (linux/arm64), built with those extensions compiled from source.
 
-## 3. Standalone Conda Stacks (Legacy / Special)
+## 3. Conda
 
-A few specialized skills remain on isolated Conda environments declared via `metadata.conda_env` in their `SKILL.md`:
-- `adit-agent`, `diffcsp-agent`, `mattergen-agent`: the generative servers and skills, when not run from the `generative` image.
-- `ms-gen`: LC-MS/MS prediction via ICEBERG (`chem-msms-predict`).
-- `react-ot-agent`: Reaction transition state generation (`chem-react-ot`).
-- `mace-agent`, `matgl-agent`, `fairchem-agent`: LAMMPS with MLIP plugins (`mat-lammps-md`).
-
-The conda environments that the uv projects replaced were removed in 2.0.0; `conda-envs/README.md` lists the ones that remain.
+Only `mat-lammps-md` still uses conda: `install_lammps.sh` compiles LAMMPS against each MLIP's C++ library in `mace-agent`, `matgl-agent` and `fairchem-agent` (declared via `metadata.conda_env`). The `adit-agent`, `diffcsp-agent` and `mattergen-agent` lockfiles only build the arm64 `generative` image. `conda-envs/README.md` describes both.
 
 ## 4. Runtime Selection and Launcher Backend
 

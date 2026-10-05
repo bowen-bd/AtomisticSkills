@@ -45,9 +45,9 @@ Each MCP server is a standalone Python module that exposes tools via the FastMCP
 | [mace_server.py](../src/mcp_server/mace_server.py) | `mlip` | MACE foundation models (relax, MD, features) |
 | [matgl_server.py](../src/mcp_server/matgl_server.py) | `mlip` | MatGL models (CHGNet, TensorNet, M3GNet), bandgap prediction |
 | [fairchem_server.py](../src/mcp_server/fairchem_server.py) | `fairchem` | FairChem models (UMA, eSEN) |
-| [mattergen_server.py](../src/mcp_server/mattergen_server.py) | `generative` image / conda | MatterGen generative crystal design |
-| [adit_server.py](../src/mcp_server/adit_server.py) | `generative` image / conda | ADiT all-atom diffusion transformer |
-| [diffcsp_server.py](../src/mcp_server/diffcsp_server.py) | `generative` image / conda | DiffCSP++ crystal structure generation |
+| [mattergen_server.py](../src/mcp_server/mattergen_server.py) | `mattergen` (aarch64: `generative` image) | MatterGen generative crystal design |
+| [adit_server.py](../src/mcp_server/adit_server.py) | `adit` (aarch64: `generative` image) | ADiT all-atom diffusion transformer |
+| [diffcsp_server.py](../src/mcp_server/diffcsp_server.py) | `diffcsp` (aarch64: `generative` image) | DiffCSP++ crystal structure generation |
 
 ### 2. Utility Modules (`src/utils/`)
 

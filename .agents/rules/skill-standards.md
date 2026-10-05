@@ -37,7 +37,7 @@ name: skill-name-in-kebab-case
 description: Concise one-sentence summary of the skill's purpose and outcome.
 metadata:
   category: [category-name]
-  venv: [cpu] # or mlip, fairchem; or conda_env: <name> for conda stacks
+  venv: [cpu] # or mlip, fairchem, or a research stack (adit, diffcsp, mattergen, msms, reactot, scd)
 ---
 ```
 
@@ -52,7 +52,7 @@ metadata:
   - `machine-learning`: MLIP training, model selection, and ML workflows (prefix: `ml-`)
   - `drug-discovery`: Drug design, docking, and molecular property prediction (prefix: `drug-`)
   - `general`: General-purpose research utilities (prefix: `general-`)
-- `metadata.venv`: A YAML list declaring the uv environments used (`[cpu]`, `[mlip]`, `[fairchem]`). For skills that remain on specialized conda stacks, use `metadata.conda_env: <env-name>` instead.
+- `metadata.venv`: A YAML list declaring the uv environments used: the shared projects (`[cpu]`, `[mlip]`, `[fairchem]`) or a research stack's own project under `venv/` (e.g. `[msms]`). A new stack that cannot share an environment gets its own pinned uv project rather than a conda environment.
 
 ### 2. Title and Goal Section
 Begin with a level-1 header matching the skill name, followed by a `## Goal` section:
@@ -94,12 +94,6 @@ Or when executed from the repository root:
 ````markdown
 ```bash
 venv/run <venv>[+<extra>] python skills/<skill-name>/scripts/<script>.py [arguments]
-```
-````
-For skills on standalone conda stacks (declared in `metadata.conda_env`):
-````markdown
-```bash
-conda run -n <conda-env> python skills/<skill-name>/scripts/<script>.py [arguments]
 ```
 ````
 
@@ -151,7 +145,7 @@ Document important limitations, safety rules, and requirements:
 ## Constraints
 - **Box Dimensions**: The lattice parameters perpendicular to the stacking axis must be identical.
 - **Ensemble**: The final production run must be in the **NVE** ensemble.
-- **Environments**: Scripts specify their required uv environment in frontmatter `metadata.venv` (`cpu`, `mlip`, `fairchem`) and execute via `venv/run <venv>[+<extra>]`. Skills on conda stacks use `metadata.conda_env`.
+- **Environments**: Scripts specify their required uv environment in frontmatter `metadata.venv` (`cpu`, `mlip`, `fairchem`, or a research stack) and execute via `venv/run <venv>[+<extra>]`.
 - **System Size**: Recommended for supercells with >50 atoms to reduce noise.
 ```
 
@@ -176,7 +170,7 @@ Usage:
     python script_name.py input.cif --option value
 
 Requirements:
-    - Environment: <venv> (cpu, mlip, or fairchem; or <conda_env>)
+    - Environment: <venv> (cpu, mlip, fairchem, or a research stack)
     - Required packages: ase, pymatgen, etc.
 """
 ```
@@ -214,7 +208,7 @@ def process_structure(atoms: Atoms, threshold: float = 0.5) -> dict:
 ### 1. Explicit Specification
 Every skill must declare its environment in its `SKILL.md` frontmatter:
 - `metadata.venv: [<venv>]` for standard uv environments (`cpu`, `mlip`, or `fairchem`). Commands use `${CLAUDE_SKILL_DIR}/../../venv/run <venv>[+<extra>] ...` (or `venv/run ...`).
-- `metadata.conda_env: <name>` for skills that remain on specialized conda stacks. Commands use `conda run -n <name> ...`.
+- `metadata.conda_env: <name>` only where a build needs conda (`mat-lammps-md`, which compiles LAMMPS against each MLIP). Commands use `conda run -n <name> ...`.
 
 ### 2. Environment Mapping
 Refer to `mcp-environments.md` for standard environment mapping:

@@ -132,15 +132,18 @@ ATOMISTIC_RUNTIME: auto
 - Keep large caches off a small home quota with `UV_CACHE_DIR` (uv's download cache)
   and `ATOMISTIC_MODEL_CACHE` (container checkpoints and SIF files).
 
-## Generative models and other conda stacks
+## Research stacks
 
-MatterGen, ADiT and DiffCSP++ (`ml-generative-*`), React-OT (`chem-react-ot`),
-ICEBERG (`chem-msms-predict`) and the LAMMPS builds (`mat-lammps-md`) cannot live
-in a uv project. On aarch64 the generative MCP servers run from the `generative`
-container image (`venv/run --setup generative`). Otherwise build the conda
-environment the skill names in its `metadata.conda_env`, using
-`conda-envs/<env>/install.sh`; `configure_mcp.py` uses those environments for the
-generative MCP servers when it finds them.
+MatterGen, ADiT and DiffCSP++ (`ml-generative-*`), ICEBERG (`chem-msms-predict`),
+React-OT (`chem-react-ot`) and SelfConditionedDenoisingAtoms
+(`ml-property-predict-scd`) each have their own pinned uv project under `venv/`,
+created on first use like the shared ones. Most are x86_64 only, because their
+compiled extensions publish no aarch64 wheels; on aarch64 the generative servers
+run from the `generative` container image instead (`venv/run --setup generative`
+pulls it ahead of time). `venv/run --doctor` shows what a host can run.
+
+The one remaining conda build is LAMMPS with ML plugins (`mat-lammps-md`); its
+skill explains the build.
 
 ## Check the installation
 
