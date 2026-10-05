@@ -1,4 +1,5 @@
 import argparse
+import contextlib
 import os
 import sys
 from pathlib import Path
@@ -85,8 +86,12 @@ class FrozenSCDEmbedder:
                 cache_dir=str(self.repo_root / "experiments"),
             )
 
-        self.checkpoint_path = checkpoint_path
-        self.model, _ema_model, _ckpt = load_model(checkpoint_path, device=self.device)
+        self.checkpoint_path = str(Path(checkpoint_path).resolve())
+        # The checkpoint names its model config relative to the repository root.
+        with contextlib.chdir(self.repo_root):
+            self.model, _ema_model, _ckpt = load_model(
+                self.checkpoint_path, device=self.device
+            )
         self.model.eval()
         self.model.denoise = False
 

@@ -1,4 +1,5 @@
 import argparse
+import contextlib
 import os
 import json
 import sys
@@ -482,7 +483,10 @@ def main():
     first_batch = next(iter(train_loader)).to(device)
     out_dim = get_targets(first_batch).shape[-1]
 
-    backbone = prepare_backbone(args, checkpoint_path, device, load_model)
+    # The checkpoint names its model config relative to the repository root.
+    checkpoint_path = str(Path(checkpoint_path).resolve())
+    with contextlib.chdir(repo_root):
+        backbone = prepare_backbone(args, checkpoint_path, device, load_model)
     head = None
     if args.head_mode == "scalar_head":
         trainable = list(backbone.scalar_head.parameters())
