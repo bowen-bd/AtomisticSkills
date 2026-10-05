@@ -19,7 +19,7 @@ Generate novel crystal structures using DiffCSP++ (ICLR 2024), a diffusion model
 
 - Runs as the `diffcsp` MCP server and its scripts run in the `diffcsp` environment: on x86_64 a uv environment created on first use (CUDA 12.6 or 13 by driver), on aarch64 the `generative` container image.
 - DiffCSP++ repo (`git clone https://github.com/jiaor17/DiffCSP-PP`) cloned next to this project as `../DiffCSP-PP`, or anywhere with `DIFFCSP_REPO` pointing to it. `venv/run` mounts it into the container on aarch64.
-- Pre-trained checkpoints downloaded to `checkpoints/` directory.
+- Pre-trained checkpoints in the repository's `checkpoints/` directory (e.g. `checkpoints/mp_csp/`). The DiffCSP-PP README links them on [Google Drive](https://drive.google.com/drive/folders/1FQ_b6CE09KtyGaU_r6uO8_I5JhrQmUFB?usp=sharing); Google Drive needs an interactive download, so fetch them by hand (or with `gdown --folder`).
 
 ## 2. Available Models
 

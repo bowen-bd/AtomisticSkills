@@ -138,6 +138,10 @@ dependencies = [
 cu126 = ["torch==2.10.0", "torchvision==0.25.0", "torch-scatter==2.1.2", "torch-sparse==0.6.18", "torch-cluster==1.6.3"]
 cu130 = ["torch==2.10.0", "torchvision==0.25.0", "torch-scatter==2.1.2", "torch-sparse==0.6.18", "torch-cluster==1.6.3"]
 
+[dependency-groups]
+# The server tests (tests/diffcsp); hosts sync it, the image leaves it out.
+dev = ["pytest"]
+
 [tool.uv]
 package = false
 conflicts = [[{ extra = "cu126" }, { extra = "cu130" }]]

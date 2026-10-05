@@ -39,10 +39,9 @@ def use_mattergen_checkout() -> Path:
     """
     if not (MATTERGEN_REPO / "sampling_conf").is_dir():
         raise FileNotFoundError(
-            f"MatterGen checkout not found at {MATTERGEN_REPO}. Clone it with "
-            "GIT_LFS_SKIP_SMUDGE=1 git clone --branch v1.0.3 "
-            f"https://github.com/microsoft/mattergen {MATTERGEN_REPO}, or set "
-            "MATTERGEN_REPO to an existing checkout."
+            f"MatterGen checkout not found at {MATTERGEN_REPO}. Fetch it with "
+            "skills/ml-generative-mattergen/scripts/setup_mattergen.py (it pins "
+            "and patches the source), or set MATTERGEN_REPO to such a checkout."
         )
     loaded = sys.modules.get("mattergen")
     if loaded is not None and not Path(loaded.__file__).resolve().is_relative_to(

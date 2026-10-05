@@ -16,10 +16,10 @@ This skill provides tools for generating novel inorganic material structures usi
 > **GPU Required**: MatterGen generation needs a CUDA GPU (NVIDIA driver ≥ 525).
 
 - Runs as the `mattergen` MCP server and its scripts run in the `mattergen` environment: on x86_64 a uv environment created on first use (CUDA 12.6 or 13 by driver), on aarch64 the `generative` container image.
-- A MatterGen checkout next to this project as `../mattergen`, or anywhere with `MATTERGEN_REPO` pointing to it. MatterGen's PyPI distribution omits the data files it needs (sampling configs, GemNet scale factors), so it runs from the checkout, as upstream installs it; the weights come from Hugging Face, so skip the LFS checkpoints:
+- A MatterGen checkout next to this project as `../mattergen`, or anywhere with `MATTERGEN_REPO` pointing to it. MatterGen's PyPI distribution omits the data files it needs (sampling configs, GemNet scale factors), so it runs from the checkout, as upstream installs it. Fetch it with the setup script, which pins the verified commit, skips the LFS checkpoints (the weights come from Hugging Face) and replaces `np.math`, which NumPy 2 removed:
 
   ```bash
-  GIT_LFS_SKIP_SMUDGE=1 git clone --branch v1.0.3 https://github.com/microsoft/mattergen ${CLAUDE_SKILL_DIR}/../../../mattergen
+  ${CLAUDE_SKILL_DIR}/../../venv/run mattergen python ${CLAUDE_SKILL_DIR}/scripts/setup_mattergen.py
   ```
 
   `venv/run` mounts it into the container on aarch64.

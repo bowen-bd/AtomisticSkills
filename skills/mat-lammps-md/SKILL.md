@@ -46,6 +46,7 @@ bash ${CLAUDE_SKILL_DIR}/scripts/build_lammps_mace.sh
 ```
    - Binary: `~/.cache/atomisticskills/lammps/mace/lmp`
    - Runtime env: `mlip+lammps`
+   - Needs a CUDA toolkit (`CUDA_HOME`) at least as new as the environment's torch build (12.6 for cu126, 13.0 for cu130); PyTorch's CMake config refuses an older one.
 
    **Path B: MatGL/CHGNet** (Kokkos with CUDA, ML-IAP with the Python coupling, embedding the `mlip` environment's Python)
 ```bash

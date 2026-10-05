@@ -9,6 +9,9 @@ requires-python = "==3.10.*"
 dependencies = [
   # The repository itself, so `src` is importable from any directory.
   "atomisticskills",
+  # ADiT imports OpenBabel when it builds the model (its molecule evaluators);
+  # the verified 1.x environment had it from conda-forge.
+  "openbabel-wheel==3.1.1.23",
   "aiohappyeyeballs==2.6.1",
   "aiohttp==3.13.3",
   "aiosignal==1.4.0",
@@ -219,6 +222,10 @@ dependencies = [
 cu126 = ["torch==2.9.1", "torchvision==0.24.1", "torch-scatter==2.1.2", "torch-sparse==0.6.18", "torch-cluster==1.6.3"]
 cu130 = ["torch==2.9.1", "torchvision==0.24.1", "torch-scatter==2.1.2", "torch-sparse==0.6.18", "torch-cluster==1.6.3"]
 
+[dependency-groups]
+# The server tests (tests/adit); hosts sync it, the image leaves it out.
+dev = ["pytest"]
+
 [tool.uv]
 package = false
 conflicts = [[{ extra = "cu126" }, { extra = "cu130" }]]
@@ -237,6 +244,7 @@ required-environments = ["sys_platform == 'linux' and platform_machine == 'x86_6
 # deliberately violates some upstream pins, so every pin is also an override.
 # torch and torchvision are not: an override would drop their per-extra index.
 override-dependencies = [
+  "openbabel-wheel==3.1.1.23",
   "aiohappyeyeballs==2.6.1",
   "aiohttp==3.13.3",
   "aiosignal==1.4.0",

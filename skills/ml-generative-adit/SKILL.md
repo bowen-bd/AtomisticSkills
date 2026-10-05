@@ -18,7 +18,12 @@ Generate novel crystal structures and molecules using ADiT (All-atom Diffusion T
 > **GPU Required**: ADiT requires a CUDA-compatible GPU. CPU inference is extremely slow.
 
 - Runs as the `adit` MCP server and its scripts run in the `adit` environment: on x86_64 a uv environment created on first use (CUDA 12.6 or 13 by driver), on aarch64 the `generative` container image.
-- The AADT repository (`git clone https://github.com/facebookresearch/all-atom-diffusion-transformer adit`) cloned next to this project as `../adit`, or anywhere with `ADIT_REPO` pointing to it. `venv/run` mounts it into the container on aarch64.
+- The AADT repository cloned next to this project as `../adit`, or anywhere with `ADIT_REPO` pointing to it, at the verified commit. `venv/run` mounts it into the container on aarch64.
+
+  ```bash
+  git clone https://github.com/facebookresearch/all-atom-diffusion-transformer ${CLAUDE_SKILL_DIR}/../../../adit
+  git -C ${CLAUDE_SKILL_DIR}/../../../adit checkout b9ce505f170597a7c8ca50d13ce8e15df21cf8c9
+  ```
 - Pre-trained weights are automatically downloaded from HuggingFace on first use.
 
 ## 2. Available Models

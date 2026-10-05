@@ -13,8 +13,9 @@
 #   CUDA_HOME          CUDA toolkit for a CUDA torch build (default: /usr/local/cuda)
 #
 # Requirements:
-#   - git, cmake, g++, an MPI compiler wrapper (mpicxx); the CUDA toolkit
-#     when torch is a CUDA build (as on GPU hosts)
+#   - git, cmake, g++, an MPI compiler wrapper (mpicxx); on GPU hosts (a CUDA
+#     torch build) a CUDA toolkit at least as new as torch's CUDA (12.6 for
+#     the cu126 build, 13.0 for cu130)
 #   - the mlip environment running natively on this host (venv/run mlip+lammps)
 #
 # Result: $LAMMPS_ROOT/mace/lmp. Run it in the same environment:
@@ -49,6 +50,22 @@ if [[ "${ENV_PREFIX}" != "${REPO}/venv/mlip/.venv" ]]; then
 fi
 PYTHON_EXECUTABLE="${ENV_PREFIX}/bin/python"
 TORCH_CMAKE_PREFIX="$("${PYTHON_EXECUTABLE}" -c 'import torch; print(torch.utils.cmake_prefix_path)')"
+
+# PyTorch's CMake config refuses a CUDA toolkit older than its own CUDA build
+# ("Your installed Cuda version: 12.4 is too old, PyTorch requires CUDA 12.6").
+TORCH_CUDA="$("${PYTHON_EXECUTABLE}" -c 'import torch; print(torch.version.cuda or "")')"
+if [[ -n "${TORCH_CUDA}" ]]; then
+  if [[ ! -x "${CUDA_HOME}/bin/nvcc" ]]; then
+    echo "torch in the mlip environment is a CUDA ${TORCH_CUDA} build, so this build needs a CUDA toolkit; none at CUDA_HOME=${CUDA_HOME}." >&2
+    exit 1
+  fi
+  TOOLKIT_CUDA="$("${CUDA_HOME}/bin/nvcc" --version | sed -n 's/.*release \([0-9]*\.[0-9]*\).*/\1/p')"
+  if [[ "$(printf '%s\n%s\n' "${TORCH_CUDA}" "${TOOLKIT_CUDA}" | sort -V | head -1)" != "${TORCH_CUDA}" ]]; then
+    echo "torch in the mlip environment is a CUDA ${TORCH_CUDA} build, and PyTorch's CMake config needs a CUDA toolkit at least that new; CUDA_HOME=${CUDA_HOME} has ${TOOLKIT_CUDA}." >&2
+    echo "Install a newer toolkit (NVIDIA's runfile installs into a user directory: --toolkit --toolkitpath=DIR) and set CUDA_HOME to it." >&2
+    exit 1
+  fi
+fi
 
 mkdir -p "${LAMMPS_ROOT}"
 if [[ ! -d "${LAMMPS_SRC_DIR}/.git" ]]; then
