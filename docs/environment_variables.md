@@ -18,7 +18,7 @@ MP_API_KEY: "your_mp_api_key_here"
 HF_TOKEN: "your_hf_token_here"
 
 # Remote project for DFT calculations via atomate2 / jobflow-remote
-ATOMATE2_REMOTE_PROJECT: "remote_perlmutter"
+ATOMATE2_REMOTE_PROJECT: "my_cluster"
 
 # Path to ORCA binary for chem-dft-orca-* skills (x86_64 only)
 ORCA_BINARY_PATH: "/path/to/orca_directory/orca"
@@ -49,7 +49,7 @@ ATOMISTIC_IMAGE_TAG: "1.5.0"
 | `SSL_CERT_FILE` | CA bundle for Python's TLS. `venv/run` sets it to the system bundle when unset (needed on RHEL-family hosts); set it yourself behind a proxy with its own CA. | all | `/etc/pki/tls/certs/ca-bundle.crt` |
 | `UV_PYTHON_PREFERENCE` | Which Python uv builds environments on. `venv/run` uses `only-managed` (a uv-managed CPython with headers) unless set. | `venv/run` | `only-managed` |
 | `ORCA_BINARY_PATH` | Full path to the external ORCA executable. | `chem-dft-orca-*` skills | `/opt/orca/orca` |
-| `ATOMATE2_REMOTE_PROJECT` | Jobflow-remote project name for remote cluster job submission. | `atomate2` server | `remote_perlmutter` |
+| `ATOMATE2_REMOTE_PROJECT` | Jobflow-remote project name for remote cluster job submission. | `atomate2` server | `my_cluster` |
 | `ATOMATE2_CONFIG_FILE` | Optional path to custom atomate2 config YAML. | `atomate2` server | `~/.config/atomate2/config.yaml` |
 | `OPENALEX_EMAIL` | Contact email for polite OpenAlex API queries. | Literature skills | `user@institution.edu` |
 | `UNPAYWALL_EMAIL` | Contact email for Unpaywall open-access queries. | Literature skills | `user@institution.edu` |

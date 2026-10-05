@@ -48,8 +48,8 @@ atomate2.run_atomate2_vasp_calculation(
     preset_type="omat",                        # VASP preset (omat, mp, matpes-pbe, matpes-r2scan)
     execution_mode="remote",                   # "local" or "remote"
     remote_settings={                          # Required for remote execution
-        "project": "remote_perlmutter",
-        "worker": "perlmutter_worker"
+        "project": "<your_jobflow_project>",
+        "worker": "<your_worker>"
     }
 )
 ```

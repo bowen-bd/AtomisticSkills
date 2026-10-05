@@ -62,7 +62,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/parse_
 - **Parsing Robustness**: The parser requires at a minimum `vasprun.xml` to succeed. `OUTCAR` is read supplementary.
 - **POTCARs**: Note that `prepare_vasp_inputs.py` relies on `pymatgen` to write POTCAR files, which requires your `PMG_DEFAULT_FUNCTIONAL` or `.pmgrc.yaml` to point to a valid POTCAR directory.
 - **KPOINTS pitfall**: The installed pymatgen's `VaspInput.write_input` may skip writing `KPOINTS` (the script prints it as saved anyway, and `vis.kpoints` stays None). Verify KPOINTS exists after generation; if missing, write the Gamma-centered mesh manually (e.g. `Kpoints.gamma_automatic(lattice, kpts=0.22)` from `pymatgen.io.vasp.outputs`) before submitting.
-- **Remote runs**: `mcp__atomate2__run_atomate2_vasp_calculation` is the preferred submission path, but it can only target hosts registered in `~/.config/jobflow-remote/jobflow_remote.yaml` (currently only `perlmutter`). Submitting to engaging requires an engaging worker entry there first.
+- **Remote runs**: `mcp__atomate2__run_atomate2_vasp_calculation` is the preferred submission path, but it can only target hosts registered in `~/.config/jobflow-remote/jobflow_remote.yaml` To submit to another cluster, add a worker entry for it there first.
 
 ## References
 - Kresse, G. & Furthmüller, J., "Efficient iterative schemes for ab initio total-energy calculations using a plane-wave basis set". *Physical Review B*, 54, 11169. [DOI](https://doi.org/10.1103/PhysRevB.54.11169)

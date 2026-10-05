@@ -742,7 +742,7 @@ class TestWorkspace:
 
 
 class TestHostQuirks:
-    """Failures found on an RHEL 8 cluster (MIT Engaging) and its CentOS 7 GPU nodes."""
+    """Failures found on an RHEL 8 HPC cluster and its older CentOS 7 GPU nodes."""
 
     def test_environments_are_built_on_a_managed_python(self, host):
         """A system python3.12 without its -devel package cannot compile smol."""
