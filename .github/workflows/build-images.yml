@@ -80,12 +80,16 @@ jobs:
           spec = json.loads(pathlib.Path("docker/images.json").read_text())
           problems, checked = [], 0
           for image in spec["images"]:
-              if not image["gpu"]:
+              if image.get("build") == "uv":
+                  checked += 1
+                  lock = pathlib.Path(f"venv/{image['venv']}/uv.lock")
+                  if not lock.exists():
+                      problems.append(f"{lock} (missing)")
                   continue
               env_python = image.get("env_python", {})
               for platform in image["platforms"]:
                   subdir = SUBDIR[platform]
-                  for env in image["envs"]:
+                  for env in image.get("envs", []):
                       checked += 1
                       pip = pathlib.Path(f"conda-envs/{env}/lock/pip-{subdir}.txt")
                       if not pip.exists():
@@ -143,7 +147,7 @@ jobs:
       # The CUDA images carry torch and, for the generative image, compiled PyG
       # extensions. Runners ship with only a few GB free, so reclaim what we can.
       - name: Free disk space
-        if: matrix.image != 'lightweight'
+        if: matrix.image != 'cpu'
         run: |
           df -h /
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
@@ -204,7 +208,7 @@ jobs:
       # fit alongside themselves on a runner, and their servers import CUDA
       # builds of torch that a GPU-less runner cannot exercise meaningfully.
       - name: Smoke test the entrypoint
-        if: github.event_name != 'pull_request' && matrix.image == 'lightweight'
+        if: github.event_name != 'pull_request' && matrix.image == 'cpu'
         run: |
           IMAGE="${{ steps.tags.outputs.base }}:$(cat VERSION)${{ matrix.multiarch == true && format('-{0}', matrix.arch) || '' }}"
           SERVERS="$(python -c "
@@ -221,7 +225,7 @@ jobs:
     # Runs even when some builds failed. The images are independent, and a
     # multi-arch image whose variants all succeeded should still get its
     # manifest list -- otherwise one failing GPU build leaves the working
-    # lightweight image reachable only by its per-arch tags.
+    # cpu image reachable only by its per-arch tags.
     if: always() && github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     permissions:
