@@ -16,10 +16,10 @@
 |/
 |--------------------------------------------------------------
 |MMPBSA.py Version=14.0
-|Complex topology file:           /Users/matthewcox/Documents/GitHub/AtomisticSkills/skills/drug-mmpbsa-gbsa/examples/cdk2-mmpbsa/run/complex.prmtop
-|Receptor topology file:          /Users/matthewcox/Documents/GitHub/AtomisticSkills/skills/drug-mmpbsa-gbsa/examples/cdk2-mmpbsa/run/receptor.prmtop
-|Ligand topology file:            /Users/matthewcox/Documents/GitHub/AtomisticSkills/skills/drug-mmpbsa-gbsa/examples/cdk2-mmpbsa/run/ligand.prmtop
-|Initial mdcrd(s):                /Users/matthewcox/Documents/GitHub/AtomisticSkills/skills/drug-mmpbsa-gbsa/examples/cdk2-mmpbsa/run/trajectory_dry.nc
+|Complex topology file:           run/complex.prmtop
+|Receptor topology file:          run/receptor.prmtop
+|Ligand topology file:            run/ligand.prmtop
+|Initial mdcrd(s):                run/trajectory_dry.nc
 |
 |Receptor mask:                  ":1-297"
 |Ligand mask:                    ":298"

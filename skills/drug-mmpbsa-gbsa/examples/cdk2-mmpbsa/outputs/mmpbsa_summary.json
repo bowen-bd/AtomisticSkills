@@ -27,7 +27,7 @@
     "gb_model": 5,
     "salt_conc_M": 0.0,
     "temperature_note": "MMPBSA.py does not expose a temperature variable; sander / PBSA use a hard-coded thermal context. The temperature MD ran at is implicit in the sampled trajectory frames.",
-    "final_results_dat": "/Users/matthewcox/Documents/GitHub/AtomisticSkills/skills/drug-mmpbsa-gbsa/examples/cdk2-mmpbsa/run/FINAL_RESULTS_MMPBSA.dat",
+    "final_results_dat": "run/FINAL_RESULTS_MMPBSA.dat",
     "decomp_dat": "skills/drug-mmpbsa-gbsa/examples/cdk2-mmpbsa/run/FINAL_DECOMP_MMPBSA.dat",
     "wall_time_seconds": 299.8,
     "sem_note": "MMPBSA.py reports SEM treating frames as independent samples; frames from a single trajectory are correlated, so the true statistical error is larger. For honest uncertainties, run replicate trajectories and compare across them."

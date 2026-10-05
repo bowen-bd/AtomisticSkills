@@ -63,7 +63,7 @@ def run_atomate2_vasp_calculation(
         check_only: If True, only check environment or job status without running.
         job_id: Optional Job ID to check status or extract results from.
         remote_settings: Optional dict for remote execution.
-                        Keys: 'project' (default: remote_perlmutter), 'worker' (default: perlmutter_worker).
+                        Keys: 'project' (default from ATOMATE2_REMOTE_PROJECT or config), 'worker' (default from ATOMATE2_WORKER or config).
         bandstructure_mode: For 'band_structure' type: "line", "uniform", or "both" (default: "line").
 
     Returns:

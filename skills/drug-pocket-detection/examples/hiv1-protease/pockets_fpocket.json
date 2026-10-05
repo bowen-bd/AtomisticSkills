@@ -1,11 +1,11 @@
 {
-    "protein": "/Users/matthewcox/Documents/GitHub/AtomisticSkills/skills/drug-pocket-detection/examples/hiv1-protease/1HSG_protein.pdb",
+    "protein": "1HSG_protein.pdb",
     "backend": "fpocket",
     "backend_version": "4.0",
     "backend_command": [
-        "/Users/matthewcox/miniforge3/envs/drugdisc-agent/bin/fpocket",
+        "fpocket",
         "-f",
-        "/var/folders/g9/q8qv40895cv4llyvvlj1b_380000gn/T/pocket_detect_173zl7ai/1HSG_protein.pdb"
+        "/tmp/pocket_detect_173zl7ai/1HSG_protein.pdb"
     ],
     "n_pockets": 5,
     "residue_cutoff_a": 5.0,

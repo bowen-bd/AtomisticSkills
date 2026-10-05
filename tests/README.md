@@ -30,7 +30,7 @@ tests/
 │   ├── test_atomate2_remote.py
 │   ├── test_atomate2_utils.py
 │   ├── test_remote_submission_check.py
-│   └── submit_perlmutter_test.py
+│   └── submit_remote_test.py
 ├── smol/                    # Tests for Smol integration (smol-agent env)
 │   └── test_smol_enumeration.py
 └── README.md                # Testing guide

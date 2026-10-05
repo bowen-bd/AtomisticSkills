@@ -1,6 +1,6 @@
 {
-    "system_xml": "/Users/matthewcox/Documents/GitHub/AtomisticSkills/skills/drug-complex-system-builder/examples/hiv1-protease/system/system.xml",
-    "input_pdb": "/Users/matthewcox/Documents/GitHub/AtomisticSkills/skills/drug-complex-system-builder/examples/hiv1-protease/system/complex_solvated.pdb",
+    "system_xml": "<repo>/skills/drug-complex-system-builder/examples/hiv1-protease/system/system.xml",
+    "input_pdb": "<repo>/skills/drug-complex-system-builder/examples/hiv1-protease/system/complex_solvated.pdb",
     "temperature_K": 300.0,
     "pressure_atm": 1.0,
     "timestep_fs": 2.0,
