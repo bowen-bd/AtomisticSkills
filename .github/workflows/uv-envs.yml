@@ -103,6 +103,18 @@ jobs:
       - name: Check skill commands
         run: python tools/check_skill_commands.py --venv ${{ matrix.venv }} --jobs 2
 
+      - name: Server tests
+        # The MCP servers' unit tests, in their environment. fairchem's need the
+        # gated UMA model (HF_TOKEN), and the research stacks their upstream
+        # checkouts, so those run on the test machines instead.
+        run: |
+          case "${{ matrix.venv }}" in
+            cpu)  dirs="tests/base tests/atomate2 tests/drugdisc tests/smol tests/orca" ;;
+            mlip) dirs="tests/mace tests/matgl" ;;
+            *)    echo "No server tests in CI for ${{ matrix.venv }}"; exit 0 ;;
+          esac
+          venv/run ${{ matrix.venv }} python -m pytest $dirs -q -p no:cacheprovider -o log_cli=false
+
       - name: MCP server smoke test
         run: |
           SERVERS="$(awk -F'\t' -v v="${{ matrix.venv }}" '$2 == v { printf "%s ", $1 }' venv/servers.tsv)"
