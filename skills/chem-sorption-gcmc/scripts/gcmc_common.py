@@ -22,7 +22,7 @@ from ase.io import read
 from ase.io.trajectory import Trajectory
 from ase_mc import Moveset
 
-from src.utils.serialization_utils import finite_or_none
+from src.utils.serialization_utils import finite_or_none, format_temperature_key
 
 # Energy/temperature conversion constants for Qst calculations
 EV_TO_KJMOL = 96.4853321233  # 1 eV per molecule = 96.485... kJ/mol
@@ -959,7 +959,7 @@ def update_properties_json_gcmc_single(
     adsorption = props.setdefault("adsorption", {})
     isotherms = adsorption.setdefault("isotherms", {})
 
-    temp_key = _format_temperature_key(temperature_K)
+    temp_key = format_temperature_key(temperature_K)
     iso_key = f"{adsorbate}@{temp_key}:simulation"
 
     try:
@@ -1053,7 +1053,7 @@ def update_properties_json_gcmc_multicomponent(
     adsorption = props.setdefault("adsorption", {})
     isotherms = adsorption.setdefault("isotherms", {})
 
-    temp_key = _format_temperature_key(temperature_K)
+    temp_key = format_temperature_key(temperature_K)
     mix_key = "-".join(sorted(species_names))
     iso_key = f"{mix_key}@{temp_key}:simulation"
 

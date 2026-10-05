@@ -20,6 +20,23 @@ from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 from ase.md.verlet import VelocityVerlet
 from ase import units
 
+DEFAULT_MODELS = {
+    "mace": [
+        "MACE-MP-small",
+        "MACE-MP-medium",
+        "MACE-MH-1",
+    ],
+    "matgl": [
+        "M3GNet",
+        "TensorNet",
+        "CHGNet",
+    ],
+    "fairchem": [
+        "uma-s-1p1",
+        "uma-m-1p1",
+    ],
+}
+
 
 # Optional imports will be handled within the benchmark loop
 def get_hardware_name():
@@ -260,7 +277,7 @@ def main():
         # Use defaults for requested providers or all if none specified
         providers = args.providers if args.providers else ["mace", "matgl", "fairchem"]
         for p in providers:
-            for m in default_models.get(p, []):
+            for m in DEFAULT_MODELS.get(p, []):
                 to_benchmark.append((m, p))
 
     # Load existing results if they exist

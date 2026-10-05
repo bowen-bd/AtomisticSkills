@@ -376,15 +376,13 @@ def main() -> None:
         with open(out_path, "w", encoding="utf-8") as f:
             f.write(output_str + "\n")
         print(f"Wrote: {out_path}")
-    else:
-        print(output_str)
 
         # Save input configs for reproducibility
         from src.utils.config_utils import save_skill_inputs
 
-        save_skill_inputs(args, args.output_dir)
-        _params_path.parent.mkdir(parents=True, exist_ok=True)
-        _params_path.write_text(json.dumps(_config, indent=2, default=str))
+        save_skill_inputs(args, out_path.parent)
+    else:
+        print(output_str)
 
 
 if __name__ == "__main__":

@@ -16,7 +16,10 @@ Requirements:
 """
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import pptx
 
 from pptx import Presentation
 from pptx.util import Inches, Pt

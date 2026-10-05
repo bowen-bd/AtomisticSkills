@@ -24,6 +24,8 @@ from rxn_network.network.network import ReactionNetwork
 from rxn_network.pathways.solver import PathwaySolver
 from rxn_network.reactions.computed import ComputedReaction
 
+logger = logging.getLogger(__name__)
+
 
 def get_chemsys_from_formulas(formulas: List[str]) -> str:
     """Extract a chemical system string from a list of formulas."""
