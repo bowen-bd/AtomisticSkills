@@ -1,0 +1,118 @@
+name: uv environments
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: uv-envs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "venv/**/uv.lock"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Render checks
+        run: |
+          python docker/render.py servers --check
+          python docker/render.py plugin-mcp --check
+
+      - name: Sync version check
+        run: python tools/sync_version.py --check
+
+      - name: Platforms lock check
+        run: venv/run cpu python tools/lock_platforms.py --check
+
+      - name: Skill migrations check
+        run: python tools/migrate_skill_commands.py --check
+
+      - name: Run CPU test suites
+        run: venv/run cpu python -m pytest tests/test_launcher.py tests/test_skill_runtime.py tests/test_uv_projects.py tests/test_images_and_manifests.py tests/test_tool_cli.py -q
+
+  envs:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
+        venv: [cpu, mlip, fairchem]
+    steps:
+      - name: Free disk space
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /usr/local/share/boost "$AGENT_TOOLSDIRECTORY" || true
+          df -h /
+
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "venv/${{ matrix.venv }}/uv.lock"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup environment
+        run: venv/run --setup ${{ matrix.venv }}
+
+      - name: Doctor check
+        run: venv/run --doctor
+
+      - name: Check skill commands
+        run: python tools/check_skill_commands.py --venv ${{ matrix.venv }} --jobs 2
+
+      - name: MCP server smoke test
+        run: |
+          SERVERS="$(awk -F'\t' -v v="${{ matrix.venv }}" '$2 == v { printf "%s ", $1 }' venv/servers.tsv)"
+          echo "Smoke testing servers: $SERVERS"
+          venv/run cpu python tools/mcp_smoke.py $SERVERS
+
+  rhel8:
+    runs-on: ubuntu-24.04
+    container:
+      image: rockylinux:8
+    steps:
+      - name: Install system dependencies
+        run: |
+          dnf install -y curl gcc gcc-c++ make git
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
+      - uses: actions/checkout@v4
+
+      - name: Configure git safe directory
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Setup CPU environment
+        run: |
+          export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+          venv/run --setup cpu
+
+      - name: Doctor check
+        run: |
+          export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+          venv/run --doctor
+
+      - name: Run CLI tests
+        run: |
+          export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+          venv/run cpu python -m pytest tests/test_tool_cli.py

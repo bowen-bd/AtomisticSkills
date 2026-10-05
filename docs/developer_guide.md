@@ -2,26 +2,30 @@
 
 ## Architecture Overview
 
-**AtomisticSkills** follows a **modular, multi-environment architecture** designed to isolate dependencies and expose functionality through the Model Context Protocol (MCP):
+**AtomisticSkills** follows a **modular architecture** designed to isolate dependencies across three `uv` projects (`cpu`, `mlip`, `fairchem`) and expose functionality through the Model Context Protocol (MCP) using the unified `venv/run` launcher:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    Antigravity Agent                    │
-│             (Coding AI Copilot Interface)               │
+│                    AI Coding Agent                      │
+│        (Antigravity, Claude Code, Cursor, Codex)        │
 └────────────────────┬────────────────────────────────────┘
-                     │ MCP Protocol
+                     │ MCP Protocol / CLI Fallback
           ┌──────────┴──────────┬───────────┬─────────────┐
           │                     │           │             │
      ┌────▼────┐         ┌──────▼──┐   ┌───▼───┐   ┌─────▼─────┐
-     │  MACE   │         │ MatGL   │   │  Fair │   │Materials  │
-     │ Server  │         │ Server  │   │ Chem  │   │Tools      │
-     │         │         │         │   │Server │   │Server     │
+     │  MACE   │         │ MatGL   │   │ Fair  │   │   Base    │
+     │ Server  │         │ Server  │   │ Chem  │   │  Server   │
      └────┬────┘         └────┬────┘   └───┬───┘   └─────┬─────┘
           │                   │            │             │
-     ┌────▼────────┐    ┌─────▼──────┐ ┌──▼─────┐  ┌────▼──────┐
-     │mace-agent   │    │matgl-agent │ │fairchem│  │base-agent │
-     │environment  │    │environment │ │-agent  │  │environment│
-     └─────────────┘    └────────────┘ └────────┘  └───────────┘
+┌─────────▼───────────────────▼────────────▼─────────────▼────────┐
+│                      venv/run Launcher                          │
+│     (Native uv execution with container image fallback)         │
+└─────────┬───────────────────┬──────────────────────────┬────────┘
+          │                   │                          │
+     ┌────▼────────┐    ┌─────▼──────┐             ┌─────▼──────┐
+     │  venv/mlip  │    │venv/fairchem│            │  venv/cpu  │
+     │ (MACE,MatGL)│    │ (FairChem) │             │ (No Torch) │
+     └─────────────┘    └────────────┘             └────────────┘
 ```
 
 ---
@@ -32,16 +36,18 @@
 
 Each MCP server is a standalone Python module that exposes tools via the FastMCP framework:
 
-| Server | Environment | Primary Functionality |
-|--------|-------------|----------------------|
-| [mace_server.py](../src/mcp_server/mace_server.py) | `mace-agent` | MACE model loading, prediction, relaxation, MD, fine-tuning |
-| [matgl_server.py](../src/mcp_server/matgl_server.py) | `matgl-agent` | CHGNet/M3GNet/TensorNet operations, bandgap prediction |
-| [fairchem_server.py](../src/mcp_server/fairchem_server.py) | `fairchem-agent` | UMA/ESEN models |
-| [base_server.py](../src/mcp_server/base_server.py) | `base-agent` | Materials Project queries, VASP I/O, research directory management |
-| [atomate2_server.py](../src/mcp_server/atomate2_server.py) | `atomate2-agent` | Query remote DFT databases, job status monitoring |
-| [smol_server.py](../src/mcp_server/smol_server.py) | `smol-agent` | Cluster expansion training and Monte Carlo simulations |
-| [drugdisc_server.py](../src/mcp_server/drugdisc_server.py) | `drugdisc-agent` | Molecular descriptors, standardization, PDBQT conversion |
-| [mattergen_server.py](../src/mcp_server/mattergen_server.py) | `mattergen-agent` | MatterGen generative crystal design |
+| Server | Runtime / venv | Primary Functionality |
+|--------|----------------|----------------------|
+| [base_server.py](../src/mcp_server/base_server.py) | `cpu` | Materials Project queries, structure utilities, literature |
+| [atomate2_server.py](../src/mcp_server/atomate2_server.py) | `cpu` | Remote DFT workflows, calculation status monitoring |
+| [drugdisc_server.py](../src/mcp_server/drugdisc_server.py) | `cpu` | Molecular descriptors, standardization, PDBQT conversion |
+| [smol_server.py](../src/mcp_server/smol_server.py) | `cpu` | Cluster expansion training and Monte Carlo simulations |
+| [mace_server.py](../src/mcp_server/mace_server.py) | `mlip` | MACE foundation models (relax, MD, features) |
+| [matgl_server.py](../src/mcp_server/matgl_server.py) | `mlip` | MatGL models (CHGNet, TensorNet, M3GNet), bandgap prediction |
+| [fairchem_server.py](../src/mcp_server/fairchem_server.py) | `fairchem` | FairChem models (UMA, eSEN) |
+| [mattergen_server.py](../src/mcp_server/mattergen_server.py) | `generative` image / conda | MatterGen generative crystal design |
+| [adit_server.py](../src/mcp_server/adit_server.py) | `generative` image / conda | ADiT all-atom diffusion transformer |
+| [diffcsp_server.py](../src/mcp_server/diffcsp_server.py) | `generative` image / conda | DiffCSP++ crystal structure generation |
 
 ### 2. Utility Modules (`src/utils/`)
 
@@ -66,15 +72,15 @@ Skills are **modular, self-contained capabilities** that combine multiple tools 
 ```
 skills/<skill-name>/
 ├── SKILL.md              # Instructions and documentation
-├── scripts/              # Python/Bash helper scripts
-├── examples/             # Reference input/output files
-└── resources/            # Configuration files, templates
+├── scripts/              # Python helper scripts
+├── examples/             # Reference input/output files with README.md
+└── resources/            # Configuration files, templates, reference data
 ```
 
 **How Skills Work**:
 1. The agent reads `SKILL.md` to understand the task
 2. Follows step-by-step instructions
-3. Executes scripts from the `scripts/` directory in the appropriate environment
+3. Executes scripts via `venv/run <venv>` in the declared environment (`metadata.venv`)
 4. Uses resources and examples as templates
 
 > [!TIP]
@@ -93,7 +99,7 @@ skills/<skill-name>/
    def my_new_tool(
        structure_data: dict,
        parameter1: float = 1.0,
-       parameter2: str = "default"
+       parameter2: str = "default",
    ) -> dict:
        """
        Brief description of what this tool does.
@@ -110,44 +116,35 @@ skills/<skill-name>/
        return results
    ```
 
-3. **Test the tool** by restarting the MCP server:
+3. **Test the tool**:
    ```bash
-   # Stop the server in Antigravity
-   # Then restart it manually for debugging:
-   export PYTHONPATH=/path/to/AtomisticSkills
-   conda activate <appropriate-env>
-   python -m src.mcp_server.<server_name>
+   # Test via the shell CLI fallback:
+   venv/run cpu python -m src.mcp_server.cli base my_new_tool parameter1=2.0
+
+   # Or run the server over stdio for agent connection:
+   venv/run --server base
    ```
 
 ### Implementing a New Skill
 
 1. Create the skill directory: `skills/<skill-name>/`
-2. Write `SKILL.md` following the [standards](../.agents/rules/skill-standards.md)
-3. Add helper scripts to `scripts/` (specify required conda environment)
+2. Write `SKILL.md` following [skill-standards.md](../.agents/rules/skill-standards.md), declaring `metadata.venv: [cpu]` (or `mlip`, `fairchem`)
+3. Add helper scripts to `scripts/`
 4. Provide examples and resources as needed
-5. Test the skill end-to-end with Antigravity
+5. Test the skill commands through `venv/run`
 
 ### Running Tests
 
-The project uses `pytest` with environment-specific test directories:
+The project uses `pytest` executed through the launcher:
 
 ```bash
-# Test a specific environment
-conda activate mace-agent
-pytest tests/mace/
+# Run core CPU test suites
+venv/run cpu python -m pytest tests/test_launcher.py tests/test_skill_runtime.py tests/test_uv_projects.py tests/test_images_and_manifests.py tests/test_tool_cli.py -q
 
-# Run all tests (requires all environments)
-pytest tests/
-```
-
-Test organization:
-```
-tests/
-├── base/           # General utilities (base-agent)
-├── mace/           # MACE-specific tests (mace-agent)
-├── matgl/          # MatGL-specific tests (matgl-agent)
-├── fairchem/       # FairChem-specific tests (fairchem-agent)
-└── integration/    # Cross-tool integration tests
+# Test server-specific suites in their respective environments
+venv/run cpu python -m pytest tests/base/ tests/atomate2/ tests/drugdisc/ tests/smol/
+venv/run mlip python -m pytest tests/mace/ tests/matgl/
+venv/run fairchem python -m pytest tests/fairchem/
 ```
 
 ---
@@ -155,9 +152,9 @@ tests/
 ## Important Technical Details
 
 ### Environment Isolation
-- Each MCP server runs in a **dedicated conda environment** to avoid dependency conflicts
-- The `PYTHONPATH` must point to the project root for all servers
-- When debugging, **always activate the correct environment** before importing modules
+- Three `uv` projects (`cpu`, `mlip`, `fairchem`) isolate incompatible dependencies (e.g., `e3nn` version pins in MACE vs FairChem).
+- The repository root is installed as an editable package into each virtualenv, ensuring `import src` works uniformly.
+- Commands execute via `venv/run <venv>[+<extra>]`, which resolves the virtual environment automatically without manual activation.
 
 ### Stdout/Stderr Handling
 All MCP servers use centralized output redirection (see `src/utils/mcp_utils.py`) to prevent:
@@ -172,7 +169,7 @@ For a complete guide on how AtomisticSkills mitigates this execution noise issue
 
 ### Research Directory Management
 Every research task should:
-1. Call `create_research_dir(research_topic)` to establish a timestamped directory
+1. Call `create_research_dir(research_topic)` to establish a timestamped directory under `ATOMISTIC_WORKSPACE`
 2. Save all results (structures, plots, logs) to this directory
 3. Document findings in the research directory
 
@@ -181,14 +178,14 @@ Every research task should:
 ## Troubleshooting
 
 ### MCP Server Not Loading
-- Check `mcp_config.json` for correct Python paths
-- Verify `PYTHONPATH` points to project root
-- Restart Antigravity after configuration changes
+- Run `venv/run --doctor` to verify runtime health and prerequisites.
+- For first-time server start, the environment may sync in the background; reconnect once ready.
+- If using containers, ensure Docker/Podman/Apptainer is running.
 
 ### Import Errors in Scripts
-- Ensure correct conda environment is activated
-- Check that `PYTHONPATH` includes project root: `export PYTHONPATH=/path/to/AtomisticSkills`
-- Use absolute imports: `from src.utils.mlips.mace_wrapper import MACEWrapper`
+- Execute scripts via `venv/run <venv>` rather than a bare `python` command.
+- Verify that `metadata.venv` specifies the appropriate project.
+- Use absolute imports: `from src.utils.mlips.loader import load_wrapper`.
 
 ### Fine-Tuning Fails
 - Verify stress units are in eV/Å³ (see [stress-units.md](../.agents/rules/stress-units.md) for details)

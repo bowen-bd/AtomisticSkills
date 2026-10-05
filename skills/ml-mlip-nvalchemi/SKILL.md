@@ -44,8 +44,7 @@ _batch_relax()
  │    NO  → _batch_relax_sequential()                          ← plain ASE FIRE, one by one
 ```
 
-> **Note**: `M3GNetWrapper` and `CHGNetWrapper` set `_nvalchemi_supports_inflight=False`.
-> They always use fixed-batch NValchemi regardless of structure count.
+> **Note**: All MatGL wrappers (`TensorNetWrapper`, `M3GNetWrapper`, `CHGNetWrapper`) set `_nvalchemi_supports_inflight=False` and use fixed-batch NValchemi regardless of structure count, because after graduation, energies are wrong (TensorNet Cu −83.70 vs −86.57 eV fixed-batch; CHGNet 0.26 eV; M3GNet 28 meV), while MACE inflight agrees to meV.
 
 **Inflight batching** keeps only `max_batch_atoms` atoms on the GPU at once.  As each structure converges or exhausts its step budget it is evicted and a new one is loaded.  This is necessary when the full set of structures would exceed GPU memory.
 
@@ -90,19 +89,21 @@ The gap grows with larger structures (more atoms → more FIRE steps → GPU sta
 
 Below is a three-way relaxation mode benchmark on 10 structures for 50 steps using MACE, TensorNet, and FairChem:
 
-#### MACE-OMAT-0-small (`mace-agent`)
+> **Variable-Cell Convergence Note:** Variable-cell batch relaxation (`relax_cell=True`) now converges only when the cell force (virial / N, as in ASE's `FrechetCellFilter`) is also below `fmax`. Speedups quoted below for variable-cell batch relaxation were measured with force-only convergence and are pending re-measurement under full virial/cell force convergence.
+
+#### MACE-OMAT-0-small (`mlip`)
 - **Serial Mode:** 13.24 s
 - **Fixed-Batch Mode:** 5.75 s (**2.3x speedup**)
 - **Inflight-Batch Mode:** 9.51 s (**1.4x speedup**)
 
-#### TensorNet-PES-MatPES-PBE-2025.2 (`matgl-agent`)
+#### TensorNet-PES-MatPES-PBE-2025.2 (`mlip`)
 - **Serial Mode:** 8.50 s
 - **Fixed-Batch Mode:** 12.95 s (0.7x - JIT compiler/graph overhead dominates for small datasets)
 - **Inflight-Batch Mode:** 14.53 s (0.6x - JIT compiler/graph overhead dominates for small datasets)
 
-> **Important (TensorNet Energy Increase Bug):** In TensorNet's inflight batching, a neighbor list graduation issue caused massive energy increases and force clipping in `relax.log` (e.g. from -390.7 eV to -268.5 eV) due to its COO-format neighbor lists not shifting index offsets correctly upon graduation. To prevent this, we explicitly set `_nvalchemi_supports_inflight = False` for the TensorNet wrapper, forcing it to fall back to fixed-batch or sequential mode, matching CHGNet and M3GNet.
+> **Important (MatGL Inflight Energy Discrepancy):** Inflight batching stays off for the MatGL wrappers (TensorNet, M3GNet, CHGNet) for a measured reason: after graduation, energies are wrong (TensorNet Cu −83.70 vs −86.57 eV fixed-batch; CHGNet 0.26 eV; M3GNet 28 meV), while MACE inflight agrees to meV. We explicitly set `_nvalchemi_supports_inflight = False` for all MatGL wrappers, forcing them to fall back to fixed-batch or sequential mode.
 
-#### FairChem uma-s-1p2 (`fairchem-agent`)
+#### FairChem uma-s-1p2 (`fairchem`)
 - **Serial Mode:** 24.58 s
 - **Fixed-Batch Mode:** 30.89 s (0.8x - overhead dominates fixed-batch execution for small datasets)
 - **Inflight-Batch Mode:** 16.57 s (**1.5x speedup**)
@@ -112,23 +113,23 @@ Below is a three-way relaxation mode benchmark on 10 structures for 50 steps usi
 
 Speedup comparison for a 100-step MD simulation under the `nvt_nose_hoover` ensemble at 300 K on 20 strained Cu FCC structures, each expanded to a fixed 108-atom cubic supercell ($\ge 10\text{ \AA}$ sides). Sequential = NValchemi disabled, structures run one at a time; Batched = all 20 driven through NValchemi integrators in a single GPU batch. Best-of-2 wall time, measured serially (one environment at a time to avoid GPU contention).
 
-#### MACE-OMAT-0-small (`mace-agent`)
+#### MACE-OMAT-0-small (`mlip`)
 - **Sequential MD:** 54.48 s
 - **Batched MD (NValchemi):** 11.12 s (**4.90x speedup**)
 
-#### TensorNet-PES-MatPES-PBE-2025.2 (`matgl-agent`)
-- **Sequential MD:** 58.28 s
-- **Batched MD:** disabled — routed to sequential (see note below; ~0.88x even when forced, i.e. *slower* than sequential)
+#### TensorNet-PES-MatPES-PBE-2025.2 (`mlip`)
+- **Sequential MD:** baseline
+- **Batched MD (NValchemi):** **1.8× speedup** over sequential (16 structures × 200 steps on GB10; batch NVE energy drift equals sequential, max 0.02 meV/atom)
 
-#### FairChem uma-s-1p2 (`fairchem-agent`)
+#### FairChem uma-s-1p2 (`fairchem`)
 - **Sequential MD:** 339.74 s
 - **Batched MD:** disabled — routed to sequential (see note below; measured ~0.64x, i.e. *slower*, before being disabled)
 
-> **When does batched MD help?** Only for models whose per-structure forward pass is cheap enough to be launch-latency-bound at small system sizes (e.g. MACE, **4.90x**). For both the very light TensorNet and the heavy FairChem uma-s-1p2, batching is at or below 1x, so their MD is routed to sequential. The wrappers still accept a list of structures (and batch **static/relax** remain available); only the **MD** path is gated. Measured on NVIDIA GB10 (aarch64, CUDA 13, Warp 1.14).
+> **When does batched MD help?** Batched MD yields substantial speedups for launch-latency-bound models at small system sizes (e.g. MACE at **4.90x**, TensorNet at **1.8x**). For heavy models like FairChem uma-s-1p2 whose single-system path is already compute-bound, batching provides no speedup and MD is routed to sequential. The wrappers still accept a list of structures (and batch **static/relax** remain available); only FairChem's MD path is gated. Measured on NVIDIA GB10 (aarch64, CUDA 13, Warp 1.14).
 
 > **FairChem batched MD disabled (`_nvalchemi_supports_batch_md = False`):** uma-s-1p2's forward scales **superlinearly per atom** — ≈1.57 ms/atom at batch=1 (108 atoms) rising to ≈2.43 ms/atom at batch=20 (2160 atoms), 1.55x worse — so a single large batched step is *slower* than running the structures one at a time through the model's optimized single-system path (batched 0.64x). Two facts pin this down: (1) the cost is intrinsic to the eSCN/MoE forward, not the neighbor list — correcting the wrapper cutoff (12 A → the model's true 6 A) cut `adapt_input` edges from 530 to 78 per atom but left the per-step time unchanged at ~5.25 s; (2) uma-s-1p2 runs with `external_graph_gen=False`, so it **rebuilds its own graph internally and ignores the edges `adapt_input` provides** (energies are identical for any cutoff we pass, including a 0-edge 2 A list). Batched MD is therefore correct (energies match sequential to 0.00 meV/atom) but never a speedup, so `run_md` falls back to sequential.
 
-> **TensorNet batched MD disabled (`_nvalchemi_supports_batch_md = False`):** TensorNet + NValchemi MD is officially supported in MatGL (`matgl.ext.alchmtk.TensorNetWrapper`, whose docstring documents the exact `NeighborListHook` path we use), so this is *not* a TensorNet incompatibility. On this hardware, however, TensorNet's light forward pass exposes a race in nvalchemi's `NeighborListHook.__call__`: the `@torch.compile`'d hook reads `num_neighbors.max()` before the asynchronous Warp neighbor-list kernel (on a non-default CUDA stream) finishes writing, yielding a garbage count that raises `NeighborOverflowError` and corrupts the CUDA context. A heavier forward (MACE) hides the race; TensorNet does not. Since (a) working around it would require patching the third-party nvalchemi-toolkit and (b) batched MD is *slower* than sequential for TensorNet anyway, the TensorNet wrapper sets `_nvalchemi_supports_batch_md = False` and `run_md` falls back to sequential. Batch **static** and **relax** for TensorNet are unaffected (they build the neighbor list once, off the hook).
+> **TensorNet batched MD enabled with stream fix:** TensorNet batch MD is re-enabled. The `NeighborListHook` "race" it was previously disabled for was a CUDA stream mismatch, now fixed by `warp_on_torch_stream` in `src/utils/mlips/nvalchemi/nvalchemi_utils.py`. Batch NVE energy drift equals sequential (max 0.02 meV/atom), and batch MD is 1.8× faster than sequential for 16 structures × 200 steps on GB10.
 
 
 ## Instructions
@@ -186,13 +187,14 @@ result = wrapper.relax_structure(
     fmax=0.05,                   # eV/Å convergence
     steps=500,
     output_dir="/path/to/output",
+    # relax_cell=True,           # optional: variable-cell relaxation
     # max_batch_atoms=500,       # optional: set explicitly on shared GPUs to force
     #                            # inflight mode and avoid OOM; None = auto from VRAM
 )
 print(result["backend"])         # "nvalchemi_inflight", "nvalchemi", or "sequential"
 ```
 
-Per-structure `relax.log` files (ASE FIRE format) are written incrementally to `{output_dir}/{structure_name}/relax.log` during inflight runs, so partial results survive an OOM abort.
+Variable-cell batch relaxation (`relax_cell=True`) converges only when the cell force (virial / N, matching ASE's `FrechetCellFilter`) is also below `fmax`. Per-structure `relax.log` files (ASE FIRE format) are written incrementally to `{output_dir}/{structure_name}/relax.log` during inflight runs, so partial results survive an OOM abort.
 
 ### Step 4 — Batch Molecular Dynamics
 
@@ -277,16 +279,15 @@ See [resources/benchmark_results.md](resources/benchmark_results.md) for the ful
 ## Constraints
 
 - **NValchemi required**: `nvalchemi-toolkit` must be installed. Check `NVALCHEMI_AVAILABLE` flag. Falls back to sequential if unavailable.
-- **Environment isolation**: Must use the correct conda environment per MLIP:
-  - `mace-agent` — MACE models
-  - `matgl-agent` — MatGL (TensorNet, M3GNet, CHGNet)
-  - `fairchem-agent` — FairChem UMA
+- **Environment isolation**: Must use the correct uv environment per MLIP:
+  - `mlip` — MACE models and MatGL (TensorNet, M3GNet, CHGNet)
+  - `fairchem` — FairChem UMA
 - **Stress format**: NValchemi returns 3×3 Cauchy stress tensor (eV/Å³); sequential path returns ASE Voigt-6. Both formats are accepted downstream — `_extract_static()` in tests handles the conversion.
 - **FairChem dataset field**: UMA model requires `dataset` (e.g., `"omat"`) passed to `FCAtomicData`. This is handled automatically by `FairChemWrapper`; defaults to `"omat"` when `task_name=None`.
 - **CHGNet batch speedup**: CHGNet directed line graph construction parallelizes well on GPU (12–13× at N=20). CPU performance is marginal (<3×); always use `device="cuda"` for batch workloads.
 - **SO3Net not supported**: `SO3Net-PES-ANI-1x-Subset` falls back to sequential automatically (`_get_nvalchemi_model()` returns `None`).
 - **ANI-1x models with transition metals**: TensorNet-PES-ANI-1x and M3GNet-PES-ANI-1x training sets cover only H/C/N/O. Using them with Cu or other transition metals causes a CUDA index OOB error that corrupts the CUDA context for the session. Run ANI-1x models in a separate process from other models.
-- **MatGL models (TensorNet, CHGNet, M3GNet) inflight batching not supported**: These custom wrappers use COO-format neighbor lists. Inflight batching (rolling GPU window) triggers a CUDA index OOB or severe energy spikes in nvalchemi's compiled `NeighborListHook` during structure graduation. All MatGL wrappers set `_nvalchemi_supports_inflight=False`; when the total atom count exceeds the batch budget, they fall through to fixed-batch NValchemi (all structures in one GPU pass) rather than inflight. For very large structure sets, reduce `max_batch_atoms` to a value that fits in VRAM, or use a natively-supported model (MACE, FairChem).
+- **MatGL models (TensorNet, CHGNet, M3GNet) inflight batching not supported**: Inflight batching stays off for the MatGL wrappers (TensorNet, M3GNet, CHGNet), for a measured reason: after graduation, energies are wrong (TensorNet Cu −83.70 vs −86.57 eV fixed-batch; CHGNet 0.26 eV; M3GNet 28 meV), while MACE inflight agrees to meV. All MatGL wrappers set `_nvalchemi_supports_inflight=False`; when the total atom count exceeds the batch budget, they fall through to fixed-batch NValchemi (all structures in one GPU pass) rather than inflight. For very large structure sets, reduce `max_batch_atoms` to a value that fits in VRAM, or use a model with validated inflight support (MACE, FairChem).
 - **Unsupported ensembles for batch MD**: `nvt_berendsen`, `nvt_andersen`, `nvt_bussi`, `npt_berendsen`, and `npt_inhomogeneous` have no NValchemi equivalent and always run sequentially.
 
 ## References

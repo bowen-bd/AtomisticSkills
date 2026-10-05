@@ -135,67 +135,45 @@ MatterGen (generative crystal design), MEGNet bandgap prediction, MLIP fine-tuni
 
 ## Quick Start & Setup
 
-### Option A — Install as a Claude Code plugin (no environment build)
+### Option A — Install as a Claude Code Plugin (fastest)
 
-The fastest route. The skills and the MCP servers they call arrive together, with
-the servers running from prebuilt container images, so nothing has to be solved
-or compiled locally:
+Install AtomisticSkills directly as a Claude Code plugin with all skills and MCP servers pre-configured:
 
 ```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh        # skip if uv is installed
 claude plugin marketplace add learningmatter-mit/AtomisticSkills
 claude plugin install atomistic-skills@atomistic-skills
 ```
 
-You are prompted for a container runtime (`docker` or `podman`) and a working
-directory, which is mounted into the servers as `/work` — simulation inputs are
-read from there and results written back to it. Model checkpoints download on
-first use into a cache that survives plugin updates.
+The plugin automatically uses native `uv` execution when your system meets requirements, and falls back to pre-built container images when needed.
 
-On an HPC cluster, where there is no Docker daemon, use Apptainer instead --
-everything else is identical:
+### Option B — Clone the Repository (all agents & development)
+
+For Claude Code, OpenAI Codex, Cursor, Google Antigravity, Gemini, Windsurf, or skill development:
 
 ```bash
-claude plugin install atomistic-skills@atomistic-skills \
-  --config container_runtime=apptainer \
-  --config work_dir=$HOME/atomistic-work \
-  --config image_registry=ghcr.io/learningmatter-mit
+git clone git@github.com:learningmatter-mit/AtomisticSkills.git
+cd AtomisticSkills
+curl -LsSf https://astral.sh/uv/install.sh | sh        # skip if uv is installed
+venv/run --setup                                         # prepares cpu, mlip, fairchem
+python configure_mcp.py                                 # auto-detects and registers agents
 ```
 
-Passing `--config` explicitly is also how to install in any non-interactive
-shell, where the plugin cannot prompt.
+To configure for a specific assistant and enable global access across all workspaces:
+```bash
+python configure_mcp.py --agent claude --scope global   # or codex, gemini, cursor, windsurf
+```
 
-> [!IMPORTANT]
-> This requires a container runtime -- `docker`, `podman`, `apptainer` or
-> `singularity` -- and GPU-backed servers additionally need the
-> [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
-> Seven of the ten servers run on **amd64 and arm64**. The three generative
-> ones (`adit`, `diffcsp`, `mattergen`) are arm64 only; on x86_64 they refuse
-> with an explanation and download nothing. See
-> [`docker/README.md`](docker/README.md) for the image inventory, the reasoning
-> behind the four-image split, and the known limitations.
+### System Requirements & Runtime
 
-### Option B — Full local install (development)
+All skills and MCP servers run through the unified `venv/run` launcher across three `uv` environments (`cpu`, `mlip`, `fairchem`):
+- **OS**: Linux on x86_64 or aarch64.
+- **glibc**: ≥ 2.28 for `cpu`; aarch64 GPU stacks (`mlip`, `fairchem`) require glibc ≥ 2.34.
+- **Compiler**: A C compiler (`gcc`) and `uv` on `PATH` for source packages.
+- **GPU**: NVIDIA GPU with driver ≥ 580 on aarch64 (CUDA 13) or standard modern driver on x86_64 (CUDA 12.8).
+- **Container Fallback**: Systems that do not meet native requirements (older clusters, macOS, or missing compilers) automatically fall back to container images (`docker`, `podman`, or `apptainer`).
 
-Build the conda environments yourself. Choose this to develop skills, run the
-`scripts/` directly, or use the environments outside of MCP. It is the heavier
-path: the environments total roughly 58 GB.
-
-1. **Clone the repository**:
-   *(Optional: Fork the repository on GitHub first if you plan to contribute, then clone your fork instead)*
-   ```bash
-   git clone git@github.com:learningmatter-mit/AtomisticSkills.git
-   cd AtomisticSkills
-   ```
-2. **Open the repository** as a workspace in your preferred agentic IDE (e.g., [Cursor](https://www.cursor.com/), [Claude Code](https://code.claude.com/docs/en/overview), [Roo](https://roocode.com/), [Antigravity](https://antigravity.google), [OpenAI Codex](https://openai.com/codex/), [VS Code](https://code.visualstudio.com/)).
-3. **Ask the agent to install AtomisticSkills for you**:
-   ```text
-   Install AtomisticSkills according to its `docs/setup.md` guide.
-   ```
-
-The agent will read the [**Setup Guide**](docs/setup.md) and interactively guide you through creating environments, configuring API keys, and registering MCP servers.
-
-> [!TIP]
-> **Prefer manual installation?** If you want to configure everything yourself without an agent, read the [**Setup Guide**](docs/setup.md) for full manual instructions.
+For full configuration options, HPC instructions, and API key setup, see the [**Setup Guide**](docs/setup.md).
 
 ---
 
@@ -205,7 +183,7 @@ This project is optimized for use with coding AI copilots like **[Antigravity](h
 ### The `.agents/` Directory
 - **Rules (`.agents/rules/`)**: Contains project-specific standards, scientific constraints, and modeling guidelines. Coding agents automatically parse these to ensure all simulations and code follow best practices.
 - **Skills (`skills/`)**: Modular, reusable capabilities, typically at the scale of a single research task (e.g., calculate material's stability). Each skill is self-documented with instructions, scripts, and resources.
-- **Workflows (`.agents/workflows/`)**: Defines high level research procedures (e.g., workflow to design a new material). Coding agents can execute these step-by-step, managing the complex transitions between different conda environments and simulation stages.
+- **Workflows (`.agents/workflows/`)**: Defines high-level research procedures (e.g., workflow to design a new material). Coding agents can execute these step-by-step, managing transitions between simulation stages and environments.
 
 ---
 
