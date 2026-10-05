@@ -42,6 +42,9 @@ RUN apt-get update \
         # libGL.so.1 for PyMOL (the pymol extra): its wheel bundles libpng,
         # freetype, libxml2, GLEW and netcdf, but not the system OpenGL loader.
         libgl1 \
+        # RDKit's drawing code (rdkit.Chem.Draw, via its bundled cairo) links
+        # the X11 client and render libraries, which its wheel does not bundle.
+        libx11-6 libxext6 libxrender1 \
     && rm -rf /var/lib/apt/lists/*
 
 RUN set -eux; \
@@ -80,6 +83,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     if grep -q '^cu126 = ' venv/${VENV}/pyproject.toml; then extras="${extras} --no-extra cu126"; fi; \
     if grep -q '^lammps = ' venv/${VENV}/pyproject.toml; then extras="${extras} --no-extra lammps"; fi; \
     uv sync --frozen --project venv/${VENV} ${extras} --no-dev \
+    && venv/${VENV}/.venv/bin/python -c "import rdkit.Chem.Draw" \
     && venv/${VENV}/.venv/bin/python docker/render.py server-map "${IMAGE_NAME}" \
         > docker/server-map.txt \
     && cat docker/server-map.txt \
