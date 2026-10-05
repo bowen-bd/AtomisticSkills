@@ -76,7 +76,15 @@ def load_model(
         wrapper.load()
         return f"Successfully loaded FAIRCHEM model: {model_name}"
     except Exception as e:
-        return f"Error loading model: {str(e)}"
+        message = f"Error loading model: {str(e)}"
+        if "401" in str(e) or "gated repo" in str(e):
+            message += (
+                "\nUMA checkpoints are gated on Hugging Face: request access at "
+                "https://huggingface.co/facebook/UMA, then set HF_TOKEN (in "
+                "~/.config/atomistic_skills.yaml or the environment) and reconnect "
+                "the server."
+            )
+        return message
 
 
 @mcp.tool()

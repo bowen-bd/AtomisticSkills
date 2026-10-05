@@ -29,8 +29,8 @@ Skills whose stack has no uv project (React-OT, ICEBERG, the generative models)
 keep a conda environment, named in ``metadata.conda_env``.
 
 Usage:
-    python tools/migrate_skill_commands.py --check   # report, change nothing
-    python tools/migrate_skill_commands.py           # rewrite in place
+    venv/run cpu python tools/migrate_skill_commands.py --check   # report, change nothing
+    venv/run cpu python tools/migrate_skill_commands.py           # rewrite in place
 
 Re-running is a no-op once a file is migrated.
 

@@ -45,7 +45,9 @@ ATOMISTIC_IMAGE_TAG: "1.5.0"
 | Variable | Description | Required By | Example |
 | :--- | :--- | :--- | :--- |
 | `MP_API_KEY` | API Key for Materials Project database access. | `base` server, pymatgen | `abc123def456` |
-| `HF_TOKEN` | Hugging Face user access token for gated models (e.g. FairChem UMA). | `fairchem` server | `hf_...` |
+| `HF_TOKEN` | Hugging Face user access token. Required for FairChem UMA, which is gated: request access at https://huggingface.co/facebook/UMA first. | `fairchem` server | `hf_...` |
+| `SSL_CERT_FILE` | CA bundle for Python's TLS. `venv/run` sets it to the system bundle when unset (needed on RHEL-family hosts); set it yourself behind a proxy with its own CA. | all | `/etc/pki/tls/certs/ca-bundle.crt` |
+| `UV_PYTHON_PREFERENCE` | Which Python uv builds environments on. `venv/run` uses `only-managed` (a uv-managed CPython with headers) unless set. | `venv/run` | `only-managed` |
 | `ORCA_BINARY_PATH` | Full path to the external ORCA executable. | `chem-dft-orca-*` skills | `/opt/orca/orca` |
 | `ATOMATE2_REMOTE_PROJECT` | Jobflow-remote project name for remote cluster job submission. | `atomate2` server | `remote_perlmutter` |
 | `ATOMATE2_CONFIG_FILE` | Optional path to custom atomate2 config YAML. | `atomate2` server | `~/.config/atomate2/config.yaml` |

@@ -22,8 +22,8 @@ Use [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.PATCH`
    `.claude-plugin/marketplace.json` and `server.json` are derived from it.
    The tag must match `VERSION` exactly.
    ```bash
-   python tools/sync_version.py --set 1.x.y
-   python tools/sync_version.py --check
+   venv/run cpu python tools/sync_version.py --set 1.x.y
+   venv/run cpu python tools/sync_version.py --check
    ```
    > CI runs `--check` on every push, so a tag can never ship with the four
    > files disagreeing.
@@ -39,7 +39,7 @@ Use [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.PATCH`
    python docker/render.py servers --check
    python docker/render.py plugin-mcp --check
    venv/run cpu python tools/lock_platforms.py --check
-   python tools/migrate_skill_commands.py --check
+   venv/run cpu python tools/migrate_skill_commands.py --check
    ```
 
 2. Run the test suites:

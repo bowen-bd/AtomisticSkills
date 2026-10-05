@@ -21,6 +21,7 @@ Requirements:
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -140,9 +141,18 @@ class Host:
                 '  for ((i=1;i<=$#;i++)); do if [[ "${!i}" == --project ]]; then j=$((i+1)); p="${!j}"; fi; done\n'
                 '  mkdir -p "$p/.venv/bin" && : > "$p/.venv/bin/python" && chmod +x "$p/.venv/bin/python"\n'
                 "fi\n"
-                'if [[ "$1" == --version ]]; then echo "uv 0.0.0"; fi'
+                'if [[ "$1" == --version ]]; then echo "uv 0.0.0"; fi\n'
+                # One line per call: what each uv invocation was given.
+                'echo "$1 pref=${UV_PYTHON_PREFERENCE:-} ssl=${SSL_CERT_FILE:-}"'
+                f' >> "{self.logs}/uv.envlines"'
             ),
         )
+
+    def uv_env_lines(self) -> dict[str, str]:
+        """{uv subcommand: 'pref=... ssl=...'} for the calls stub_uv saw."""
+        path = self.logs / "uv.envlines"
+        lines = path.read_text().splitlines() if path.exists() else []
+        return {ln.split(" ", 1)[0]: ln.split(" ", 1)[1] for ln in lines}
 
     def stub_apptainer(self, exit_code: int = 0) -> Path:
         """An apptainer whose `build` leaves the output file, as the real one does."""
@@ -729,3 +739,126 @@ class TestWorkspace:
             "override": "/srv/elsewhere",
         }
         assert out == expected[where]
+
+
+class TestHostQuirks:
+    """Failures found on an RHEL 8 cluster (MIT Engaging) and its CentOS 7 GPU nodes."""
+
+    def test_environments_are_built_on_a_managed_python(self, host):
+        """A system python3.12 without its -devel package cannot compile smol."""
+        host.stub_uv()
+        result = host.run("cpu", "python", "x.py", cwd=host.workspace)
+        assert result.returncode == 0, result.stderr
+        lines = host.uv_env_lines()
+        assert lines["sync"].startswith("pref=only-managed")
+        # Running an existing environment must not force it: uv would warn on
+        # every command for environments built before this default.
+        assert lines["run"].startswith("pref= ")
+
+    def test_a_chosen_python_preference_is_kept(self, host):
+        host.stub_uv()
+        host.run(
+            "cpu", "python", "x.py", cwd=host.workspace, UV_PYTHON_PREFERENCE="system"
+        )
+        assert host.uv_env_lines()["sync"].startswith("pref=system")
+
+    def test_the_uv_backend_gets_the_system_ca_bundle(self, host):
+        """A managed CPython does not find RHEL's bundle on its own."""
+        host.stub_uv()
+        host.mark_synced("cpu")
+        host.run("cpu", "python", "x.py", cwd=host.workspace)
+        expected = ""
+        if not os.path.exists("/etc/ssl/cert.pem"):
+            for path in (
+                "/etc/pki/tls/certs/ca-bundle.crt",
+                "/etc/ssl/certs/ca-certificates.crt",
+                "/etc/ssl/ca-bundle.pem",
+            ):
+                if os.path.exists(path):
+                    expected = path
+                    break
+        assert host.uv_env_lines()["run"].endswith(f"ssl={expected}")
+
+    def test_a_chosen_ca_bundle_is_kept(self, host):
+        host.stub_uv()
+        host.mark_synced("cpu")
+        host.run(
+            "cpu", "python", "x.py", cwd=host.workspace, SSL_CERT_FILE="/corp/ca.pem"
+        )
+        assert host.uv_env_lines()["run"].endswith("ssl=/corp/ca.pem")
+
+    def test_containers_do_not_get_the_host_ca_bundle(self, host):
+        """The host path would not exist inside the image."""
+        log = host.recorder("docker")
+        result = host.run("cpu", "python", "x.py", ATOMISTIC_RUNTIME="docker")
+        assert result.returncode == 0, result.stderr
+        assert not any("SSL_CERT_FILE" in a for a in host.calls(log)[-1])
+
+    def test_possibly_empty_arrays_are_expanded_safely(self):
+        """bash < 4.4 (CentOS 7 ships 4.2) treats "${a[@]}" of an empty array as
+        unbound under `set -u`: `venv/run: line 471: extras[@]: unbound variable`."""
+        text = (PROJECT_ROOT / "venv" / "run").read_text()
+        unsafe = re.findall(r'(?<!\+)"\$\{(extras|previous|binds)\[@\]\}"', text)
+        assert not unsafe, f'use ${{a[@]+"${{a[@]}}"}} for: {sorted(set(unsafe))}'
+
+    def test_an_image_that_cannot_be_pulled_says_so(self, host):
+        host.recorder(
+            "apptainer",
+            extra=(
+                'if [[ "$1" == build ]]; then echo "FATAL: While performing build: '
+                'DENIED: requested access to the resource is denied"; exit 1; fi'
+            ),
+        )
+        result = host.run("cpu", "python", "x.py", ATOMISTIC_RUNTIME="apptainer")
+        assert result.returncode != 0
+        assert "cannot pull" in result.stderr
+        assert "ATOMISTIC_IMAGE_REGISTRY" in result.stderr
+        assert "ATOMISTIC_SQUASHFS_PROCS" not in result.stderr
+
+    @pytest.mark.parametrize(
+        "driver, warned", [("550.54.14", True), ("580.173.02", False)]
+    )
+    def test_doctor_warns_about_a_driver_too_old_for_cuda_13(
+        self, host, driver, warned
+    ):
+        host.stub(
+            "nvidia-smi",
+            f'if [[ "$*" == *name,driver_version* ]]; then echo "NVIDIA GeForce RTX 2080 Ti, {driver}";\n'
+            f'elif [[ "$*" == *driver_version* ]]; then echo "{driver}";\n'
+            'else echo "GPU 0: NVIDIA GeForce RTX 2080 Ti"; fi\n',
+        )
+        result = host.run("--doctor")
+        assert ("older than 580" in result.stderr) is warned
+
+    def test_old_glibc_is_reported_before_a_missing_compiler(self, host, tmp_path):
+        """On glibc 2.17 the compiler is not the problem; saying so misleads."""
+        no_cc = tmp_path / "no_cc"
+        no_cc.mkdir()
+        for entry in host.sysbin.iterdir():
+            if entry.name not in {
+                "cc",
+                "gcc",
+                "c++",
+                "g++",
+                "clang",
+            } and not entry.name.startswith(("gcc-", "cc-")):
+                (no_cc / entry.name).symlink_to(os.readlink(entry))
+        host.stub_uv()
+        host.set_platform("x86_64", "2.17")
+        result = host.run("--doctor", PATH=f"{host.bin}:{no_cc}")
+        assert "needs glibc >= 2.28; this host has 2.17" in result.stderr
+        assert "C compiler" not in result.stderr
+
+    def test_an_inherited_virtual_env_is_dropped(self, host):
+        """A server started from another environment's shell must not make uv warn
+        that the active environment does not match the project."""
+        host.stub_uv()
+        host.mark_synced("mlip")
+        host.run(
+            "mlip",
+            "python",
+            "x.py",
+            cwd=host.workspace,
+            VIRTUAL_ENV=str(host.repo / "venv" / "cpu" / ".venv"),
+        )
+        assert "VIRTUAL_ENV" not in host.env_of("uv")

@@ -43,7 +43,7 @@ Select the appropriate machine learning interatomic potential (MLIP) for a given
 ### FAIRCHEM Models
 **Environment:** `fairchem`
 
-- **uma-s-1p1**:
+- **uma-s-1p1** (UMA checkpoints are gated on Hugging Face: request access at https://huggingface.co/facebook/UMA and set `HF_TOKEN`):
   - Use for organic and inorganic simulations.
   - **Note:** UMA models are typically slower and more expensive. Avoid for dynamic simulations with systems >500 atoms.
 - **uma-m-1p1**:

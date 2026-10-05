@@ -115,7 +115,7 @@ hand-editing derived files:
 python docker/render.py servers --check        # or without --check to rewrite venv/servers.tsv
 python docker/render.py plugin-mcp --check     # plugin wiring in .claude-plugin/plugin.json
 python docker/render.py matrix                 # CI build matrix for build-images.yml
-python tools/sync_version.py --check           # manifest versions match VERSION
+venv/run cpu python tools/sync_version.py --check           # manifest versions match VERSION
 ```
 Run `docker/export_locks.py` to refresh conda locks for the generative conda-lock image only.
 CI validates that rendered files and version manifests are current.

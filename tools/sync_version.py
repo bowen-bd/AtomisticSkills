@@ -19,9 +19,9 @@ the tag is created, so the tag and the manifests cannot disagree.
 
 Usage:
     # Env: base-agent
-    python tools/sync_version.py            # rewrite manifests from VERSION
-    python tools/sync_version.py --check    # verify only, non-zero on drift
-    python tools/sync_version.py --set 1.4.0
+    venv/run cpu python tools/sync_version.py            # rewrite manifests from VERSION
+    venv/run cpu python tools/sync_version.py --check    # verify only, non-zero on drift
+    venv/run cpu python tools/sync_version.py --set 1.4.0
 
 Requirements:
     - Conda environment: base-agent (standard library only)
@@ -152,7 +152,7 @@ def main() -> int:
             print(f"Version drift against VERSION={version}:")
             for d in all_drift:
                 print(f"  - {d}")
-            print("\nRun: python tools/sync_version.py")
+            print("\nRun: venv/run cpu python tools/sync_version.py")
             return 1
         print(f"All manifests agree on version {version}")
         return 0

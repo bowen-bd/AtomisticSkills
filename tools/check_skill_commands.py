@@ -7,9 +7,9 @@ skill's first command breaks on this machine: a dependency missing from the uv
 project, an import error, or a script path that does not exist.
 
 Usage:
-    python tools/check_skill_commands.py                 # every skill
-    python tools/check_skill_commands.py --venv mlip     # one environment
-    python tools/check_skill_commands.py --skill mat-phonon --jobs 1
+    venv/run cpu python tools/check_skill_commands.py                 # every skill
+    venv/run cpu python tools/check_skill_commands.py --venv mlip     # one environment
+    venv/run cpu python tools/check_skill_commands.py --skill mat-phonon --jobs 1
 
 Exit status is the number of failing commands (capped at 100).
 

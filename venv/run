@@ -111,12 +111,6 @@ host_supports_uv() {
     if ! command -v uv >/dev/null 2>&1; then
         echo "uv is not installed (install: curl -LsSf https://astral.sh/uv/install.sh | sh)"; return 1
     fi
-    # A few packages ship no wheel and compile on install (smol everywhere;
-    # MDAnalysis, pycalphad and others on aarch64), so building an environment
-    # needs a C compiler. Running one that already exists does not.
-    if ! uv_is_synced "$venv" "$@" && ! command -v cc >/dev/null 2>&1 && ! command -v gcc >/dev/null 2>&1; then
-        echo "creating the '${venv}' environment needs a C compiler (gcc), and none is on PATH"; return 1
-    fi
     local glibc need extra
     glibc="$(glibc_version)"
     for extra in - "$@"; do
@@ -130,6 +124,12 @@ host_supports_uv() {
             echo "'${what}' needs glibc >= ${need}; this host has ${glibc}"; return 1
         fi
     done
+    # A few packages ship no wheel and compile on install (smol everywhere;
+    # MDAnalysis, pycalphad and others on aarch64), so building an environment
+    # needs a C compiler. Running one that already exists does not.
+    if ! uv_is_synced "$venv" "$@" && ! command -v cc >/dev/null 2>&1 && ! command -v gcc >/dev/null 2>&1; then
+        echo "creating the '${venv}' environment needs a C compiler (gcc), and none is on PATH"; return 1
+    fi
     return 0
 }
 
@@ -202,6 +202,25 @@ workspace() {
 
 # --- uv backend -----------------------------------------------------------------
 
+# prepare_uv_process -- just before exec'ing `uv run`.
+# A uv-managed CPython looks for CA certificates at /etc/ssl/cert.pem and in
+# /etc/ssl/certs, which RHEL-family hosts do not populate the way OpenSSL
+# expects, so model downloads through urllib fail certificate checks. Point it
+# at the system bundle unless the user chose one. uv backend only: an image has
+# its own bundle, and Apptainer would carry this host path into the container.
+prepare_uv_process() {
+    # Also drop an inherited VIRTUAL_ENV: a command running in one environment
+    # that starts a server in another (mcp_smoke, an agent's shell) would make uv
+    # warn that the active environment does not match the project. The project
+    # is always named explicitly here.
+    unset VIRTUAL_ENV
+    [[ -n "${SSL_CERT_FILE:-}" || -f /etc/ssl/cert.pem ]] && return 0
+    local f
+    for f in /etc/pki/tls/certs/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt /etc/ssl/ca-bundle.pem; do
+        if [[ -f "$f" ]]; then export SSL_CERT_FILE="$f"; return 0; fi
+    done
+}
+
 uv_project_args() {  # uv_project_args VENV EXTRAS... -> prints one argument per line
     printf '%s\n' --frozen --project "${VENV_DIR}/$1"
     shift
@@ -241,10 +260,13 @@ uv_sync() {
     local marker extras=("$@") previous=() args
     marker="$(sync_marker "$venv")"
     [[ -f "$marker" ]] && mapfile -t previous < <(tail -n +2 "$marker")
-    mapfile -t extras < <(printf '%s\n' "${extras[@]}" "${previous[@]}" | awk 'NF' | sort -u)
-    mapfile -t args < <(uv_project_args "$venv" "${extras[@]}")
-    uv sync "${args[@]}" >&2
-    record_sync "$venv" "${extras[@]}"
+    mapfile -t extras < <(printf '%s\n' ${extras[@]+"${extras[@]}"} ${previous[@]+"${previous[@]}"} | awk 'NF' | sort -u)
+    mapfile -t args < <(uv_project_args "$venv" ${extras[@]+"${extras[@]}"})
+    # A uv-managed CPython ships its own headers. uv would otherwise pick any
+    # system python3.12, and on RHEL-family hosts that often lacks Python.h,
+    # so packages built from source (smol) fail to compile.
+    UV_PYTHON_PREFERENCE="${UV_PYTHON_PREFERENCE:-only-managed}" uv sync "${args[@]}" >&2
+    record_sync "$venv" ${extras[@]+"${extras[@]}"}
 }
 
 # A first sync downloads several GB, far longer than an MCP client waits for a
@@ -322,6 +344,11 @@ apptainer_sif() {  # apptainer_sif RUNTIME IMAGE_NAME -> path of a ready SIF
                 APPTAINER_MKSQUASHFS_ARGS="-processors 1" SINGULARITY_MKSQUASHFS_ARGS="-processors 1" \
                     "$rt" build --force "$tmp" "docker://${ref}" >"$build_log" 2>&1 \
                     || { cat "$build_log" >&2; rm -f "$tmp" "$build_log"; die "failed to build ${sif_name}"; }
+            elif grep -qiE "denied|unauthorized|manifest unknown|not found|404" "$build_log"; then
+                rm -f "$tmp" "$build_log"
+                die "cannot pull ${ref}: the image is not published at this registry and tag, or is private.
+       Set ATOMISTIC_IMAGE_REGISTRY / ATOMISTIC_IMAGE_TAG (the plugin's image_registry /
+       image_tag options) to a published image, or ATOMISTIC_RUNTIME=uv on a host that can run uv."
             else
                 rm -f "$tmp" "$build_log"
                 die "failed to build ${sif_name} from ${ref}; see the output above.
@@ -395,7 +422,7 @@ run_container() {
                 [[ -z "$d" || "$d" == "$HOME" || "$d" == "$HOME"/* ]] && continue
                 binds+=(--bind "${d}:${d}")
             done
-            args+=("${binds[@]}" --bind "${MODEL_CACHE}:/opt/model-cache")
+            args+=(${binds[@]+"${binds[@]}"} --bind "${MODEL_CACHE}:/opt/model-cache")
             for v in "${envs[@]}"; do args+=(--env "$v"); done
             [[ "$gpu_ok" == 1 ]] && args+=(--nv)
             if [[ "$mode" == server ]]; then
@@ -456,6 +483,7 @@ start_server() {
     fi
     cd "$ATOMISTIC_WORKSPACE" 2>/dev/null || true
     log "starting ${name} (venv ${venv})"
+    prepare_uv_process
     exec uv run --frozen --no-sync --project "${VENV_DIR}/${venv}" python -m "$module"
 }
 
@@ -468,7 +496,7 @@ run_command() {
     [[ -f "${VENV_DIR}/${venv}/pyproject.toml" ]] \
         || die "unknown venv '${venv}'; available: $(cd "$VENV_DIR" && ls -d */ | tr -d / | paste -sd' ' -)"
 
-    backend="$(choose_backend "$venv" "${extras[@]}")"
+    backend="$(choose_backend "$venv" ${extras[@]+"${extras[@]}"})"
     if [[ "$backend" != uv ]]; then
         local gpu=0
         [[ "$venv" != cpu ]] && gpu=1
@@ -476,14 +504,15 @@ run_command() {
     fi
 
     if [[ " ${extras[*]} " == *" docking "* && "$ARCH" == aarch64 && ! -d /usr/include/boost ]] \
-       && ! uv_is_synced "$venv" "${extras[@]}"; then
+       && ! uv_is_synced "$venv" ${extras[@]+"${extras[@]}"}; then
         log "note: AutoDock Vina has no aarch64 wheel and is compiled here; that needs the Boost headers (e.g. sudo apt install libboost-all-dev). Without them, set ATOMISTIC_RUNTIME=docker or apptainer."
     fi
-    if ! uv_is_synced "$venv" "${extras[@]}"; then
+    if ! uv_is_synced "$venv" ${extras[@]+"${extras[@]}"}; then
         log "preparing the '${spec}' environment (first use downloads several GB for mlip and fairchem)..."
-        uv_sync "$venv" "${extras[@]}"
+        uv_sync "$venv" ${extras[@]+"${extras[@]}"}
     fi
-    local args; mapfile -t args < <(uv_project_args "$venv" "${extras[@]}")
+    local args; mapfile -t args < <(uv_project_args "$venv" ${extras[@]+"${extras[@]}"})
+    prepare_uv_process
     exec uv run "${args[@]}" --no-sync "$@"
 }
 
@@ -539,6 +568,13 @@ doctor() {
         echo "  uv         : $(command -v uv >/dev/null 2>&1 && uv --version || echo 'not installed')"
         echo "  containers : $(for rt in "${CONTAINER_RUNTIMES[@]}"; do command -v "$rt" >/dev/null 2>&1 && printf '%s ' "$rt"; done; echo)"
         echo "  GPU        : $( (command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi --query-gpu=name,driver_version --format=csv,noheader 2>/dev/null | head -1) || echo none)"
+        local driver
+        driver="$(command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null | head -1 || true)"
+        if [[ -n "$driver" && "${driver%%.*}" =~ ^[0-9]+$ ]] && (( ${driver%%.*} < 580 )); then
+            echo "  WARNING    : NVIDIA driver ${driver} is older than 580; the mlip and fairchem"
+            echo "               environments use CUDA 13 builds of torch, which need >= 580."
+            echo "               GPU code will not see the GPU here (run on a node with a newer driver)."
+        fi
         echo "  runtime    : ${RUNTIME} (from ATOMISTIC_RUNTIME or ${CONFIG_FILE})"
         echo "  workspace  : $(workspace)"
         for venv in $(cd "$VENV_DIR" && ls -d */ | tr -d /); do
