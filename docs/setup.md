@@ -118,6 +118,17 @@ ATOMISTIC_RUNTIME: auto
 - If the cluster's glibc is too old or there is no compiler, set
   `ATOMISTIC_RUNTIME: apptainer`. `venv/run --setup` then converts the images to
   SIF files once (minutes per image), so MCP servers start without timing out.
+- Even with `auto`, extras that need a newer glibc than the host's (`cpu+openmm`
+  and `cpu+pymol` on RHEL 8) run from the Apptainer image. The first such command
+  converts the image to a SIF, which took 15–30 minutes on an NFS home directory.
+  `--setup cpu` does not do this when `cpu` itself runs natively, so trigger it
+  once ahead of time with `venv/run cpu+openmm python -c 1`.
+- After an upgrade, delete superseded `atomisticskills-*.sif` files (about 1.4 GB
+  each) from `~/.cache/atomisticskills/sif/` or `$ATOMISTIC_MODEL_CACHE/sif/`.
+- GPU nodes can differ from login nodes. A node with glibc older than 2.28 (for
+  example CentOS 7) needs a container runtime installed there, and the images
+  carry the CUDA 13 build (driver ≥ 580). On a native uv node, a driver of 525–579
+  gets the CUDA 12.6 build automatically.
 - Keep large caches off a small home quota with `UV_CACHE_DIR` (uv's download cache)
   and `ATOMISTIC_MODEL_CACHE` (container checkpoints and SIF files).
 
