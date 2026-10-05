@@ -15,13 +15,12 @@ from sklearn.cluster import KMeans
 
 # Try importing torch early to avoid OpenMP conflicts with RDKit
 try:
-    import torch
+    import torch  # noqa: F401
 except ImportError:
     pass
 
 # Add project root to sys.path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
-print(f"DEBUG: Project root: {project_root}", flush=True)
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
@@ -34,7 +33,7 @@ from ase.units import kB
 # Import RDKit (check availability)
 try:
     from rdkit import Chem
-    from rdkit.Chem import AllChem, rdMolAlign
+    from rdkit.Chem import AllChem
 
     HAS_RDKIT = True
 except ImportError:
