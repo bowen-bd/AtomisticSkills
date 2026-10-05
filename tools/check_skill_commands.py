@@ -56,13 +56,62 @@ def collect(skills: list[str] | None, venv: str | None) -> list[tuple[str, str, 
     return out
 
 
+def classify(output: str, arch: str) -> str | None:
+    """Classify a command failure output against known platform limits.
+
+    Returns a skip reason string if the failure is an expected platform limitation
+    on the given architecture, or None otherwise.
+    """
+    normalized_arch = arch.lower()
+    if normalized_arch not in ("aarch64", "arm64"):
+        return None
+
+    # PyMOL is x86_64 only
+    if re.search(r"No module named ['\"]pymol['\"]", output):
+        return "the pymol extra is x86_64 only"
+
+    # SCINE utilities/readuct has no aarch64 wheels
+    if re.search(r"No module named ['\"]scine_(?:utilities|readuct)['\"]", output):
+        return "scine_utilities / scine_readuct has no aarch64 wheels"
+
+    # AutoDock Vina on aarch64 requires the docking extra and Boost
+    if re.search(r"No module named ['\"]vina['\"]", output):
+        return "vina on aarch64 requires docking extra and Boost"
+    if "vina" in output.lower() and (
+        "boost" in output.lower() or "libboost" in output.lower()
+    ):
+        return "vina on aarch64 requires docking extra and Boost"
+
+    return None
+
+
+def format_summary(
+    passed: int = 0,
+    failed: int = 0,
+    skipped: int = 0,
+    *,
+    ok: int | None = None,
+    fail: int | None = None,
+    skip: int | None = None,
+) -> str:
+    """Format the end-of-run summary line."""
+    p = ok if ok is not None else passed
+    f = fail if fail is not None else failed
+    s = skip if skip is not None else skipped
+    return f"{p} passed, {f} failed, {s} skipped"
+
+
 def check(
-    item: tuple[str, str, Path], timeout: float
-) -> tuple[str, str, Path, bool, str, float]:
+    item: tuple[str, str, Path], timeout: float, arch: str | None = None
+) -> tuple[str, str, Path, bool, str, float, str | None]:
     skill, spec, script = item
     t0 = time.monotonic()
+    if arch is None:
+        import platform
+
+        arch = platform.machine()
     if not script.is_file():
-        return skill, spec, script, False, "script does not exist", 0.0
+        return skill, spec, script, False, "script does not exist", 0.0, None
     try:
         proc = subprocess.run(
             [str(LAUNCHER), spec, "python", str(script), "--help"],
@@ -72,11 +121,13 @@ def check(
             cwd=PROJECT_ROOT,
         )
         ok = proc.returncode == 0
-        tail = (proc.stderr or proc.stdout).strip().splitlines()
+        raw_output = ((proc.stderr or "") + "\n" + (proc.stdout or "")).strip()
+        tail = raw_output.splitlines()
         detail = "" if ok else (tail[-1] if tail else f"exit {proc.returncode}")
+        skip_reason = classify(raw_output, arch) if not ok else None
     except subprocess.TimeoutExpired:
-        ok, detail = False, f"timed out after {timeout:.0f}s"
-    return skill, spec, script, ok, detail, time.monotonic() - t0
+        ok, detail, skip_reason = False, f"timed out after {timeout:.0f}s", None
+    return skill, spec, script, ok, detail, time.monotonic() - t0, skip_reason
 
 
 def main() -> int:
@@ -101,25 +152,41 @@ def main() -> int:
             stderr=subprocess.DEVNULL,
         )
 
-    print(f"checking {len(items)} script/environment pairs")
+    import platform
+
+    current_arch = platform.machine()
+    print(f"checking {len(items)} script/environment pairs on {current_arch}")
+    ok_count = 0
     failures = []
+    skips = []
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:
-        for skill, spec, script, ok, detail, secs in pool.map(
-            lambda it: check(it, args.timeout), items
+        for skill, spec, script, ok, detail, secs, skip_reason in pool.map(
+            lambda it: check(it, args.timeout, current_arch), items
         ):
             rel = (
                 script.relative_to(PROJECT_ROOT)
                 if script.is_relative_to(PROJECT_ROOT)
                 else script
             )
-            print(
-                f"{'ok  ' if ok else 'FAIL'} {spec:16} {rel} ({secs:.1f}s){'' if ok else ' -- ' + detail}"
-            )
-            if not ok:
+            if ok:
+                ok_count += 1
+                print(f"ok    {spec:16} {rel} ({secs:.1f}s)")
+            elif skip_reason:
+                skips.append((skill, spec, rel, skip_reason))
+                print(f"skip  {spec:16} {rel} ({secs:.1f}s) -- {skip_reason}")
+            else:
                 failures.append((skill, spec, rel, detail))
-    print(f"\n{len(items) - len(failures)} passed, {len(failures)} failed")
-    for skill, spec, rel, detail in failures:
-        print(f"  {skill}: venv/run {spec} python {rel} --help -> {detail}")
+                print(f"FAIL  {spec:16} {rel} ({secs:.1f}s) -- {detail}")
+
+    print(f"\n{format_summary(ok=ok_count, fail=len(failures), skip=len(skips))}")
+    if skips:
+        print("\nSkipped (known platform limits):")
+        for skill, spec, rel, reason in skips:
+            print(f"  {skill}: {spec} {rel} -- {reason}")
+    if failures:
+        print("\nFailures:")
+        for skill, spec, rel, detail in failures:
+            print(f"  {skill}: venv/run {spec} python {rel} --help -> {detail}")
     return min(len(failures), 100)
 
 
