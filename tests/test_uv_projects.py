@@ -92,7 +92,7 @@ def test_extras_are_the_same_everywhere(project):
     extras = dict(load(project)["project"]["optional-dependencies"])
     # The GPU projects add their two torch builds; everything else matches cpu.
     if project in ("mlip", "fairchem"):
-        assert extras.pop("cu126") == ["torch"] and extras.pop("cu130") == ["torch"]
+        assert extras.pop("cu126") == extras.pop("cu130") == ["torch", "torchvision"]
     assert extras == load("cpu")["project"]["optional-dependencies"]
     assert set(extras) == {"openmm", "pymol", "docking", "void", "transport"}
 
@@ -103,10 +103,12 @@ def test_gpu_projects_lock_both_torch_cuda_builds():
     (PyPI's aarch64 torch is not always a CUDA build)."""
     for project in ("mlip", "fairchem"):
         uv = load(project)["tool"]["uv"]
-        assert uv["sources"]["torch"] == [
-            {"index": "pytorch-cu126", "extra": "cu126"},
-            {"index": "pytorch-cu130", "extra": "cu130"},
-        ]
+        # torchvision is compiled against one torch build: same index as torch.
+        for package in ("torch", "torchvision"):
+            assert uv["sources"][package] == [
+                {"index": "pytorch-cu126", "extra": "cu126"},
+                {"index": "pytorch-cu130", "extra": "cu130"},
+            ]
         assert uv["conflicts"] == [[{"extra": "cu126"}, {"extra": "cu130"}]]
         lock = (VENV_DIR / project / "uv.lock").read_text()
         assert "+cu126" in lock and "+cu130" in lock

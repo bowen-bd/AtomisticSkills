@@ -100,8 +100,11 @@ transport = ["amset"]
 # driver: cu130 (CUDA 13; driver >= 580; GB10's sm_121 needs it) when the driver
 # allows, else cu126 (CUDA 12.6; drivers >= 525, still common on clusters).
 # ATOMISTIC_TORCH_CUDA=cu126|cu130 overrides the choice.
-cu126 = ["torch"]
-cu130 = ["torch"]
+# torchvision (via timm, physicsnemo) is compiled against one torch build, so it
+# comes from the same index; a PyPI torchvision with a cu126 torch fails with
+# "operator torchvision::nms does not exist".
+cu126 = ["torch", "torchvision"]
+cu130 = ["torch", "torchvision"]
 
 [dependency-groups]
 dev = ["pytest", "pytest-timeout"]
@@ -149,6 +152,10 @@ atomisticskills = { path = "../..", editable = true }
 # package published there under the name "void" is an unrelated utility.
 VOID = { git = "https://github.com/learningmatter-mit/VOID.git" }
 torch = [
+  { index = "pytorch-cu126", extra = "cu126" },
+  { index = "pytorch-cu130", extra = "cu130" },
+]
+torchvision = [
   { index = "pytorch-cu126", extra = "cu126" },
   { index = "pytorch-cu130", extra = "cu130" },
 ]
