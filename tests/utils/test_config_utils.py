@@ -75,3 +75,12 @@ def test_save_skill_inputs_string(tmp_path):
     with open(yaml_path, "r") as f:
         data = yaml.safe_load(f)
     assert data["arguments"] == "just a string"
+
+
+def test_save_skill_inputs_next_to_a_data_file(tmp_path):
+    """An output that is a data file puts the configs beside it, not in it."""
+    out = tmp_path / "training_data.csv"
+    out.write_text("cif\n")
+    save_skill_inputs({"property_name": "band_gap"}, str(out))
+    assert (tmp_path / "input_configs.yaml").exists()
+    assert out.read_text() == "cif\n"

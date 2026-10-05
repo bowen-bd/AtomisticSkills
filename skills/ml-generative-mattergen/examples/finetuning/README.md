@@ -31,10 +31,10 @@ Create a JSON file with your structures and properties:
 
 Or use the preparation script:
 
-```bash
-conda activate mattergen-agent
+Run from the AtomisticSkills checkout:
 
-python ../scripts/prepare_training_data.py \
+```bash
+venv/run mattergen python skills/ml-generative-mattergen/scripts/prepare_training_data.py \
   --structures-json your_data.json \
   --property-name "formation_energy" \
   --output training_data.csv
@@ -44,7 +44,7 @@ python ../scripts/prepare_training_data.py \
 
 ```bash
 # Quick test (2 epochs)
-python ../scripts/run_finetuning.py \
+venv/run mattergen python skills/ml-generative-mattergen/scripts/run_finetuning.py \
   --training-data training_data.csv \
   --property-name "formation_energy" \
   --base-model "mattergen_base" \
@@ -52,7 +52,7 @@ python ../scripts/run_finetuning.py \
   --output-dir ./test_finetune
 
 # Full fine-tuning (100 epochs)
-python ../scripts/run_finetuning.py \
+venv/run mattergen python skills/ml-generative-mattergen/scripts/run_finetuning.py \
   --training-data training_data.csv \
   --property-name "formation_energy" \
   --epochs 100 \
@@ -68,6 +68,7 @@ Currently, using a fine-tuned model requires loading it via the MatterGen Python
 ## Notes
 
 - **GPU Required**: Fine-tuning requires a CUDA-compatible GPU
+- **MatterGen checkout**: the scripts import MatterGen from its checkout (see the skill's prerequisites); fine-tuning adds a property embedding config to it
 - **Training Time**: Expect several hours for 100 epochs on typical datasets
 - **Data Requirements**: Minimum 50-100 structures recommended for meaningful fine-tuning
 - **Property Range**: Ensure your property values have reasonable variance

@@ -1,7 +1,13 @@
 #!/bin/bash
-# Example script showing complete MatterGen fine-tuning workflow
+# Example: the complete MatterGen fine-tuning workflow on a toy dataset.
+# Run it from any directory; its outputs go to the current directory.
+# Requires a GPU and a MatterGen checkout (see the skill's prerequisites).
 
 set -e  # Exit on error
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SKILL_DIR="$(dirname "$(dirname "$HERE")")"
+RUN="${SKILL_DIR}/../../venv/run"
 
 echo "=== MatterGen Fine-Tuning Example ==="
 echo
@@ -14,7 +20,8 @@ OUTPUT_DIR="./example_finetuned_model"
 
 # Step 1: Prepare training data
 echo "Step 1: Preparing training data..."
-python ../scripts/prepare_training_data.py \
+"$RUN" mattergen python "${HERE}/make_dummy.py"   # writes example_training_data.json
+"$RUN" mattergen python "${SKILL_DIR}/scripts/prepare_training_data.py" \
   --structures-json example_training_data.json \
   --property-name "$PROPERTY_NAME" \
   --output training_data.csv
@@ -24,7 +31,7 @@ echo
 
 # Step 2: Run fine-tuning
 echo "Step 2: Running fine-tuning (${EPOCHS} epochs)..."
-python ../scripts/run_finetuning.py \
+"$RUN" mattergen python "${SKILL_DIR}/scripts/run_finetuning.py" \
   --training-data training_data.csv \
   --property-name "$PROPERTY_NAME" \
   --base-model "$BASE_MODEL" \

@@ -53,7 +53,12 @@ def run_finetuning(
     config_dir = output_dir / "config"
     config_dir.mkdir(exist_ok=True)
 
-    # Get MatterGen's config directory
+    # Get MatterGen's config directory (in its checkout; see the wrapper)
+    from src.utils.generative_models.mattergen.mattergen_wrapper import (
+        use_mattergen_checkout,
+    )
+
+    mattergen_repo = use_mattergen_checkout()
     import mattergen
 
     mattergen_dir = Path(mattergen.__file__).parent
@@ -202,7 +207,19 @@ max_epochs: {epochs}
             check=True,
             cwd=output_dir,  # Run in output dir so Hydra outputs are relative to it
             text=True,
-            env={**subprocess.os.environ, "OUTPUT_DIR": str(output_dir)},
+            env={
+                **subprocess.os.environ,
+                "OUTPUT_DIR": str(output_dir),
+                # The CLI must import MatterGen from the checkout, like this script.
+                "PYTHONPATH": subprocess.os.pathsep.join(
+                    p
+                    for p in (
+                        str(mattergen_repo),
+                        subprocess.os.environ.get("PYTHONPATH"),
+                    )
+                    if p
+                ),
+            },
         )
 
         print("\n✓ Fine-tuning completed successfully")
