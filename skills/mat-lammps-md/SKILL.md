@@ -35,6 +35,8 @@ nvidia-smi --query-gpu=name,compute_cap --format=csv,noheader
   - `8.6` -> `Kokkos_ARCH_AMPERE86`
   - `8.9` -> `Kokkos_ARCH_ADA89`
   - `9.0` -> `Kokkos_ARCH_HOPPER90`
+  - `10.0` -> `Kokkos_ARCH_BLACKWELL100`
+  - `12.0`, `12.1` (e.g. GB10 / DGX Spark) -> `Kokkos_ARCH_BLACKWELL120` (Kokkos 4.6 has no 12.1 target; it runs, with a performance warning)
 
 4. **Build the environment-matched LAMMPS binary** (choose one of the three paths below). Builds go to `$LAMMPS_ROOT` (default `~/.cache/atomisticskills/lammps`) and need the environment to run natively on the host.
 
