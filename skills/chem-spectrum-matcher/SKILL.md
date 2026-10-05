@@ -107,7 +107,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/regist
 **IR (QM-backed, high accuracy):**
 ```bash
 # Run ORCA frequency calculation → extract IR spectrum → register
-# See ${CLAUDE_SKILL_DIR}/../../conda-envs/orca-agent/ for ORCA setup.
+# ORCA setup (ORCA_BINARY_PATH, x86_64 only): see the chem-dft-orca-singlepoint skill.
 # After ORCA run, convert output with ${CLAUDE_SKILL_DIR}/../../src/utils/dft/orca_utils.py
 # then call register_spectrum.py --modality ir
 ```
@@ -172,7 +172,7 @@ After reading scores, the agent must:
 | Ppm/wavenumber axis mismatch | Similarity scores all near 0 | Query and reference use different x-axis. Check `--field_mhz` or unit convention. |
 | SMILES canonicalization fails | RDKit error | SMILES invalid. Verify with RDKit before retry. |
 | NMRShiftDB2 / NIST timeout | HTTP error during public DB query | Retry once; if persistent, disable `--fallback_public_db` and predict locally. |
-| ORCA IR prediction unavailable | `ORCA_BINARY_PATH` not set | Set env var per `conda-envs/orca-agent/README.md` or fall back to NIST WebBook IR. |
+| ORCA IR prediction unavailable | `ORCA_BINARY_PATH` not set | Set it as described in the `chem-dft-orca-singlepoint` skill, or fall back to NIST WebBook IR. |
 
 ---
 
@@ -198,7 +198,7 @@ Required packages: `numpy`, `scipy`, `rdkit`, `requests`, `matplotlib`.
 **IR prediction via QM (optional):**
 ```bash
 ```
-Requires `ORCA_BINARY_PATH` environment variable. See `conda-envs/orca-agent/README.md`.
+Requires the `ORCA_BINARY_PATH` environment variable (see the `chem-dft-orca-singlepoint` skill); x86_64 only, since SCINE has no aarch64 wheels.
 
 ---
 

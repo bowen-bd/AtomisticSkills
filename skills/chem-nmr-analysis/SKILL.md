@@ -144,7 +144,7 @@ All spectrum files must be two-column numeric data (ppm, intensity):
 All scripts in this skill use the `nmr-agent` conda environment:
 ```bash
 ```
-Install: `conda-envs/nmr-agent/install.sh`
+Environment: `cpu` (created on first use by `venv/run`; no separate install)
 
 Required packages: `numpy`, `scipy` (>= 1.7), `matplotlib`, `rdkit`, `requests`, `nmrsim`, `scikit-learn`.
 

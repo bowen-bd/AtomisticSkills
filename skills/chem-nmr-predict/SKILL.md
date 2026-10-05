@@ -114,7 +114,7 @@ After prediction, the agent must:
 ```bash
 ```
 
-Install: `conda-envs/nmr-agent/install.sh`
+Environment: `cpu` (created on first use by `venv/run`; no separate install)
 
 Required packages: `numpy`, `rdkit`, `requests`, `nmrsim`.
 

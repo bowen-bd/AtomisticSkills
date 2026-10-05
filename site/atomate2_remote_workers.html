@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Remote Cluster: Atomate2 & JobFlow Remote Setup — AtomisticSkills</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.0.4/3Dmol-min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" defer></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#f8f9fc; --bg2:#ffffff; --border:#e2e8f0;
+      --text:#1b1464; --muted:#64748b; --accent:#816cff;
+      --accent2:#5b3de8;
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+
+    /* NAV */
+    nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;
+      padding:0 2rem;height:56px;background:rgba(255,255,255,0.92);
+      backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+    .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+    .nav-logo img{height:24px}
+    .nav-back{display:flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-size:0.88rem;font-weight:500;transition:color .2s}
+    .nav-back:hover{color:var(--accent)}
+
+    /* HERO */
+    .doc-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:4rem 2rem 3rem}
+    .doc-hero-inner{max-width:850px;margin:0 auto}
+    .doc-breadcrumb{font-size:0.82rem;color:var(--muted);margin-bottom:1rem}
+    .doc-breadcrumb a{color:var(--accent);text-decoration:none}
+    h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;line-height:1.1;color:var(--text);margin:0}
+
+    /* CONTENT */
+    .doc-content{max-width:850px;margin:0 auto;padding:3rem 2rem}
+    .rendered-md h2{font-size:1.6rem;font-weight:700;margin:2rem 0 1rem;color:var(--text);border-bottom:2px solid var(--border);padding-bottom:0.5rem}
+    .rendered-md h3{font-size:1.25rem;font-weight:700;margin:1.5rem 0 0.75rem;color:var(--text)}
+    .rendered-md p{margin:0.8rem 0;color:#374151;line-height:1.75;font-size:1.05rem}
+    .rendered-md ul,.rendered-md ol{padding-left:1.5rem;margin:1rem 0}
+    .rendered-md li{margin:0.5rem 0;color:#374151}
+    .rendered-md code{font-family:'JetBrains Mono',monospace;font-size:0.85rem;
+      background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:2px 6px;color:#be185d}
+    .rendered-md pre{background:#1e293b;border-radius:10px;padding:1.5rem;overflow-x:auto;margin:1.5rem 0}
+    .rendered-md pre code{background:none;border:none;color:#e2e8f0;padding:0;font-size:0.85rem;line-height:1.7}
+    .rendered-md blockquote{border-left:4px solid var(--accent);background:#f8f9ff;
+      padding:1rem 1.5rem;border-radius:0 10px 10px 0;margin:1.5rem 0}
+    .rendered-md img{max-width:100%;border-radius:12px;border:1px solid var(--border);margin:2rem auto;display:block;box-shadow:0 8px 30px rgba(0,0,0,0.1)}
+    .rendered-md a{color:var(--accent);text-decoration:none;font-weight:500}
+    .rendered-md a:hover{text-decoration:underline}
+
+    .admonition{border-radius:8px;padding:1rem;margin:1.5rem 0;border-left:4px solid}
+    .admonition-tip{background:#f0fdf4;border-color:#22c55e}
+    .admonition-note{background:#eff6ff;border-color:#3b82f6}
+    .admonition-important{background:#faf5ff;border-color:#a855f7}
+    .admonition-warning{background:#fffbeb;border-color:#f59e0b}
+    .admonition-caution{background:#fef2f2;border-color:#ef4444}
+
+    footer{border-top:1px solid var(--border);padding:3rem 2rem;text-align:center;color:var(--muted);font-size:0.9rem}
+  </style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="index.html"><img src="logo/atomisticskills_logo.svg" alt="AtomisticSkills"/></a>
+  <a class="nav-back" href="index.html">← Back Home</a>
+</nav>
+<div class="doc-hero">
+  <div class="doc-hero-inner">
+    <div class="doc-breadcrumb"><a href="index.html">Home</a> / Documentation</div>
+    <h1>Remote Cluster: Atomate2 & JobFlow Remote Setup</h1>
+  </div>
+</div>
+<div class="doc-content">
+  <div class="rendered-md" id="doc-body"></div>
+</div>
+<footer><p>AtomisticSkills — Open-sourced AI research infrastructure</p></footer>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const DOC_MD = "This document summarizes the configuration and operational steps for running Atomate2 workflows remotely on a Slurm cluster (such as a remote HPC facility) using `jobflow-remote`.\n\n## 1. Project Configuration\nThe primary configuration for this setup is located in:\n`~/.jfremote/<your_jobflow_project>.yaml`\n\n### Key Settings:\n- **Worker Type**: `local` (Switched from `remote` to avoid SSH loopback issues on the login nodes).\n- **Scheduler**: `slurm`\n- **Working Directory**: `/path/to/cluster/scratch/<username>/jobflow_runs`\n- **Environment Setup**: Handled via the `pre_run` script in the YAML, which:\n  - Loads VASP module (e.g. `module load vasp/6.4.2-cpu`).\n  - Activates the `atomate2` conda environment.\n  - Sets `export ATOMATE2_CONFIG_FILE=~/.config/atomate2/config.yaml`.\n\n### Project Name Auto-detection\nTo avoid specifying `project_name` in every command, you can set the `ATOMATE2_REMOTE_PROJECT` environment variable:\n```bash\nexport ATOMATE2_REMOTE_PROJECT=<your_jobflow_project>\n```\nWhen this variable is set, Atomate2 MCP tools will automatically use this project if no valid default is found in the `jobflow-remote` configuration.\n\n## 2. Slurm Submission Policies\nTo comply with cluster node policies, the following Slurm resources are configured:\n- **QoS**: `regular` (Or the appropriate cluster QoS).\n- **Constraint**: `cpu` (Or cluster-specific node architecture constraint).\n- **Time**: \"24:00:00\" (Default).\n- **Note**: Explicit `partition` naming may be omitted if your cluster maps queues based on QoS.\n\n## 3. Database & Stores\nThe setup connects to a MongoDB instance (`<mongodb_host>:27017`).\n\n- **Queue Store**: Stores job states and metadata (`agent_db.queue`).\n- **Job Store (Outputs)**: Stores calculation results (`agent_db.outputs`).\n- **Additional Stores**:\n  - `data`: Required for large datasets/specific Atomate2 outputs (`agent_db.data`).\n\n### Full-split Configuration: SSH Tunnel for Local Access\n\nIf you are querying Atomate2 data from your **local laptop/workstation** (not directly on the cluster), you need an SSH tunnel to access the cluster MongoDB.\n\n**Configuration Overview:**\n- **`jobstore`**: Uses `localhost:27017` (for local queries via SSH tunnel)\n- **`remote_jobstore`**: Uses `<mongodb_host>:27017` (for remote cluster - direct access, no tunnel needed)\n\n#### Automatic SSH Tunnel Setup\n\nAdd this to your `~/.bashrc` on your **local machine**:\n\n```bash\n# Cluster MongoDB Auto-tunnel with Key Expiration Check\ncluster_tunnel_start() {\n    local CLUSTER_KEY=\"$HOME/.ssh/<cluster_key>\"\n\n    # Check if key exists\n    if [[ ! -f \"$CLUSTER_KEY\" ]]; then\n        echo \"\u26a0\ufe0f  SSH key not found. Run your cluster auth command (e.g. sshproxy -u <username>)\" >&2\n        return 1\n    fi\n\n    # Check key age (< 24 hours)\n    local key_age_seconds=$(($(date +%s) - $(stat -c %Y \"$CLUSTER_KEY\" 2>/dev/null || stat -f %m \"$CLUSTER_KEY\")))\n    local key_age_hours=$((key_age_seconds / 3600))\n\n    if [[ $key_age_hours -ge 24 ]]; then\n        echo \"\u26a0\ufe0f  SSH key expired ($key_age_hours hours old). Please refresh.\" >&2\n        return 1\n    fi\n\n    # Check if tunnel already running\n    if pgrep -f \"ssh.*<mongodb_host>.*27017\" > /dev/null 2>&1; then\n        return 0\n    fi\n\n    # Create tunnel\n    ssh -f -N -L 27017:<mongodb_host>:27017 -i \"$CLUSTER_KEY\" <username>@<login_hostname> 2>/dev/null\n}\n\n# Auto-start tunnel on login\ncluster_tunnel_start\n\n# Helpful aliases\nalias cluster-refresh='sshproxy -u <username> && pkill -f \"ssh.*<mongodb_host>.*27017\"; cluster_tunnel_start'\nalias cluster-status='pgrep -f \"ssh.*<mongodb_host>.*27017\" > /dev/null && echo \"\u2705 Tunnel running\" || echo \"\u274c Tunnel not running\"'\n```\n\nReplace `<username>`, `<login_hostname>`, and `<cluster_key>` with your cluster credentials.\n\n**What this does:**\n- \u2705 Auto-creates SSH tunnel on login if SSH key is fresh (< 24 hours)\n- \u26a0\ufe0f Warns if key is expired (won't create broken tunnel)\n- \u2705 Prevents duplicate tunnels\n- \u2705 Provides easy refresh: `cluster-refresh`\n\n**Daily workflow:**\n1. Login to your laptop - tunnel auto-starts if key is valid\n2. When key expires (~24h), you'll see a warning\n3. Refresh your credentials (e.g. `sshproxy -u <username>`)\n4. Tunnel auto-restarts on next login or manual `cluster-refresh`\n\n**Check tunnel status:**\n```bash\nps aux | grep \"<mongodb_host>.*27017\"\n```\n\n## 4. Runner Operations\nThe JobFlow Remote Runner operates as a background daemon managed by `supervisord`.\n\n### Common Commands:\n- **Start Runner**:\n  ```bash\n  export PATH=/path/to/conda/envs/atomate2/bin:$PATH\n  jf -p <your_jobflow_project> runner start --log-level info\n  ```\n- **Stop Runner**:\n  ```bash\n  jf -p <your_jobflow_project> runner stop\n  ```\n- **Check Status**:\n  ```bash\n  jf -p <your_jobflow_project> runner status\n  ```\n- **Reset Daemon**: (Use if the daemon is stuck or reports running on another machine)\n  ```bash\n  jf -p <your_jobflow_project> runner reset\n  ```\n\n## 5. Remote Workflow: How to use it\nOnce this setup is complete, you can submit jobs from your **local machine** and they will be executed on **a remote cluster** without you needing to be logged in.\n\n### Step-by-Step Execution:\n1. **Submit locally**: Run your Atomate2 flow on your local machine using the `<your_jobflow_project>` project target. This uploads the jobs to the MongoDB queue.\n2. **Daemon takes over**: The `jobflow-remote` runner daemon on the remote cluster periodically checks the MongoDB queue for `READY` jobs.\n3. **Execution**: The daemon submits the jobs to Slurm, monitors them, and downloads results back to the `outputs` and `data` collections in MongoDB upon completion.\n\n### Common Questions:\n- **Do I need to start the runner every time?** No. Once started with `runner start`, it runs as a background process using `supervisord`. It will survive your logout.\n- **Will jobs be submitted if I log out?** Yes. As long as the cluster login node is up and the daemon hasn't been stopped, it will continue to process any new jobs you submit from your local machine.\n- **How do I know if it's still alive?** Log in to the remote cluster and run `jf -p <your_jobflow_project> runner status`. If it says `Daemon status: running`, you are good to go.\n- **What if the cluster reboots?** If the login node is rebooted, the daemon will stop. You will need to log in and run the `runner start` command again.\n\n## 6. Job Management\n- **List Jobs**: `jf -p <your_jobflow_project> job list`\n- **Check Slurm Queue**: `squeue -u <username>`\n- **Runner Logs**: `~/.jfremote/<your_jobflow_project>/log/runner.log`\n\n---\n*Setup completed/verified on 2026-01-15.*\n*SSH tunnel auto-configuration added on 2026-01-22.*\n";
+  marked.setOptions({ breaks: true, gfm: true });
+  const KATEX_OPTS = { delimiters: [
+    {left: '$$', right: '$$', display: true},
+    {left: '$', right: '$', display: false},
+    {left: '\\(', right: '\\)', display: false},
+    {left: '\\[', right: '\\]', display: true}
+  ], throwOnError: false };
+
+    function renderMd(md, container) {
+    if (!md) return;
+    const mathBlocks = [];
+    const placeholder = (i) => `MATHPLACEHOLDER${i}X`;
+
+    // Protect block math $$...$$
+    let safe = md.replace(/\$\$([\s\S]+?)\$\$/g, (_, m) => {
+      mathBlocks.push(`$$${m}$$`);
+      return placeholder(mathBlocks.length - 1);
+    });
+    // Protect inline math $...$
+    safe = safe.replace(/(?<!\$)\$([^\$]+?)\$(?!\$)/g, (_, m) => {
+      mathBlocks.push(`$${m}$`);
+      return placeholder(mathBlocks.length - 1);
+    });
+
+    let html = marked.parse(safe);
+    mathBlocks.forEach((tok, i) => {
+      html = html.replace(new RegExp(placeholder(i), 'g'), tok);
+    });
+
+    html = html
+      .replace(/<blockquote>\s*<p>\[!TIP\]/gi,  '<blockquote class="admonition admonition-tip"><p>💡 <strong>Tip</strong>')
+      .replace(/<blockquote>\s*<p>\[!NOTE\]/gi, '<blockquote class="admonition admonition-note"><p>📝 <strong>Note</strong>')
+      .replace(/<blockquote>\s*<p>\[!IMPORTANT\]/gi, '<blockquote class="admonition admonition-important"><p>⚡ <strong>Important</strong>')
+      .replace(/<blockquote>\s*<p>\[!WARNING\]/gi, '<blockquote class="admonition admonition-warning"><p>⚠️ <strong>Warning</strong>')
+      .replace(/<blockquote>\s*<p>\[!CAUTION\]/gi, '<blockquote class="admonition admonition-caution"><p>🚨 <strong>Caution</strong>');
+
+    container.innerHTML = html;
+    if (typeof renderMathInElement !== 'undefined') renderMathInElement(container, KATEX_OPTS);
+    if (typeof $3Dmol !== 'undefined') {
+      container.querySelectorAll('.custom-3dmol').forEach(el => {
+        if (!el.dataset.b64) return;
+        try {
+          let content = decodeURIComponent(escape(atob(el.dataset.b64)));
+          let viewer = $3Dmol.createViewer(el, {backgroundColor: '#f8f9fc'});
+          viewer.addModel(content, el.dataset.datatype);
+          viewer.setStyle({}, {stick:{radius:0.15}, sphere:{radius:0.4}});
+          if(el.dataset.unitcell) viewer.addUnitCell();
+          viewer.zoomTo();
+          viewer.render();
+        } catch (err) {
+          console.error("Failed to init 3Dmol viewer", err);
+        }
+      });
+    }
+  }
+  renderMd(DOC_MD, document.getElementById('doc-body'));
+});
+</script>
+</body>
+</html>

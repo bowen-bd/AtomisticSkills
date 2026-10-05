@@ -14,8 +14,8 @@ Perform quantitative Rietveld refinement of powder X-ray diffraction (XRD) patte
 
 ## Requirements
 
-- Conda environment: `xrd-agent` (see [conda-envs/xrd-agent](../../conda-envs/xrd-agent)).
-- Dependencies: `dara-xrd`, `pymatgen`. Optional: `kaleido` for PNG export (use `kaleido>=0.2.1,<0.3` to avoid needing Chrome).
+- Environment: `cpu` (it includes `dara-xrd` and `pymatgen`; `venv/run` creates it on first use).
+- PNG export uses `kaleido`, which needs Chrome or Chromium (on x86_64, `plotly_get_chrome` installs one).
 - BGMN: DARA uses BGMN; ensure it is installed. On HPC without network, set `--bgmn_dir` or `DARA_BGMN_DIR` to a local BGMN directory.
 
 ## Scripts

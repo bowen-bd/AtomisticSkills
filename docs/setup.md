@@ -173,4 +173,4 @@ Then run a live test with the user:
 | FairChem `load_model` fails with `401` / gated repo | UMA checkpoints are gated: request access at https://huggingface.co/facebook/UMA, then set `HF_TOKEN` (in `~/.config/atomistic_skills.yaml` or the environment). |
 | Model download fails with `CERTIFICATE_VERIFY_FAILED` | The launcher points Python at the system CA bundle; behind a proxy or with a custom bundle, set `SSL_CERT_FILE` to it. |
 | `SyntaxError` running a `tools/` script | `python3` is too old (Python 3.6 on RHEL 8); run it as `venv/run cpu python tools/<script>.py`. |
-| Atomate2 remote worker issues | See `conda-envs/atomate2-agent/atomate2_remote_worker_setup.md` |
+| Atomate2 remote worker issues | See [docs/atomate2_remote_workers.md](atomate2_remote_workers.md) |

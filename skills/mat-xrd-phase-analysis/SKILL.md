@@ -35,10 +35,9 @@ DARA searches for structures in experimental databases. It supports:
 
   Check for the library itself (`python -c "import dara"`), not for an environment
   name -- `import dara_xrd` will always fail.
-- Conda environment: `xrd-agent` (see `conda-envs/xrd-agent`) is the environment this
-  repo provisions, but it is one deployment option, not a requirement. Where
-  `dara-xrd` is already installed on the default interpreter, call `search_phases`
-  directly; the `xrd-agent` env and `scripts/phase_search.py` are conveniences.
+- Environment: `cpu` (it includes `dara-xrd`; `venv/run` creates it on first use).
+  Where `dara-xrd` is already installed on another interpreter, call
+  `search_phases` directly; `scripts/phase_search.py` is a convenience.
 - BGMN: DARA will prompt to download or use a local BGMN installation.
 - For clusters where only some nodes have internet:
   - You can optionally use a **two-step workflow** (download CIFs on a node with internet, run Ray search elsewhere).

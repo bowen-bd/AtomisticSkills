@@ -52,7 +52,7 @@ A few specialized skills remain on isolated Conda environments declared via `met
 - `react-ot-agent`: Reaction transition state generation (`chem-react-ot`).
 - `mace-agent`, `matgl-agent`, `fairchem-agent`: LAMMPS with MLIP plugins (`mat-lammps-md`).
 
-All other directories under `conda-envs/*` are retained for legacy reference only.
+The conda environments that the uv projects replaced were removed in 2.0.0; `conda-envs/README.md` lists the ones that remain.
 
 ## 4. Runtime Selection and Launcher Backend
 
