@@ -6,17 +6,17 @@ under nvt_nose_hoover, comparing NValchemi batch vs sequential (NValchemi disabl
 wall time. Best-of-N timing is used.
 
 Usage:
-    # mace-agent
-    python skills/ml-mlip-nvalchemi/scripts/run_md_benchmark.py --env mace
+    # mlip
+    venv/run mlip python skills/ml-mlip-nvalchemi/scripts/run_md_benchmark.py --env mace
 
-    # matgl-agent
-    python skills/ml-mlip-nvalchemi/scripts/run_md_benchmark.py --env matgl
+    # mlip
+    venv/run mlip python skills/ml-mlip-nvalchemi/scripts/run_md_benchmark.py --env matgl
 
-    # fairchem-agent
-    python skills/ml-mlip-nvalchemi/scripts/run_md_benchmark.py --env fairchem
+    # fairchem
+    venv/run fairchem python skills/ml-mlip-nvalchemi/scripts/run_md_benchmark.py --env fairchem
 
 Requirements:
-    - Correct Environment per env flag (mlip / mlip / fairchem)
+    - Correct Environment per env flag (mlip / fairchem)
     - nvalchemi-toolkit installed in the environment
 """
 
