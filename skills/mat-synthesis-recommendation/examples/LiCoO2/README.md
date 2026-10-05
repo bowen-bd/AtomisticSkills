@@ -5,8 +5,7 @@ This example demonstrates synthesis recipe recommendations for lithium cobalt ox
 ## Query Command
 
 ```bash
-# Env: base-agent
-python skills/mat-synthesis-recommendation/scripts/recommend_synthesis.py "LiCoO2" --limit 5 --output synthesis_recipes.json
+venv/run cpu python skills/mat-synthesis-recommendation/scripts/recommend_synthesis.py "LiCoO2" --limit 5 --output synthesis_recipes.json
 ```
 
 ## Results Summary

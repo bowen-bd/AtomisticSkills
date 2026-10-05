@@ -17,7 +17,7 @@ Calculate the equation of state for a material by applying volumetric strains, c
 ## 1. Prerequisites
 
 - The appropriate MLIP wrapper must be available (`MACEWrapper`, `MatGLWrapper`, or `FAIRCHEMWrapper`).
-- `matcalc` must be installed in the relevant conda environment.
+- `matcalc` is included in the `mlip` and `fairchem` environments.
 - A relaxed structure file (CIF, POSCAR, or other ASE-readable format).
 
 ## 2. Choosing a Foundation Potential
@@ -63,10 +63,9 @@ See `examples/` for detailed usage scenarios, including Silicon EOS calculation.
 
 ## 6. Constraints
 
-- **Environment**: Scripts require conda environments with MLIP packages installed:
-  - `mace-agent` for MACE models
-  - `matgl-agent` for MatGL/CHGNet models
-  - `fairchem-agent` for FairChem/UMA models
+- **Environment**: Scripts require an environment with MLIP packages installed (`venv/run <venv> ...`):
+  - `mlip` for MACE and MatGL/CHGNet models
+  - `fairchem` for FairChem/UMA models
 - **Structure Relaxation**: two distinct stages. The *pre-relaxation* (`--relax_structure`) centres the scan on the model's equilibrium cell; the *per-point* relaxation always runs. `--fmax` currently sets both -- the 0.1 eV/Å default is loose for a cell relaxation, and a pre-relaxation that stops early shifts the whole scan window and therefore B0. Tighten it (0.02-0.05) when B0 matters. V0 from the fit is far less sensitive than B0.
 - **Strain Range**: The default ±10% strain is suitable for most materials. For very soft or very hard materials, adjust `--max_abs_strain` accordingly.
 - **Fitting Model**: MatCalc fits the Birch-Murnaghan equation of state. Note that `--max_abs_strain` is applied as a *linear* strain (target volume = (1+e)^3 x V0), despite matcalc's own docstring calling it volumetric.

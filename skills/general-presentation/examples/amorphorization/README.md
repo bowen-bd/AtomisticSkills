@@ -15,7 +15,6 @@ summarizing the **mat-amorphorization** skill with LiCl as the example material.
 ## Usage
 
 ```bash
-# Env: base-agent
 venv/run cpu python skills/general-presentation/examples/amorphorization/amorphorization_slides.py
 ```
 
@@ -36,6 +35,6 @@ venv/run cpu python skills/general-presentation/examples/amorphorization/amorpho
 
 ## Dependencies
 
-- `python-pptx`, `Pillow` (installed in `base-agent`)
+- `python-pptx`, `Pillow` (installed in `cpu`)
 - Structure images generated via `mcp_base_visualize_structure`
 - RDF plot from `mat-amorphorization/examples/LiCl/rdf_plot.png`

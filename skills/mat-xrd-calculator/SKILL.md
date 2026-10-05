@@ -12,7 +12,7 @@ This skill calculates the X-ray Diffraction (XRD) pattern of a crystal structure
 
 ## Requirements
 
-- Conda environment: `base-agent`
+- Environment: `cpu` (commands run through `venv/run cpu ...`)
 - `pymatgen`
 - `matplotlib`
 

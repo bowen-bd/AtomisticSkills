@@ -72,7 +72,7 @@ SOLUTE_SEL = "not (resname HOH WAT TIP3 SOL NA CL Na+ Cl- K K+ NA+ CL-)"
 def _check_cli(name: str) -> str:
     path = shutil.which(name)
     if not path:
-        sys.exit(f"ERROR: '{name}' not on PATH. Install AmberTools (drugmd-agent).")
+        sys.exit(f"ERROR: '{name}' not on PATH. Install AmberTools and put it on PATH.")
     return path
 
 

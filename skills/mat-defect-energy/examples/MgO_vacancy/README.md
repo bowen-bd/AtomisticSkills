@@ -15,8 +15,7 @@ mcp_mace_load_model(model_name="MACE-MH-1", task_name="omat_pbe")
 mcp_mace_relax_structure(structure_data="MgO.cif", fmax=0.01, output_dir="bulk_relaxation")
 
 # Step 4: Generate vacancy supercells
-# Env: base-agent
-python skills/mat-defect-energy/scripts/generate_defects.py \
+venv/run cpu python skills/mat-defect-energy/scripts/generate_defects.py \
     --bulk bulk_relaxation/relaxed_structure.cif \
     --supercell_size 3 3 3 \
     --defect_type vacancy \
@@ -28,8 +27,7 @@ mcp_mace_relax_structure(structure_data="vacancy_structures/vac_Mg_0.cif", fmax=
 mcp_mace_relax_structure(structure_data="vacancy_structures/vac_O_1.cif", fmax=0.01, output_dir="defect_relaxations/vac_O_1")
 
 # Step 6: Calculate formation energies
-# Env: base-agent
-python skills/mat-defect-energy/scripts/calculate_defect_energy.py \
+venv/run cpu python skills/mat-defect-energy/scripts/calculate_defect_energy.py \
     --bulk_dir pristine_relaxation/ \
     --defect_dir defect_relaxations/ \
     --elemental_energies skills/mat-elemental-energies/resources/MACE-MH-1_omat_pbe_energies.json \

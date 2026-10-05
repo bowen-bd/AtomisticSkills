@@ -5,8 +5,7 @@ This example demonstrates how to find structurally similar compounds (analogs) t
 ## Command
 
 ```bash
-# Env: base-agent
-python skills/chem-similarity-search/scripts/similarity_search.py \
+venv/run cpu python skills/chem-similarity-search/scripts/similarity_search.py \
   --cid 2244 \
   --threshold 95 \
   --max_records 5 \

@@ -36,9 +36,9 @@ Ibuprofen shows the highest QED (drug-likeness) score of 0.82.
 **6** on rdkit <= 2025.09.4 and **3** on >= 2025.09.6, where it became a strict SMARTS
 acceptor count that excludes amide and pyrrole-type N with delocalised lone pairs.
 
-The table above was generated on **rdkit 2025.09.4** (the version this repo's
-`drugdisc-agent` environment pins), so caffeine's `hba` reads 6. On a newer rdkit the
-same code reads 3 -- that is the library change, not a discrepancy, and 3 is the
+The table above was generated on **rdkit 2025.09.4** (the version this repo pinned
+in 1.x; the `cpu` environment now pins 2026.03.6), so caffeine's `hba` reads 6. On a
+newer rdkit the same code reads 3 -- that is the library change, not a discrepancy, and 3 is the
 chemically correct acceptor count for caffeine: only its two carbonyl O and its
 imidazole `=N-` accept. `hba_lipinski` and the Ro5 verdict are identical on both.
 

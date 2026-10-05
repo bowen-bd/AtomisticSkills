@@ -1,3 +1,4 @@
+import importlib.util
 import os
 import sys
 import subprocess
@@ -75,10 +76,10 @@ def run_matgl():
 
 
 if __name__ == "__main__":
-    if "matgl-agent" not in os.environ.get("CONDA_DEFAULT_ENV", ""):
+    if importlib.util.find_spec("matgl") is None:
         print("Restarting MatGL test in the 'mlip' environment...")
-        subprocess.run(
-            ["conda", "run", "-n", "matgl-agent", "python", __file__], check=True
-        )
+        here = os.path.dirname(os.path.abspath(__file__))
+        launcher = os.path.join(here, "..", "..", "..", "..", "venv", "run")
+        subprocess.run([launcher, "mlip", "python", __file__], check=True)
     else:
         run_matgl()

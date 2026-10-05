@@ -13,8 +13,6 @@ The dataset is processed using the `prepare_fairchem_data.py` script. The traini
 Because the raw `vasp_s` labels in this WBM extraction are recorded in `kB`, we MUST pass the `--vasp-stress-conversion` flag to multiply them by `-1/1602.1766208` during extraction. The script also automatically unravels multi-layer dictionaries (e.g., `{wbm_id: [{config_id: {data}}]}`).
 
 ```bash
-# Env: fairchem-agent
-
 # Execute the data preparation and runner script
 bash skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune/run.sh
 ```
@@ -37,7 +35,6 @@ python skills/ml-fairchem-finetune/scripts/prepare_fairchem_data.py \
 The script generates a `uma_sm_finetune_template.yaml` file compatible with the `fairchem-train` CLI. Run the actual training loop:
 
 ```bash
-# Env: fairchem-agent
 cd skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune
 venv/run fairchem fairchem-train --config-yml uma_sm_finetune_template.yaml
 ```
@@ -46,7 +43,6 @@ venv/run fairchem fairchem-train --config-yml uma_sm_finetune_template.yaml
 Once training converges, extract the diagnostic learning curves (energy, forces, and stress MAE) from the generated logs to evaluate performance.
 
 ```bash
-# Env: fairchem-agent
 venv/run fairchem python skills/ml-fairchem-finetune/scripts/extract_fairchem_logs.py \
     --log-file skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune/tensorboard/uma_sm_finetune*/train.log \
     --output-dir skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune

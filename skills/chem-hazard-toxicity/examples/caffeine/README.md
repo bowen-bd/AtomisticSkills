@@ -5,8 +5,7 @@ This example demonstrates how to retrieve the GHS Hazard, Hazard Classes, and To
 ## Command
 
 ```bash
-# Env: base-agent
-python skills/chem-hazard-toxicity/scripts/get_safety_data.py \
+venv/run cpu python skills/chem-hazard-toxicity/scripts/get_safety_data.py \
   --cid 2519 \
   --outdir skills/chem-hazard-toxicity/examples/caffeine \
   --output safety_caffeine.json

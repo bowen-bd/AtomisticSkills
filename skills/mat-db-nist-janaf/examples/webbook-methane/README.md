@@ -6,8 +6,7 @@ This example demonstrates how to use the `query_janaf.py` script to retrieve sta
 
 Run the query script:
 ```bash
-# Env: base-agent
-python ../../scripts/query_janaf.py CH4 methane_thermo.json
+venv/run cpu python ../../scripts/query_janaf.py CH4 methane_thermo.json
 ```
 
 ## Expected Output

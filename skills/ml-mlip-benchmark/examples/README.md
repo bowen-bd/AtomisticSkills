@@ -27,7 +27,6 @@ You can fully reproduce these findings by performing the following execution ste
 
 1. **Fetch Target Dataset**
 ```bash
-# Env: base-agent
 venv/run cpu python skills/ml-mlip-benchmark/examples/fetch_r2scan.py
 ```
 
@@ -35,25 +34,25 @@ venv/run cpu python skills/ml-mlip-benchmark/examples/fetch_r2scan.py
 Execute inference testing across each model in their respective environments:
 
 ```bash
-# MACE Potential Benchmark (Env: mace-agent)
+# MACE Potential Benchmark (Env: mlip)
 venv/run mlip python skills/ml-mlip-benchmark/scripts/run_benchmark.py \
     --model MACE-MATPES-R2SCAN-0 --backend mace \
     --data_path r2scan_data.json \
     --output research/2026-03-03_r2SCAN_benchmark/mace_results.json
 
-# CHGNet Potential Benchmark (Env: matgl-agent)
+# CHGNet Potential Benchmark (Env: mlip)
 venv/run mlip python skills/ml-mlip-benchmark/scripts/run_benchmark.py \
     --model CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES --backend matgl \
     --data_path r2scan_data.json \
     --output research/2026-03-03_r2SCAN_benchmark/chgnet_results.json
 
-# M3GNet Potential Benchmark (Env: matgl-agent)
+# M3GNet Potential Benchmark (Env: mlip)
 venv/run mlip python skills/ml-mlip-benchmark/scripts/run_benchmark.py \
     --model M3GNet-MatPES-r2SCAN-v2025.1-PES --backend matgl \
     --data_path r2scan_data.json \
     --output research/2026-03-03_r2SCAN_benchmark/m3gnet_results.json
 
-# TensorNet Potential Benchmark (Env: matgl-agent)
+# TensorNet Potential Benchmark (Env: mlip)
 venv/run mlip python skills/ml-mlip-benchmark/scripts/run_benchmark.py \
     --model TensorNet-MatPES-r2SCAN-v2025.1-PES --backend matgl \
     --data_path r2scan_data.json \
@@ -62,7 +61,6 @@ venv/run mlip python skills/ml-mlip-benchmark/scripts/run_benchmark.py \
 
 3. **Generate Parity Plots**
 ```bash
-# Env: base-agent
 venv/run cpu python skills/ml-mlip-benchmark/scripts/plot_benchmark.py \
     --results research/2026-03-03_r2SCAN_benchmark/mace_results.json \
     --output_dir skills/ml-mlip-benchmark/examples/

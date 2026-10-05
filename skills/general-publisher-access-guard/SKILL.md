@@ -88,7 +88,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/safe_p
 See [examples/oa-repository-bypass/README.md](examples/oa-repository-bypass/README.md) for step-by-step instructions.
 
 ## Constraints
-- **Environment**: Requires `base-agent` conda environment (contains `requests`, `pymupdf` / `fitz`).
+- **Environment**: Requires the `cpu` environment (contains `requests`, `pymupdf` / `fitz`).
 - **Zero Direct Scrape**: Never execute `curl`, `read_url_content`, or browser automation on blocked publisher domains.
 - **Unpaywall Polite Pool**: Provide an email address in `UNPAYWALL_EMAIL` or `OPENALEX_EMAIL` environment variable to access high-throughput API pools.
 - **Preprint Rate Limits**: arXiv requests must maintain a minimum 3-second crawl delay.

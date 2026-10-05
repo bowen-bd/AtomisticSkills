@@ -41,7 +41,7 @@ When using the `--provider` parameter, you can provide the following short strin
 - **`jarvis`** – **JARVIS**: Joint Automated Repository for Various Integrated Simulations.
 
 ## Constraints
-- **Environments**: The scripts require the `base-agent` Conda environment.
+- **Environments**: The scripts require the `cpu` environment.
 - **Provider Status**: Sometimes specific providers (like Aflow or NOMAD) may experience API downtime. If a provider fails, the `optimade` client will log warnings.
 
 ## References

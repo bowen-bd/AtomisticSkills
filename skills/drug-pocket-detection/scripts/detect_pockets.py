@@ -22,7 +22,8 @@ Requirements:
     - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: numpy, MDAnalysis
     - External CLI tools (one of):
-        - fpocket: `conda install -c conda-forge fpocket` (default backend)
+        - fpocket: build from https://github.com/Discngine/fpocket and put on PATH
+          (default backend)
         - prank (P2Rank): download from https://github.com/rdk/p2rank/releases,
           unpack, and ensure `prank` is on PATH (optional ML backend).
           Java requirement is version-specific (P2Rank 2.5 needs Java 17+).

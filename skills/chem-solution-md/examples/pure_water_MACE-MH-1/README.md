@@ -14,8 +14,7 @@
 
 ### 1. Build box
 ```bash
-# Env: base-agent
-python skills/chem-solution-md/scripts/build_solvation_box.py \
+venv/run cpu python skills/chem-solution-md/scripts/build_solvation_box.py \
     --solvent water --num_solvent 64 \
     --output_dir <research_dir>/solvation_box
 ```
@@ -33,8 +32,7 @@ mcp_mace_run_md(
 
 ### 3. Analyze
 ```bash
-# Env: base-agent
-python skills/chem-solution-md/scripts/analyze_solution_md.py \
+venv/run cpu python skills/chem-solution-md/scripts/analyze_solution_md.py \
     --trajectory <research_dir>/nvt_production/H128O64_300.0K_nvt.traj \
     --rdf_pairs O-O,O-H --log_interval_fs 5.0 --stride 20 --start_frame 200 \
     --output_dir <research_dir>/analysis

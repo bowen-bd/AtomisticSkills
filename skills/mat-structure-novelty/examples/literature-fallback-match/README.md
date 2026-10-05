@@ -11,9 +11,8 @@ In this case, we use `Li2ZrCl6` (LZC)—a known halide solid-state electrolyte (
 2. Run the script:
 
 ```bash
-# Env: base-agent
 # You don't need to pass a second argument. It will automatically query MP. The API will find 0 polymorphs, triggering the literature fallback.
-python ../../scripts/match_structure.py Li2ZrCl6.cif --output fallback_match.json
+venv/run cpu python ../../scripts/match_structure.py Li2ZrCl6.cif --output fallback_match.json
 ```
 
 3. **Expected Output:**

@@ -13,7 +13,6 @@ The dataset is processed using the `prepare_mace_data.py` script. The training d
 Because the raw `vasp_s` labels in this WBM extraction are recorded in `kB`, we MUST pass the `--vasp-stress-conversion` flag to multiply them by `-1/1602.1766208` during extraction. The script also automatically unravels multi-layer dictionaries (e.g., `{wbm_id: [{config_id: {data}}]}`).
 
 ```bash
-# Env: mace-agent
 venv/run mlip python skills/ml-mace-finetune/scripts/prepare_mace_data.py \
     --data private_data/WBM_subset_200_configs.json \
     --model MACE-OMAT-0-small \
@@ -29,7 +28,6 @@ venv/run mlip python skills/ml-mace-finetune/scripts/prepare_mace_data.py \
 The script generates a `finetune_config.yaml` file natively compatible with the `mace_run_train` CLI. Run the actual training loop:
 
 ```bash
-# Env: mace-agent
 cd skills/ml-mace-finetune/examples/mace-wbm-finetune
 venv/run mlip mace_run_train --config finetune_config.yaml
 ```
@@ -38,7 +36,6 @@ venv/run mlip mace_run_train --config finetune_config.yaml
 Once training converges, extract the diagnostic learning curves (energy, forces, and stress MAE) from the generated logs to evaluate performance.
 
 ```bash
-# Env: mace-agent
 cd /path/to/project_root
 venv/run mlip python skills/ml-mace-finetune/scripts/extract_mace_logs.py \
     --results-dir skills/ml-mace-finetune/examples/mace-wbm-finetune/results

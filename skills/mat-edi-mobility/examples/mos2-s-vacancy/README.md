@@ -48,9 +48,8 @@ All input decks are in [`../../resources/inputs/`](../../resources/inputs/).
 Parse the transport table and compare against the upstream reference:
 
 ```bash
-# Env: base-agent
-python ../../scripts/parse_transport.py mos2_transport.dat --output-dir results/
-python ../../scripts/compare_reference.py mos2_transport.dat reference_mos2_transport.dat --tol 0.10 --output-dir results/
+venv/run cpu python ../../scripts/parse_transport.py mos2_transport.dat --output-dir results/
+venv/run cpu python ../../scripts/compare_reference.py mos2_transport.dat reference_mos2_transport.dat --tol 0.10 --output-dir results/
 ```
 
 **Upstream reference** (EDI repo `examples/edi_run/reference/mos2_transport.dat`;
@@ -106,12 +105,11 @@ Gamma-K-M-Gamma final path ([`kf.dat`](../../resources/inputs/kf.dat)).
   = 144 coarse kf x 25 band pairs (the small on-grid deliverable).
 
 ```bash
-# Env: base-agent
-python ../../scripts/parse_edmat.py mos2_edmat_interp.dat --output-dir results/
+venv/run cpu python ../../scripts/parse_edmat.py mos2_edmat_interp.dat --output-dir results/
 # pairwise comparison (rows 1-2 of the table):
-python ../../scripts/compare_edmat.py mos2_edmat_direct.dat mos2_edmat_interp.dat --band-offset 12 --output-dir results/
+venv/run cpu python ../../scripts/compare_edmat.py mos2_edmat_direct.dat mos2_edmat_interp.dat --band-offset 12 --output-dir results/
 # gauge-invariant band-summed comparison (row 3, the headline):
-python ../../scripts/compare_edmat.py mos2_edmat_direct.dat mos2_edmat_interp.dat --band-offset 12 --band-sum --output-dir results_bandsum/
+venv/run cpu python ../../scripts/compare_edmat.py mos2_edmat_direct.dat mos2_edmat_interp.dat --band-offset 12 --band-sum --output-dir results_bandsum/
 ```
 
 Direct-vs-interpolated $|M|^2$ agreement along Gamma-K-M-Gamma:

@@ -161,7 +161,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/calcul
 - **Slab thickness**: Use `--min-slab-size ≥ 10 Å` to ensure bulk-like behaviour at the centre of each grain. Thin grains cause artificial interaction between the two GBs in the periodic cell.
 - **Same MLIP for bulk and GB**: Use the **identical model** and settings for both bulk relaxation (Step 2) and GB relaxation (Step 4) to ensure energy cancellation in the GB energy formula.
 - **Vacuum**: Set `--vacuum 0.0`. Unlike surface calculations, grain boundary supercells should have no vacuum — both grains are connected periodically.
-- **Environment**: All scripts run in `base-agent`. MLIP relaxations use the respective MLIP environment.
+- **Environment**: All scripts run in `cpu`. MLIP relaxations use the respective MLIP environment.
 
 ## References
 

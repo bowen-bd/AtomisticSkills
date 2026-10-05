@@ -140,7 +140,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_
   * Prefer standardized fields (`standard_type/value/units/relation`) and pChEMBL for comparable potency where appropriate.
   * Do **not** mix censored relations (`>`, `<`) into regression labels unless you explicitly model censoring.
 * **Target mapping confidence**: ChEMBL assigns a 0-9 confidence score to assay-to-target mappings; consider using it when building high-precision datasets.
-* **Environment**: Requires `base-agent` conda environment.
+* **Environment**: Requires the `cpu` environment.
 * **Dependencies**: Standard library only (`urllib`, `json`, `csv`, etc.).
 
 ---

@@ -104,7 +104,7 @@ See [examples/README.md](examples/README.md) for a side-by-side comparison of ag
 
 ## Constraints
 
-- **Environment**: Requires `drugdisc-agent`.
+- **Environment**: Requires `cpu`.
 - **Dependencies**: rdkit, numpy, scipy, matplotlib.
 - **Input format**: CSV with at minimum `compound_id`, `best_affinity`, and `smiles` columns. Optional passthrough columns: `label`, `parent_compound_id`, `microstate_id`. Use `collect_results.py` in [drug-docking-vina](../drug-docking-vina/SKILL.md) to produce a CSV in the expected shape.
 - **Join key**: join between the docking CSV and the optional `--library_csv` is on `compound_id`, **not** on SMILES. The SMILES string in a docked row may reflect a specific protonation or tautomer microstate and will not necessarily match the canonical SMILES in the parent library. Always use `compound_id` as the key.

@@ -292,7 +292,7 @@ reference outputs, and a literature cross-check against ACS Nano **18**, 8511 (2
 ## Constraints
 - **External codes**: requires an MPI build of Quantum ESPRESSO 7.5 with Wannier90
   and the EDI plugin built in-tree (`edi.x`, `extract_pot.x`); the Python parsers
-  run in `base-agent`. GCC builds require `-ffree-line-length-none` (see Background).
+  run in `cpu`. GCC builds require `-ffree-line-length-none` (see Background).
   Version pins reflect what was targeted, not a claim that other versions are broken.
 - **In-tree build only**: EDI links QE 7.5 static libraries; the QE version must
   match exactly. Our QE 7.4.1 build is not reusable.

@@ -6,8 +6,7 @@ This example demonstrates how to use the `query_optimade.py` script to query the
 
 Run the query script:
 ```bash
-# Env: base-agent
-python ../../scripts/query_optimade.py \
+venv/run cpu python ../../scripts/query_optimade.py \
     results.json \
     --filter 'elements HAS ALL "Na", "Cl"' \
     --provider cod \

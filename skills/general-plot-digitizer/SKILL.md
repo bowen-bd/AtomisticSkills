@@ -174,7 +174,7 @@ Full flag list: `python ${CLAUDE_SKILL_DIR}/scripts/digitize_pipeline.py --help`
 - **Bounding box** must enclose only the inner data region (inside axis lines, excluding labels/legend/title). VLMs often get this wrong — verify against the grid overlay.
 - **Multi-curve:** Each curve in `curves[]` must have a `color_hint`. Auto-detect is unreliable with multiple traces.
 - **Per-curve regions:** For stacked/offset plots, `curves[].region.y_min/y_max` must include generous padding (10-20px) above tallest peaks and below baseline.
-- **Environments:** All scripts require `base-agent` conda env.
+- **Environments:** All scripts require the `cpu` environment.
 
 ## Resources
 

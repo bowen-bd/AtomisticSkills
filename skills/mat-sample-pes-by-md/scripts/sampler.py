@@ -12,7 +12,7 @@ from ase import Atoms
 logger = logging.getLogger(__name__)
 
 # Try to import dependencies - handle gracefully if not available
-# Note: MLIP-specific imports (torch, matgl) should only be used in appropriate conda environments
+# Note: MLIP-specific imports (torch, matgl) should only be used in the appropriate environment (mlip)
 try:
     from ase.md import MDLogger, VelocityVerlet, Langevin
     from ase.md.nptberendsen import Inhomogeneous_NPTBerendsen, NPTBerendsen

@@ -56,7 +56,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/arxiv_
 
 ## Constraints
 - **Rate Limiting**: The ArXiv API requires a minimum of 3 seconds between requests. This script includes a small delay, but frequent calls should be avoided.
-- **Environment**: Requires `base-agent` conda environment.
+- **Environment**: Requires the `cpu` environment.
 - **Dependencies**: Uses `feedparser` and `urllib`.
 - **Metadata**: Results include ID, URL, Title, Authors, Summary, Publication Date, and DOI (if available).
 ---

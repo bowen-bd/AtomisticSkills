@@ -280,9 +280,9 @@ Structures:
 ## Constraints
 
 - **API Key**: Requires Materials Project API key set in `MP_API_KEY` environment variable
-- **Environment**: All scripts require the `base-agent` conda environment
+- **Environment**: All scripts require the `cpu` environment
 - **MP-API Version**: Similarity search requires mp-api >= 0.46.0 with `find_similar` method
-- **Python Version**: Base-agent uses Python 3.11
+- **Python Version**: The `cpu` environment uses Python 3.12
 - **Rate Limits**: Materials Project API has rate limits; large queries may be throttled
 - **Endpoint Differences**:
   - `summary` endpoint includes crystal structures (CIF format)

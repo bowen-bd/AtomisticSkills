@@ -46,8 +46,7 @@ Three global minima, all at $f^* = 0.3979$:
 Generate 8 space-filling initial candidates (power-of-2 for Sobol balance):
 
 ```bash
-# Env: base-agent
-python skills/ml-bayesian-optimization/scripts/suggest_candidates.py \
+venv/run cpu python skills/ml-bayesian-optimization/scripts/suggest_candidates.py \
     --config skills/ml-bayesian-optimization/examples/branin-function/search_space.yaml \
     --batch_size 8 \
     --output candidates_round_0.csv \
@@ -60,7 +59,7 @@ python skills/ml-bayesian-optimization/scripts/suggest_candidates.py \
 Compute the Branin function for each row and save to `evaluated.csv`:
 
 ```python
-# Env: base-agent
+# Environment: cpu (run with: venv/run cpu python)
 import numpy as np, pandas as pd
 
 def branin(x1: float, x2: float) -> float:
@@ -79,8 +78,7 @@ In a real materials campaign, replace the `branin()` call with an MCP tool (e.g.
 Fit the GP on `evaluated.csv` and suggest the next 4 candidates:
 
 ```bash
-# Env: base-agent
-python skills/ml-bayesian-optimization/scripts/suggest_candidates.py \
+venv/run cpu python skills/ml-bayesian-optimization/scripts/suggest_candidates.py \
     --config skills/ml-bayesian-optimization/examples/branin-function/search_space.yaml \
     --results evaluated.csv \
     --batch_size 4 \
@@ -102,8 +100,7 @@ Increment the round number and repeat until convergence (7 rounds were run here)
 ### Step 4: Plot results
 
 ```bash
-# Env: base-agent
-python skills/ml-bayesian-optimization/scripts/plot_bo_results.py \
+venv/run cpu python skills/ml-bayesian-optimization/scripts/plot_bo_results.py \
     --results evaluated.csv \
     --config skills/ml-bayesian-optimization/examples/branin-function/search_space.yaml \
     --output_dir ./

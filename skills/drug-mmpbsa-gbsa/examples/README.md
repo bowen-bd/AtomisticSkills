@@ -87,8 +87,7 @@ This is what the Genheden & Ryde (2010) and Roux & Chipot (2024) papers in the S
 If you have a trajectory, produce an equivalent result with:
 
 ```bash
-# Env: drugmd-agent
-python skills/drug-mmpbsa-gbsa/scripts/compute_mmgbsa.py \
+venv/run cpu+openmm python skills/drug-mmpbsa-gbsa/scripts/compute_mmgbsa.py \
   --topology examples/drug-discovery/cdk2-htvs/07_md_refinement/complexes/CHEMBL388978/complex_solvated.pdb \
   --trajectory examples/drug-discovery/cdk2-htvs/07_md_refinement/results/CHEMBL388978/rep1/production.dcd \
   --ligand_sdf examples/drug-discovery/cdk2-htvs/05_pose_validation/poses_sdf/CHEMBL388978.sdf \

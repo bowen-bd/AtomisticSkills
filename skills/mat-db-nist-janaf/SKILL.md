@@ -26,7 +26,7 @@ Parameters:
 - `output_json`: Path to the output JSON file where results will be stored.
 
 ## Constraints
-- **Environments**: The scripts require the `base-agent` Conda environment.
+- **Environments**: The scripts require the `cpu` environment.
 - **Scraping Dependability**: This script utilizes HTML scraping (`beautifulsoup4`). If the NIST WebBook layout changes in the future, the table selectors may need to be updated.
 - **Isotopes**: By default, the script skips explicitly isotopically-labelled variants (unless it's the only match) to return the standard natural-abundance compound.
 

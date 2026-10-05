@@ -17,7 +17,7 @@ Enable advanced ORCA quantum chemistry calculations by constructing a custom ORC
 
 ## 1. Prerequisites
 
-- **Conda environment:** `orca-agent` with `ase` installed (SCINE not required for this skill)
+- **Environment:** `cpu` (commands run through `venv/run cpu ...`), which includes `ase` (SCINE not required for this skill)
 - **ORCA binary:** The environment variable `ORCA_BINARY_PATH` must point to the ORCA executable
   ```bash
   export ORCA_BINARY_PATH=/path/to/orca
@@ -155,7 +155,7 @@ For properties not covered by the built-in parser (excited-state energies, NMR s
 - **Memory:** ORCA can be memory-intensive for correlated methods. Set `%maxcore` appropriately (rule of thumb: total available RAM / nprocs, leaving some for the OS).
 - **Disk:** Post-HF methods (CCSD(T), CASSCF) can generate large temporary files. Ensure sufficient disk space.
 - **ORCA binary:** `ORCA_BINARY_PATH` must be set and point to a working ORCA installation.
-- **Environment:** All commands require the `orca-agent` conda environment.
+- **Environment:** All commands require the `cpu` environment.
 - **Parallelization:** ORCA uses OpenMPI internally. Do not run multiple ORCA instances on overlapping core sets.
 - **Output parsing:** The built-in parser covers common output patterns. For uncommon methods or output formats, the raw `.out` file must be inspected directly.
 

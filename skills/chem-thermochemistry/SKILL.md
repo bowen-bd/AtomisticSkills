@@ -119,10 +119,9 @@ ${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/calcu
 - **Gas-phase only**: This skill uses the ideal-gas approximation. Not applicable to condensed-phase or surface reactions.
 - **Harmonic approximation**: Vibrational contributions assume harmonic potentials. Accuracy degrades for floppy modes and near dissociation.
 - **Spin and symmetry**: The script includes a lookup table for common molecules, but exotic species may need manual `--spin` and `--symmetry_number` overrides.
-- **Environments**: Scripts require conda environments with MLIP packages:
-  - `mace-agent` for MACE models
-  - `matgl-agent` for MatGL/CHGNet models
-  - `fairchem-agent` for FairChem/UMA models
+- **Environments**: Scripts require an environment with MLIP packages (`venv/run <venv> ...`):
+  - `mlip` for MACE and MatGL/CHGNet models
+  - `fairchem` for FairChem/UMA models
 
 ## References
 

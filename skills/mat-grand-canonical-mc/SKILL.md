@@ -123,7 +123,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/analyz
 - **System Size**: Larger supercells reduce finite-size effects but increase computational cost. For phase diagram mapping, 3×3×3 to 5×5×5 is typically sufficient.
 - **Temperature Range**: Choose temperatures relevant to your system. For alloys, consider the experimental phase diagram temperature range.
 - **Chemical Potential Range**: The range should span the full composition space (0 to 1 mole fraction). Start with ±0.5 eV and adjust based on results.
-- **Environment**: Scripts require the `smol-agent` conda environment with smol, pymatgen, matplotlib, and numpy.
+- **Environment**: Scripts require the `cpu` environment with smol, pymatgen, matplotlib, and numpy.
 - **Cluster Expansion Quality**: Ensure your CE has low RMSE (<10 meV/atom) for accurate phase diagram predictions.
 
 ## Theory Notes

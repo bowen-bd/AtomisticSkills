@@ -9,8 +9,7 @@ To model the transition from centrosymmetric cubic BaTiO$_3$ ($Pm\bar{3}m$) to t
 
 Run the workflow generation script:
 ```bash
-# Env: atomate2-agent
-python ../../scripts/generate_inputs.py --output batio3_flow.json
+venv/run cpu python ../../scripts/generate_inputs.py --output batio3_flow.json
 ```
 
 ## Expected Execution Output and Literature Validation

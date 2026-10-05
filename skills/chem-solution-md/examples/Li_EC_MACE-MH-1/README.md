@@ -14,8 +14,7 @@
 
 ### 1. Build solvation box
 ```bash
-# Env: base-agent
-python skills/chem-solution-md/scripts/build_solvation_box.py \
+venv/run cpu python skills/chem-solution-md/scripts/build_solvation_box.py \
     --solute_smiles "[Li+]" \
     --solvent ethylene_carbonate --num_solvent 32 \
     --output_dir <research_dir>/solvation_box
@@ -34,8 +33,7 @@ mcp_mace_run_md(
 
 ### 3. Analyze
 ```bash
-# Env: base-agent
-python skills/chem-solution-md/scripts/analyze_solution_md.py \
+venv/run cpu python skills/chem-solution-md/scripts/analyze_solution_md.py \
     --trajectory <research_dir>/nvt_production/C96H128LiO96_330.0K_nvt.traj \
     --rdf_pairs Li-O,Li-C --log_interval_fs 5.0 --stride 20 --start_frame 200 \
     --output_dir <research_dir>/analysis

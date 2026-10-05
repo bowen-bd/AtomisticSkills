@@ -128,7 +128,7 @@ bash examples/get_structure/structure_retrieval.sh
 ## Requirements
 
 - Materials Project API key set in `MP_API_KEY` environment variable
-- `base-agent` conda environment activated
+- `cpu` environment (commands run through `venv/run cpu ...`)
 - mp-api >= 0.46.0 (for similarity search)
 
 ## Notes

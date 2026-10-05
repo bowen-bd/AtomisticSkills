@@ -43,7 +43,7 @@ To visualize the spatial probability density of mobile ions (e.g., Li, Na) from 
 - A fast workflow description based on a $Li_{12}Er_{12}Br_{48}$ Solid-State Electrolyte can be found in the [LiErBr Example](examples/LiErBr/README.md).
 
 ## Constraints
-- **Environments**: The script requires the **base-agent** conda environment.
+- **Environments**: The script requires the **cpu** environment.
 - **File formats**: The trajectory should be provided in `ASE .traj` format.
 - **Memory Limits**: Avoid setting `--interval` too small ($< 0.1$) on large supercells, as this may result in extremely large 3D grid sizes and out-of-memory errors.
 

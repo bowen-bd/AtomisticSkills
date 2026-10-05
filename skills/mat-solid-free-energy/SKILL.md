@@ -20,7 +20,7 @@ Compute the Helmholtz free energy $F$ of a pre-equilibrated periodic solid at a 
 
 - A pre-equilibrated periodic solid structure in an ASE-readable format such as CIF or POSCAR.
 - The transferable MLIP wrapper stack must be available in the target repo via `src.utils.mlips.loader.load_wrapper(...)`.
-- ASE and pymatgen must be installed in the relevant conda environment.
+- ASE and pymatgen are included in the `mlip` and `fairchem` environments.
 
 > [!IMPORTANT]
 > This skill only performs the Frenkel-Ladd free-energy workflow. It does not relax the structure, build a supercell, equilibrate the volume, perform alchemical switching, or apply center-of-mass corrections.
@@ -127,9 +127,8 @@ ${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/run_f
 ## Constraints
 
 - **Environment**:
-  - `mace-agent` for MACE models
-  - `fairchem-agent` for FairChem/UMA models
-  - `matgl-agent` for MatGL/CHGNet models
+  - `mlip` for MACE and MatGL/CHGNet models
+  - `fairchem` for FairChem/UMA models
 - **Periodic solids only**: This method is intended for bulk crystalline solids, not molecules or non-periodic clusters.
 - **Pre-equilibrated input required**: The script assumes the supplied structure already represents the desired thermodynamic state point.
 - **Quality control**: Inspect `abs(dissipated_energy) / num_atoms`. Values much larger than about `0.05 eV/atom` suggest poor switching reversibility and should be treated with caution.

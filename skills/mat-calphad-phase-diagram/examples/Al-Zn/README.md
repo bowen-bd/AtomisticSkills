@@ -9,8 +9,7 @@ This example reproduces the classic Al-Zn parameterization by S. Mey (1993) usin
 To plot the T-x (Temperature vs Mole Fraction of Zn) binary phase diagram from 300 K to 1000 K with a temperature resolution of 10 K, run the following command:
 
 ```bash
-# Env: calphad-agent
-python ../../scripts/plot_phase_diagram.py alzn_mey.tdb --elements Al Zn --t-range 300 1000 10 --output Al-Zn_diagram.png
+venv/run cpu python ../../scripts/plot_phase_diagram.py alzn_mey.tdb --elements Al Zn --t-range 300 1000 10 --output Al-Zn_diagram.png
 ```
 
 ## Interpreting the Output

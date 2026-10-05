@@ -33,7 +33,7 @@ bash test_widom.sh
 
 ## Requirements
 
-- `fairchem-agent` conda environment activated
+- `fairchem` environment (commands run through `venv/run fairchem ...`)
 - Pre-relaxed `.cif` structure (typically from `chem-sorption-relax`)
 - UMA-S-1p1 model downloaded and configured
 

@@ -11,8 +11,7 @@ Uses outputs from the system builder and MD examples:
 ## Steps
 
 ```bash
-# Env: drugmd-agent
-python skills/drug-trajectory-analysis/scripts/analyze_trajectory.py \
+venv/run cpu python skills/drug-trajectory-analysis/scripts/analyze_trajectory.py \
   --topology <path_to>/system/complex_solvated.pdb \
   --trajectory <path_to>/run/production.dcd \
   --ligand_resname UNK \

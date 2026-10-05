@@ -27,7 +27,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/get_pr
 See [examples/lithium-carbonate/README.md](examples/lithium-carbonate/README.md) for a complete run of querying elemental lithium alongside a molecular precursor.
 
 ## Constraints
-- **Environments**: The script requires the **`base-agent`** Conda environment because it uses standard requests, beautifulsoup4, and pubchempy libraries. **Each code block MUST specify the environment.**
+- **Environments**: The script requires the **`cpu`** environment because it uses standard requests, beautifulsoup4, and pubchempy libraries. **Each code block MUST specify the environment.**
 - **Price Precision**: Elemental bulk prices presented are averaged and highly dependent on market fluctuations and the reference year (scraped dynamically from Wikipedia's USGS Mineral Commodity list).
 - **Vendor Links**: For compounds, live price points are not freely accessible via unauthenticated APIs. The skill provides a robust PubChem URL that aggregates active supplier links where live pricing can be interactively observed.
 

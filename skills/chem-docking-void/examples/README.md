@@ -8,10 +8,10 @@ This example demonstrates how to perform molecular docking into a porous materia
 - **SMILES**: `C[N+](C)(C)C12CC3CC(C1)CC(C2)C3`
 
 ## Running the Example
-Make sure you have the `void-agent` conda environment installed and activated. Run the provided script from this directory:
+Run the provided script from this directory in the `cpu+void` environment:
 
 ```bash
-bash ./run_example.sh
+venv/run cpu+void bash ./run_example.sh
 ```
 
 ## Expected Output

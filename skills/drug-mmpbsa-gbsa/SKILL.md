@@ -26,7 +26,7 @@ The entropy term (-TdS) is omitted, which is standard practice when the goal is 
 | Path | Script | When to use | Extras |
 |---|---|---|---|
 | **OpenMM GBn2 (fast)** | `compute_mmgbsa.py` | Throughput rescoring of HTVS hits; everything stays inside OpenMM with the same force field as the MD | No extra dependencies; ~1-5 minutes per compound on CPU |
-| **AmberTools MMPBSA.py** | `compute_mmpbsa.py` | When you need PB (not just GB), per-method decomposition (ELE, VDW, EGB / EPB, ESURF), or a setup that matches what reviewers expect from the MM-PBSA literature | Adds `MMPBSA.py`, `cpptraj`, and `parmed` to the dependency surface (already in `drugmd-agent`); ~1-3 minutes for GB, ~5-30 minutes for PB depending on system size and frame count |
+| **AmberTools MMPBSA.py** | `compute_mmpbsa.py` | When you need PB (not just GB), per-method decomposition (ELE, VDW, EGB / EPB, ESURF), or a setup that matches what reviewers expect from the MM-PBSA literature | Adds `MMPBSA.py`, `cpptraj`, and `parmed` to the dependency surface (`parmed` is in `cpu+openmm`; AmberTools must be installed separately and on `PATH`); ~1-3 minutes for GB, ~5-30 minutes for PB depending on system size and frame count |
 
 Both paths give comparable GB rankings for typical drug-protein systems, but the absolute dG numbers will differ across backends because they use different GB models, radius sets, and surface-area treatments. **Don't compare numbers across the two scripts.**
 
@@ -198,10 +198,10 @@ In the [HTVS workflow](../../.agents/workflows/drug-hit-finding-htvs.md), MM-GBS
 
 ## Constraints
 
-- **Environment**: Requires `drugmd-agent`.
+- **Environment**: Requires `cpu+openmm`.
 - **Dependencies**:
   - OpenMM path (`compute_mmgbsa.py`): openmm, openmmforcefields, openff-toolkit (for SMIRNOFF parameterization), rdkit, MDAnalysis.
-  - AmberTools path (`compute_mmpbsa.py`): the OpenMM deps above plus parmed, AmberTools (`MMPBSA.py`, `mmpbsa_py_energy`, `cpptraj`). All present in `drugmd-agent`.
+  - AmberTools path (`compute_mmpbsa.py`): the OpenMM deps above plus parmed, AmberTools (`MMPBSA.py`, `mmpbsa_py_energy`, `cpptraj`). `parmed` is in `cpu+openmm`; AmberTools is not part of any uv environment and must be installed separately and on `PATH`.
 - **Implicit solvent**:
   - OpenMM path: GBn2 (Generalized Born with neck correction, model 2). NoCutoff nonbonded method.
   - AmberTools path: igb=5 (OBC2) by default, with mbondi2 GB radii. Other igb models supported with their canonical paired radii: 1 (HCT / mbondi), 2 (OBC1 / mbondi2), 7 (GBn / mbondi), 8 (GBn2 / mbondi3). Radii are set automatically via ParmEd `changeRadii`.

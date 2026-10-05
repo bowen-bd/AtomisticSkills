@@ -16,8 +16,7 @@ constraints.  No PuLP, CBC, or external solver required -- uses SciPy's
 built-in HiGHS backend.
 
 Usage:
-  # Env: nmr-agent
-  python deconvolve.py crude.csv ref_a.csv ref_b.csv \
+  venv/run cpu python deconvolve.py crude.csv ref_a.csv ref_b.csv \
       --protons 18 18 --names borneol isoborneol --baseline-correct --json
 
 Requirements: numpy, scipy (>= 1.7), matplotlib (optional, for --plot)

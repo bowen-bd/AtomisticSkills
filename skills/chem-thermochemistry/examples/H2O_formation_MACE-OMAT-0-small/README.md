@@ -7,8 +7,7 @@
 ## Command
 
 ```bash
-# Env: mace-agent
-python skills/chem-thermochemistry/scripts/calculate_thermochemistry.py \
+venv/run mlip python skills/chem-thermochemistry/scripts/calculate_thermochemistry.py \
     --reaction "2H2 + O2 -> 2H2O" \
     --temperature 298.15 \
     --model_type mace \

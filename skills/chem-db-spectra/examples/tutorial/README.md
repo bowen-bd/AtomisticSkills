@@ -6,8 +6,7 @@ This example demonstrates how to use the `query_spectra.py` script to retrieve a
 
 Run the query script:
 ```bash
-# Env: base-agent
-python ../../scripts/query_spectra.py CH4 output_spectra/
+venv/run cpu python ../../scripts/query_spectra.py CH4 output_spectra/
 ```
 
 ## Expected Output

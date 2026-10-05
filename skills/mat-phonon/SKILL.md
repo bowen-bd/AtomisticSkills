@@ -13,7 +13,7 @@ This skill provides tools for calculating vibrational properties of materials us
 ## 1. Prerequisites
 
 - The appropriate MLIP wrapper must be available (`MACEWrapper`, `MatGLWrapper`, or `FAIRCHEMWrapper`).
-- `matcalc`, `phonopy`, and `phono3py` must be installed in the relevant conda environment.
+- `matcalc`, `phonopy`, and `phono3py` are included in the `mlip` and `fairchem` environments.
 
 ## 2. Choosing a Foundation Potential
 

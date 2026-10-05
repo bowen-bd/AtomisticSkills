@@ -6,8 +6,7 @@ This example demonstrates how to use the `query_optimade.py` script to fetch str
 
 Run the query script:
 ```bash
-# Env: base-agent
-python ../../scripts/query_optimade.py results_aflow.json --filter 'elements HAS ALL "Na", "Cl"' --provider aflow
+venv/run cpu python ../../scripts/query_optimade.py results_aflow.json --filter 'elements HAS ALL "Na", "Cl"' --provider aflow
 ```
 
 ## Potential Limitations

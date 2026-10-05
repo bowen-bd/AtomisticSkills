@@ -25,7 +25,6 @@ mcp_base_search_materials_project_by_formula(
 ### Step 2: Sample with the unified CLI
 
 ```bash
-# Env: matgl-agent
 venv/run mlip python skills/mat-sample-pes-by-md/scripts/run_sampling.py \
     LiMnO2_initial.cif \
     --model_type matgl --model_name CHGNet-PES-MatPES-PBE-2025.2.10 \

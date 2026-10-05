@@ -167,7 +167,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/create
 ## Constraints
 - **Box Dimensions**: The lattice parameters perpendicular to the stacking axis must be identical for both solid and liquid blocks.
 - **Ensemble**: The final production run must be in the **NVE** ensemble to allow the temperature to evolve to $T_m$.
-- **Environments**: Different MLIPs require specific Conda environments (e.g., `mace-agent`, `matgl-agent`). Ensure the scripts are run within the correct environment for the chosen model.
+- **Environments**: Different MLIPs require specific environments (`mlip` for MACE and MatGL, `fairchem` for FairChem). Ensure the scripts are run within the correct environment for the chosen model.
 ---
 
 **Author:** Bowen Deng

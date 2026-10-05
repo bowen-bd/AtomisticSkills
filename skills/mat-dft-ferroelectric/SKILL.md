@@ -39,7 +39,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ../../scripts/generate_inputs.py -
 ```
 
 ## Constraints
-- **Environments**: Scripts require the `atomate2-agent` environment.
+- **Environments**: Scripts require the `cpu` environment.
 - **Reference State Requirement**: The user *must* provide both a chemically identical polar and non-polar (reference) structure.
 - **Continuous Mapping**: The atoms in the polar structure must map one-to-one to the non-polar structure without crossing periodic boundaries incorrectly. Large arbitrary translations will break the Berry phase continuity assumption.
 

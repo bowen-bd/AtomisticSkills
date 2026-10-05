@@ -15,8 +15,7 @@ This example is extracted from the official React-OT validation dataset ([Zenodo
 ## Usage
 
 ```bash
-conda activate react-ot-agent
-python skills/chem-react-ot/scripts/generate_ts.py \
+venv/run reactot python skills/chem-react-ot/scripts/generate_ts.py \
     --reactants skills/chem-react-ot/examples/oxadiazole_isomerization/reactant.xyz \
     --products skills/chem-react-ot/examples/oxadiazole_isomerization/product.xyz \
     --output_dir skills/chem-react-ot/examples/oxadiazole_isomerization/output

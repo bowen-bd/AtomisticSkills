@@ -135,7 +135,7 @@ Expected: O vacancy formation energy ~6–8 eV (DFT reference: ~7.2 eV for neutr
 - **Fixed cell**: Do NOT relax the unit cell during defect relaxation — the supercell must remain fixed to be commensurate with the bulk reference. This constraint is scoped to the defect supercell: the bulk cell and the elemental chemical-potential references are both fully relaxed (cell and coordinates).
 - **Supercell size**: Use at least 3×3×3 for cubic systems to minimize periodic image interactions. Formation energies converge with supercell size.
 - **Chemical potential**: Default uses metal-rich limit (elemental energies). For environment-specific stability, manually provide chemical potentials.
-- **Environments**: Defect generation and energy calculation scripts require `base-agent`.
+- **Environments**: Defect generation and energy calculation scripts require `cpu`.
 
 ---
 

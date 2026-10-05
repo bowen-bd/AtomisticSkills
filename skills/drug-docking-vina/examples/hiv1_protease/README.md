@@ -15,22 +15,21 @@ This example demonstrates docking indinavir into HIV-1 protease (PDB: 1HSG) usin
 From the project root:
 
 ```bash
-# Env: drugdisc-agent
 # Step 1: Prepare receptor
-python skills/drug-protein-prep/scripts/prepare_protein.py \
+venv/run cpu+openmm python skills/drug-protein-prep/scripts/prepare_protein.py \
   --pdb_id 1HSG \
   --heterogens none \
   --missing_residues ignore \
   --output_dir skills/drug-docking-vina/examples/hiv1_protease/inputs/
 
 # Step 2: Prepare ligand
-python skills/drug-ligand-prep/scripts/prepare_ligand.py \
+venv/run cpu python skills/drug-ligand-prep/scripts/prepare_ligand.py \
   --smiles "CC(C)(C)NC(=O)C1CC2CCCCC2CN1CC(O)C(CC1=CC=CC=C1)NC(=O)C(CC(N)=O)NC(=O)C1=CC2=CC=CC=C2N1" \
   --name indinavir \
   --output_dir skills/drug-docking-vina/examples/hiv1_protease/inputs/
 
 # Step 3: Dock
-python skills/drug-docking-vina/scripts/run_docking.py \
+venv/run cpu+docking python skills/drug-docking-vina/scripts/run_docking.py \
   --receptor skills/drug-docking-vina/examples/hiv1_protease/inputs/1HSG_prepared.pdbqt \
   --ligand skills/drug-docking-vina/examples/hiv1_protease/inputs/indinavir/indinavir.pdbqt \
   --center_x 16.0 --center_y 25.0 --center_z 2.0 \

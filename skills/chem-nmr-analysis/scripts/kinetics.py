@@ -7,8 +7,7 @@ collects the estimated mole fractions and Wasserstein distances, saves a CSV tab
 and a kinetics plot.
 
 Usage:
-    # Env: nmr-agent
-    python kinetics.py \
+    venv/run cpu python kinetics.py \
         --refs ref_a.csv ref_b.csv \
         --timepoints t000min.csv t005min.csv t010min.csv \
         --times 0 5 10 \

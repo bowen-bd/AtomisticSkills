@@ -126,7 +126,7 @@ drugdisc.convert_to_pdbqt(
 
 ## Constraints
 
-* **Environment**: Requires `drugdisc-agent`.
+* **Environment**: Requires `cpu+openmm`.
 * **Core dependencies**: `pdbfixer`, `openmm`.
 * **Protonation**: Default pH-based hydrogen addition is a baseline.
 * **Missing residues**: By default, missing residues are ignored to avoid introducing uncertain loop models.

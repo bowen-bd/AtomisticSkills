@@ -19,7 +19,7 @@ Provide a unified interface for retrieving Metal-Organic Framework (MOF) crystal
 
 ## Prerequisites
 
-- **Environment**: `base-agent`
+- **Environment**: `cpu` (commands run through `venv/run cpu ...`)
 - **Packages**: `mpcontribs-client`, `requests`, `pandas`, `pymatgen`
 - **Credentials**: `MP_API_KEY` environment variable (required for `qmof` only)
 

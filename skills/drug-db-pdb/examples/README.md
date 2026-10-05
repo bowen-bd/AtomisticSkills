@@ -12,9 +12,8 @@ This example demonstrates searching the RCSB PDB for HIV-1 protease X-ray struct
 From the project root:
 
 ```bash
-# Env: base-agent
 # Step 1: Search for HIV-1 protease structures
-python skills/drug-db-pdb/scripts/query_pdb.py \
+venv/run cpu python skills/drug-db-pdb/scripts/query_pdb.py \
   --search "HIV-1 protease" \
   --method "X-RAY DIFFRACTION" \
   --resolution 2.0 \
@@ -22,7 +21,7 @@ python skills/drug-db-pdb/scripts/query_pdb.py \
   --output skills/drug-db-pdb/examples/hiv1_protease_search.json
 
 # Step 2: Fetch metadata for a specific entry
-python skills/drug-db-pdb/scripts/query_pdb.py \
+venv/run cpu python skills/drug-db-pdb/scripts/query_pdb.py \
   --pdb_id 1HSG \
   --output skills/drug-db-pdb/examples/1hsg_entry.json
 ```

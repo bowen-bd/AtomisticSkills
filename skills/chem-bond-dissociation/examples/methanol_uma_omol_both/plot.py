@@ -3,7 +3,7 @@ Plot BDE comparison for methanol (CO) using FairChem UMA (uma-s-1p1, omol task).
 Shows homolytic vs heterolytic BDE for all bonds. Heterolytic is only available
 for heavy-atom bonds where both fragments have > 1 atom.
 
-# Env: fairchem-agent
+Environment: fairchem (run with: venv/run fairchem python ...)
 """
 
 import json

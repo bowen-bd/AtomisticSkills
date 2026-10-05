@@ -8,9 +8,9 @@ Usage:
 
 Requirements:
     - Env: depends on --calculator
-        fairchem              -> use 'fairchem-agent' conda env
-        mace                  -> use 'mace-agent' conda env
-        matgl                 -> use 'matgl-agent' conda env
+        fairchem              -> venv/run fairchem python ...
+        mace                  -> venv/run mlip python ...
+        matgl                 -> venv/run mlip python ...
     - PYTHONPATH must include AtomisticSkills project root so src.utils is importable.
 """
 

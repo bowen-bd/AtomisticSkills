@@ -106,8 +106,8 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/../mat-db-mp/s
 - **Chemical System Format**: Use hyphen-separated elements (e.g., "Li-O", not "LiO" or "Li O")
 - **Availability**: Not all chemical systems have pre-computed phase diagrams. Common systems (binary oxides, battery materials) are well-covered.
 - **Thermo Type Availability**: R2SCAN phase diagrams are available for a subset of systems
-- **Environment**: Requires `base-agent` conda environment
-- **Dependencies**: `mp-api`, `pymatgen`, `matplotlib` (all installed in base-agent)
+- **Environment**: Requires the `cpu` environment
+- **Dependencies**: `mp-api`, `pymatgen`, `matplotlib` (all installed in `cpu`)
 
 ## When to Use This vs. Calculate
 

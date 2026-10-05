@@ -94,7 +94,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/analyz
 
 ## Constraints
 
-- **Environment**: Requires `drugmd-agent` with MDAnalysis and ProLIF.
+- **Environment**: Requires `cpu` (includes MDAnalysis and ProLIF).
 - **Trajectory format**: DCD is the default from the MD skill. PDB trajectories and XTC are also supported by MDAnalysis.
 - **Ligand residue name**: must match the name used in the topology PDB. OpenMM often assigns `UNL` to non-standard residues.
 - **ProLIF requirement**: interaction fingerprints require ProLIF. If ProLIF is not installed, the script skips IFP computation and logs a warning.

@@ -18,8 +18,7 @@ Total input size is ~40 KB. The receptor itself is not needed: RMSD is computed 
 ## How to run it
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-redocking-rmsd/scripts/compute_rmsd.py \
+venv/run cpu python skills/drug-redocking-rmsd/scripts/compute_rmsd.py \
   --docked skills/drug-redocking-rmsd/examples/cdk2-nu6102/inputs/cocrystal_NU6102_docked.pdbqt \
   --reference skills/drug-redocking-rmsd/examples/cdk2-nu6102/inputs/cocrystal_ligand_4SP.pdb \
   --smiles "NS(=O)(=O)c1ccc(Nc2nc3[nH]cnc3c(OCC3CCCCC3)n2)cc1" \
@@ -57,8 +56,7 @@ For the HTVS workflow, this means the CDK2 / NU6102 protocol as configured **sho
 As a positive-control smoke test, you can run the script against pose 1 used as its own reference. The result should be `pose 1 = 0.0 A`, `gate_pass = True`, with the other poses at their real in-place distances from pose 1:
 
 ```bash
-# Env: drugdisc-agent
-python - <<'PY'
+venv/run cpu python - <<'PY'
 from meeko import PDBQTMolecule, RDKitMolCreate
 from rdkit import Chem
 pdbqt = PDBQTMolecule.from_file("skills/drug-redocking-rmsd/examples/cdk2-nu6102/inputs/cocrystal_NU6102_docked.pdbqt", skip_typing=True)
@@ -68,7 +66,7 @@ p1.AddConformer(Chem.Conformer(mol.GetConformer(0)), assignId=True)
 w = Chem.SDWriter("/tmp/pose1_self.sdf"); w.write(p1.GetMol()); w.close()
 PY
 
-python skills/drug-redocking-rmsd/scripts/compute_rmsd.py \
+venv/run cpu python skills/drug-redocking-rmsd/scripts/compute_rmsd.py \
   --docked skills/drug-redocking-rmsd/examples/cdk2-nu6102/inputs/cocrystal_NU6102_docked.pdbqt \
   --reference /tmp/pose1_self.sdf \
   --output_dir /tmp/pose1_control/
@@ -81,8 +79,7 @@ Expected: `top_pose_rmsd = 0.0`, `gate_pass = True`, and the other nine poses re
 As another sanity check, point the script at a reference that is a different molecule than the docked compound:
 
 ```bash
-# Env: drugdisc-agent
-python -c "
+venv/run cpu python -c "
 from rdkit import Chem
 from rdkit.Chem import AllChem
 m = Chem.MolFromSmiles('CC(=O)Oc1ccccc1C(=O)O')  # aspirin
@@ -90,7 +87,7 @@ m = Chem.AddHs(m); AllChem.EmbedMolecule(m, randomSeed=1); m = Chem.RemoveHs(m)
 w = Chem.SDWriter('/tmp/wrong_ref.sdf'); w.write(m); w.close()
 "
 
-python skills/drug-redocking-rmsd/scripts/compute_rmsd.py \
+venv/run cpu python skills/drug-redocking-rmsd/scripts/compute_rmsd.py \
   --docked skills/drug-redocking-rmsd/examples/cdk2-nu6102/inputs/cocrystal_NU6102_docked.pdbqt \
   --reference /tmp/wrong_ref.sdf \
   --output_dir /tmp/wrong_test/

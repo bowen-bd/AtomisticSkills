@@ -16,7 +16,8 @@ Usage:
         --output_dir . --fmax 0.01
 
 Requirements:
-    pymatgen, ase, numpy (base-agent or mace-agent env)
+    pymatgen, ase, numpy and the MLIP backend (mlip environment, or fairchem for
+    --model_type fairchem; run with: venv/run mlip python ...)
 """
 
 from __future__ import annotations

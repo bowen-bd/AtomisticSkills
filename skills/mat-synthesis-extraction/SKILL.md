@@ -173,11 +173,11 @@ See [examples/pt-cu-alloy-co-oxidation/](examples/pt-cu-alloy-co-oxidation/) for
 
 ## Constraints
 
-- **Environment**: Step 1 (`parse_pdfs.py`) requires `base-agent` (pymupdf installed).
+- **Environment**: Step 1 (`parse_pdfs.py`) requires `cpu` (pymupdf installed).
 - **Scanned PDFs**: PyMuPDF extracts embedded text only. Scanned-image PDFs produce empty output — use a PDF with a text layer.
 - **Figure text**: PyMuPDF may extract figure captions and table text. The LLM extraction prompt instructs to focus on synthesis procedure sections only.
 - **One JSON per paper**: Output aggregates all materials for a paper into a single file.
-- **No DSPy / no separate LLM env**: LLM extraction is done by the agent directly using the schema and prompts above. No additional conda environment needed beyond `base-agent` for the parsing script.
+- **No DSPy / no separate LLM env**: LLM extraction is done by the agent directly using the schema and prompts above. No additional environment needed beyond `cpu` for the parsing script.
 - **Input configs**: Save any run-specific settings (model used, temperatures, pdf_dir, output_dir) to `input_configs.yaml` in the output directory for reproducibility.
 
 ---

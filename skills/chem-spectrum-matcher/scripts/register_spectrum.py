@@ -8,14 +8,13 @@ predictor) and upserts entries keyed by (canonical_smiles, modality) into catalo
 Supported modalities: nmr_1h, ir
 
 Usage:
-    # Env: nmr-agent
-    python register_spectrum.py \\
+    venv/run cpu python register_spectrum.py \\
         --source_dir research/nmr_predictions/ \\
         --modality nmr_1h \\
         --catalog_dir research/spectrum_catalog/
 
-    # Env: base-agent  (for IR from chem-db-spectra)
-    python register_spectrum.py \\
+    # For IR references from chem-db-spectra
+    venv/run cpu python register_spectrum.py \\
         --source_dir research/ir_references/ \\
         --modality ir \\
         --smiles "OC1CC2CCC1C2" \\

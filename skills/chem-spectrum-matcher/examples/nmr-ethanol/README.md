@@ -9,8 +9,7 @@ The same workflow applies to IR: replace `--modality nmr_1h` with `--modality ir
 ## Step 1 — Predict 1H NMR Reference Spectrum
 
 ```bash
-# Env: nmr-agent
-python skills/chem-nmr-predict/scripts/predict_nmr.py \
+venv/run cpu python skills/chem-nmr-predict/scripts/predict_nmr.py \
   --smiles "CCO" \
   --names "ethanol" \
   --field_mhz 400 \
@@ -24,8 +23,7 @@ Outputs in `research/nmr_predictions/`:
 ## Step 2 — Register into Local Catalog
 
 ```bash
-# Env: nmr-agent
-python skills/chem-spectrum-matcher/scripts/register_spectrum.py \
+venv/run cpu python skills/chem-spectrum-matcher/scripts/register_spectrum.py \
   --source_dir research/nmr_predictions/ \
   --modality nmr_1h \
   --catalog_dir research/spectrum_catalog/
@@ -42,8 +40,7 @@ Done: 1 registered, 0 skipped.
 Replace `<query>.xy` with a real two-column spectrum file (ppm vs intensity). For a self-consistency test, use the predicted spectrum itself — expect score ≈ 1.0.
 
 ```bash
-# Env: nmr-agent
-python skills/chem-spectrum-matcher/scripts/match_spectrum.py \
+venv/run cpu python skills/chem-spectrum-matcher/scripts/match_spectrum.py \
   --query <query>.xy \
   --smiles "CCO" \
   --names "ethanol" \
@@ -91,18 +88,16 @@ SPINUS correctly predicts the CH₂/CH₃ chemical shift separation and the trip
 To match against IR instead of NMR, fetch references from NIST WebBook and register them:
 
 ```bash
-# Env: base-agent
-python skills/chem-db-spectra/scripts/query_spectra.py C2H6O research/ir_refs/ --type IR
+venv/run cpu python skills/chem-db-spectra/scripts/query_spectra.py C2H6O research/ir_refs/ --type IR
 
-# Env: nmr-agent  (or base-agent)
-python skills/chem-spectrum-matcher/scripts/register_spectrum.py \
+venv/run cpu python skills/chem-spectrum-matcher/scripts/register_spectrum.py \
   --source_dir research/ir_refs/ \
   --modality ir \
   --smiles "CCO" \
   --names "ethanol" \
   --catalog_dir research/spectrum_catalog/
 
-python skills/chem-spectrum-matcher/scripts/match_spectrum.py \
+venv/run cpu python skills/chem-spectrum-matcher/scripts/match_spectrum.py \
   --query experimental_ir.jdx \
   --smiles "CCO" \
   --names "ethanol" \

@@ -7,8 +7,7 @@ Three Raman spectra (Polyethylene, Polystyrene, Nylon 6,6) plotted with vertical
 ## Command
 
 ```bash
-# Env: base-agent
-python skills/general-plot-digitizer/scripts/digitize_pipeline.py \
+venv/run cpu python skills/general-plot-digitizer/scripts/digitize_pipeline.py \
   skills/general-plot-digitizer/examples/04-stacked-spectra/source.png \
   --full \
   --metadata skills/general-plot-digitizer/examples/04-stacked-spectra/metadata.json \

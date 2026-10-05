@@ -96,7 +96,7 @@ See [examples/README.md](examples/README.md) for a worked case using real NU6102
 
 ## Constraints
 
-- **Environment**: Requires `drugdisc-agent`.
+- **Environment**: Requires `cpu`.
 - **Docked format**: Multi-model PDBQT (as output by [drug-docking-vina](../drug-docking-vina/SKILL.md)). Poses must be in Vina order (pose 1 = top-scored) or the top-1 gate will key off the wrong pose.
 - **Reference format**: PDB (requires `--smiles`) or SDF (self-contained bond orders).
 - **In-place RMSD, no alignment**: The script uses `rdMolAlign.CalcRMS` (not `GetBestRMS`) to compute RMSD *without* rigid-body alignment between probe and reference. For self-docking validation this is mandatory: the docked pose and the crystal reference are expected to share the receptor's coordinate frame, so any alignment would artificially deflate the RMSD and silently pass a failing protocol.

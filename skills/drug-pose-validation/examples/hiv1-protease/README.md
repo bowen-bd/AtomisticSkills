@@ -12,8 +12,7 @@ Demonstrate PoseBusters pose validation with both passing and failing poses, usi
 ### Ligand-only validation (all pass)
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-pose-validation/scripts/validate_poses.py \
+venv/run cpu python skills/drug-pose-validation/scripts/validate_poses.py \
   --poses skills/drug-pose-validation/examples/hiv1-protease/test_poses.sdf \
   --output_dir validation/
 ```
@@ -23,8 +22,7 @@ Expected: 3/3 pass.
 ### Mixed validation (one bad pose)
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-pose-validation/scripts/validate_poses.py \
+venv/run cpu python skills/drug-pose-validation/scripts/validate_poses.py \
   --poses skills/drug-pose-validation/examples/hiv1-protease/mixed_poses.sdf \
   --output_dir mixed_validation/
 ```

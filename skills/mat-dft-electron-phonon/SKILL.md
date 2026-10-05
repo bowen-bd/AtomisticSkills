@@ -39,7 +39,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ../../scripts/generate_inputs.py -
 ```
 
 ## Constraints
-- **Environments**: Scripts require the `atomate2-agent` environment containing `phonopy`.
+- **Environments**: Scripts require the `cpu` environment, which contains `phonopy`.
 - **Phase Stability**: The material must be strictly stable. If imaginary modes exist in the phonon branch, thermal displacement mapping will fail catastrophically since occupations of negative frequencies diverge.
 - **Supercells**: Accuracy is critically bound to taking a large enough supercell (`supercell_matrix`) to capture long-wavelength phonons correctly.
 

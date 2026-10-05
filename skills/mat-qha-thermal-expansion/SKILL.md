@@ -13,7 +13,7 @@ This skill provides tools for calculating thermal expansion and temperature-depe
 ## 1. Prerequisites
 
 - The appropriate MLIP wrapper must be available (`MACEWrapper`, `MatGLWrapper`, or `FAIRCHEMWrapper`).
-- `matcalc` must be installed in the relevant conda environment.
+- `matcalc` is included in the `mlip` and `fairchem` environments.
 
 ## 2. Choosing a Foundation Potential
 

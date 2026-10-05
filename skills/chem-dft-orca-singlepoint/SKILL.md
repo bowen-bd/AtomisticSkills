@@ -18,7 +18,7 @@ The calculation relies on the SCINE wrapper for automated input generation, outp
 
 ## 1. Prerequisites
 
-- **Conda environment:** `orca-agent` with `scine_utilities` and `ase` installed
+- **Environment:** `cpu` (commands run through `venv/run cpu ...`), which includes `scine_utilities` (x86_64 only) and `ase`
 - **ORCA binary:** The environment variable `ORCA_BINARY_PATH` must point to the ORCA executable
   ```bash
   export ORCA_BINARY_PATH=/path/to/orca
@@ -149,7 +149,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_si
 - **Non-periodic systems only:** This skill is designed for molecules, clusters, and finite systems. ORCA does not handle periodic boundary conditions.
 - **Standard methods:** For multi-reference methods (CASSCF, NEVPT2), excited-state calculations (TD-DFT, EOM-CCSD), or other advanced features, use the [advanced ORCA skill](../chem-dft-orca-advanced-calculation/SKILL.md).
 - **ORCA binary:** `ORCA_BINARY_PATH` must be set and point to a working ORCA installation.
-- **Environment:** All commands require the `orca-agent` conda environment.
+- **Environment:** All commands require the `cpu` environment.
 - **Solvation:** When using `--solvation`, you must also provide `--solvent`. Available solvents depend on the chosen model (CPCM/SMD); common names like `water`, `ethanol`, `dmso`, `acetonitrile`, `thf` are supported.
 - **Spin multiplicity:** Provide the spin multiplicity $2S+1$ (e.g. 1 for singlet, 2 for doublet, 3 for triplet), not the number of unpaired electrons.
 

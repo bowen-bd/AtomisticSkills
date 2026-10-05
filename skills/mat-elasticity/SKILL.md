@@ -21,7 +21,7 @@ Calculate the elastic tensor ($C_{ij}$) of a material by applying systematic def
 ## 1. Prerequisites
 
 - The appropriate MLIP wrapper must be available (`MACEWrapper`, `MatGLWrapper`, or `FAIRCHEMWrapper`).
-- `matcalc` must be installed in the relevant conda environment.
+- `matcalc` is included in the `mlip` and `fairchem` environments.
 - A structure file (CIF, POSCAR, or other ASE-readable format). The structure will be relaxed before deformation by default.
 
 ## 2. Choosing a Foundation Potential
@@ -85,10 +85,9 @@ ${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/calcu
 
 ## 6. Constraints
 
-- **Environment**: Scripts require conda environments with MLIP packages installed:
-  - `mace-agent` for MACE models
-  - `matgl-agent` for MatGL/CHGNet models
-  - `fairchem-agent` for FairChem/UMA models
+- **Environment**: Scripts require an environment with MLIP packages installed (`venv/run <venv> ...`):
+  - `mlip` for MACE and MatGL/CHGNet models
+  - `fairchem` for FairChem/UMA models
 - **Structure Relaxation**: two distinct stages, controlled by two different flags. `--relax_structure` (default on) relaxes the input cell *before* the strain scan, so the scan is centred on a stress-free reference — elastic constants are defined about zero stress, so this matters. `--relax_deformed` (default on) controls the *per-deformation* ion relaxation, which selects between two different physical quantities; see below.
 - **Linear Regime**: Strains must be small enough to remain in the linear elastic regime. The default values are appropriate for most inorganic crystalline materials.
 - **Unit Conversion**: MatCalc returns moduli in eV/ų (bulk, shear) and Pa (Young's). The script converts all to GPa.

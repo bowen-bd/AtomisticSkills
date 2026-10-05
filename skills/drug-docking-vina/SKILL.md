@@ -163,7 +163,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu+docking python ${CLAUDE_SKILL_DIR}/script
 
 ## Constraints
 
-* **Environment**: Requires `drugdisc-agent`.
+* **Environment**: Requires `cpu`; docking runs in `cpu+docking` and receptor preparation in `cpu+openmm`.
 * **AutoDock Vina**: Requires AutoDock Vina Python bindings (`vina` package; typically Vina >= 1.2.x).
 * **Input format**: Receptor and ligands must be **PDBQT**.
 * **Search space selection**: Box center/size strongly affects accuracy and runtime; avoid unnecessarily large "blind docking" boxes unless justified.

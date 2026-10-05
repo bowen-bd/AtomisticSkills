@@ -26,7 +26,7 @@ The skill uses MatCalc's `AdsorptionCalc` to automate the full workflow: bulk re
 ## Prerequisites
 
 - The appropriate MLIP wrapper must be available (`MACEWrapper`, `MatGLWrapper`, or `FAIRCHEMWrapper`)
-- `matcalc`, `pymatgen`, and `ase` must be installed in the relevant conda environment
+- `matcalc`, `pymatgen`, and `ase` are included in the `mlip` and `fairchem` environments
 - A bulk crystalline structure file (CIF, POSCAR, etc.)
 - An adsorbate molecule structure file (XYZ, CIF) or SMILES string
 

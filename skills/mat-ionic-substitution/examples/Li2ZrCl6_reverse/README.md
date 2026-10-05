@@ -7,8 +7,7 @@ Find all crystal structures that can be ion-substituted to produce Li₂ZrCl₆,
 ## Command
 
 ```bash
-# Env: base-agent
-python skills/mat-ionic-substitution/scripts/find_structures_for_composition.py \
+venv/run cpu python skills/mat-ionic-substitution/scripts/find_structures_for_composition.py \
     --composition Li2ZrCl6 \
     --threshold 0.001 \
     --max_precursors 42 \

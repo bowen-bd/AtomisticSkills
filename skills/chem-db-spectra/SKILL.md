@@ -27,7 +27,7 @@ Parameters:
 - `--type`: Filter the spectrum type to download (options: `IR`, `Mass`, `UVVis`, `All`). Default is `All`.
 
 ## Constraints
-- **Environments**: The scripts require the `base-agent` Conda environment.
+- **Environments**: The scripts require the `cpu` environment.
 - **Spectrum Format**: Output data is universally saved in JCAMP-DX (`.jdx`) standard format. You must use appropriate spectroscopic python package (e.g., `jcamp`) if you need to parse it back into numpy arrays.
 - **Scraping Dependability**: This script utilizes HTML scraping (`beautifulsoup4`). If the NIST WebBook layout changes in the future, the selectors may need to be updated.
 

@@ -14,8 +14,7 @@ You can first make sure that your system is setup properly by running `../../che
 Run the following command from the project root:
 
 ```bash
-# Env: orca-agent
-python skills/chem-dft-orca-optimization/scripts/run_optimization.py \
+venv/run cpu python skills/chem-dft-orca-optimization/scripts/run_optimization.py \
     --structure skills/chem-dft-orca-optimization/example/h2o.xyz \
     --functional PBE \
     --basis_set def2-SVP \
@@ -40,8 +39,7 @@ python skills/chem-dft-orca-optimization/scripts/run_optimization.py \
 Run the following command from the project root:
 
 ```bash
-# Env: orca-agent
-python skills/chem-dft-orca-optimization/scripts/run_optimization.py \
+venv/run cpu python skills/chem-dft-orca-optimization/scripts/run_optimization.py \
     --structure skills/chem-dft-orca-optimization/example/ts_guess.xyz \
     --opt_type ts \
     --functional PBE \

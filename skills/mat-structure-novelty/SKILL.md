@@ -59,7 +59,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/match_
 ```
 
 ## Constraints
-- **Environments**: The script uses the standard `StructureMatcher` from `pymatgen`. It MUST be run in the `base-agent` environment.
+- **Environments**: The script uses the standard `StructureMatcher` from `pymatgen`. It MUST be run in the `cpu` environment.
 - **Match Tolerances**: The structural matching relies on fractional length tolerance (`--ltol`), site tolerance (`--stol`), and angle tolerance (`--angle_tol`). The defaults (0.2, 0.3, 5.0) are typically suitable for DFT-relaxed comparison against MP structures, but can be tweaked if the test structure is highly distorted or unrelaxed.
 
 ---

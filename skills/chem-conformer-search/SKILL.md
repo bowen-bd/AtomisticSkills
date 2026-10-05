@@ -20,13 +20,13 @@ Generate a diverse ensemble of low-energy conformers for a given molecule. The w
 
 ### Recommended Models
 
-- **MACE-OFF23**: `MACE-OFF23-small` (default), `MACE-OFF23-medium` — trained on organic molecules (Env: `mace-agent`)
-- **MACE-MH**: `MACE-MH-1` with head `omol` — multi-head model with molecular head (Env: `mace-agent`)
-- **UMA**: `uma-s-1p1` with head `omol` — general molecular model (Env: `fairchem-agent`)
+- **MACE-OFF23**: `MACE-OFF23-small` (default), `MACE-OFF23-medium` — trained on organic molecules (Env: `mlip`)
+- **MACE-MH**: `MACE-MH-1` with head `omol` — multi-head model with molecular head (Env: `mlip`)
+- **UMA**: `uma-s-1p1` with head `omol` — general molecular model (Env: `fairchem`)
 
 ## 1. Prerequisites
 
-- **Conda Environment**: `mace-agent` (recommended as it includes both `mace` and `rdkit`).
+- **Environment**: `mlip` (recommended as it includes both `mace` and `rdkit`; commands run through `venv/run mlip ...`).
 - **Input**: SMILES string or a structure file (`.xyz`, `.sdf`, `.mol2`, `.pdb`).
 
 ## 2. Methodology
@@ -99,7 +99,7 @@ See `examples/aspirin` for a complete example run on Acetylsalicylic acid.
 
 ## 6. Constraints
 
-- **Environment**: Use the conda environment matching the chosen model: `mace-agent` (MACE), `fairchem-agent` (FairChem/UMA), or `matgl-agent` (MatGL). All include RDKit.
+- **Environment**: Use the environment matching the chosen model: `mlip` (MACE or MatGL) or `fairchem` (FairChem/UMA). All include RDKit.
 - **Input**: Either `--smiles` or `--structure` must be provided, but not both.
 - **Molecule Type**: Optimized for organic molecules. For inorganic clusters, switch to `MACE-OMAT` or `MatGL` models.
 - **Non-periodic**: All conformers are treated as non-periodic (isolated molecules).

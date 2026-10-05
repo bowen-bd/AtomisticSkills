@@ -136,7 +136,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_
 - **Request Time Limit**: PUG-REST is intended for short synchronous requests (server timeouts ~30 seconds). Keep `--max_results` small for interactive use.
 - **3D Structures**: PubChem 3D SDF records are computed (not necessarily experimental) and may not exist for all compounds; the script falls back to 2D when needed.
 - **Synonyms**: Synonyms may be numerous and are optional; disable them with `--no_synonyms` for high-throughput workflows.
-- **Environment**: Requires `base-agent` conda environment.
+- **Environment**: Requires the `cpu` environment.
 - **Dependencies**: Standard library only (`urllib`, `json`, `argparse`).
 
 ---

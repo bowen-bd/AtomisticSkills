@@ -12,16 +12,15 @@ This example demonstrates querying ChEMBL for human EGFR (Epidermal Growth Facto
 From the project root:
 
 ```bash
-# Env: base-agent
 # Step 1: Search for EGFR targets
-python skills/drug-db-chembl/scripts/query_chembl.py \
+venv/run cpu python skills/drug-db-chembl/scripts/query_chembl.py \
   --target "EGFR" \
   --target_type "SINGLE PROTEIN" \
   --max_results 5 \
   --output skills/drug-db-chembl/examples/egfr_targets.json
 
 # Step 2: Get IC50 binding activities for human EGFR
-python skills/drug-db-chembl/scripts/query_chembl.py \
+venv/run cpu python skills/drug-db-chembl/scripts/query_chembl.py \
   --target_id "CHEMBL203" \
   --activity_type "IC50" \
   --assay_type "B" \

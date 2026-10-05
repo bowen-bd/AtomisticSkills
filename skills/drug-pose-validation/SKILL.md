@@ -110,7 +110,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/valida
 
 ## Constraints
 
-- **Environment**: Requires `drugdisc-agent` with `posebusters` installed.
+- **Environment**: Requires `cpu` (includes `posebusters`).
 - **Input format**: Poses must be SDF. Convert PDBQT to SDF with Open Babel before running.
 - **Receptor**: Optional but strongly recommended. Without it, protein-ligand clash checks are skipped.
 - **Hydrogen handling**: PoseBusters expects explicit hydrogens on the ligand. Ensure hydrogens are present in the input SDF (they should be if you used [drug-ligand-prep](../drug-ligand-prep/SKILL.md)).

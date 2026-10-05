@@ -34,10 +34,10 @@ To strictly enforce numerical stability within explicit explicit integration bou
 
 ## Reproduction
 
-Run the following command from the project root using the `phasefield-agent` environment:
+Run the following command from the project root using the `cpu` environment:
 
 ```bash
-python skills/mat-phase-field-non-conservative/scripts/run_dendrite_growth.py \
+venv/run cpu python skills/mat-phase-field-non-conservative/scripts/run_dendrite_growth.py \
     --grid-size 300 \
     --steps 12000 \
     --dt 0.00005 \

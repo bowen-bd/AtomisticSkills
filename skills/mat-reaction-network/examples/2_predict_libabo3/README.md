@@ -4,10 +4,10 @@ This example compares the theoretical synthesis pathways for the phosphor materi
 
 ## Running the Example
 
-Activate the appropriate Conda environment (`base-agent`) and run the included bash script:
+Run the included bash script in the `cpu` environment:
 
 ```bash
-./run.sh
+venv/run cpu bash ./run.sh
 ```
 
 This invokes the `find_pathways.py` tool on both cursor sets and generates two JSON files: `traditional_output.json` and `predicted_output.json`.

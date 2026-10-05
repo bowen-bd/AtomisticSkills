@@ -11,8 +11,7 @@ The Silicon structure ([Si.cif](Si.cif)) was obtained from Materials Project (mp
 Run the EOS calculation with:
 
 ```bash
-# Env: mace-agent
-python skills/mat-equation-of-state/scripts/calculate_eos.py \
+venv/run mlip python skills/mat-equation-of-state/scripts/calculate_eos.py \
     --structure skills/mat-equation-of-state/examples/Si/Si.cif \
     --model_type mace \
     --model_name MACE-OMAT-0-small \

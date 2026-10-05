@@ -162,8 +162,8 @@ See [examples/](examples/) for a SiC dielectric-response tutorial and example pl
 - **VASP Setup**: Requires properly configured VASP and pseudopotentials.
 - **Atomate2 Setup**: Requires atomate2, jobflow, and either local or remote execution configuration.
 - **Environments**:
-  - Optics calculation: `atomate2-agent`
-  - Post-processing scripts: `base-agent`
+  - Optics calculation: `cpu`
+  - Post-processing scripts: `cpu`
 - **Convergence**:
   - Increase `NBANDS` until the optical spectrum is converged over the energy range of interest
   - Check sensitivity to `NEDOS`, `CSHIFT`, and k-point density

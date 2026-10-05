@@ -24,7 +24,7 @@ Geometry optimization iteratively adjusts nuclear positions to minimize (or, for
 
 ## 1. Prerequisites
 
-- **Conda environment:** `orca-agent` with `scine_utilities`, `scine_readuct`, and `ase` installed
+- **Environment:** `cpu` (commands run through `venv/run cpu ...`), which includes `scine_utilities`, `scine_readuct` (x86_64 only), and `ase`
 - **ORCA binary:** The environment variable `ORCA_BINARY_PATH` must point to the ORCA executable
   ```bash
   export ORCA_BINARY_PATH=/path/to/orca
@@ -140,7 +140,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_op
 - **Single-ended TS:** Only single-ended TS optimization is available. For double-ended methods (NEB), pre-screen with MLIPs.
 - **TS guess quality:** The TS optimizer requires a reasonable initial guess. Generate one using constrained scans, interpolation, or MLIP-based TS search methods.
 - **ORCA binary:** `ORCA_BINARY_PATH` must be set and point to a working ORCA installation.
-- **Environment:** All commands require the `orca-agent` conda environment.
+- **Environment:** All commands require the `cpu` environment.
 - **Solvation:** When using `--solvation`, you must also provide `--solvent`.
 
 ## References

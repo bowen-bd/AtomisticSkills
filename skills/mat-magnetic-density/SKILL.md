@@ -216,7 +216,7 @@ Choosing the right exchange-correlation functional is critical for accurate magn
 
 - **Spin Polarization**: The `mp` preset (MPStaticSet) automatically enables spin polarization (ISPIN=2) for magnetic systems. MAGMOM values are also automatically initialized (default 0.6 per magnetic atom).
 - **Initial Magnetic Moments**: For complex magnetic ordering (e.g., antiferromagnetic), you should provide initial MAGMOM values through the config parameter to help convergence.
-- **Environment**: The parsing scripts require the `base-agent` conda environment with pymatgen installed.
+- **Environment**: The parsing scripts require the `cpu` environment with pymatgen installed.
 - **Remote Execution**: DFT calculations are computationally expensive and should typically be run on remote clusters using `execution_mode="remote"`.
 - **CHGCAR Access**: Extracting spin density requires access to the CHGCAR file, which may not be automatically retrieved. You may need to manually download it from the remote execution directory.
 - **Convergence**: Magnetic systems can be challenging to converge. If calculations fail to converge, try:

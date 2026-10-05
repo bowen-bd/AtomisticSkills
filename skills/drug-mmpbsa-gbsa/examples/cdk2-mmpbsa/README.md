@@ -15,8 +15,7 @@ Real outputs from `compute_mmpbsa.py` (rep1 only) on a CDK2 / CHEMBL388978 traje
 ## Command
 
 ```bash
-# Env: drugmd-agent
-python skills/drug-mmpbsa-gbsa/scripts/compute_mmpbsa.py \
+venv/run cpu+openmm python skills/drug-mmpbsa-gbsa/scripts/compute_mmpbsa.py \
   --topology .../CHEMBL388978/complex_solvated.pdb \
   --trajectory .../CHEMBL388978/rep1/production.dcd \
   --ligand_sdf .../CHEMBL388978.sdf \
@@ -83,8 +82,7 @@ When PB and GB rank-orders diverge, neither is reliable. The honest answer is to
 The trajectory is ~12 MB and the prmtops add another ~3 MB; the full intermediate set is ~44 MB. Reproduce with:
 
 ```bash
-# Env: drugmd-agent
-python skills/drug-mmpbsa-gbsa/scripts/compute_mmpbsa.py \
+venv/run cpu+openmm python skills/drug-mmpbsa-gbsa/scripts/compute_mmpbsa.py \
   --topology examples/drug-discovery/cdk2-htvs/07_md_refinement/complexes/CHEMBL388978/complex_solvated.pdb \
   --trajectory examples/drug-discovery/cdk2-htvs/07_md_refinement/results/CHEMBL388978/rep1/production.dcd \
   --ligand_sdf examples/drug-discovery/cdk2-htvs/05_pose_validation/poses_sdf/CHEMBL388978.sdf \

@@ -94,7 +94,7 @@ Default criterion: exactly one mode below `-50 cm^-1`.
 
 ## Prerequisites And Constraints
 
-- Activate `mace-agent` or `fairchem-agent` depending on backend.
+- Run in `mlip` (MACE) or `fairchem` (FairChem) depending on backend (`venv/run <venv> ...`).
 - Script enforces `pbc=False` (non-periodic only).
 - TS guess quality matters; poor guesses can converge to minima or higher-order saddles.
 

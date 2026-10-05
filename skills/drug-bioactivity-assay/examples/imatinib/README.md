@@ -5,8 +5,7 @@ This example demonstrates how to find target proteins and bioassays where Imatin
 ## Command
 
 ```bash
-# Env: base-agent
-python skills/drug-bioactivity-assay/scripts/get_assays.py \
+venv/run cpu python skills/drug-bioactivity-assay/scripts/get_assays.py \
   --cid 5291 \
   --active_only \
   --limit 20 \

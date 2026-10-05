@@ -24,7 +24,7 @@ To keep the core MLIP wrappers clean, property prediction in AtomisticSkills is 
 2. **Determine Property Type**: Determine if the property is `"intensive"` (e.g. Bandgap, Bulk Modulus) or `"extensive"` (e.g. Total Energy).
    - *MatGL logic*: For intensive targets, node features undergo a global graph readout (like `Set2Set`) before passing through an MLP. For extensive targets, the MLP outputs atomic properties which are then sum-pooled.
    - *MACE logic*: MACE natively supports extensive targets by predicting site-wise scalar outputs and sum-pooling them. When intensive properties are targeted, MACE still sum-pools site-wise outputs, forcing the model to internally learn the intensive invariant.
-3. **Execute Script**: Run the MACE or MatGL property prediction script in their respective Conda environments.
+3. **Execute Script**: Run the MACE or MatGL property prediction script in the `mlip` environment.
 
 ---
 
@@ -76,7 +76,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/train
 
 ## Constraints
 
-- **Environments**: MACE predictor strictly requires `mace-agent`, and MatGL requires `matgl-agent`. **Each code block MUST specify the environment.**
+- **Environments**: The MACE and MatGL predictors both require `mlip`. **Each code block MUST specify the environment.**
 - **Data Format**: The dataset must be `.json` or XYZ formatted with the raw structures or ASE atoms.
 - **Subprocess Dependency**: The `train_mace_property.py` script spawns an underlying `mace.cli.run_train` subprocess to maintain compatibility with MACE's native optimizers.
 - **Pre-trained Architecture**: For MatGL, changing the intensive/extensive nature of a pre-trained model changes the head dimensions. Extensive model predictions are mathematically scaled down by the number of atoms dynamically at training time if an intensive property is targeted.

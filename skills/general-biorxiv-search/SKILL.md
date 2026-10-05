@@ -77,7 +77,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/biorxi
 - **No official rate limit** specified by bioRxiv API; script includes 0.5s delay per request as courtesy.
 - **Pagination**: API returns 30 results per page; script paginates automatically up to `--max_results`.
 - **Keyword filtering**: Done client-side (API lacks full-text search); date range must be broad enough to surface relevant papers.
-- **Environment**: Requires `base-agent` conda environment.
+- **Environment**: Requires the `cpu` environment.
 - **Dependencies**: Uses `requests`.
 - **Metadata fields**: DOI, URL, title, authors, abstract, date, category, server, version, license, published journal (if available).
 

@@ -15,8 +15,7 @@ and the [ORCA manual](https://www.faccts.de/docs/orca/6.0/manual/).
 Run the following command from the project root:
 
 ```bash
-# Env: orca-agent
-python skills/chem-dft-orca-advanced-calculation/scripts/run_orca_input.py \
+venv/run cpu python skills/chem-dft-orca-advanced-calculation/scripts/run_orca_input.py \
     --input_file orca_calc.inp
 ```
 

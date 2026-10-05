@@ -11,8 +11,7 @@ Run pocket detection on the apo-like HIV-1 protease (PDB 1HSG with the MK1 inhib
 ## Run fpocket
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-pocket-detection/scripts/detect_pockets.py \
+venv/run cpu python skills/drug-pocket-detection/scripts/detect_pockets.py \
   --protein skills/drug-pocket-detection/examples/hiv1-protease/1HSG_protein.pdb \
   --backend fpocket \
   --top_n 5 \
@@ -47,8 +46,7 @@ The fpocket logistic-regression model reports a druggability score of only **0.0
 ## Visualize
 
 ```bash
-# Env: drugmd-agent  (PyMOL lives in drugmd-agent)
-python skills/drug-pocket-detection/scripts/visualize_pockets.py \
+venv/run cpu+pymol python skills/drug-pocket-detection/scripts/visualize_pockets.py \
   --protein skills/drug-pocket-detection/examples/hiv1-protease/1HSG_protein.pdb \
   --pockets skills/drug-pocket-detection/examples/hiv1-protease/pockets_fpocket.json \
   --top_n 3 \
@@ -62,8 +60,7 @@ P1 sits squarely between the homodimer flaps; P2 and P3 are peripheral.
 ## Hand off the chosen pocket to docking
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-pocket-detection/scripts/pocket_to_box.py \
+venv/run cpu python skills/drug-pocket-detection/scripts/pocket_to_box.py \
   --pockets skills/drug-pocket-detection/examples/hiv1-protease/pockets_fpocket.json \
   --rank 1 \
   --padding 6.0 \
@@ -78,8 +75,7 @@ The resulting `binding_site_from_pocket.json` is consumable directly by [drug-do
 If the `prank` CLI is on PATH, run the ML backend for an independent ranking:
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-pocket-detection/scripts/detect_pockets.py \
+venv/run cpu python skills/drug-pocket-detection/scripts/detect_pockets.py \
   --protein skills/drug-pocket-detection/examples/hiv1-protease/1HSG_protein.pdb \
   --backend p2rank \
   --top_n 5 \

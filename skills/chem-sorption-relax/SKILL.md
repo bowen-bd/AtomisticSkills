@@ -30,7 +30,7 @@ To process porous frameworks (e.g., MOFs, COFs) for downstream molecular sorptio
 
 - **Input**: A framework structure in CIF (or XYZ) format.
 - **MLIP MCP Tool**: A relaxation tool such as `fairchem.relax_structure`, `mace.relax_structure`, or `matgl.relax_structure`.
-- **Conda environment**: `base-agent` for the supercell builder logic, followed by the specific environment for the chosen MLIP (e.g., `fairchem-agent`).
+- **Environment**: `cpu` for the supercell builder logic, followed by the specific environment for the chosen MLIP (`fairchem` for FairChem, `mlip` for MACE and MatGL).
 
 ## Instructions
 

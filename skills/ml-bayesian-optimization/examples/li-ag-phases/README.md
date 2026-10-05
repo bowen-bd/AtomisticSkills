@@ -42,8 +42,7 @@ Then query formation energies via `mp_api` and save to `li_ag_phases.csv`.
 ### Step 2: Sobol initialization
 
 ```bash
-# Env: base-agent
-python skills/ml-bayesian-optimization/scripts/suggest_candidates.py \
+venv/run cpu python skills/ml-bayesian-optimization/scripts/suggest_candidates.py \
     --config search_space.yaml \
     --batch_size 5 \
     --output candidates_round_0.csv \
@@ -55,7 +54,7 @@ formation energies. You must evaluate each candidate externally and record the r
 Here, evaluation is a nearest-neighbor lookup in `li_ag_phases.csv`:
 
 ```python
-# Env: base-agent
+# Environment: cpu (run with: venv/run cpu python)
 import pandas as pd, numpy as np
 db = pd.read_csv("li_ag_phases.csv")
 best = db.groupby("x_Li")["formation_energy_per_atom"].min().reset_index()
@@ -74,8 +73,7 @@ or a DFT workflow for each candidate, then append the results to `evaluated.csv`
 ### Step 3: BO rounds (repeat)
 
 ```bash
-# Env: base-agent
-python skills/ml-bayesian-optimization/scripts/suggest_candidates.py \
+venv/run cpu python skills/ml-bayesian-optimization/scripts/suggest_candidates.py \
     --config search_space.yaml \
     --results evaluated.csv \
     --batch_size 3 \
@@ -90,8 +88,7 @@ results to `evaluated.csv`, then repeat.
 ### Step 4: Plot results
 
 ```bash
-# Env: base-agent
-python skills/ml-bayesian-optimization/scripts/plot_bo_results.py \
+venv/run cpu python skills/ml-bayesian-optimization/scripts/plot_bo_results.py \
     --results evaluated.csv \
     --config search_space.yaml \
     --output_dir ./

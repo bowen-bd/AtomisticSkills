@@ -13,7 +13,6 @@ The dataset is processed using the `prepare_matgl_data.py` script. The training 
 Because the raw `vasp_s` labels in this dataset are recorded in `kB`, we MUST pass the `--vasp-stress-conversion` flag to multiply them by `-1/1602.1766208` during extraction, converting them to `eV/Å³` and matching standard convention.
 
 ```bash
-# Env: matgl-agent
 venv/run mlip python skills/ml-matgl-finetune/scripts/prepare_matgl_data.py \
     --data private_data/WBM_high_energy_states.json \
     --output-dir skills/ml-matgl-finetune/examples/matgl-wbm-finetune \
@@ -25,7 +24,6 @@ venv/run mlip python skills/ml-matgl-finetune/scripts/prepare_matgl_data.py \
 The script structures data internally with `MGLDataset` and natively connects directly to PyTorch Lightning via the `train_matgl.py` protocol. You can boot the loop directly onto GPU without supplementary extraction passes:
 
 ```bash
-# Env: matgl-agent
 venv/run mlip python skills/ml-matgl-finetune/scripts/train_matgl.py \
     --train-data skills/ml-matgl-finetune/examples/matgl-wbm-finetune/train_data.json \
     --val-data skills/ml-matgl-finetune/examples/matgl-wbm-finetune/val_data.json \

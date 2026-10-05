@@ -10,8 +10,7 @@
 ## How to Reproduce
 
 ```bash
-# Env: fairchem-agent
-python skills/chem-bond-dissociation/scripts/calculate_bde.py \
+venv/run fairchem python skills/chem-bond-dissociation/scripts/calculate_bde.py \
     --smiles CO \
     --all_bonds \
     --include_h_bonds \
@@ -22,7 +21,7 @@ python skills/chem-bond-dissociation/scripts/calculate_bde.py \
     --output_dir skills/chem-bond-dissociation/examples/methanol_uma_omol_both
 
 # Plot
-python skills/chem-bond-dissociation/examples/methanol_uma_omol_both/plot.py
+venv/run fairchem python skills/chem-bond-dissociation/examples/methanol_uma_omol_both/plot.py
 ```
 
 ## Results

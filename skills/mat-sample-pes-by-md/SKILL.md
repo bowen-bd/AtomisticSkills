@@ -70,8 +70,8 @@ Sampling 10 representative configurations from a 10 ps MD trajectory of LiMnO2 a
 
 ## Constraints
 - **Environments**:
-    - **Off-Equilibrium (MatGL)**: Requires `matgl-agent` conda environment.
-    - **Off-Equilibrium (MACE)**: Requires `mace-agent` conda environment.
+    - **Off-Equilibrium (MatGL)**: Requires the `mlip` environment.
+    - **Off-Equilibrium (MACE)**: Requires the `mlip` environment.
 - **Time Step**: Automatically set to **5.0 fs** for stability, or **2.0 fs** if Hydrogen is detected.
 - **Clustering**: Requires `scikit-learn` in the environment.
 ---

@@ -34,7 +34,6 @@ committee energy standard deviation on bulk configurations should be
 ### 1. Query and Prepare Bulk Structure
 
 ```bash
-# Env: base-agent
 mcp_base_search_materials_project_by_formula(formula="LiFePO4", save_to_file="LiFePO4_bulk.cif")
 mcp_base_supercell_expansion(
     structure_path="LiFePO4_bulk.cif",
@@ -48,8 +47,7 @@ mcp_base_supercell_expansion(
 Sample off-equilibrium structures using the [mat-sample-pes-by-md](../../mat-sample-pes-by-md/SKILL.md) skill, then label with VASP via Atomate2.
 
 ```bash
-# Env: mace-agent
-python skills/mat-sample-pes-by-md/scripts/sample_structures.py \
+venv/run mlip python skills/mat-sample-pes-by-md/scripts/sample_structures.py \
     --structure LiFePO4_2x1x2.cif \
     --model_type mace --model_name MACE-MH-1 \
     --n_structures 1200 \
@@ -61,13 +59,12 @@ Label with DFT and collect into `training_data.json`.
 ### 3. Fine-Tune Committee (3 Models)
 
 ```bash
-# Env: mace-agent
 for SEED in 0 1 2; do
-    python skills/ml-mace-finetune/scripts/prepare_mace_data.py \
+    venv/run mlip python skills/ml-mace-finetune/scripts/prepare_mace_data.py \
         --data training_data.json \
         --output-dir mace_data/
 
-    python skills/ml-mace-finetune/scripts/generate_mace_config.py \
+    venv/run mlip python skills/ml-mace-finetune/scripts/generate_mace_config.py \
         --train-file mace_data/train.xyz \
         --valid-file mace_data/valid.xyz \
         --model MACE-MH-1 \
@@ -94,7 +91,6 @@ Extract 100 equilibrium bulk frames from a short 300 K NVT MD run as
 the in-distribution test set.
 
 ```bash
-# Env: mace-agent
 mcp_mace_load_model(model_path="committee_models/seed_0/mace_finetuned.model")
 mcp_mace_run_md(
     structure_data="LiFePO4_2x1x2.cif",
@@ -103,7 +99,7 @@ mcp_mace_run_md(
     output_dir="md_300K/"
 )
 
-python skills/ml-committee-uncertainty/scripts/run_committee_inference.py \
+venv/run mlip python skills/ml-committee-uncertainty/scripts/run_committee_inference.py \
     --structures md_300K/trajectory.traj \
     --models committee_models/seed_0/mace_finetuned.model \
              committee_models/seed_1/mace_finetuned.model \
@@ -116,8 +112,7 @@ python skills/ml-committee-uncertainty/scripts/run_committee_inference.py \
 ### 5. Run on Off-Equilibrium Structures (Expected: Higher Uncertainty)
 
 ```bash
-# Env: mace-agent
-python skills/ml-committee-uncertainty/scripts/run_committee_inference.py \
+venv/run mlip python skills/ml-committee-uncertainty/scripts/run_committee_inference.py \
     --structures sampled_structures/off_equilibrium.xyz \
     --models committee_models/seed_0/mace_finetuned.model \
              committee_models/seed_1/mace_finetuned.model \

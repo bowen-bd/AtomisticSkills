@@ -9,8 +9,7 @@ Average intercalation voltage of olivine LiFePO₄ cathode using MACE-MH-1 (matp
 mcp_base_search_materials_project_by_formula(formula="LiFePO4")
 
 # 2. Create de-intercalated structure
-# Env: base-agent
-python skills/mat-intercalation-voltage/scripts/remove_atoms.py \
+venv/run cpu python skills/mat-intercalation-voltage/scripts/remove_atoms.py \
     LiFePO4_structure.cif --remove Li --output FePO4.cif
 
 # 3. Load model & relax all three structures
@@ -23,8 +22,7 @@ mcp_mace_relax_structure(
 )
 
 # 4. Calculate voltage (substitute actual energies from relaxation)
-# Env: base-agent
-python skills/mat-intercalation-voltage/scripts/calculate_voltage.py \
+venv/run cpu python skills/mat-intercalation-voltage/scripts/calculate_voltage.py \
     --e_full <E_full> --e_empty <E_empty> --e_metal <E_metal> \
     --n_metal <n_metal_atoms> --n_ions <n_Li_removed> --metal Li \
     --output voltage/voltage_results.json

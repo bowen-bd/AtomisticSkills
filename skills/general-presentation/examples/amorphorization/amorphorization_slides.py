@@ -2,8 +2,7 @@
 Generate a presentation about the mat-amorphorization skill example (LiCl).
 
 Usage:
-    # Env: base-agent
-    python skills/general-presentation/examples/amorphorization/amorphorization_slides.py
+    venv/run cpu python skills/general-presentation/examples/amorphorization/amorphorization_slides.py
 
 Requirements:
     - Environment: cpu (run with: venv/run cpu python ...)

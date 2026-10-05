@@ -38,7 +38,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_
 ```
 
 ## Constraints
-- **Environments**: The script requires the `base-agent` Conda environment.
+- **Environments**: The script requires the `cpu` environment.
 - **Google Patents Limits**: The scraping script is sensitive to IP rate-limiting. Do not set `--limit` excessively high (keep under 50).
 - **Chemical Structures**: This tool performs **text-based** searches. It does not perform exact Substructure or Tanimoto similarity searches natively. You must provide textual synonyms (e.g., IUPAC names, trade names) for accurate chemical retrieval.
 

@@ -47,7 +47,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ../../scripts/generate_inputs.py -
 
 ## Constraints
 - **Computational Cost**: Extremely high. The dense uniform band structure and multiple deformations require significant CPU hours per material.
-- **Environments**: Scripts require `atomate2-agent` with both `atomate2` and `amset` installed.
+- **Environments**: Scripts require the `cpu` environment (`atomate2`); `amset` is its `transport` extra (`cpu+transport`), needed only where the AMSET jobs execute.
 - **K-Point Convergence**: Default parameters assume qualitative screening; strict literature matching requires extremely dense k-meshes (e.g., `40x40x40`).
 
 ## References

@@ -13,8 +13,7 @@ This example demonstrates preparing the c-Abl kinase domain (PDB: 1IEP, chain A)
 From the project root:
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-protein-prep/scripts/prepare_protein.py \
+venv/run cpu+openmm python skills/drug-protein-prep/scripts/prepare_protein.py \
   --pdb_id 1iep \
   --chains A \
   --heterogens none \

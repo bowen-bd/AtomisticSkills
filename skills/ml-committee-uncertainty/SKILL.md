@@ -147,7 +147,7 @@ base.register_model(
 - **Identical architecture**: All committee members must share the same base model architecture and chemical elements (same `--model` flag during fine-tuning). Different architectures cannot be meaningfully ensembled.
 - **Same data, different seeds** (fine-tuned committees): When building a committee via Option A above, members should be trained on the same dataset with different random seeds. Mixing training datasets within this committee flavor introduces epistemic uncertainty from data mismatch, not model uncertainty, and confounds the estimate.
 - **Heterogeneous / multi-foundation-model committees**: A committee does not have to be same-data/different-seed — a fixed pool of independently pretrained foundation models (e.g. MACE-MP-0, MACE-MP-0b, MACE-MP-0b2, MACE-OMAT-0) is also a valid ensemble for epistemic UQ, and can surface genuine out-of-distribution structures (e.g. an element in an unusual coordination environment) that a same-data seed ensemble would miss. Because these models differ in training data and reference level of theory, however, their **energy** predictions are not on a common scale — always rank this committee flavor by **force disagreement**, never by energy std (see the warning under Goal).
-- **Environment**: This script requires the `mace-agent` conda environment.
+- **Environment**: This script requires the `mlip` environment.
 
 ## References
 

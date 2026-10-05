@@ -6,8 +6,7 @@ This example demonstrates how to extract quantitative property data (specificall
 We will simulate slowly cooling a 40 mol% Zn (Al-40Zn) alloy from 900 K down to 300 K, plotting the equilibrium molar fraction of each phase.
 
 ```bash
-# Env: calphad-agent
-python ../../scripts/plot_phase_fractions.py ../../../mat-calphad-phase-diagram/examples/Al-Zn/alzn_mey.tdb --elements Al Zn --composition Zn 0.4 --t-range 300 900 10 --output phase_fractions.png
+venv/run cpu python ../../scripts/plot_phase_fractions.py ../../../mat-calphad-phase-diagram/examples/Al-Zn/alzn_mey.tdb --elements Al Zn --composition Zn 0.4 --t-range 300 900 10 --output phase_fractions.png
 ```
 
 ## Interpreting the Output

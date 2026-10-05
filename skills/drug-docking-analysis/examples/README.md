@@ -10,8 +10,7 @@ Two worked examples live here:
 Both examples start from a `docking_ranked.csv` that has already been produced upstream. If you are starting from `drug-docking-vina` output, run `collect_results.py` first:
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-docking-vina/scripts/collect_results.py \
+venv/run cpu python skills/drug-docking-vina/scripts/collect_results.py \
   --results docking/results/docking_results.json \
   --library_csv library/library_master.csv \
   --output_dir docking/analysis/
@@ -26,8 +25,7 @@ Input: `cdk2-htvs/inputs/docking_ranked.csv` (real CDK2 docking results from a 2
 Run the analysis:
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-docking-analysis/scripts/analyze_docking.py \
+venv/run cpu python skills/drug-docking-analysis/scripts/analyze_docking.py \
   --docking_csv skills/drug-docking-analysis/examples/cdk2-htvs/inputs/docking_ranked.csv \
   --output_dir skills/drug-docking-analysis/examples/cdk2-htvs/output/
 ```
@@ -55,8 +53,7 @@ Input: `microstates-demo/inputs/docking_ranked_microstates.csv`. Ten rows coveri
 **Run unaggregated (wrong)**:
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-docking-analysis/scripts/analyze_docking.py \
+venv/run cpu python skills/drug-docking-analysis/scripts/analyze_docking.py \
   --docking_csv skills/drug-docking-analysis/examples/microstates-demo/inputs/docking_ranked_microstates.csv \
   --output_dir skills/drug-docking-analysis/examples/microstates-demo/output_unaggregated/
 ```
@@ -66,8 +63,7 @@ Reports `n_compounds: 10, n_actives: 6, n_inactives: 4`. These counts are wrong 
 **Run with aggregation (correct)**:
 
 ```bash
-# Env: drugdisc-agent
-python skills/drug-docking-analysis/scripts/analyze_docking.py \
+venv/run cpu python skills/drug-docking-analysis/scripts/analyze_docking.py \
   --docking_csv skills/drug-docking-analysis/examples/microstates-demo/inputs/docking_ranked_microstates.csv \
   --parent_id_col parent_compound_id \
   --output_dir skills/drug-docking-analysis/examples/microstates-demo/output/

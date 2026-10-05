@@ -49,7 +49,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/find_p
 ```
 
 ## Constraints
-- **Environments**: The scripts require the `base-agent` conda environment where `reaction-network` and `mp-api` are installed. **Each execution MUST specify this environment.**
+- **Environments**: The scripts require the `cpu` environment where `reaction-network` and `mp-api` are installed. **Each execution MUST specify this environment.**
 - **Network Extent**: Highly constrained chemical systems (e.g., >5 elements) without sensible stability filtering (`--stability-tol`) can generate massive reaction networks taking >10 minutes and >16GB memory to solve.
 - **Open Phases**: Synthesis in air or controlled atmospheres must be modeled appropriately by declaring oxygen/nitrogen as open phases.
 

@@ -188,7 +188,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/define
 
 ## Constraints
 
-- **Environment**: Requires `drugdisc-agent`.
+- **Environment**: Requires `cpu` (`cpu+pymol` for `visualize_box.py`).
 - **Ligand mode**: Accepts PDB, SDF, MOL2, and PDBQT formats. The ligand must already be positioned in the receptor coordinate frame.
 - **Residue mode**: The protein file must be a PDB with standard residue numbering. Non-standard residue IDs or insertion codes may require explicit `chain:resid` specification.
 - **Box sizing**: For standard docking, 20-25 A per axis is typical. Boxes larger than 30 A significantly increase Vina runtime and reduce pose accuracy (Feinstein & Brylinski, 2015). Blind docking with boxes of 40-60 A is possible but should be treated as exploratory.

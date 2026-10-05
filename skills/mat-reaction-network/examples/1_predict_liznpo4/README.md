@@ -4,10 +4,10 @@ This example compares the synthesis pathways for $\text{LiZnPO}_4$ using traditi
 
 ## Running the Example
 
-Activate the appropriate Conda environment (`base-agent`) and run the included bash script:
+Run the included bash script in the `cpu` environment:
 
 ```bash
-./run.sh
+venv/run cpu bash ./run.sh
 ```
 
 This will run the pathway solver for both sets of precursors and generate two JSON files: `traditional_output.json` and `predicted_output.json`.

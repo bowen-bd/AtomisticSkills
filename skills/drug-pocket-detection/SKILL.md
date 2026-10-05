@@ -207,7 +207,7 @@ See [examples/hiv1-protease/README.md](examples/hiv1-protease/README.md) for a f
 
 ## Troubleshooting
 
-- **`fpocket: command not found`**: Install via `conda install -c conda-forge fpocket` (or `mamba install`). Verify with `fpocket -h`.
+- **`fpocket: command not found`**: fpocket is not a Python package, so the `cpu` environment does not include it: build it from source (https://github.com/Discngine/fpocket) and put it on `PATH`, or use the `cpu` container image, which includes it on x86_64. Verify with `fpocket -h`.
 - **`prank: command not found`**: Download the latest P2Rank release from https://github.com/rdk/p2rank/releases, unpack it, and either add the unpacked directory to `PATH` or symlink `prank` into a directory on `PATH`. Current P2Rank requires Java 17+ (tested up to Java 25). Run `prank --version` to confirm the install.
 - **fpocket reports zero pockets**: The input is likely missing heavy atoms (only CA traces) or has badly fragmented chains. Run protein-prep first.
 - **fpocket returns one giant pocket covering the whole surface**: The alpha-sphere clustering distance is too large for your structure. Lower `--fp_min_clust_radius` (try 1.4 A).
@@ -216,10 +216,10 @@ See [examples/hiv1-protease/README.md](examples/hiv1-protease/README.md) for a f
 
 ## Constraints
 
-- **Environment**: `drugdisc-agent`.
-- **Python deps**: numpy, MDAnalysis (already in `drugdisc-agent`).
+- **Environment**: `cpu` (`cpu+pymol` for `visualize_pockets.py`).
+- **Python deps**: numpy, MDAnalysis (already in `cpu`).
 - **External CLI tools** (one of):
-  - `fpocket` 4.x via conda-forge. Add to `drugdisc-agent` with `mamba install -n drugdisc-agent -c conda-forge fpocket`.
+  - `fpocket` 4.x, built from source (https://github.com/Discngine/fpocket) and on `PATH`; the `cpu` container image includes it (x86_64 only).
   - `prank` (P2Rank) from https://github.com/rdk/p2rank/releases. Current P2Rank requires **Java 17+** (tested up to Java 25). Very old releases (2.3 and earlier) supported Java 11+; only relevant if you are pinning to a legacy version.
 - **Input**: PDB (preferred) or any format MDAnalysis can read for residue extraction. fpocket itself accepts PDB and mmCIF.
 - **Pure geometry / ML on a single conformer**: cryptic pockets are missed by design. Use trajectory ensembles to detect those.

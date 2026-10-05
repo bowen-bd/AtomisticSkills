@@ -39,7 +39,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/plot_p
 
 ## Constraints
 - **Databases**: This skill strictly requires a valid `.tdb` file.
-- **Environments**: Scripts require the `calphad-agent` Conda environment because it isolates `pycalphad`.
+- **Environments**: Scripts require the `cpu` environment, which includes `pycalphad`.
 - **Multicomponent**: This specific plotting script focuses on Binary Systems. Ternary isotherms require a separate script not yet implemented.
 
 ## References

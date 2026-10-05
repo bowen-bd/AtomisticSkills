@@ -17,8 +17,7 @@ with actual PBE DFT results from atomate2 local execution.
 mcp_base_search_materials_project_by_formula(formula="MgO")
 
 # Step 2: Generate charged vacancy structures
-# Env: base-agent
-python skills/mat-defect-energy-dft/scripts/generate_defect_structures.py \
+venv/run cpu python skills/mat-defect-energy-dft/scripts/generate_defect_structures.py \
     --bulk MgO.cif \
     --supercell_size 3 3 3 \
     --defect_type vacancy \

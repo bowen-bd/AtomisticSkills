@@ -11,10 +11,10 @@ Usage:
         --temperature 300 --output-dir ./frenkel_ladd/Si_demo
 
 Requirements:
-    - Conda environment: depends on --calculator
-        mace                  -> use 'mace-agent' conda env
-        fairchem              -> use 'fairchem-agent' conda env
-        matgl                 -> use 'matgl-agent' conda env
+    - Environment: depends on --calculator
+        mace                  -> venv/run mlip python ...
+        fairchem              -> venv/run fairchem python ...
+        matgl                 -> venv/run mlip python ...
     - The transferable skill repo must provide `src.utils.mlips.loader`.
 """
 

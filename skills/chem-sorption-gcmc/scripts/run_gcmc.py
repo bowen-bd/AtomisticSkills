@@ -7,7 +7,8 @@ Usage:
         --steps 100000 --temperature-K 298 --pressure-bar 1
 
 Requirements:
-    - Conda environment: Varies based on `--calculator`
+    - Environment: Varies based on `--calculator` (fairchem -> fairchem; mace, matgl -> mlip;
+      run with: venv/run <venv> python ...)
     - Required packages: ase, ase-mc, numpy, matplotlib, torch, MLIP backend package
 """
 

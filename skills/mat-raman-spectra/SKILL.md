@@ -35,8 +35,8 @@ To calculate the Raman spectrum of a crystalline material by:
 
 ## Prerequisites
 
-- Pymatgen, phonopy installed in `base-agent` (for symmetry analysis and plotting)
-- MLIP environment (`mace-agent`, `matgl-agent`, or `fairchem-agent`) for phonon calculation
+- Pymatgen, phonopy installed in `cpu` (for symmetry analysis and plotting)
+- MLIP environment (`mlip` for MACE or MatGL, or `fairchem`) for phonon calculation
 
 ## Instructions
 
@@ -176,7 +176,7 @@ Expected: the script should identify B1g, Eg, A1g, and B2g modes (all Raman acti
 - **Supercell size**: A 2×2×2 supercell (or larger) is recommended. The script reads pre-computed force constants from `phonon.yaml`; the supercell size affects the quality of Γ-point eigenvectors.
 - **MLIP tier intensities**: Equal intensities are used as a placeholder. Do not compare intensities from the MLIP tier quantitatively with experiment.
 - **Acoustic modes**: The three acoustic modes at Γ (near 0 cm⁻¹) are always excluded from the Raman spectrum.
-- **Environments**: Step 2 (phonon calculation) requires `mace-agent` (or `matgl-agent`/`fairchem-agent`); Step 3 (analysis and plotting) runs in `base-agent`.
+- **Environments**: Step 2 (phonon calculation) requires `mlip` (MACE or MatGL) or `fairchem`; Step 3 (analysis and plotting) runs in `cpu`.
 
 ## References
 

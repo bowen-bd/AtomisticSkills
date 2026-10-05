@@ -231,7 +231,7 @@ step and the DFPT-vs-EPW $|g|$ validation against the gauge-invariant reference.
 
 ## Constraints
 - **External codes**: requires an MPI build of Quantum ESPRESSO 7.4.1 with EPW
-  and Wannier90; the Python parsers run in `base-agent`. Validated with ONCV
+  and Wannier90; the Python parsers run in `cpu`. Validated with ONCV
   SG15 PBE v1.2 pseudopotentials. Version pins reflect what was tested, not a
   claim that other versions are broken.
 - **2D truncation**: `assume_isolated = '2D'` in `pw.x` and `ph.x`, and

@@ -118,7 +118,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu+openmm python ${CLAUDE_SKILL_DIR}/scripts
 
 ## Constraints
 
-- **Environment**: Requires `drugmd-agent`.
+- **Environment**: Requires `cpu+openmm`.
 - **GPU acceleration**: The script auto-detects CUDA GPUs. Without a GPU, simulations will run on CPU (significantly slower; consider reducing production_steps for testing).
 - **Timestep**: 4 fs requires hydrogen mass repartitioning (HMR) in the system. The [drug-complex-system-builder](../drug-complex-system-builder/SKILL.md) applies HMR by default. If using a system without HMR, set `--timestep 2.0`.
 - **Trajectory size**: DCD files grow ~1 MB per 1000 frames for a typical 50k-atom system. A 10 ns run at 20 ps intervals produces ~500 frames (~500 MB).

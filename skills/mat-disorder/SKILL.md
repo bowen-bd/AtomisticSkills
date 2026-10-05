@@ -74,8 +74,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/iterat
 
 ## Constraints
 - **Environment**:
-    - `base-agent` for basic sampling.
-    - `smol-agent` for iterative training and smol-based analysis.
+    - `cpu` for basic sampling, iterative training and smol-based analysis.
 - **Fractional Occupancies**: The input must be a format that carries occupancy information (like CIF with `_atom_site_occupancy`).
 - **Algorithm**: Uses `ALGO_FAST` for efficiency; while fast, it may not find the global Ewald minimum for extremely large cells.
 ---

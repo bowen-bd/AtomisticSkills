@@ -29,8 +29,8 @@ Set up and run molecular dynamics (MD) simulations of molecules in explicit solv
 
 ## 1. Prerequisites
 
-- **Packmol binary** must be installed and on `PATH` in the `base-agent` environment.
-- **RDKit** must be available in the `base-agent` environment (for SMILES → 3D geometry).
+- **Packmol binary** must be installed and on `PATH` for the `cpu` environment.
+- **RDKit** must be available in the `cpu` environment (for SMILES → 3D geometry).
 - An MLIP backend must be available via MCP tools (MACE, MatGL, or FairChem).
 
 ## 2. MLIP Selection
@@ -185,7 +185,7 @@ After MD + analysis, expected RDF peak positions:
 - **System size**: A minimum of **64 solvent molecules** is recommended for reliable RDFs. Larger boxes (128–256) reduce finite-size effects.
 - **PBC interactions**: Ensure the box is large enough that periodic images do not interact (box side > 2 × rmax for RDF).
 - **Environments**:
-  - `base-agent` for box building and analysis scripts
+  - `cpu` for box building and analysis scripts
   - MCP tools for MD (any MLIP backend)
 
 ## References

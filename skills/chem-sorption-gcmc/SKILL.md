@@ -15,7 +15,7 @@ To predict the macroscopic adsorption uptake of a gas (or gas mixture) in a poro
 ## Prerequisites
 
 - **Input**: A relaxed framework structure in CIF (or XYZ) format. The structure should ideally be processed by [chem-sorption-relax](../chem-sorption-relax/SKILL.md) to ensure proper supercell dimensions.
-- **Conda environment**: Depends on the MLIP used (e.g., `fairchem-agent`, `mace-agent`, `matgl-agent`).
+- **Environment**: Depends on the MLIP used (`fairchem` for FairChem; `mlip` for MACE and MatGL).
 
 ## Instructions
 

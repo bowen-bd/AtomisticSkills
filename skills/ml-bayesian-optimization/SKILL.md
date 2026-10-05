@@ -175,7 +175,7 @@ See [li-ag-phases example](examples/li-ag-phases/README.md) for the full walkthr
 
 ## Constraints
 
-- **Environment**: `base-agent`. Dependencies: `scikit-learn`, `scipy`, `numpy`, `pandas`, `pyyaml`. No BoTorch or ax-platform required.
+- **Environment**: `cpu`. Dependencies: `scikit-learn`, `scipy`, `numpy`, `pandas`, `pyyaml`. No BoTorch or ax-platform required.
 - **GP Scaling**: Training is O(n³). Practical upper limit is ~500 evaluated points before training time becomes noticeable.
 - **Batch Size**: Use a power-of-2 for initialization (`batch_size` = 4, 8, 16, …). For BO rounds, `batch_size` ≤ 8 is recommended; larger is fine when evaluations are embarrassingly parallel.
 - **Minimum Data**: The GP needs at least `2 × N_range_params` evaluated points to fit reliably. The Sobol initialization (Step 2) should provide at least this many.

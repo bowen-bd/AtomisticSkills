@@ -64,7 +64,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu+void python ${CLAUDE_SKILL_DIR}/scripts/r
 
 ## Constraints
 
-* **Environment**: Requires `atomistic-agent` conda environment where `VOID`, `rdkit`, and `pymatgen` are accessible.
+* **Environment**: Requires the `cpu+void` environment (`venv/run cpu+void ...`), where `VOID`, `rdkit`, and `pymatgen` are accessible.
 * **Loading Size**: By default, this script handles single-guest loadings per unit cell. Heavy multiple guest loading (`--max_loading > 1`) may scale exponentially in computational time depending on pore size.
 * **Outputs**: Everything is standardized to CIF files for compatibility with subsequent DFT or MLIP workflows.
 

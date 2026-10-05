@@ -12,8 +12,7 @@ Supported modalities: nmr_1h, ir
 Supported metrics:    l2, cosine, wasserstein
 
 Usage:
-    # Env: nmr-agent
-    python match_spectrum.py \\
+    venv/run cpu python match_spectrum.py \\
         --query experimental.xy \\
         --smiles "OC1CC2CCC1C2" "OC1CC2CCC1[C@@H]2C" \\
         --names "borneol" "isoborneol" \\

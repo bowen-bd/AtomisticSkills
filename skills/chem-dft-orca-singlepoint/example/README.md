@@ -12,8 +12,7 @@ You can first make sure that your system is setup properly by running `validate_
 Run the following command from the project root:
 
 ```bash
-# Env: orca-agent
-python skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
+venv/run cpu python skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
     --structure skills/chem-dft-orca-singlepoint/example/h2o.xyz \
     --functional PBE0 \
     --basis_set def2-TZVP \

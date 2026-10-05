@@ -76,7 +76,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/apply_
 For referencing or phase diagram generation, apply this correction to every entry before computing E_hull.
 
 ## Constraints
-- **Environment**: `base-agent` (requires `pymatgen`).
+- **Environment**: `cpu` (requires `pymatgen`).
 - **Input Energy**: Must be the *total energy* in eV (not per atom).
 ---
 

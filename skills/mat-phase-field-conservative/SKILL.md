@@ -53,7 +53,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_sp
 See the `examples/benchmark-spinodal/README.md` for the expected output.
 
 ## Constraints
-- **Environments**: Scripts require the `phasefield-agent` Conda environment. **Each code block MUST specify the environment.**
+- **Environments**: Scripts require the `cpu` environment. **Each code block MUST specify the environment.**
 - **Conservation**: The Cahn-Hilliard PDE inherently conserves the global integral of $c$. If using explicit time-stepping with too large of a `dt`, numerical instability may break conservation.
 
 ## References

@@ -8,8 +8,7 @@ To demonstrate how an agent safely handles a paper published in an American Chem
 ### 1. Pre-Flight Domain Check
 Run the publisher policy validator:
 ```bash
-# Env: base-agent
-python skills/general-publisher-access-guard/scripts/check_publisher.py \
+venv/run cpu python skills/general-publisher-access-guard/scripts/check_publisher.py \
     --url "https://pubs.acs.org/doi/10.1021/acs.jpclett.7b00189"
 ```
 
@@ -32,8 +31,7 @@ Safe Mirrors / APIs:   openalex, unpaywall_filtered, europe_pmc
 ### 2. Execute Safe Paper Retrieval
 Run the safe paper retriever:
 ```bash
-# Env: base-agent
-python skills/general-publisher-access-guard/scripts/safe_paper_retriever.py \
+venv/run cpu python skills/general-publisher-access-guard/scripts/safe_paper_retriever.py \
     --doi "10.1021/acs.jpclett.7b00189" \
     --output_dir skills/general-publisher-access-guard/examples/acs-blocked-paper
 ```

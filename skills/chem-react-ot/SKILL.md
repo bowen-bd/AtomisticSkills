@@ -13,7 +13,7 @@ metadata:
 Generate transition state (TS) structures given reactant and product structures using the React-OT model (Optimal Transport). React-OT is a generative model that predicts TS geometries directly without requiring an initial guess path (like NEB).
 
 **Category:** `chemistry`
-**Environment:** `react-ot-agent`
+**Environment:** `reactot` (commands run through `venv/run reactot ...`)
 
 ## Key Features
 

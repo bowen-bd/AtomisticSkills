@@ -25,7 +25,7 @@ Usage:
         --output htst_results.json
 
 Requirements:
-    phonopy, numpy (base-agent env)
+    phonopy, numpy (cpu environment; run with: venv/run cpu python ...)
 """
 
 from __future__ import annotations

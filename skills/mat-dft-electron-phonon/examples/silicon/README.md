@@ -9,8 +9,7 @@ To model the effect of quantum level zero-point ionic motions and classical ther
 
 Run the workflow generation script:
 ```bash
-# Env: atomate2-agent
-python ../../scripts/generate_inputs.py --output si_flow.json
+venv/run cpu python ../../scripts/generate_inputs.py --output si_flow.json
 ```
 
 ## Expected Execution Output and Literature Validation

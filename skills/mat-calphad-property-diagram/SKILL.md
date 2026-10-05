@@ -34,7 +34,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/plot_p
 ```
 
 ## Constraints
-- **Environments**: Scripts require the `calphad-agent` Conda environment.
+- **Environments**: Scripts require the `cpu` environment.
 - Only plots equilibrium step (lever-rule). For non-equilibrium fast solidification (Scheil), custom scripting is required.
 
 ## References

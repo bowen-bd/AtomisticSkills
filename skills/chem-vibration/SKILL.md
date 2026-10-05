@@ -22,7 +22,7 @@ In the harmonic approximation, the potential energy surface near a local minimum
 ## 1. Prerequisites
 
 - An MLIP wrapper must be available (`MACEWrapper`, `MatGLWrapper`, or `FAIRCHEMWrapper`).
-- ASE must be installed in the relevant conda environment.
+- ASE is included in the `mlip` and `fairchem` environments.
 - The input structure must be a **molecule or cluster** (non-periodic). Periodic systems should use [mat-phonon](../mat-phonon/SKILL.md).
 
 ## 2. Choosing a Foundation Potential
@@ -106,10 +106,9 @@ Expected H2O vibrational modes (experimental reference):
 - **Molecule/cluster only**: This skill applies the harmonic approximation to finite systems. For periodic crystals, use [mat-phonon](../mat-phonon/SKILL.md).
 - **Equilibrium required**: The structure MUST be at a local minimum (forces ≈ 0). Large residual forces invalidate the harmonic approximation.
 - **Harmonic approximation**: Only valid near equilibrium. Accuracy degrades for large-amplitude motions and near dissociation.
-- **Environments**: Scripts require conda environments with MLIP packages:
-  - `mace-agent` for MACE models
-  - `matgl-agent` for MatGL/CHGNet models
-  - `fairchem-agent` for FairChem/UMA models
+- **Environments**: Scripts require an environment with MLIP packages (`venv/run <venv> ...`):
+  - `mlip` for MACE and MatGL/CHGNet models
+  - `fairchem` for FairChem/UMA models
 ---
 
 **Author:** Bowen Deng
