@@ -40,13 +40,14 @@ wrapper: Optional[Any] = None
 
 @mcp.tool()
 def load_model(
-    model_name: str = "CHGNet-PES-MatPES-PBE-2025.2.10", device: str = "auto"
+    model_name: str = "CHGNet-PES-MatPES-PBE-1M-2026.9", device: str = "auto"
 ) -> str:
     """
     Load a MatGL model.
 
     Supported models include:
-    - CHGNet PES: 'CHGNet-PES-MatPES-PBE-2025.2.10', 'CHGNet-PES-MatPES-r2SCAN-2025.2.10'
+    - CHGNet PES: 'CHGNet-PES-MatPES-PBE-1M-2026.9' (default), 'CHGNet-PES-MatPES-r2SCAN-1M-2026.9';
+      earlier checkpoints 'CHGNet-PES-MatPES-PBE-2025.2.10', 'CHGNet-PES-MatPES-r2SCAN-2025.2.10'
     - M3GNet PES: 'M3GNet-PES-MatPES-PBE-2025.2', 'M3GNet-PES-MatPES-r2SCAN-2025.2', 'M3GNet-PES-ANI-1x-Subset'
     - TensorNet PES: 'TensorNet-PES-MatPES-PBE-2025.2', 'TensorNet-PES-MatPES-r2SCAN-2025.2', 'TensorNet-PES-ANI-1x-Subset'
     - QET PES: 'QET-PES-MatPES-PBE-2025.2', 'QET-PES-MatPES-r2SCAN-2025.2', 'QET-PES-MatQ'

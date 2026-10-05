@@ -3,7 +3,6 @@ MACE model wrapper for MLIP Agent
 """
 
 import logging
-import os
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 import torch
@@ -58,19 +57,12 @@ try:
 
     MACE_AVAILABLE = True
 except ImportError as e:
-    import os
-
-    current_env = os.environ.get("CONDA_DEFAULT_ENV", "unknown")
-    if not current_env.startswith("mace"):
-        raise ImportError(
-            f"MACE is not available in the current conda environment '{current_env}'. "
-            f"MACE models require the 'mace-agent' conda environment. "
-            f"Please run this code in the mace-agent environment:\n"
-            f"  conda activate mace-agent\n"
-            f"Or use subprocess execution via MLIPModelTool which handles this automatically.\n"
-            f"Original error: {e}"
-        ) from e
-    raise
+    raise ImportError(
+        "MACE is not installed in this Python environment. MACE runs in the 'mlip' "
+        "environment; start the command through the launcher, e.g.\n"
+        "  venv/run mlip python <script>.py ...\n"
+        f"Original error: {e}"
+    ) from e
 
 
 class MACEWrapper(MLIPModel):

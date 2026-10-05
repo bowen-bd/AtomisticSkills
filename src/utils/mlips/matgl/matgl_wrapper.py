@@ -48,12 +48,15 @@ AVAILABLE_MATGL_MODELS = {
     "M3GNet-MatPES-r2SCAN-v2025.1-PES": "M3GNet-PES-MatPES-r2SCAN-2025.2",
     "M3GNet-PES-MatPES-r2SCAN-2025.2": "M3GNet-PES-MatPES-r2SCAN-2025.2",
     "M3GNet-PES-ANI-1x-Subset": "M3GNet-PES-ANI-1x-Subset",
-    # CHGNet PES models
-    "CHGNet": "CHGNet-PES-MatPES-PBE-2025.2.10",
-    "CHGNet-MatPES-PBE": "CHGNet-PES-MatPES-PBE-2025.2.10",
+    # CHGNet PES models. The 1M-2026.9 checkpoints (matgl 4.1) are the default
+    # CHGNet; versioned 2025 names still load exactly the weights they name.
+    "CHGNet": "CHGNet-PES-MatPES-PBE-1M-2026.9",
+    "CHGNet-MatPES-PBE": "CHGNet-PES-MatPES-PBE-1M-2026.9",
+    "CHGNet-PES-MatPES-PBE-1M-2026.9": "CHGNet-PES-MatPES-PBE-1M-2026.9",
     "CHGNet-MatPES-PBE-2025.2.10-2.7M-PES": "CHGNet-PES-MatPES-PBE-2025.2.10",
     "CHGNet-PES-MatPES-PBE-2025.2.10": "CHGNet-PES-MatPES-PBE-2025.2.10",
-    "CHGNet-MatPES-r2SCAN": "CHGNet-PES-MatPES-r2SCAN-2025.2.10",
+    "CHGNet-MatPES-r2SCAN": "CHGNet-PES-MatPES-r2SCAN-1M-2026.9",
+    "CHGNet-PES-MatPES-r2SCAN-1M-2026.9": "CHGNet-PES-MatPES-r2SCAN-1M-2026.9",
     "CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES": "CHGNet-PES-MatPES-r2SCAN-2025.2.10",
     "CHGNet-PES-MatPES-r2SCAN-2025.2.10": "CHGNet-PES-MatPES-r2SCAN-2025.2.10",
     # TensorNet PES models

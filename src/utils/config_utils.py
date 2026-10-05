@@ -16,7 +16,7 @@ def load_config() -> Dict[str, Any]:
 
     Priority:
     1. Environment variables (MLIP_*)
-    2. Config file (~/.config/mlip_agent.yaml or ~/.mlip_agent.yaml)
+    2. Config file (~/.config/atomistic_skills.yaml, or the legacy ~/.atomistic_skills.yaml)
     """
     settings: Dict[str, Any] = {}
 
