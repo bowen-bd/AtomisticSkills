@@ -85,15 +85,18 @@
       "servers": {
         "adit": {
           "env": "adit-agent",
-          "module": "src.mcp_server.adit_server"
+          "module": "src.mcp_server.adit_server",
+          "venv": "adit"
         },
         "diffcsp": {
           "env": "diffcsp-agent",
-          "module": "src.mcp_server.diffcsp_server"
+          "module": "src.mcp_server.diffcsp_server",
+          "venv": "diffcsp"
         },
         "mattergen": {
           "env": "mattergen-agent",
-          "module": "src.mcp_server.mattergen_server"
+          "module": "src.mcp_server.mattergen_server",
+          "venv": "mattergen"
         }
       },
       "notes": "arm64 only for now. adit/diffcsp/mattergen were assembled by hand -- adit-agent's spec declares only python, pip and uv -- so unlike the uv images their environments cannot be resolved from a spec. torch-scatter/cluster/sparse are compiled from source here. On amd64 these servers need the conda envs under conda-envs/."

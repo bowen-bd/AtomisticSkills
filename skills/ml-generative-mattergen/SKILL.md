@@ -3,18 +3,10 @@ name: ml-generative-mattergen
 description: Generate inorganic material structures using MatterGen, a diffusion-based generative model.
 metadata:
   category: [machine-learning, materials]
-  venv: []
-  conda_env: mattergen-agent
+  venv: [mattergen]
 ---
 
 # MatterGen Structure Generation Skill
-
-<!-- mcp-tools-note -->
-> [!NOTE]
-> Steps written `server.tool` are MCP tool calls: `mattergen.generate_structures` is the `generate_structures`
-> tool of the `mattergen` server (`mcp__mattergen__generate_structures`, or
-> `mcp__plugin_atomistic-skills_mattergen__generate_structures` when installed as a plugin).
-> `mattergen` run only as MCP servers, from the `generative` container image (arm64) or the matching conda environment in `conda-envs/`.
 
 This skill provides tools for generating novel inorganic material structures using MatterGen, a state-of-the-art diffusion-based generative model for crystalline materials.
 
@@ -23,7 +15,7 @@ This skill provides tools for generating novel inorganic material structures usi
 > [!IMPORTANT]
 > **ARM/aarch64 Support**: MatterGen CAN work on ARM-based systems like NVIDIA DGX Spark. However, PyG dependencies (torch-scatter, torch-cluster) must be compiled from source with CUDA_HOME properly configured. See installation guide below.
 
-- The `mattergen-agent` conda environment must be installed and configured.
+- Runs as the `mattergen` MCP server and its scripts run in the `mattergen` environment: on x86_64 a uv environment created on first use (CUDA 12.6 or 13 by driver), on aarch64 the `generative` container image.
 - MatterGen requires Python 3.10 and CUDA 13.0 compatible GPU for efficient generation.
 - **For ARM/aarch64 systems**: See [Installing torch-scatter on ARM](../../docs/installing_torch_scatter_arm.md) for detailed installation instructions.
 
@@ -82,11 +74,8 @@ Fine-tune MatterGen on custom datasets using the skill scripts:
 ### Step 1: Prepare Training Data
 
 ```bash
-cd skills/ml-generative-mattergen
-conda activate mattergen-agent
-
 # Convert structures and properties to CSV format
-python scripts/prepare_training_data.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mattergen python ${CLAUDE_SKILL_DIR}/scripts/prepare_training_data.py \
   --structures-json training_structures.json \
   --property-name "formation_energy" \
   --output training_data.csv
@@ -106,7 +95,7 @@ python scripts/prepare_training_data.py \
 ### Step 2: Run Fine-Tuning
 
 ```bash
-python scripts/run_finetuning.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mattergen python ${CLAUDE_SKILL_DIR}/scripts/run_finetuning.py \
   --training-data training_data.csv \
   --property-name "formation_energy" \
   --base-model "mattergen_base" \

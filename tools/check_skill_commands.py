@@ -57,6 +57,22 @@ def collect(skills: list[str] | None, venv: str | None) -> list[tuple[str, str, 
     return out
 
 
+def not_built_for(spec: str, arch: str) -> str | None:
+    """Skip reason when the spec's uv project is not built for this architecture.
+
+    Such projects (the generative stacks on aarch64) run from a container image
+    there; a --help sweep should not pull a multi-GB image to find that out.
+    """
+    venv = spec.split("+")[0]
+    table = PROJECT_ROOT / "venv" / "platforms.tsv"
+    for line in table.read_text().splitlines():
+        cols = line.split("\t")
+        if len(cols) == 4 and cols[0] == venv and cols[1] == "-" and cols[2] == arch:
+            if cols[3].startswith("unavailable:not built for"):
+                return f"the {venv} environment is not built for {arch} (container image only)"
+    return None
+
+
 def classify(output: str, arch: str) -> str | None:
     """Classify a command failure output against known platform limits.
 
@@ -100,6 +116,9 @@ def check(
         arch = platform.machine()
     if not script.is_file():
         return skill, spec, script, False, "script does not exist", 0.0, None
+    reason = not_built_for(spec, arch)
+    if reason:
+        return skill, spec, script, False, reason, 0.0, reason
     try:
         proc = subprocess.run(
             [str(LAUNCHER), spec, "python", str(script), "--help"],

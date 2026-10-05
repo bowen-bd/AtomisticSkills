@@ -85,7 +85,9 @@ class Host:
         shutil.copy(PROJECT_ROOT / "VERSION", self.repo / "VERSION")
         for name in ("run", "servers.tsv", "platforms.tsv"):
             shutil.copy(PROJECT_ROOT / "venv" / name, venv / name)
-        for project in ("cpu", "mlip", "fairchem"):
+        for project in sorted(
+            p.parent.name for p in (PROJECT_ROOT / "venv").glob("*/pyproject.toml")
+        ):
             (venv / project).mkdir()
             for name in ("pyproject.toml", "uv.lock"):
                 shutil.copy(
@@ -482,15 +484,25 @@ class TestServerMode:
             host.home / ".local" / "state" / "atomisticskills" / "setup-fairchem.log"
         ).exists()
 
-    def test_container_only_server_needs_a_container_runtime(self, host):
+    def test_generative_servers_run_from_their_uv_project(self, host):
+        """adit, diffcsp and mattergen have x86_64 uv projects; the image is the
+        fallback elsewhere (aarch64, old glibc)."""
         host.stub_uv()
+        host.set_platform("x86_64", "2.39")
+        host.mark_synced("adit", "cu130")
         result = host.run("--server", "adit")
-        assert result.returncode != 0
-        assert "runs only from the 'generative' container image" in result.stderr
+        assert result.returncode == 0, result.stderr
+        run = [c for c in host.calls(host.logs / "uv.calls") if c and c[0] == "run"][-1]
+        assert flag_value(run, "--project")[0].endswith("venv/adit")
+        assert run[-2:] == ["-m", "src.mcp_server.adit_server"]
 
     def test_container_only_server_is_refused_on_the_wrong_architecture(self, host):
-        """No bytes may move for an image the host cannot run (29 GB once did)."""
-        host.set_platform("x86_64", "2.39")
+        """No bytes may move for an image the host cannot run (29 GB once did).
+
+        The generative image is arm64-only, so an x86_64 host too old for the uv
+        project (glibc 2.17) must be refused rather than pull it."""
+        host.stub_uv()
+        host.set_platform("x86_64", "2.17")
         docker = host.recorder("docker")
         result = host.run("--server", "mattergen")
         assert result.returncode != 0

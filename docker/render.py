@@ -7,7 +7,7 @@ consumers that would otherwise drift out of sync:
 
 ``servers``
     ``venv/servers.tsv``, the table ``venv/run --server <name>`` reads to find a
-    server's uv project, module and image. Tab-separated on purpose: the
+    server's uv project (if any), module and image. Tab-separated on purpose: the
     launcher is bash and must not need a Python interpreter or jq to start.
 
 ``server-map <image>``
@@ -91,7 +91,13 @@ def servers_table(spec: dict) -> str:
     rows = []
     for image in spec["images"]:
         for server, info in normalise_servers(image).items():
-            venv = image["venv"] if image["build"] == "uv" else CONTAINER_ONLY
+            # A conda-lock image's servers may still have a uv project of their
+            # own (the generative stacks do): the image is then only the
+            # container fallback.
+            if image["build"] == "uv":
+                venv = image["venv"]
+            else:
+                venv = image["servers"][server].get("venv", CONTAINER_ONLY)
             rows.append(
                 "\t".join(
                     [

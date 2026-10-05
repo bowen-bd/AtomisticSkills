@@ -24,6 +24,17 @@ from packaging.requirements import Requirement
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 VENV_DIR = PROJECT_ROOT / "venv"
 PROJECTS = ("cpu", "mlip", "fairchem")
+# Research stacks with their own uv project each (the generative servers, ...):
+# pinned to the environment they were verified in, rather than tracking the
+# latest releases like the shared projects.
+STACKS = tuple(
+    sorted(
+        p.parent.name
+        for p in VENV_DIR.glob("*/pyproject.toml")
+        if p.parent.name not in PROJECTS
+    )
+)
+ALL = PROJECTS + STACKS
 ARCHES = {
     "sys_platform == 'linux' and platform_machine == 'x86_64'",
     "sys_platform == 'linux' and platform_machine == 'aarch64'",
@@ -68,7 +79,7 @@ def test_shared_cpu_set_is_identical():
     }
 
 
-@pytest.mark.parametrize("project", PROJECTS)
+@pytest.mark.parametrize("project", ALL)
 def test_the_repository_is_an_editable_dependency(project):
     """Without it, `from src...` fails whenever the cwd is not the repo root."""
     data = load(project)
@@ -79,12 +90,22 @@ def test_the_repository_is_an_editable_dependency(project):
     }
 
 
-@pytest.mark.parametrize("project", PROJECTS)
+@pytest.mark.parametrize("project", ALL)
 def test_both_architectures_are_required(project):
-    """`environments` limits the resolver; only `required-environments` checks wheels."""
+    """`environments` limits the resolver; only `required-environments` checks wheels.
+
+    The shared projects cover both architectures. A research stack may be
+    x86_64-only (its compiled dependencies have no aarch64 wheels); venv/run
+    then uses its container image on aarch64."""
     uv = load(project)["tool"]["uv"]
-    assert set(uv["environments"]) == ARCHES
-    assert set(uv["required-environments"]) == ARCHES
+    assert set(uv["environments"]) == set(uv["required-environments"])
+    if project in PROJECTS:
+        assert set(uv["environments"]) == ARCHES
+    else:
+        assert (
+            "sys_platform == 'linux' and platform_machine == 'x86_64'"
+            in uv["environments"]
+        )
 
 
 @pytest.mark.parametrize("project", PROJECTS)
@@ -137,7 +158,7 @@ def test_versions_are_floors_not_pins():
 
 
 @needs_uv
-@pytest.mark.parametrize("project", PROJECTS)
+@pytest.mark.parametrize("project", ALL)
 def test_lock_matches_pyproject(project):
     result = subprocess.run(
         ["uv", "lock", "--check", "--project", str(VENV_DIR / project)],
@@ -162,8 +183,52 @@ def test_base_sets_install_on_rhel8_era_x86():
     table = (VENV_DIR / "platforms.tsv").read_text().splitlines()
     rows = [ln.split("\t") for ln in table if ln and not ln.startswith("#")]
     for venv, extra, arch, glibc in rows:
-        if extra == "-" and arch == "x86_64":
+        if venv in PROJECTS and extra == "-" and arch == "x86_64":
             assert tuple(map(int, glibc.split("."))) <= (
                 2,
                 28,
             ), f"{venv} needs glibc {glibc} on x86_64"
+
+
+@pytest.mark.parametrize("project", STACKS)
+def test_research_stacks_reproduce_their_verified_environment(project):
+    """A closed set like the verified `pip install --no-deps`, with the torch build
+    still chosen per driver."""
+    data = load(project)
+    uv = data["tool"]["uv"]
+    pins = [d for d in data["project"]["dependencies"] if d != "atomisticskills"]
+    assert pins and all("==" in d for d in pins), project
+    # Every pin is an override, so upstream constraints cannot move it...
+    torchy = {"torch", "torchvision"}
+    assert {p for p in pins if Requirement(p).name not in torchy} <= set(
+        uv["override-dependencies"]
+    ), project
+    # ...but torch is not: an override would drop its per-extra index.
+    overridden = {Requirement(o).name for o in uv["override-dependencies"]}
+    assert not overridden & {"torch", "torchvision"}, project
+    extras = data["project"].get("optional-dependencies", {})
+    if not extras:
+        return  # a single torch build (e.g. reactot: torch 2.2 has no CUDA 12.6/13)
+    assert set(extras) == {"cu126", "cu130"} and extras["cu126"] == extras["cu130"]
+    assert uv["conflicts"] == [[{"extra": "cu126"}, {"extra": "cu130"}]]
+    # Each package of the torch build comes from the index matching its extra.
+    for package in (Requirement(r).name for r in extras["cu126"]):
+        assert [src["extra"] for src in uv["sources"][package]] == ["cu126", "cu130"], (
+            project,
+            package,
+        )
+
+
+@pytest.mark.parametrize("project", STACKS)
+def test_research_stack_builds_install_on_rhel8_era_x86(project):
+    table = (VENV_DIR / "platforms.tsv").read_text().splitlines()
+    rows = [ln.split("\t") for ln in table if ln and not ln.startswith("#")]
+    has_builds = bool(load(project)["project"].get("optional-dependencies"))
+    wanted = ("cu126", "cu130") if has_builds else ("-",)
+    floors = {
+        e: g for v, e, a, g in rows if v == project and a == "x86_64" and e in wanted
+    }
+    assert set(floors) == set(wanted), f"{project} missing from venv/platforms.tsv"
+    for extra, glibc in floors.items():
+        assert not glibc.startswith("unavailable"), (project, extra, glibc)
+        assert tuple(map(int, glibc.split("."))) <= (2, 28), (project, extra, glibc)

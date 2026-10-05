@@ -5,20 +5,27 @@ import shutil
 import tempfile
 from types import SimpleNamespace
 
-# Add the current directory to path to ensure imports work if needed
-sys.path.append(os.getcwd())
+# React-OT is imported from the source setup_react_ot.py fetched and patched.
+REACT_OT_DIR = os.path.expanduser(
+    os.environ.get(
+        "REACT_OT_DIR", os.path.join("~", ".cache", "atomisticskills", "react-ot")
+    )
+)
 
-try:
-    from reactot.run_model import pred_ts
-    import torch
-except ImportError as e:
-    print(f"Error: Could not import 'reactot' or dependencies: {e}")
-    # print traceback
-    import traceback
 
-    traceback.print_exc()
-    print("Ensure you are in the 'react-ot-agent' environment.")
-    sys.exit(1)
+def import_react_ot():
+    """Return React-OT's pred_ts, from REACT_OT_DIR."""
+    if os.path.isdir(REACT_OT_DIR):
+        sys.path.insert(0, REACT_OT_DIR)
+    try:
+        from reactot.run_model import pred_ts
+    except ImportError as e:
+        sys.exit(
+            f"Error: could not import React-OT ({e}). Fetch it first with "
+            "skills/chem-react-ot/scripts/setup_react_ot.py (in the reactot "
+            f"environment), or set REACT_OT_DIR. Looked in: {REACT_OT_DIR}"
+        )
+    return pred_ts
 
 
 def main():
@@ -51,6 +58,7 @@ def main():
     )
 
     args = parser.parse_args()
+    pred_ts = import_react_ot()
 
     # Resolve paths
     reactants_path = os.path.abspath(args.reactants)

@@ -3,8 +3,7 @@ name: chem-react-ot
 description: Generate transition state structures for chemical reactions using React-OT.
 metadata:
   category: [chemistry]
-  venv: []
-  conda_env: react-ot-agent
+  venv: [reactot]
 ---
 
 # `chem-react-ot` — React-OT Transition State Generation
@@ -24,32 +23,27 @@ Generate transition state (TS) structures given reactant and product structures 
 
 ## Usage
 
-### 1. Environment Setup
+### 1. Fetch React-OT and the model
 
-This skill requires the `react-ot-agent` conda environment. Ensure it is installed:
-
-```bash
-cd ${CLAUDE_SKILL_DIR}/../../conda-envs/react-ot-agent
-bash install.sh
-```
-
-### 2. Download Models
-
-Before running the skill for the first time, download the pre-trained model weights:
+React-OT runs in its own uv environment, `reactot` (torch 2.2.1, created on first
+use). Its source is not a package: fetch the pinned version, with the fixes it
+needs, once, then download the pre-trained weights:
 
 ```bash
-# activate react-ot-agent first
-conda run --no-capture-output -n react-ot-agent python ${CLAUDE_SKILL_DIR}/../../conda-envs/react-ot-agent/download_models.py
+${CLAUDE_SKILL_DIR}/../../venv/run reactot python ${CLAUDE_SKILL_DIR}/scripts/setup_react_ot.py
+${CLAUDE_SKILL_DIR}/../../venv/run reactot python ${CLAUDE_SKILL_DIR}/scripts/download_models.py
 ```
+
+The source goes to `~/.cache/atomisticskills/react-ot` (or `$REACT_OT_DIR`).
 
 The checkpoint is saved to `~/.cache/react-ot/checkpoints/sb-pretrained.ckpt`.
 
-### 3. Generate Transition State
+### 2. Generate Transition State
 
 Run the generation script with reactant and product files (xyz, cif, pdb, etc. - anything ASE reads).
 
 ```bash
-conda run --no-capture-output -n react-ot-agent python ${CLAUDE_SKILL_DIR}/scripts/generate_ts.py \
+${CLAUDE_SKILL_DIR}/../../venv/run reactot python ${CLAUDE_SKILL_DIR}/scripts/generate_ts.py \
     --reactants reactant.xyz \
     --products product.xyz \
     --output_dir results/ts_search
@@ -66,7 +60,7 @@ conda run --no-capture-output -n react-ot-agent python ${CLAUDE_SKILL_DIR}/scrip
 ## Example
 
 ```bash
-conda run --no-capture-output -n react-ot-agent python ${CLAUDE_SKILL_DIR}/scripts/generate_ts.py \
+${CLAUDE_SKILL_DIR}/../../venv/run reactot python ${CLAUDE_SKILL_DIR}/scripts/generate_ts.py \
     --reactants ${CLAUDE_SKILL_DIR}/examples/oxadiazole_isomerization/reactant.xyz \
     --products ${CLAUDE_SKILL_DIR}/examples/oxadiazole_isomerization/product.xyz \
     --output_dir ${CLAUDE_SKILL_DIR}/examples/oxadiazole_isomerization/output
@@ -74,10 +68,10 @@ conda run --no-capture-output -n react-ot-agent python ${CLAUDE_SKILL_DIR}/scrip
 
 ## Constraints
 
-- **Environment**: All scripts require the `react-ot-agent` conda environment.
+- **Environment**: `reactot` (x86_64: CUDA 12.1 build of torch 2.2.1, driver >= 525; aarch64: CPU). On aarch64 the PyG extensions are compiled on first use, which needs a C++ compiler.
 - **Input Format**: Reactant and product structures must be in any format readable by ASE (XYZ, CIF, PDB, etc.).
 - **Atom Ordering**: Reactant and product structures must have the same number of atoms with consistent atom ordering.
-- **Model Checkpoint**: The pre-trained checkpoint must be downloaded before first use (see step 2).
+- **Model Checkpoint**: The pre-trained checkpoint must be downloaded before first use (see step 1).
 
 ## References
 

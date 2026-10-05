@@ -11,8 +11,9 @@
 #       Start an MCP server over stdio. plugin.json and configure_mcp.py call this.
 #   venv/run --setup [venv|image...]
 #       Create the environments (or fetch their images) now instead of on first
-#       use -- several GB for mlip and fairchem. Naming a container-only image,
-#       e.g. `--setup generative`, fetches it too. Apptainer users should run
+#       use -- several GB for mlip and fairchem. Without arguments: cpu, mlip
+#       and fairchem; name a research stack (adit, diffcsp, mattergen, ...) to
+#       add it. Naming an image, e.g. `--setup generative`, fetches it too. Apptainer users should run
 #       this once before starting Claude Code: converting an image to a SIF
 #       takes minutes, longer than an MCP client waits for a server.
 #   venv/run --doctor
@@ -118,7 +119,9 @@ host_supports_uv() {
         need="$(min_glibc "$venv" "$extra")"
         case "$need" in
             unknown) continue ;;
-            unavailable*) echo "'${venv}+${extra}' has no wheels for ${ARCH} (${need#unavailable:})"; return 1 ;;
+            unavailable*)
+                local what="$venv"; [[ "$extra" != - ]] && what="${venv}+${extra}"
+                echo "'${what}' is not available natively on ${ARCH} (${need#unavailable:})"; return 1 ;;
         esac
         if ! version_ge "$glibc" "$need"; then
             local what="$venv"; [[ "$extra" != - ]] && what="${venv}+${extra}"
@@ -476,6 +479,13 @@ run_container() {
 
 # --- modes ------------------------------------------------------------------------
 
+# venv_image VENV -> the container image that carries a uv project's servers:
+# the project's own image for cpu/mlip/fairchem, the shared `generative` image
+# for adit/diffcsp/mattergen (from venv/servers.tsv). Nothing if none does.
+venv_image() {
+    awk -F'\t' -v v="$1" '!/^#/ && $2 == v { print $4; exit }' "$SERVERS_TABLE"
+}
+
 server_row() {  # server_row NAME -> "venv module image gpu platforms"
     awk -F'\t' -v s="$1" '!/^#/ && $1 == s { print $2, $3, $4, $5, $6; found = 1 }
                           END { exit !found }' "$SERVERS_TABLE"
@@ -541,7 +551,9 @@ run_command() {
     if [[ "$backend" != uv ]]; then
         local gpu=0
         [[ "$venv" != cpu ]] && gpu=1
-        run_container "$backend" "$venv" "$gpu" command "$@"
+        local image; image="$(venv_image "$venv")"
+        [[ -n "$image" ]] || die "'${venv}' cannot run natively here and no container image carries it."
+        run_container "$backend" "$image" "$gpu" command "$@"
     fi
 
     if [[ " ${extras[*]} " == *" docking "* && "$ARCH" == aarch64 && ! -d /usr/include/boost ]] \
@@ -576,7 +588,10 @@ fetch_image() {
 # a container-only image (generative). The default is every venv.
 setup() {
     local targets=("$@") target backend platforms
-    [[ ${#targets[@]} -gt 0 ]] || mapfile -t targets < <(cd "$VENV_DIR" && ls -d */ | tr -d / )
+    # By default the shared projects only. The research stacks (adit, diffcsp,
+    # mattergen, ...) are several GB each and serve a few skills; they are set
+    # up on first use, or by name: venv/run --setup mattergen.
+    [[ ${#targets[@]} -gt 0 ]] || targets=(cpu mlip fairchem)
     for target in "${targets[@]}"; do
         if [[ -f "${VENV_DIR}/${target}/pyproject.toml" ]]; then
             local extras=()
@@ -586,7 +601,7 @@ setup() {
                 log "== ${target}: uv sync ${extras[*]:-}"
                 uv_sync "$target" ${extras[@]+"${extras[@]}"}
             else
-                fetch_image "$backend" "$target" ""
+                fetch_image "$backend" "$(venv_image "$target")" ""
             fi
             continue
         fi
@@ -635,7 +650,9 @@ doctor() {
             if why="$(host_supports_uv "$venv" $cuda)"; then
                 if uv_is_synced "$venv" $cuda; then echo "  ${venv}: uv, ready${note}"; else echo "  ${venv}: uv, not created yet (venv/run --setup ${venv})${note}"; fi
             elif rt="$(first_container_runtime)"; then
-                echo "  ${venv}: ${rt} image $(image_ref "$venv") -- ${why}"
+                local image; image="$(venv_image "$venv")"
+                if [[ -n "$image" ]]; then echo "  ${venv}: ${rt} image $(image_ref "$image") -- ${why}"
+                else echo "  ${venv}: UNAVAILABLE (no container image) -- ${why}"; fi
             else
                 echo "  ${venv}: UNAVAILABLE -- ${why}"
             fi

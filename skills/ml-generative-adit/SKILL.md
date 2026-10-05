@@ -4,17 +4,9 @@ description: Generate novel crystal structures and molecules using ADiT (All-ato
 metadata:
   category: [machine-learning, materials, chemistry]
   venv: []
-  conda_env: adit-agent
 ---
 
 # ADiT Structure Generation Skill
-
-<!-- mcp-tools-note -->
-> [!NOTE]
-> Steps written `server.tool` are MCP tool calls: `adit.generate_structures` is the `generate_structures`
-> tool of the `adit` server (`mcp__adit__generate_structures`, or
-> `mcp__plugin_atomistic-skills_adit__generate_structures` when installed as a plugin).
-> `adit` run only as MCP servers, from the `generative` container image (arm64) or the matching conda environment in `conda-envs/`.
 
 ## Goal
 
@@ -25,7 +17,7 @@ Generate novel crystal structures and molecules using ADiT (All-atom Diffusion T
 > [!IMPORTANT]
 > **GPU Required**: ADiT requires a CUDA-compatible GPU. CPU inference is extremely slow.
 
-- The `adit-agent` conda environment must be installed and configured.
+- Runs as the `adit` MCP server and its scripts run in the `adit` environment: on x86_64 a uv environment created on first use (CUDA 12.6 or 13 by driver), on aarch64 the `generative` container image.
 - The AADT repository must be cloned to `.agents/tmp/adit/`.
 - Pre-trained weights are automatically downloaded from HuggingFace on first use.
 

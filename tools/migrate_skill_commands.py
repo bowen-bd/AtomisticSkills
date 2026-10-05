@@ -56,12 +56,8 @@ SKILL_DIR = "${CLAUDE_SKILL_DIR}"
 # the named conda environment from conda-envs/.
 CONDA_SKILLS = {
     "chem-msms-predict": "ms-gen",
-    "chem-react-ot": "react-ot-agent",
     # LAMMPS is compiled against each MLIP's conda environment.
     "mat-lammps-md": "[mace-agent, matgl-agent, fairchem-agent]",
-    "ml-generative-adit": "adit-agent",
-    "ml-generative-diffcsp": "diffcsp-agent",
-    "ml-generative-mattergen": "mattergen-agent",
 }
 
 # Optional extras of the uv projects, keyed by the modules that need them.
@@ -247,8 +243,7 @@ def mcp_note(calls: list[tuple[str, str]], servers: dict[str, str]) -> str:
         lines.append(
             "> "
             + ", ".join(f"`{s}`" for s in container_only)
-            + " run only as MCP servers, from the `generative` container image (arm64)"
-            " or the matching conda environment in `conda-envs/`."
+            + " run only as MCP servers, from their container image."
         )
     return "\n".join(lines)
 

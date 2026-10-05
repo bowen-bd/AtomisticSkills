@@ -60,6 +60,16 @@ jobs:
           - { runner: ubuntu-24.04, venv: fairchem, torch: cu126 }
           - { runner: ubuntu-24.04-arm, venv: mlip, torch: cu126 }
           - { runner: ubuntu-24.04-arm, venv: fairchem, torch: cu126 }
+          # Research stacks, pinned to their verified environments. The
+          # generative ones are x86_64-only (aarch64 uses the generative image).
+          - { runner: ubuntu-24.04, venv: mattergen, torch: cu130 }
+          - { runner: ubuntu-24.04, venv: mattergen, torch: cu126 }
+          - { runner: ubuntu-24.04, venv: adit, torch: cu130 }
+          - { runner: ubuntu-24.04, venv: adit, torch: cu126 }
+          - { runner: ubuntu-24.04, venv: diffcsp, torch: cu130 }
+          - { runner: ubuntu-24.04, venv: diffcsp, torch: cu126 }
+          - { runner: ubuntu-24.04, venv: reactot, torch: cu130 }
+          - { runner: ubuntu-24.04-arm, venv: reactot, torch: cu130 }
     env:
       ATOMISTIC_TORCH_CUDA: ${{ matrix.torch }}
     steps:

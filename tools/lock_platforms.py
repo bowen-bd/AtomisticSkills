@@ -48,6 +48,20 @@ def projects() -> list[str]:
     return sorted(p.parent.name for p in VENV_DIR.glob("*/pyproject.toml"))
 
 
+def python_minor(project: str) -> int:
+    """Return the Python 3 minor version a project runs, from requires-python."""
+    data = tomllib.loads((VENV_DIR / project / "pyproject.toml").read_text())
+    spec = data["project"]["requires-python"]
+    return int(re.search(r"3\.(\d+)", spec).group(1))
+
+
+def arches_of(project: str) -> set[str]:
+    """Return the architectures a project resolves for (tool.uv.environments)."""
+    data = tomllib.loads((VENV_DIR / project / "pyproject.toml").read_text())
+    envs = data.get("tool", {}).get("uv", {}).get("environments", [])
+    return {a for a in ARCHES if any(a in e for e in envs)} or set(ARCHES)
+
+
 def extras_of(project: str) -> list[str]:
     """Return the optional-dependency groups a project declares."""
     data = tomllib.loads((VENV_DIR / project / "pyproject.toml").read_text())
@@ -75,8 +89,8 @@ def needed(project: str, extra: str | None, arch: str) -> dict[str, str]:
         "platform_system": "Linux",
         "os_name": "posix",
         "platform_machine": arch,
-        "python_version": "3.12",
-        "python_full_version": "3.12.12",
+        "python_version": f"3.{python_minor(project)}",
+        "python_full_version": f"3.{python_minor(project)}.0",
         "implementation_name": "cpython",
         "platform_python_implementation": "CPython",
         "extra": extra or "",
@@ -98,21 +112,25 @@ def canonical(name: str) -> str:
     return re.sub(r"[-_.]+", "-", name).lower()
 
 
-def wheel_glibc(filename: str, arch: str) -> tuple[int, int] | None:
-    """Return the glibc a wheel needs on arch, or None if it cannot install there."""
+def wheel_glibc(filename: str, arch: str, minor: int = 12) -> tuple[int, int] | None:
+    """Return the glibc a wheel needs on arch (CPython 3.minor), or None if it cannot."""
     parts = filename[:-4].split("-")
     if len(parts) < 5:
         return None
     py, abi, plat = parts[-3], parts[-2], parts[-1]
     if not any(
-        p in ("py3", "cp312")
-        or (re.fullmatch(r"cp3(\d+)", p) and abi == "abi3" and int(p[3:]) <= 12)
+        p in ("py3", f"cp3{minor}")
+        or (re.fullmatch(r"cp3(\d+)", p) and abi == "abi3" and int(p[3:]) <= minor)
         for p in py.split(".")
     ):
         return None
     best = None
     for tag in plat.split("."):
         if tag == "any":
+            return (0, 0)
+        # A plain linux_<arch> wheel (PyG's extensions) states no glibc floor;
+        # uv installs it on any Linux of that architecture.
+        if tag == f"linux_{arch}":
             return (0, 0)
         m = re.fullmatch(r"manylinux_(\d+)_(\d+)_(\w+)", tag)
         if m and m.group(3) == arch:
@@ -132,6 +150,7 @@ def analyse(project: str, extra: str | None, arch: str) -> tuple[str, list[str]]
     for pkg in lock["package"]:
         by_name.setdefault(canonical(pkg["name"]), []).append(pkg)
 
+    minor = python_minor(project)
     floor, builds, missing = (0, 0), [], []
     for name, version in sorted(needed(project, extra, arch).items()):
         candidates = [
@@ -148,7 +167,7 @@ def analyse(project: str, extra: str | None, arch: str) -> tuple[str, list[str]]
         needs = [
             g
             for w in pkg.get("wheels", [])
-            if (g := wheel_glibc(w["url"].rsplit("/", 1)[-1], arch)) is not None
+            if (g := wheel_glibc(w["url"].rsplit("/", 1)[-1], arch, minor)) is not None
         ]
         if needs:
             floor = max(floor, min(needs))
@@ -168,6 +187,18 @@ def render() -> tuple[str, list[str]]:
         for extra in [None, *extras_of(project)]:
             base_builds: set[str] = set()
             for arch in ARCHES:
+                if arch not in arches_of(project):
+                    rows.append(
+                        "\t".join(
+                            [
+                                project,
+                                extra or "-",
+                                arch,
+                                f"unavailable:not built for {arch}",
+                            ]
+                        )
+                    )
+                    continue
                 glibc, builds = analyse(project, extra, arch)
                 if extra is None:
                     base_builds |= set(builds)
