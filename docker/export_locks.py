@@ -146,7 +146,14 @@ def export(env: str, subdir: str) -> dict:
 
 def main() -> int:
     spec = json.loads(IMAGES_SPEC.read_text())
-    all_envs = [e for image in spec["images"] for e in image["envs"]]
+    # Only conda-lock images install from these locks; the uv images build
+    # from venv/<venv>/uv.lock instead.
+    all_envs = [
+        e
+        for image in spec["images"]
+        if image["build"] == "conda-lock"
+        for e in image["envs"]
+    ]
 
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument(

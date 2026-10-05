@@ -21,184 +21,158 @@
     "dft"
   ],
   "mcpServers": {
-    "atomate2": {
-      "command": "${CLAUDE_PLUGIN_ROOT}/docker/run_server.sh",
-      "args": [
-        "atomate2"
-      ],
-      "env": {
-        "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
-        "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-lightweight:${user_config.image_tag}",
-        "ATOMISTIC_IMAGE_NAME": "lightweight",
-        "ATOMISTIC_PLATFORMS": "linux/amd64,linux/arm64",
-        "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
-        "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
-        "ATOMISTIC_GPU": "0"
-      }
-    },
-    "base": {
-      "command": "${CLAUDE_PLUGIN_ROOT}/docker/run_server.sh",
-      "args": [
-        "base"
-      ],
-      "env": {
-        "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
-        "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-lightweight:${user_config.image_tag}",
-        "ATOMISTIC_IMAGE_NAME": "lightweight",
-        "ATOMISTIC_PLATFORMS": "linux/amd64,linux/arm64",
-        "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
-        "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
-        "ATOMISTIC_GPU": "0"
-      }
-    },
-    "drugdisc": {
-      "command": "${CLAUDE_PLUGIN_ROOT}/docker/run_server.sh",
-      "args": [
-        "drugdisc"
-      ],
-      "env": {
-        "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
-        "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-lightweight:${user_config.image_tag}",
-        "ATOMISTIC_IMAGE_NAME": "lightweight",
-        "ATOMISTIC_PLATFORMS": "linux/amd64,linux/arm64",
-        "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
-        "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
-        "ATOMISTIC_GPU": "0"
-      }
-    },
-    "smol": {
-      "command": "${CLAUDE_PLUGIN_ROOT}/docker/run_server.sh",
-      "args": [
-        "smol"
-      ],
-      "env": {
-        "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
-        "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-lightweight:${user_config.image_tag}",
-        "ATOMISTIC_IMAGE_NAME": "lightweight",
-        "ATOMISTIC_PLATFORMS": "linux/amd64,linux/arm64",
-        "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
-        "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
-        "ATOMISTIC_GPU": "0"
-      }
-    },
-    "mace": {
-      "command": "${CLAUDE_PLUGIN_ROOT}/docker/run_server.sh",
-      "args": [
-        "mace"
-      ],
-      "env": {
-        "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
-        "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-mace:${user_config.image_tag}",
-        "ATOMISTIC_IMAGE_NAME": "mace",
-        "ATOMISTIC_PLATFORMS": "linux/amd64,linux/arm64",
-        "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
-        "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
-        "ATOMISTIC_GPU": "1"
-      }
-    },
-    "matgl": {
-      "command": "${CLAUDE_PLUGIN_ROOT}/docker/run_server.sh",
-      "args": [
-        "matgl"
-      ],
-      "env": {
-        "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
-        "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-mace:${user_config.image_tag}",
-        "ATOMISTIC_IMAGE_NAME": "mace",
-        "ATOMISTIC_PLATFORMS": "linux/amd64,linux/arm64",
-        "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
-        "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
-        "ATOMISTIC_GPU": "1"
-      }
-    },
-    "fairchem": {
-      "command": "${CLAUDE_PLUGIN_ROOT}/docker/run_server.sh",
-      "args": [
-        "fairchem"
-      ],
-      "env": {
-        "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
-        "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-fairchem:${user_config.image_tag}",
-        "ATOMISTIC_IMAGE_NAME": "fairchem",
-        "ATOMISTIC_PLATFORMS": "linux/amd64,linux/arm64",
-        "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
-        "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
-        "ATOMISTIC_GPU": "1"
-      }
-    },
     "adit": {
-      "command": "${CLAUDE_PLUGIN_ROOT}/docker/run_server.sh",
+      "command": "${CLAUDE_PLUGIN_ROOT}/venv/run",
       "args": [
+        "--server",
         "adit"
       ],
       "env": {
-        "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
-        "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-generative:${user_config.image_tag}",
-        "ATOMISTIC_IMAGE_NAME": "generative",
-        "ATOMISTIC_PLATFORMS": "linux/arm64",
-        "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
-        "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
-        "ATOMISTIC_GPU": "1"
+        "ATOMISTIC_RUNTIME": "${user_config.runtime}",
+        "ATOMISTIC_IMAGE_REGISTRY": "${user_config.image_registry}",
+        "ATOMISTIC_IMAGE_TAG": "${user_config.image_tag}",
+        "ATOMISTIC_WORKSPACE": "${CLAUDE_PROJECT_DIR}"
+      }
+    },
+    "atomate2": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/venv/run",
+      "args": [
+        "--server",
+        "atomate2"
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.runtime}",
+        "ATOMISTIC_IMAGE_REGISTRY": "${user_config.image_registry}",
+        "ATOMISTIC_IMAGE_TAG": "${user_config.image_tag}",
+        "ATOMISTIC_WORKSPACE": "${CLAUDE_PROJECT_DIR}"
+      }
+    },
+    "base": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/venv/run",
+      "args": [
+        "--server",
+        "base"
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.runtime}",
+        "ATOMISTIC_IMAGE_REGISTRY": "${user_config.image_registry}",
+        "ATOMISTIC_IMAGE_TAG": "${user_config.image_tag}",
+        "ATOMISTIC_WORKSPACE": "${CLAUDE_PROJECT_DIR}"
       }
     },
     "diffcsp": {
-      "command": "${CLAUDE_PLUGIN_ROOT}/docker/run_server.sh",
+      "command": "${CLAUDE_PLUGIN_ROOT}/venv/run",
       "args": [
+        "--server",
         "diffcsp"
       ],
       "env": {
-        "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
-        "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-generative:${user_config.image_tag}",
-        "ATOMISTIC_IMAGE_NAME": "generative",
-        "ATOMISTIC_PLATFORMS": "linux/arm64",
-        "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
-        "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
-        "ATOMISTIC_GPU": "1"
+        "ATOMISTIC_RUNTIME": "${user_config.runtime}",
+        "ATOMISTIC_IMAGE_REGISTRY": "${user_config.image_registry}",
+        "ATOMISTIC_IMAGE_TAG": "${user_config.image_tag}",
+        "ATOMISTIC_WORKSPACE": "${CLAUDE_PROJECT_DIR}"
+      }
+    },
+    "drugdisc": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/venv/run",
+      "args": [
+        "--server",
+        "drugdisc"
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.runtime}",
+        "ATOMISTIC_IMAGE_REGISTRY": "${user_config.image_registry}",
+        "ATOMISTIC_IMAGE_TAG": "${user_config.image_tag}",
+        "ATOMISTIC_WORKSPACE": "${CLAUDE_PROJECT_DIR}"
+      }
+    },
+    "fairchem": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/venv/run",
+      "args": [
+        "--server",
+        "fairchem"
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.runtime}",
+        "ATOMISTIC_IMAGE_REGISTRY": "${user_config.image_registry}",
+        "ATOMISTIC_IMAGE_TAG": "${user_config.image_tag}",
+        "ATOMISTIC_WORKSPACE": "${CLAUDE_PROJECT_DIR}"
+      }
+    },
+    "mace": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/venv/run",
+      "args": [
+        "--server",
+        "mace"
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.runtime}",
+        "ATOMISTIC_IMAGE_REGISTRY": "${user_config.image_registry}",
+        "ATOMISTIC_IMAGE_TAG": "${user_config.image_tag}",
+        "ATOMISTIC_WORKSPACE": "${CLAUDE_PROJECT_DIR}"
+      }
+    },
+    "matgl": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/venv/run",
+      "args": [
+        "--server",
+        "matgl"
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.runtime}",
+        "ATOMISTIC_IMAGE_REGISTRY": "${user_config.image_registry}",
+        "ATOMISTIC_IMAGE_TAG": "${user_config.image_tag}",
+        "ATOMISTIC_WORKSPACE": "${CLAUDE_PROJECT_DIR}"
       }
     },
     "mattergen": {
-      "command": "${CLAUDE_PLUGIN_ROOT}/docker/run_server.sh",
+      "command": "${CLAUDE_PLUGIN_ROOT}/venv/run",
       "args": [
+        "--server",
         "mattergen"
       ],
       "env": {
-        "ATOMISTIC_RUNTIME": "${user_config.container_runtime}",
-        "ATOMISTIC_IMAGE": "${user_config.image_registry}/atomisticskills-generative:${user_config.image_tag}",
-        "ATOMISTIC_IMAGE_NAME": "generative",
-        "ATOMISTIC_PLATFORMS": "linux/arm64",
-        "ATOMISTIC_WORK_DIR": "${user_config.work_dir}",
-        "ATOMISTIC_MODEL_CACHE": "${CLAUDE_PLUGIN_DATA}/model-cache",
-        "ATOMISTIC_GPU": "1"
+        "ATOMISTIC_RUNTIME": "${user_config.runtime}",
+        "ATOMISTIC_IMAGE_REGISTRY": "${user_config.image_registry}",
+        "ATOMISTIC_IMAGE_TAG": "${user_config.image_tag}",
+        "ATOMISTIC_WORKSPACE": "${CLAUDE_PROJECT_DIR}"
+      }
+    },
+    "smol": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/venv/run",
+      "args": [
+        "--server",
+        "smol"
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.runtime}",
+        "ATOMISTIC_IMAGE_REGISTRY": "${user_config.image_registry}",
+        "ATOMISTIC_IMAGE_TAG": "${user_config.image_tag}",
+        "ATOMISTIC_WORKSPACE": "${CLAUDE_PROJECT_DIR}"
       }
     }
   },
   "userConfig": {
-    "container_runtime": {
+    "runtime": {
       "type": "string",
-      "title": "Container runtime",
-      "description": "Command used to run the server images: docker, podman, apptainer or singularity. On HPC clusters, where users have no root and no Docker daemon, use apptainer.",
-      "default": "docker",
-      "required": true
-    },
-    "work_dir": {
-      "type": "directory",
-      "title": "Working directory",
-      "description": "Directory bound into the containers at /work. Simulation inputs are read from here and all results are written back here, so it must be the project you want the skills to operate on.",
-      "required": true
+      "title": "Runtime",
+      "description": "How skill scripts and MCP servers run. 'auto' (recommended) uses uv when this machine can install the environments and otherwise falls back to a container runtime. Force one with uv, docker, podman, apptainer or singularity -- e.g. apptainer on an HPC cluster whose glibc is too old for the uv environments.",
+      "default": "auto",
+      "required": false
     },
     "image_registry": {
       "type": "string",
       "title": "Image registry",
-      "description": "Registry namespace holding the atomisticskills-* server images. Change this only if you are testing images published from a fork, e.g. ghcr.io/<your-github-user>.",
+      "description": "Registry namespace of the atomisticskills-* images, used only when running from containers. Change it only to test images published from a fork, e.g. ghcr.io/<your-github-user>.",
       "default": "ghcr.io/learningmatter-mit",
-      "required": true
+      "required": false
     },
     "image_tag": {
       "type": "string",
       "title": "Image tag",
-      "description": "Tag of the atomisticskills-* images to run. Defaults to the plugin version so the images match the skills that call them.",
+      "description": "Tag of the atomisticskills-* images, used only when running from containers. Defaults to the plugin version so the images match the skills.",
       "default": "1.4.0",
-      "required": true
+      "required": false
     }
   }
 }

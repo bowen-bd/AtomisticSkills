@@ -1,119 +1,74 @@
 {
   "$comment": [
-    "Single source of truth for the container images that ship the MCP servers.",
-    "Consumed by docker/export_locks.py, docker/render_plugin_mcp.py, the",
-    "Dockerfiles and .github/workflows/build-images.yml. Adding a server means",
-    "editing this file only.",
+    "Single source of truth for the container images and the MCP servers they",
+    "carry. Consumed by docker/render.py, which renders venv/servers.tsv (read by",
+    "venv/run), the mcpServers block of .claude-plugin/plugin.json, the in-image",
+    "server map and the build matrix of .github/workflows/build-images.yml.",
+    "Adding a server means editing this file and re-rendering.",
     "",
-    "Two strategies appear below, and the choice is forced by the dependency",
-    "graph rather than by preference:",
+    "Two build strategies, chosen by what the dependency graph allows:",
     "",
-    "  merged  - the listed envs are resolved into ONE conda env. Only used",
-    "            where a clean union solve was verified. Smaller image.",
-    "  locked  - each env is installed side by side from its exact lockfile.",
-    "            Required wherever a union cannot resolve: mace-torch pins",
-    "            e3nn==0.4.4 while fairchem-core needs e3nn>=0.5, and the",
-    "            generative envs pin torch versions that violate their own",
-    "            declared constraints because no compliant build exists for",
-    "            sm_121 / aarch64 / CUDA 13. Preserves the tested versions",
-    "            exactly, which is the point: a container that resolves to",
-    "            different versions than the environment you validated is a",
-    "            container that silently breaks skills."
+    "  uv          - the image installs one uv project from venv/<venv>/uv.lock,",
+    "                the same lock a host install uses. A container is then the",
+    "                same environment with a newer glibc and the build tools",
+    "                already present, so a command behaves identically in both.",
+    "  conda-lock  - the generative stack. mattergen hard-pins torch 2.2.1+cu118",
+    "                wheels that never existed for aarch64, and ADiT/DiffCSP++",
+    "                are not published packages, so it cannot be a uv project.",
+    "                Each env is installed side by side from its exact lockfile."
   ],
   "registry": "ghcr.io/learningmatter-mit",
   "repo_path": "/opt/atomisticskills",
   "images": [
     {
-      "name": "lightweight",
-      "strategy": "merged",
-      "python": "3.11",
+      "name": "cpu",
+      "build": "uv",
+      "venv": "cpu",
       "gpu": false,
       "platforms": [
         "linux/amd64",
         "linux/arm64"
       ],
-      "spec": "docker/specs/lightweight.yaml",
-      "envs": [
-        "base-agent",
-        "drugdisc-agent",
-        "smol-agent",
-        "atomate2-agent"
-      ],
-      "merged_env": "lightweight",
       "servers": {
+        "atomate2": "src.mcp_server.atomate2_server",
         "base": "src.mcp_server.base_server",
         "drugdisc": "src.mcp_server.drugdisc_server",
-        "smol": "src.mcp_server.smol_server",
-        "atomate2": "src.mcp_server.atomate2_server"
+        "smol": "src.mcp_server.smol_server"
       },
-      "notes": "No torch. fpocket has no linux-aarch64 conda-forge build, so the arm64 variant omits it and drug-pocket-detection must use its P2Rank path there."
+      "notes": "No torch. Carries every optional extra the architecture allows (openmm, docking; pymol on amd64 only)."
     },
     {
-      "name": "mace",
-      "strategy": "locked",
+      "name": "mlip",
+      "build": "uv",
+      "venv": "mlip",
       "gpu": true,
       "platforms": [
         "linux/amd64",
         "linux/arm64"
       ],
-      "envs": [
-        "mace-agent",
-        "matgl-agent"
-      ],
       "servers": {
-        "mace": {
-          "env": "mace-agent",
-          "module": "src.mcp_server.mace_server"
-        },
-        "matgl": {
-          "env": "matgl-agent",
-          "module": "src.mcp_server.matgl_server"
-        }
+        "mace": "src.mcp_server.mace_server",
+        "matgl": "src.mcp_server.matgl_server"
       },
-      "env_vars": {
-        "matgl": {
-          "MATGL_BACKEND": "DGL"
-        }
-      },
-      "notes": "torch 2.12 on both arches, resolved independently. Cannot host fairchem: mace-torch 0.3.15 pins e3nn==0.4.4, fairchem-core needs e3nn>=0.5 -- that conflict is architecture-independent.",
-      "env_python": {
-        "mace-agent": "3.12",
-        "matgl-agent": "3.12"
-      },
-      "torch_cuda_arch_list": {
-        "linux/arm64": "12.1",
-        "linux/amd64": "8.0;8.6;8.9;9.0;12.0"
-      }
+      "notes": "torch 2.10.0: the CUDA 12.8 build on amd64, CUDA 13 on arm64 (GB10). Cannot host fairchem: mace-torch pins e3nn==0.4.4, fairchem-core needs e3nn>=0.5."
     },
     {
       "name": "fairchem",
-      "strategy": "locked",
+      "build": "uv",
+      "venv": "fairchem",
       "gpu": true,
       "platforms": [
         "linux/amd64",
         "linux/arm64"
       ],
-      "envs": [
-        "fairchem-agent"
-      ],
       "servers": {
-        "fairchem": {
-          "env": "fairchem-agent",
-          "module": "src.mcp_server.fairchem_server"
-        }
+        "fairchem": "src.mcp_server.fairchem_server"
       },
-      "notes": "arm64 pins torch 2.10.0 and overrides fairchem-core's declared torch~=2.8.0, because torch 2.8 has no sm_121 build. amd64 has no such constraint and resolves to the declared torch 2.8.0.",
-      "env_python": {
-        "fairchem-agent": "3.12"
-      },
-      "torch_cuda_arch_list": {
-        "linux/arm64": "12.1",
-        "linux/amd64": "8.0;8.6;8.9;9.0;12.0"
-      }
+      "notes": "Same torch as mlip. fairchem-core 2.19.0 declares torch~=2.8.0; the override to 2.10.0 is recorded in venv/fairchem/pyproject.toml."
     },
     {
       "name": "generative",
-      "strategy": "locked",
+      "build": "conda-lock",
       "gpu": true,
       "platforms": [
         "linux/arm64"
@@ -141,7 +96,7 @@
           "module": "src.mcp_server.mattergen_server"
         }
       },
-      "notes": "arm64 only for now. adit/diffcsp/mattergen were assembled by hand -- adit-agent's spec declares only python, pip and uv -- so unlike mace and fairchem their pip layer cannot be resolved from a spec and an amd64 lock must be derived from a built environment. torch-scatter/cluster/sparse are compiled from source here; x86_64 CUDA wheels do exist, so the amd64 build will not need that."
+      "notes": "arm64 only for now. adit/diffcsp/mattergen were assembled by hand -- adit-agent's spec declares only python, pip and uv -- so unlike the uv images their environments cannot be resolved from a spec. torch-scatter/cluster/sparse are compiled from source here. On amd64 these servers need the conda envs under conda-envs/."
     }
   ]
 }
