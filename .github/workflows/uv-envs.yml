@@ -1,8 +1,12 @@
 name: uv environments
 
 on:
+  # docs/ holds no code, commands or SKILL.md files; everything else can
+  # change what installs or runs.
   push:
+    paths-ignore: ["docs/**"]
   pull_request:
+    paths-ignore: ["docs/**"]
   workflow_dispatch:
 
 concurrency:
