@@ -11,7 +11,7 @@ Usage:
         results/structure_0/job_*/vasprun.xml.gz
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: pymatgen, matplotlib
 """
 

@@ -14,7 +14,7 @@ Usage:
         --output_dir bo_campaign/
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: matplotlib, pandas, numpy, yaml, scikit-learn, scipy
 """
 

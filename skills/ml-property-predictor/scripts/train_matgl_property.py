@@ -1,22 +1,30 @@
 #!/usr/bin/env python3
+"""Train a property predictor on a MatGL backbone (M3GNet or MEGNet).
+
+matgl >= 4 is built on PyTorch Geometric only: graphs are PyG ``Data`` objects,
+batched with ``Batch.from_data_list``. Positions and periodic image shifts are
+attached to each graph before batching, because each graph needs its own
+lattice to turn ``pbc_offset`` into a Cartesian shift.
+
+Usage:
+    venv/run mlip python train_matgl_property.py --data_path data.json \
+        --model_name M3GNet-PES-MatPES-PBE-2025.2 --target_property bulk_modulus
+
+Requirements:
+    - Environment: mlip (run with: venv/run mlip python ...)
+"""
+
 import argparse
 import tempfile
 import logging
 from pathlib import Path
 import json
-import os
-
-os.environ["MATGL_BACKEND"] = "DGL"
 
 import torch
-import dgl
+from torch_geometric.data import Batch
 
 import matgl
-
-matgl.set_backend("DGL")
-
-# MatGL Imports
-from matgl.models._m3gnet import M3GNet
+from matgl.models import M3GNet
 from matgl.ext.pymatgen import Structure2Graph, get_element_list
 
 # Ase/Pymatgen
@@ -43,8 +51,8 @@ def parse_args():
     parser.add_argument(
         "--model_name",
         type=str,
-        default="MEGNet",
-        help="MatGL foundation model or just architectural choice.",
+        default="M3GNet-PES-MatPES-PBE-2025.2",
+        help="Pretrained MatGL model to start from (see matgl.get_available_pretrained_models()).",
     )
     parser.add_argument(
         "--target_property",
@@ -133,29 +141,38 @@ def main():
     structures, labels = prepare_data(args.data_path, args.target_property)
     logger.info(f"Loaded {len(structures)} structures.")
 
-    elem_list = get_element_list(structures)
+    # Load the backbone first: its element list defines the node-type indices,
+    # so graphs must be built with it rather than with the dataset's elements.
+    logger.info(f"Loading pretrained model: {args.model_name}")
+    try:
+        # Accept the legacy names skills and papers use (e.g. *-v2025.1-PES);
+        # matgl 4 renamed every pretrained model.
+        from src.utils.mlips.matgl.matgl_wrapper import AVAILABLE_MATGL_MODELS
 
-    class PositionInjectingStructure2Graph(Structure2Graph):
-        def get_graph(self, structure):
-            # MatGL's get_graph may return 2 or 3 items (graph, state_attr, [line_graph])
-            ret = super().get_graph(structure)
-            g = ret[0]
+        potential = matgl.load_model(
+            AVAILABLE_MATGL_MODELS.get(args.model_name, args.model_name)
+        )
+        model = getattr(potential, "model", potential)
+    except Exception as e:
+        logger.warning(
+            f"Failed to load pretrained model '{args.model_name}', falling back to fresh initialization: {e}"
+        )
+        model = M3GNet(
+            element_types=get_element_list(structures),
+            is_intensive=(args.property_type == "intensive"),
+        )
+    elem_list = list(model.element_types)
+    converter = Structure2Graph(
+        element_types=elem_list, cutoff=getattr(model, "cutoff", 5.0)
+    )
 
-            # Inject required M3GNet features that are sometimes missing:
-            g.ndata["pos"] = torch.tensor(structure.cart_coords, dtype=torch.float32)
-
-            # Compute pbc_offshift explicitly
-            lattice = torch.tensor(structure.lattice.matrix, dtype=torch.float32)
-            # Element-wise multiplication of pbc_offset (N, 3) with lattice (3, 3)
-            # To do this correctly: pbc_offset is (num_edges, 3).
-            # pbc_offshift = (pbc_offset.unsqueeze(-1) * lattice).sum(dim=1)  # wait, lattice is 3x3 but we need (num_edges, 3, 3)
-            # Actually simpler: torch.matmul(pbc_offset.float(), lattice.float())
-            pbc_offset = g.edata["pbc_offset"].float()
-            g.edata["pbc_offshift"] = torch.matmul(pbc_offset, lattice)
-
-            return ret
-
-    converter = PositionInjectingStructure2Graph(element_types=elem_list, cutoff=5.0)
+    def structure_to_graph(structure):
+        """Return (PyG graph with pos and pbc_offshift, state attributes)."""
+        g, lattice, state_attr = converter.get_graph(structure)
+        lattice = torch.as_tensor(lattice, dtype=matgl.float_th).reshape(3, 3)
+        g.pos = torch.tensor(structure.cart_coords, dtype=matgl.float_th)
+        g.pbc_offshift = g.pbc_offset.to(matgl.float_th) @ lattice
+        return g, torch.as_tensor(state_attr, dtype=matgl.float_th)
 
     output_dir = args.output_dir or tempfile.mkdtemp(prefix="matgl_property_")
     output_path = Path(output_dir).absolute()
@@ -171,14 +188,8 @@ def main():
             return len(self.structures)
 
         def __getitem__(self, idx):
-            structure = self.structures[idx]
-            label = self.labels[idx]
-            ret = self.converter.get_graph(structure)
-            # return signature usually (graph, state_attr, [line_graph])
-            g = ret[0]
-            state_attr = ret[1] if len(ret) > 1 else torch.tensor([0.0])
-
-            return g, label, state_attr
+            g, state_attr = structure_to_graph(self.structures[idx])
+            return g, self.labels[idx], state_attr
 
     dataset = InMemoryPropertyDataset(structures, labels, converter)
 
@@ -200,8 +211,7 @@ def main():
         graphs = [item[0] for item in batch]
         labels = torch.tensor([item[1] for item in batch], dtype=torch.float32)
         state_attrs = torch.stack([item[2] for item in batch])
-        batched_g = dgl.batch(graphs)
-        return batched_g, labels, state_attrs
+        return Batch.from_data_list(graphs), labels, state_attrs
 
     batch_size = min(args.batch_size, len(train_data))
     train_loader = DataLoader(
@@ -225,17 +235,6 @@ def main():
         num_workers=0,
         shuffle=False,
     )
-
-    # Load the specified pre-trained model
-    logger.info(f"Loading pretrained model: {args.model_name}")
-    try:
-        potential = matgl.load_model(args.model_name)
-        model = potential.model
-    except Exception as e:
-        logger.warning(
-            f"Failed to load pretrained model '{args.model_name}', falling back to fresh initialization: {e}"
-        )
-        model = M3GNet(is_intensive=(args.property_type == "intensive"))
 
     # We do NOT override model.is_intensive here because changing an extensive
     # pretrained model to intensive breaks its forward method (missing 'readout' attr).
@@ -284,7 +283,9 @@ def main():
             optimizer.zero_grad()
             preds = model(graph, state_attr=state_attrs)
             if is_intensive_target and not getattr(model, "is_intensive", True):
-                preds = preds / graph.batch_num_nodes().to(device).unsqueeze(-1)
+                preds = preds / torch.bincount(
+                    graph.batch, minlength=graph.num_graphs
+                ).unsqueeze(-1)
             loss = criterion(preds.squeeze(), labels.squeeze())
             loss.backward()
             optimizer.step()
@@ -302,7 +303,9 @@ def main():
 
                 preds = model(graph, state_attr=state_attrs)
                 if is_intensive_target and not getattr(model, "is_intensive", True):
-                    preds = preds / graph.batch_num_nodes().to(device).unsqueeze(-1)
+                    preds = preds / torch.bincount(
+                        graph.batch, minlength=graph.num_graphs
+                    ).unsqueeze(-1)
                 val_loss += criterion(preds.squeeze(), labels.squeeze()).item()
                 val_mae += torch.nn.functional.l1_loss(
                     preds.squeeze(), labels.squeeze()

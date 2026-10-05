@@ -3,9 +3,24 @@ name: chem-sorption-relax
 description: Prepares supercells for porous frameworks based on minimum interplanar distance and relaxes them using standard MLIP relaxation tools.
 metadata:
   category: [materials, chemistry]
+  venv: [cpu, fairchem, mlip]
 ---
 
 # chem-sorption-relax
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `fairchem.relax_structure` is the `relax_structure`
+> tool of the `fairchem` server (`mcp__fairchem__relax_structure`, or
+> `mcp__plugin_atomistic-skills_fairchem__relax_structure` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run fairchem python -m src.mcp_server.cli fairchem relax_structure key=value load_model key=value
+> ${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli mace relax_structure key=value
+> ${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli matgl relax_structure key=value
+> ```
 
 ## Goal
 
@@ -14,7 +29,7 @@ To process porous frameworks (e.g., MOFs, COFs) for downstream molecular sorptio
 ## Prerequisites
 
 - **Input**: A framework structure in CIF (or XYZ) format.
-- **MLIP MCP Tool**: A relaxation tool such as `mcp_fairchem_relax_structure`, `mcp_mace_relax_structure`, or `mcp_matgl_relax_structure`.
+- **MLIP MCP Tool**: A relaxation tool such as `fairchem.relax_structure`, `mace.relax_structure`, or `matgl.relax_structure`.
 - **Conda environment**: `base-agent` for the supercell builder logic, followed by the specific environment for the chosen MLIP (e.g., `fairchem-agent`).
 
 ## Instructions
@@ -22,8 +37,7 @@ To process porous frameworks (e.g., MOFs, COFs) for downstream molecular sorptio
 1. **Build Supercell (if necessary)**: Determine if the input framework needs to be expanded. Use the provided utility to read the input CIF, check interplanar distances, build a supercell if they are below the threshold, and save the result.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-sorption-relax/scripts/build_supercell.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/build_supercell.py \
     --structure path/to/framework.cif \
     --min-plane-dist 12.0 \
     --output-cif ./out/framework_supercell.cif
@@ -35,13 +49,13 @@ uv run --project venv/cpu python skills/chem-sorption-relax/scripts/build_superc
 2. **Relax the Framework**: Relax the output structure using the MCP server environment. Ensure that the correct MLIP is loaded first.
 
 ```python
-# Venv: venv/fairchem (via MCP server)
-mcp_fairchem_load_model(
+# (via MCP server)
+fairchem.load_model(
     model_name="uma-s-1p2",
     device="auto"
 )
 
-mcp_fairchem_relax_structure(
+fairchem.relax_structure(
     structure_data="./out/framework_supercell.cif",
     fmax=0.05,
     steps=500,
@@ -72,8 +86,7 @@ The relaxed CIF file (e.g. `./out/relaxed_framework/<name>.relaxed.cif`) from st
 
 1. Build supercell:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-sorption-relax/scripts/build_supercell.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/build_supercell.py \
     --structure my_cof.cif \
     --min-plane-dist 12.0 \
     --output-cif ./results/COF-1_supercell.cif
@@ -81,12 +94,12 @@ uv run --project venv/cpu python skills/chem-sorption-relax/scripts/build_superc
 
 2. Relax with UMA-S-1p2 via MCP Tool:
 ```python
-mcp_fairchem_load_model(
+fairchem.load_model(
     model_name="uma-s-1p2",
     device="auto"
 )
 
-mcp_fairchem_relax_structure(
+fairchem.relax_structure(
     structure_data="./results/COF-1_supercell.cif",
     fmax=0.05,
     steps=500,

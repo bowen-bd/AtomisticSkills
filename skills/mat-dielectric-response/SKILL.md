@@ -3,9 +3,23 @@ name: mat-dielectric-response
 description: Calculate frequency-dependent dielectric response using atomate2 OpticsMaker and VASP.
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # Dielectric Response
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `base.search_materials_project_by_formula` is the `search_materials_project_by_formula`
+> tool of the `base` server (`mcp__base__search_materials_project_by_formula`, or
+> `mcp__plugin_atomistic-skills_base__search_materials_project_by_formula` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli base search_materials_project_by_formula key=value
+> ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli atomate2 run_atomate2_vasp_calculation key=value
+> ```
 
 ## Goal
 
@@ -23,7 +37,7 @@ This skill is based on atomate2's optics workflow, which is a flow maker analogo
 
 Start with a well-relaxed crystalline structure in CIF or POSCAR format. You can:
 
-- Search Materials Project using the [`mcp_base_search_materials_project_by_formula`](../../src/mcp_server/base_server.py) tool
+- Search Materials Project using the [`base.search_materials_project_by_formula`](../../src/mcp_server/base_server.py) tool
 - Use a structure from previous calculations
 - Create a structure manually using pymatgen or ASE
 
@@ -35,7 +49,7 @@ Start with a well-relaxed crystalline structure in CIF or POSCAR format. You can
 Use the `atomate2` MCP tool with `calculation_type="optics"`:
 
 ```python
-mcp_atomate2_run_atomate2_vasp_calculation(
+atomate2.run_atomate2_vasp_calculation(
     structures_path="structure.cif",        # Input structure file
     output_dir="./optics_results",          # Output directory
     calculation_type="optics",              # Atomate2 optics workflow
@@ -55,7 +69,7 @@ The workflow automatically:
 If you need to tune optics settings such as `NBANDS`, `NEDOS`, or `CSHIFT`, pass them through `config`:
 
 ```python
-mcp_atomate2_run_atomate2_vasp_calculation(
+atomate2.run_atomate2_vasp_calculation(
     structures_path="structure.cif",
     output_dir="./optics_results",
     calculation_type="optics",
@@ -74,8 +88,7 @@ mcp_atomate2_run_atomate2_vasp_calculation(
 After the calculation completes, parse the results and generate a dielectric-response plot:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-dielectric-response/scripts/plot_dielectric.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/plot_dielectric.py \
     optics_results \
     --output dielectric_function.png \
     --mode average
@@ -90,8 +103,7 @@ The script will:
 For anisotropic systems, plot the diagonal tensor components separately:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-dielectric-response/scripts/plot_dielectric.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/plot_dielectric.py \
     optics_results \
     --output dielectric_components.png \
     --mode diagonal
@@ -120,7 +132,7 @@ If you need the static dielectric tensor rather than the frequency-dependent spe
 # 1. Prepare a relaxed SiC structure
 
 # 2. Run optics workflow
-mcp_atomate2_run_atomate2_vasp_calculation(
+atomate2.run_atomate2_vasp_calculation(
     structures_path="SiC.cif",
     output_dir="./SiC_optics",
     calculation_type="optics",
@@ -134,8 +146,7 @@ mcp_atomate2_run_atomate2_vasp_calculation(
 )
 
 # 3. Plot results
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-dielectric-response/scripts/plot_dielectric.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/plot_dielectric.py \
     SiC_optics \
     --output SiC_dielectric.png \
     --mode average

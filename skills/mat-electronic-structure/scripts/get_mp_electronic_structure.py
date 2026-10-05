@@ -13,7 +13,7 @@ Usage:
     python get_mp_electronic_structure.py --material_id mp-149 --output si_electronic.json --plot
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - MP_API_KEY environment variable must be set
     - Required packages: mp-api, pymatgen, matplotlib
 """

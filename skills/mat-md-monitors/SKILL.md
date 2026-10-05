@@ -3,9 +3,22 @@ name: mat-md-monitors
 description: Real-time monitoring tools for stability, equilibration, and diffusion during ASE molecular dynamics simulations.
 metadata:
   category: [materials, chemistry]
+  venv: [mlip]
 ---
 
 # Molecular Dynamics
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `mace.run_md` is the `run_md`
+> tool of the `mace` server (`mcp__mace__run_md`, or
+> `mcp__plugin_atomistic-skills_mace__run_md` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli mace run_md key=value
+> ```
 
 ## Goal
 To perform stable and accurate molecular dynamics simulations using MLIPs, ensuring physical correctness and avoiding common "explosions" associated with neural network potentials.
@@ -35,7 +48,7 @@ MD stability monitoring is integrated directly into the `run_md` tool via ASE ca
 - **Quenching Template (MCP Tool Call)**:
     ```json
     {
-      "tool": "mcp_mace_run_md",
+      "tool": "mace.run_md",
       "arguments": {
         "structure_data": "initial_structure.cif",
         "temperature": 3000.0,

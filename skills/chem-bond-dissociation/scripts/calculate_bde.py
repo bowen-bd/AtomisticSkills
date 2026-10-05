@@ -24,7 +24,7 @@ Usage:
         --output_dir results/
 
 Requirements:
-    - Conda environment: mace-agent (for MACE) or fairchem-agent (for FairChem)
+    - Environment: mlip (for MACE) or fairchem (for FairChem)
     - Required packages: ase, rdkit, mace-torch (or fairchem-core)
 """
 

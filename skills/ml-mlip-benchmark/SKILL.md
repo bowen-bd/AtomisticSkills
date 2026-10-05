@@ -3,26 +3,41 @@ name: ml-mlip-benchmark
 description: Benchmark MLIP accuracy against a labeled dataset — compute MAE/RMSE for energy/atom and forces, and generate parity plots.
 metadata:
   category: [machine-learning, materials, chemistry]
+  venv: [cpu, fairchem, mlip]
 ---
 
 # Benchmark Machine Learning Interatomic Potentials (MLIP)
 
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `mace.load_model` is the `load_model`
+> tool of the `mace` server (`mcp__mace__load_model`, or
+> `mcp__plugin_atomistic-skills_mace__load_model` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli mace load_model key=value
+> ${CLAUDE_SKILL_DIR}/../../venv/run fairchem python -m src.mcp_server.cli fairchem load_model key=value
+> ${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli matgl load_model key=value
+> ```
+
 This skill evaluates the accuracy of a given MLIP against an existing ground-truth dataset (e.g., DFT calculations or a higher-fidelity foundation potential). It computes the Mean Absolute Error (MAE) and Root Mean Square Error (RMSE) for both energy (per atom) and atomic forces, and optionally stress. It also generates parity plots for visual inspection of the model's correlation.
 
 ## Prerequisites
-1. **Model Loaded**: An MLIP must be currently active via a `load_model` MCP tool call (e.g., `mcp_mace_load_model`, `mcp_fairchem_load_model`, `mcp_matgl_load_model`).
+1. **Model Loaded**: An MLIP must be currently active via a `load_model` MCP tool call (e.g., `mace.load_model`, `fairchem.load_model`, `matgl.load_model`).
 2. **Labeled Data**: A JSON dataset where each entry contains a structural dictionary under `"structure"`, along with scalar/vector ground truth values for `"energy"`, `"forces"`, and optionally `"stress"`. This is identical to the format used in `ml-mlip-training`. (Data can be generated using Atomate2 MongoDB queries or MD sampling + labeling).
 
 ## Instructions
 
 ### 1. Run Benchmark metrics
-Use the `skills/ml-mlip-benchmark/scripts/run_benchmark.py` script to perform inference across the dataset and compute global error metrics.
+Use the `${CLAUDE_SKILL_DIR}/scripts/run_benchmark.py` script to perform inference across the dataset and compute global error metrics.
 
 **Environment requirement**: This script instantiates the MLIP models directly, so it must run in the uv project that provides the backend: `venv/mlip` for MACE and MatGL, `venv/fairchem` for FairChem.
 
 ```bash
-# Venv: venv/mlip (or venv/fairchem when --backend fairchem)
-uv run --project venv/mlip python skills/ml-mlip-benchmark/scripts/run_benchmark.py \
+# (or venv/fairchem when --backend fairchem)
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/run_benchmark.py \
     --data_path <path_to_labeled_data.json> \
     --model <model_name_or_path> \
     --backend <mace|fairchem|matgl> \
@@ -36,7 +51,7 @@ Once `run_benchmark.py` finishes, it writes a comprehensive JSON file containing
 **Environment requirement**: `venv/cpu` is enough for the plotting script.
 
 ```bash
-uv run --project venv/cpu python skills/ml-mlip-benchmark/scripts/plot_benchmark.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/plot_benchmark.py \
     --results <path_to_benchmark_results.json> \
     --output_dir <path_to_save_plots>
 ```
@@ -82,21 +97,18 @@ If the model is performing poorly on the labeled data, suggest fine-tuning it ut
 Evaluating state-of-the-art MatPES-r2SCAN Foundation Models directly against f-block filtered analytical DFT data from the Materials Project:
 
 ```bash
-# Venv: venv/cpu
 # Fetch 100 random r2SCAN structures from MP API (excluding Lanthanides/Actinides)
-uv run --project venv/cpu python skills/ml-mlip-benchmark/examples/fetch_r2scan.py
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/examples/fetch_r2scan.py
 
-# Venv: venv/mlip
 # Benchmark MACE foundation potential
-uv run --project venv/cpu python skills/ml-mlip-benchmark/scripts/run_benchmark.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_benchmark.py \
     --data_path research/2026-03-03_r2SCAN_benchmark/r2scan_data.json \
     --model MACE-MATPES-R2SCAN-0 \
     --backend mace \
     --output research/2026-03-03_r2SCAN_benchmark/mace_results.json
 
-# Venv: venv/cpu
 # Plot the evaluation statistics
-uv run --project venv/cpu python skills/ml-mlip-benchmark/scripts/plot_benchmark.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/plot_benchmark.py \
     --results research/2026-03-03_r2SCAN_benchmark/mace_results.json \
     --output_dir research/2026-03-03_r2SCAN_benchmark/plots_mace
 ```

@@ -3,6 +3,8 @@ name: mat-lammps-md
 description: Build and run LAMMPS molecular dynamics with isolated MLIP-specific binaries (MACE, MatGL/CHGNet, FairChem) to avoid Python and Torch stack conflicts.
 metadata:
   category: [materials]
+  venv: []
+  conda_env: [mace-agent, matgl-agent, fairchem-agent]
 ---
 
 # LAMMPS Molecular Dynamics with MLIPs
@@ -18,7 +20,6 @@ Run GPU-accelerated LAMMPS molecular dynamics with MLIP backends using three iso
 
 2. **Check system prerequisites**.
 ```bash
-# Venv: venv/cpu
 nvidia-smi
 nvcc --version
 g++ --version
@@ -28,7 +29,6 @@ mpicxx --version
 
 3. **Identify GPU compute capability and set Kokkos arch flag**.
 ```bash
-# Venv: venv/cpu
 nvidia-smi --query-gpu=name,compute_cap --format=csv,noheader
 ```
 - Example mapping:
@@ -41,41 +41,37 @@ nvidia-smi --query-gpu=name,compute_cap --format=csv,noheader
 
    **Path A: MACE**
 ```bash
-# Venv: venv/cpu
-bash conda-envs/mace-agent/install.sh
+bash ${CLAUDE_SKILL_DIR}/../../conda-envs/mace-agent/install.sh
 KOKKOS_ARCH_FLAG=Kokkos_ARCH_AMPERE86 \
 LAMMPS_REF="stable_2Aug2023_update2" \
-bash conda-envs/mace-agent/install_lammps.sh
+bash ${CLAUDE_SKILL_DIR}/../../conda-envs/mace-agent/install_lammps.sh
 ```
    - Binary: `./lammps/mace-agent/lmp`
    - Runtime env: `mace-agent`
 
    **Path B: MatGL/CHGNet**
 ```bash
-# Venv: venv/cpu
-bash conda-envs/matgl-agent/install.sh
+bash ${CLAUDE_SKILL_DIR}/../../conda-envs/matgl-agent/install.sh
 KOKKOS_ARCH_FLAG=Kokkos_ARCH_AMPERE86 \
 LAMMPS_REF="stable_2Aug2023_update2" \
-bash conda-envs/matgl-agent/install_lammps.sh
+bash ${CLAUDE_SKILL_DIR}/../../conda-envs/matgl-agent/install_lammps.sh
 ```
    - Binary: `./lammps/matgl-agent/lmp`
    - Runtime env: `matgl-agent`
 
    **Path C: FairChem**
 ```bash
-# Venv: venv/cpu
-bash conda-envs/fairchem-agent/install.sh
+bash ${CLAUDE_SKILL_DIR}/../../conda-envs/fairchem-agent/install.sh
 KOKKOS_ARCH_FLAG=Kokkos_ARCH_AMPERE86 \
 LAMMPS_REF="stable_2Aug2023_update2" \
-bash conda-envs/fairchem-agent/install_lammps.sh
+bash ${CLAUDE_SKILL_DIR}/../../conda-envs/fairchem-agent/install_lammps.sh
 ```
    - Binary: `./lammps/fairchem-agent/lmp`
    - Runtime env: `fairchem-agent`
 
 5. **Run the selected binary with its matching conda environment**.
 ```bash
-# Venv: venv/mlip (example; switch env/binary pair as needed)
-# Venv: venv/mlip
+# (example; switch env/binary pair as needed)
 ./lammps/mace-agent/lmp -h
 ```
 

@@ -3,6 +3,7 @@ name: mat-phonon
 description: Calculate vibrational properties (phonon dispersions, density of states, thermal properties) using MLIPs.
 metadata:
   category: [materials]
+  venv: [cpu, mlip]
 ---
 
 # Phonon Calculation Skill
@@ -31,8 +32,7 @@ Refer to the [foundation-potentials skill](../ml-foundation-potentials/SKILL.md)
 To calculate phonon properties using machine learning potentials, use the `calculate_phonon.py` script.
 
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/mat-phonon/scripts/calculate_phonon.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/calculate_phonon.py \
     --structure path/to/relaxed_structure.cif \
     --model_type mace \
     --model_name MACE-MP-small \
@@ -45,8 +45,7 @@ uv run --project venv/mlip python skills/mat-phonon/scripts/calculate_phonon.py 
 For validation and benchmarking, retrieve pre-computed DFT phonon data:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-phonon/scripts/get_mp_phonon.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/get_mp_phonon.py \
     --material_id mp-149 \
     --phonon_method dfpt \
     --output si_phonon_mp.json \
@@ -63,14 +62,14 @@ uv run --project venv/cpu python skills/mat-phonon/scripts/get_mp_phonon.py \
 
 ```bash
 # 1. Calculate with MLIP
-python skills/mat-phonon/scripts/calculate_phonon.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/calculate_phonon.py \
     --structure Si.cif \
     --model_type mace \
     --model_name MACE-OMAT-0-small \
     --output_dir si_mace_phonon
 
 # 2. Get DFT reference from MP
-python skills/mat-phonon/scripts/get_mp_phonon.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/get_mp_phonon.py \
     --material_id mp-149 \
     --phonon_method dfpt \
     --output si_mp_phonon.json \

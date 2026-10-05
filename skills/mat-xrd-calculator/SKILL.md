@@ -3,6 +3,7 @@ name: mat-xrd-calculator
 description: Calculate the X-ray Diffraction (XRD) spectrum of a material using pymatgen.
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # XRD Spectrum Calculation
@@ -22,7 +23,7 @@ The primary script for this skill is `calculate_xrd.py`. It takes a structure fi
 ### Command Line Interface
 
 ```bash
-python skills/mat-xrd-calculator/scripts/calculate_xrd.py <structure_file> --output_dir <output_dir> --wavelength <wavelength>
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/calculate_xrd.py <structure_file> --output_dir <output_dir> --wavelength <wavelength>
 ```
 
 ### Arguments
@@ -42,10 +43,8 @@ python skills/mat-xrd-calculator/scripts/calculate_xrd.py <structure_file> --out
 To calculate the XRD pattern for LiFePO4:
 
 ```bash
-```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-xrd-calculator/scripts/calculate_xrd.py skills/mat-xrd-calculator/examples/LiFePO4/LiFePO4.cif --output_dir skills/mat-xrd-calculator/examples/LiFePO4
-```
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/calculate_xrd.py \
+    ${CLAUDE_SKILL_DIR}/examples/LiFePO4/LiFePO4.cif --output_dir xrd_LiFePO4
 ```
 
 ## Foundation Potential Recommendations

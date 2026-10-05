@@ -3,9 +3,22 @@ name: general-deep-research
 description: Perform iterative, deep, and comprehensive literature research on a specific materials/chemistry topic.
 metadata:
   category: [general]
+  venv: [cpu]
 ---
 
 # Deep Research
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `base.search_literature` is the `search_literature`
+> tool of the `base` server (`mcp__base__search_literature`, or
+> `mcp__plugin_atomistic-skills_base__search_literature` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli base search_literature key=value create_research_dir key=value
+> ```
 
 ## Goal
 To perform an in-depth, iterative, and comprehensive literature and web research campaign to answer complex scientific questions (e.g., "What are the synthesis methods and solid-state electrolyte performance of LiInCl3?"). This skill produces a high-quality, synthesized research report with citations, significantly exceeding the depth of a single simple literature query.
@@ -21,10 +34,10 @@ Break down the user's broad research topic into 3-5 specific sub-queries.
 Create a rough outline for the final research report in your task plan.
 
 ### Step 2: Iterative Literature Search
-For *each* sub-query, use the `mcp_base_search_literature` tool to search the OpenAlex database. **Always set `download=True`** to attempt downloading the full text of discovered papers.
+For *each* sub-query, use the `base.search_literature` tool to search the OpenAlex database. **Always set `download=True`** to attempt downloading the full text of discovered papers.
 
 ```bash
-mcp_base_search_literature(
+base.search_literature(
     query="Lithium Indium Chloride ionic conductivity",
     limit=50,
     download=True
@@ -46,7 +59,7 @@ Extract specific numbers, methodologies, and limitations (e.g., "Conductivity is
 If gaps in knowledge remain (e.g., you found the conductivity but not the stability window), **perform another round of searching** with refined queries targeting the missing information.
 
 ### Step 4: Report Generation
-Draft a comprehensive, academic-style markdown report named `deep_research_report.md` inside the active `research_dir` (which should be created via `mcp_base_create_research_dir`).
+Draft a comprehensive, academic-style markdown report named `deep_research_report.md` inside the active `research_dir` (which should be created via `base.create_research_dir`).
 
 The report must include:
 1. **Executive Summary**: A high-level overview of the findings.
@@ -69,7 +82,7 @@ notify_user(
 ## Constraints
 - **Depth Over Speed**: Take the time to run multiple tool calls to search and read. Do not stop after one search query.
 - **Data Specificity**: Extract quantitative data (values, temperatures, error margins) wherever possible rather than qualitative statements.
-- **Resource Utilization**: Use both `mcp_base_search_literature` and `search_web`.
+- **Resource Utilization**: Use both `base.search_literature` and `search_web`.
 
 ## Examples
 

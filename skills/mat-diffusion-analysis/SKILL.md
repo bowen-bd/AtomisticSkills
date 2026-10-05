@@ -3,6 +3,7 @@ name: mat-diffusion-analysis
 description: Calculate ionic diffusion coefficients and activation energy from MD trajectories using pymatgen.
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # Diffusion Analysis
@@ -31,8 +32,7 @@ To accurately calculate the ionic diffusivity ($D$) and activation energy ($E_a$
 
 2.  **Individual Diffusivity Analysis**: For each temperature directory that did *not* hit the early stopping criteria, run the analysis script to extract the diffusivity and Mean Square Displacement (MSD).
     ```bash
-    # Venv: venv/cpu
-    uv run --project venv/cpu python skills/mat-diffusion-analysis/scripts/analyze_diffusion.py \
+    ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/analyze_diffusion.py \
         results/md_600K/trajectory.traj \
         --species Li \
         --temperature 600 \
@@ -44,8 +44,7 @@ To accurately calculate the ionic diffusivity ($D$) and activation energy ($E_a$
 
 3.  **Activation Energy Fitting**: Once all individual results are generated, use the fitting script to combine data and perform a weighted Arrhenius fit.
     ```bash
-    # Venv: venv/cpu
-    uv run --project venv/cpu python skills/mat-diffusion-analysis/scripts/calculate_activation_energy.py results/
+    ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/calculate_activation_energy.py results/
     ```
     - The script looks for `md_*K/diffusion_results.json` patterns.
     - It performs error propagation to calculate uncertainty in $E_a$ and extrapolated room-temperature conductivity.

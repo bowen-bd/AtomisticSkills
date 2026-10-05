@@ -34,7 +34,7 @@ Usage:
         --output_dir mmpbsa/
 
 Requirements:
-    - Conda environment: drugmd-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: openmm, openmmforcefields, openff-toolkit, parmed,
       MDAnalysis, AmberTools (MMPBSA.py + cpptraj must be on PATH).
 """

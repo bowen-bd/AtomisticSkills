@@ -10,7 +10,7 @@ Usage:
         --env mace --device cuda --n-repeat 3 --output results.json
 
 Requirements:
-    - Conda environment: mace-agent, matgl-agent, or fairchem-agent
+    - Environment: mlip, mlip, or fairchem (run with: venv/run fairchem python ...)
     - nvalchemi-toolkit installed in the environment
 """
 
@@ -126,16 +126,16 @@ ENV_MODELS: dict[str, list[tuple[str, str, str | None, str]]] = {
         ),
         # CHGNet PES (NValchemi supported)
         (
-            "CHGNet-PES-MatPES-PBE-2025.2.10",
+            "CHGNet-PES-MatPES-PBE-1M-2026.9",
             "src.utils.mlips.matgl.matgl_wrapper.MatGLWrapper",
             None,
-            "CHGNet-PES-PBE-2025.2.10",
+            "CHGNet-PES-PBE-1M-2026.9",
         ),
         (
-            "CHGNet-PES-MatPES-r2SCAN-2025.2.10",
+            "CHGNet-PES-MatPES-r2SCAN-1M-2026.9",
             "src.utils.mlips.matgl.matgl_wrapper.MatGLWrapper",
             None,
-            "CHGNet-PES-r2SCAN-2025.2.10",
+            "CHGNet-PES-r2SCAN-1M-2026.9",
         ),
         # QET PES (NValchemi NOT supported — will skip gracefully)
         (

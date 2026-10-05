@@ -3,6 +3,7 @@ name: drug-pose-validation
 description: Validate docked or generated ligand poses for physical plausibility using PoseBusters, filtering out chemically invalid or clashing poses before downstream refinement.
 metadata:
   category: [drug-discovery]
+  venv: [cpu]
 ---
 
 # drug-pose-validation
@@ -23,15 +24,13 @@ You need:
 If your docked poses are in PDBQT format, convert them to SDF first:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu obabel docking/results/ligand_docked.pdbqt -O docking/results/ligand_docked.sdf -m
+${CLAUDE_SKILL_DIR}/../../venv/run cpu obabel docking/results/ligand_docked.pdbqt -O docking/results/ligand_docked.sdf -m
 ```
 
 ### 2. Run pose validation
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-pose-validation/scripts/validate_poses.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/validate_poses.py \
   --poses docking/results/ligand_docked.sdf \
   --receptor docking/inputs/protein_prepared.pdb \
   --output_dir docking/validation/
@@ -47,8 +46,7 @@ This produces:
 When no receptor is available, run ligand-only validation (checks bond geometry, planarity, stereochemistry, internal clashes):
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-pose-validation/scripts/validate_poses.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/validate_poses.py \
   --poses generated/conformers.sdf \
   --output_dir generated/validation/
 ```
@@ -102,11 +100,9 @@ Poses failing any test are excluded from `valid_poses.sdf`. If all poses fail, r
 ### Example: validate Vina docking output for HIV-1 protease
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu obabel hiv_docking/results/indinavir_docked.pdbqt -O hiv_docking/results/indinavir_docked.sdf -m
+${CLAUDE_SKILL_DIR}/../../venv/run cpu obabel hiv_docking/results/indinavir_docked.pdbqt -O hiv_docking/results/indinavir_docked.sdf -m
 
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-pose-validation/scripts/validate_poses.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/validate_poses.py \
   --poses hiv_docking/results/indinavir_docked.sdf \
   --receptor hiv_docking/inputs/1HSG_prepared.pdb \
   --output_dir hiv_docking/validation/

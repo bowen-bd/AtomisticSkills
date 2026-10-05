@@ -12,10 +12,9 @@ Using the `base-agent` environment, we convert the `Si` structure into a working
 
 ```bash
 # Env: base-agent
-conda activate base-agent
 
 # Run the preparation script
-python ../../../scripts/prepare_vasp_inputs.py \
+venv/run cpu python ../../../scripts/prepare_vasp_inputs.py \
     Si.cif \
     vasp_inputs/ \
     --preset_type matpes-pbe \
@@ -43,10 +42,9 @@ After the calculation completes, the simulation directory will contain standard 
 
 ```bash
 # Env: base-agent
-conda activate base-agent
 
 # Parse the directory locally
-python ../../../scripts/parse_vasp_results.py \
+venv/run cpu python ../../../scripts/parse_vasp_results.py \
     vasp_inputs/ \
     --save_to_file parsed_results.json
 ```

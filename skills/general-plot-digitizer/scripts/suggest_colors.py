@@ -10,7 +10,7 @@ Usage:
     python suggest_colors.py plot.png metadata.json --exclude-labels
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: opencv, numpy
 """
 

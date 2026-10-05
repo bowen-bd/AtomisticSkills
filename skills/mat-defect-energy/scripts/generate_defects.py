@@ -8,7 +8,7 @@ Usage:
     python generate_defects.py --bulk bulk.cif --supercell_size 2 2 2 --defect_type interstitial --interstitial_element Li --output defects/
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: pymatgen, pymatgen-analysis-defects, ase
 """
 

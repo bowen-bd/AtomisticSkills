@@ -5,7 +5,7 @@ Usage:
     python parse_vasp_results.py output_dir --save_to_file results.json
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: ase, pymatgen
 """
 

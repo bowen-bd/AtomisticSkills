@@ -24,7 +24,6 @@ import argparse
 import importlib
 import json
 import logging
-import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -45,12 +44,10 @@ except Exception:  # pragma: no cover - optional dependency
         return iterable
 
 
-os.environ.setdefault("MATGL_BACKEND", "DGL")
-
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger("FrenkelLadd-Skill")
 
-TRAPEZOID = getattr(np, "trapezoid", np.trapz)
+TRAPEZOID = np.trapezoid  # numpy >= 2 (np.trapz was removed in 2.4)
 
 
 class HarmonicOscillatorCalculator(Calculator):

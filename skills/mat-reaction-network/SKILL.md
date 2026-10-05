@@ -3,6 +3,7 @@ name: mat-reaction-network
 description: Predict thermodynamically optimal solid-state inorganic synthesis pathways and tabulates basic reactions.
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # Material Reaction Network Prediction
@@ -16,8 +17,7 @@ To predict the optimal sequence of thermodynamically favorable chemical reaction
 Explore the landscape of competing reactions within a specific chemical system by explicitly generating balanced equations.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-reaction-network/scripts/enumerate_reactions.py --chemsys Ba-Ti-O --enumerator-type basic_open --open-phases O2 --temperature 1000 --limit 10
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/enumerate_reactions.py --chemsys Ba-Ti-O --enumerator-type basic_open --open-phases O2 --temperature 1000 --limit 10
 ```
 - `--chemsys`: The chemical system to restrict search to.
 - `--enumerator-type`: The algorithm used to propose reactions (`basic`, `basic_open`, `minimize_gibbs`, `minimize_grand_potential`).
@@ -29,8 +29,7 @@ uv run --project venv/cpu python skills/mat-reaction-network/scripts/enumerate_r
 To resolve a complete list of step-by-step reactions that convert specific starting precursors into a target compound, use the pathway solver script.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-reaction-network/scripts/find_pathways.py --target BaTiO3 --precursors BaO TiO2 --temperature 1000 --k-paths 5
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/find_pathways.py --target BaTiO3 --precursors BaO TiO2 --temperature 1000 --k-paths 5
 ```
 - `--target`: The desired final functional material.
 - `--precursors`: One or more starting materials (e.g., oxides or carbonates).
@@ -41,8 +40,7 @@ uv run --project venv/cpu python skills/mat-reaction-network/scripts/find_pathwa
 
 Finding pathways to synthesize Yttrium Manganite from carbonates and chlorides:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-reaction-network/scripts/find_pathways.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/find_pathways.py \
     --target YMnO3 \
     --precursors YCl3 Mn2O3 Li2CO3 \
     --byproducts LiCl CO2 \

@@ -3,6 +3,7 @@ name: general-arxiv-search
 description: Search and retrieve research papers from ArXiv API for scientific research.
 metadata:
   category: [general]
+  venv: [cpu]
 ---
 
 # ArXiv Search
@@ -16,16 +17,14 @@ To search for and retrieve metadata (title, authors, summary, DOI, etc.) of rese
 Search for papers containing specific keywords across all fields (title, abstract, authors, etc.).
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/general-arxiv-search/scripts/arxiv_search.py "machine learning interatomic potential" --max_results 5 --output mlip_papers.json
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/arxiv_search.py "machine learning interatomic potential" --max_results 5 --output mlip_papers.json
 ```
 
 ### 2. Advanced Search (Authors, Categories, Title)
 Combine multiple criteria to narrow down search results.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/general-arxiv-search/scripts/arxiv_search.py --authors "Ceder" --categories mtrl-sci --max_results 10 --output ceder_papers.json
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/arxiv_search.py --authors "Ceder" --categories mtrl-sci --max_results 10 --output ceder_papers.json
 ```
 
 **Supported Category Shortcuts:**
@@ -40,22 +39,19 @@ uv run --project venv/cpu python skills/general-arxiv-search/scripts/arxiv_searc
 Restrict the search to only the paper titles.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/general-arxiv-search/scripts/arxiv_search.py --title "perovskite stability" --max_results 5
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/arxiv_search.py --title "perovskite stability" --max_results 5
 ```
 
 ## Examples
 
 ### Retrieval of Recent MACE Related Papers
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/general-arxiv-search/scripts/arxiv_search.py "MACE force field" --max_results 3 --output mace_results.json
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/arxiv_search.py "MACE force field" --max_results 3 --output mace_results.json
 ```
 
 ### Searching for Specific Authors in Materials Science
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/general-arxiv-search/scripts/arxiv_search.py --authors "Boris Kozinsky" --categories mtrl-sci --max_results 5
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/arxiv_search.py --authors "Boris Kozinsky" --categories mtrl-sci --max_results 5
 ```
 
 ## Constraints

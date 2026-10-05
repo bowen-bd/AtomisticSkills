@@ -27,7 +27,7 @@ Usage
 
 Requirements
 ------------
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: phonopy, pymatgen, numpy, matplotlib
 """
 

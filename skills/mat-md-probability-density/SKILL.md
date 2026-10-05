@@ -3,6 +3,7 @@ name: mat-md-probability-density
 description: Calculate and visualize the probability density of diffusing ions from a Molecular Dynamics (MD) trajectory.
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # MD Probability Density Visualization
@@ -20,8 +21,7 @@ To visualize the spatial probability density of mobile ions (e.g., Li, Na) from 
 
 2.  **Calculate Probability Density**: Use the provided script to extract the fractional coordinates of the targeted species over time and convert them into a spatial density grid.
     ```bash
-    # Venv: venv/cpu
-    uv run --project venv/cpu python skills/mat-md-probability-density/scripts/calculate_probability_density.py \
+    ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/calculate_probability_density.py \
         results/md_600K/trajectory.traj \
         --species Li \
         --interval 0.2 \

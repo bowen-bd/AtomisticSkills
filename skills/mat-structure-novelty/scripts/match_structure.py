@@ -5,7 +5,7 @@ Usage:
     python match_structure.py <target_structure_or_dir> <candidates_or_MP> [--ltol 0.2] [--stol 0.3] [--angle_tol 5]
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: pymatgen, ase, argparse, mp_api (if using 'MP')
 """
 

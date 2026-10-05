@@ -47,13 +47,13 @@ On shared machines, prefer a GPU with no active compute job and low memory usage
 To run on one selected GPU:
 
 ```bash
-conda run --no-capture-output -n scd-agent env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=2 python -u run_ct_scd_matbench.py --num-steps 2 --val-interval 1
+venv/run mlip env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=2 python -u run_ct_scd_matbench.py --num-steps 2 --val-interval 1
 ```
 
 To run on all selected visible GPUs:
 
 ```bash
-conda run --no-capture-output -n scd-agent env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=0,1,2,3 python -u run_ct_scd_matbench.py --num-steps 2 --val-interval 1 --use-all-visible-gpus
+venv/run mlip env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=0,1,2,3 python -u run_ct_scd_matbench.py --num-steps 2 --val-interval 1 --use-all-visible-gpus
 ```
 
 The wrapper defaults to a single visible GPU unless `--use-all-visible-gpus` is requested.
@@ -67,7 +67,7 @@ python run_ct_scd_matbench.py --wandb-mode offline
 For W&B online mode, first log in inside `scd-agent`:
 
 ```bash
-conda run -n scd-agent wandb login
+venv/run mlip wandb login
 ```
 
 Then launch without `WANDB_MODE=offline`, or set `WANDB_MODE=online` explicitly.

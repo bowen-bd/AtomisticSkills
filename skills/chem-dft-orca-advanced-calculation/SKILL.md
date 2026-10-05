@@ -3,6 +3,7 @@ name: chem-dft-orca-advanced-calculation
 description: Write and run custom ORCA input files for advanced electronic structure methods or settings not available through the SCINE wrapper, including multi-reference methods, excited states, relativistic effects, advanced SCF, NMR/EPR, and more.
 metadata:
   category: [chemistry]
+  venv: [cpu]
 ---
 
 # Advanced ORCA Calculation
@@ -94,8 +95,7 @@ end
 ### Step 3: Run the calculation
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-dft-orca-advanced-calculation/scripts/run_orca_input.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_orca_input.py \
     --input_file calculation.inp \
     --output_dir research/my_project/advanced_calc
 ```
@@ -112,8 +112,7 @@ The script will:
 For standard energies, the runner script already extracts the final energy. For other properties, use the dedicated parser:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-dft-orca-advanced-calculation/scripts/parse_orca_output.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/parse_orca_output.py \
     --output_file research/my_project/advanced_calc/calculation.out \
     --property energy orbitals
 ```

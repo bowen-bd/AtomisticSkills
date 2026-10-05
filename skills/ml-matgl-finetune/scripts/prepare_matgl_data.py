@@ -25,7 +25,7 @@ def main():
     )
     parser.add_argument(
         "--model",
-        default="CHGNet-MatPES-PBE-2025.2.10-2.7M-PES",
+        default="CHGNet-PES-MatPES-PBE-1M-2026.9",
         help="Base model name or path to a checkpoint",
     )
     parser.add_argument(
@@ -142,9 +142,8 @@ def main():
     print(f"Data written to: {output_path}")
     print("=======================================================\n")
     print("To generate training config and start training, run:")
-    print("  conda activate matgl-agent")
     print(
-        f"  python generate_matgl_config.py --train-data {train_path.absolute()} "
+        f"  venv/run mlip python {Path(__file__).resolve().parent / 'generate_matgl_config.py'} --train-data {train_path.absolute()} "
         + (f"--val-data {val_path.absolute()} " if val_data else "")
         + f"--model {args.model} --output-dir {output_path.absolute()}"
     )

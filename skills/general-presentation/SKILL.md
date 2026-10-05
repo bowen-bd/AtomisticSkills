@@ -3,6 +3,7 @@ name: general-presentation
 description: Generate and iteratively refine PowerPoint presentations from simulation results using python-pptx.
 metadata:
   category: [general]
+  venv: [cpu]
 ---
 
 # Presentation Generation
@@ -18,9 +19,8 @@ Create professional PowerPoint presentations from simulation results (plots, tab
 All scripts should import `slide_utils` from this skill:
 
 ```python
-# Venv: venv/cpu
 import sys
-sys.path.insert(0, "skills/general-presentation/scripts")
+sys.path.insert(0, "${CLAUDE_SKILL_DIR}/scripts")
 from slide_utils import *
 ```
 
@@ -75,9 +75,8 @@ pdftocairo -png output.pdf output
 Generating a simulation report:
 
 ```python
-# Venv: venv/cpu
 import sys
-sys.path.insert(0, "skills/general-presentation/scripts")
+sys.path.insert(0, "${CLAUDE_SKILL_DIR}/scripts")
 from slide_utils import *
 
 prs = create_presentation("LiFePO4 Stability", "MACE-MP Results", "Research Agent")
@@ -91,7 +90,8 @@ See [amorphorization example](examples/amorphorization/) for a complete runnable
 
 ## Constraints
 
-- **Environment**: Scripts require `base-agent` with `python-pptx` installed.
+- **Environment**: Run the slide script in the `cpu` environment, which has `python-pptx`:
+  `${CLAUDE_SKILL_DIR}/../../venv/run cpu python make_slides.py`.
 - **Image formats**: PNG, JPG, BMP, GIF, TIFF supported.
 - **Slide dimensions**: Default 16:9 (13.333 × 7.5 inches). Override via `THEME["width"]` / `THEME["height"]`.
 - **Tables**: Large tables (>15 rows) may overflow the slide — split across multiple slides.

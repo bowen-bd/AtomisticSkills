@@ -10,7 +10,7 @@ Usage:
     python propose_substitutions.py structure.cif --threshold 0.01
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: pymatgen
 """
 

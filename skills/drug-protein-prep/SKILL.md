@@ -3,9 +3,22 @@ name: drug-protein-prep
 description: Prepare macromolecular receptor structures (PDB/mmCIF or RCSB PDB ID) for docking or simulation by fixing common structure issues and adding hydrogens.
 metadata:
   category: [drug-discovery]
+  venv: [cpu]
 ---
 
 # protein-prep
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `drugdisc.convert_to_pdbqt` is the `convert_to_pdbqt`
+> tool of the `drugdisc` server (`mcp__drugdisc__convert_to_pdbqt`, or
+> `mcp__plugin_atomistic-skills_drugdisc__convert_to_pdbqt` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli drugdisc convert_to_pdbqt key=value
+> ```
 
 ## Goal
 To prepare protein (and optionally nucleic acid) receptor structures for molecular docking (e.g., AutoDock Vina) by:
@@ -13,7 +26,7 @@ To prepare protein (and optionally nucleic acid) receptor structures for molecul
 2) fixing common structural issues (missing atoms, nonstandard residues),
 3) adding hydrogens at a target pH.
 
-> **Note**: This skill handles structure cleanup and protonation. To convert the result to **PDBQT** for docking, use the `mcp_drugdisc_convert_to_pdbqt` tool.
+> **Note**: This skill handles structure cleanup and protonation. To convert the result to **PDBQT** for docking, use the `drugdisc.convert_to_pdbqt` tool.
 
 ## Instructions
 
@@ -22,8 +35,7 @@ To prepare protein (and optionally nucleic acid) receptor structures for molecul
 This script manages missing atoms, nonstandard residues, and protonation.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-protein-prep/scripts/prepare_protein.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu+openmm python ${CLAUDE_SKILL_DIR}/scripts/prepare_protein.py \
   --pdb_id 1iep \
   --chains A \
   --ph 7.0 \
@@ -37,7 +49,7 @@ uv run --project venv/cpu python skills/drug-protein-prep/scripts/prepare_protei
 Use the MCP tool to convert the prepared PDB to PDBQT format.
 
 ```bash
-mcp_drugdisc_convert_to_pdbqt(
+drugdisc.convert_to_pdbqt(
     input_data="protein_prep/1IEP_prepared.pdb",
     output_path="protein_prep/1IEP.pdbqt",
     input_type="pdb"
@@ -47,8 +59,7 @@ mcp_drugdisc_convert_to_pdbqt(
 ### 3. Keep cofactors/metal ions
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-protein-prep/scripts/prepare_protein.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu+openmm python ${CLAUDE_SKILL_DIR}/scripts/prepare_protein.py \
   --pdb_id 1iep \
   --chains A \
   --heterogens non-water \
@@ -59,8 +70,7 @@ uv run --project venv/cpu python skills/drug-protein-prep/scripts/prepare_protei
 ### 4. Use a biological assembly (recommended when oligomerization matters)
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-protein-prep/scripts/prepare_protein.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu+openmm python ${CLAUDE_SKILL_DIR}/scripts/prepare_protein.py \
   --pdb_id 1iep \
   --assembly 1 \
   --chains A \
@@ -70,8 +80,7 @@ uv run --project venv/cpu python skills/drug-protein-prep/scripts/prepare_protei
 ### 5. Prepare from a local structure file
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-protein-prep/scripts/prepare_protein.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu+openmm python ${CLAUDE_SKILL_DIR}/scripts/prepare_protein.py \
   --pdb_file receptor.pdb \
   --heterogens none \
   --output_dir protein_prep_local/
@@ -97,8 +106,7 @@ If protonation is critical, consider a hydrogen optimization / pKa-aware tool (e
 1. Prepare the structure:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-protein-prep/scripts/prepare_protein.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu+openmm python ${CLAUDE_SKILL_DIR}/scripts/prepare_protein.py \
   --pdb_id 1hsg \
   --chains A B \
   --heterogens none \
@@ -109,7 +117,7 @@ uv run --project venv/cpu python skills/drug-protein-prep/scripts/prepare_protei
 2. Convert to PDBQT:
 
 ```bash
-mcp_drugdisc_convert_to_pdbqt(
+drugdisc.convert_to_pdbqt(
     input_data="hiv_prep/1HSG_prepared.pdb",
     output_path="hiv_prep/1HSG.pdbqt",
     input_type="pdb"
@@ -122,7 +130,7 @@ mcp_drugdisc_convert_to_pdbqt(
 * **Core dependencies**: `pdbfixer`, `openmm`.
 * **Protonation**: Default pH-based hydrogen addition is a baseline.
 * **Missing residues**: By default, missing residues are ignored to avoid introducing uncertain loop models.
-* **PDBQT**: PDBQT conversion is delegated to the `mcp_drugdisc_convert_to_pdbqt` tool (which uses Meeko).
+* **PDBQT**: PDBQT conversion is delegated to the `drugdisc.convert_to_pdbqt` tool (which uses Meeko).
 ---
 
 **Author:** Matthew Cox

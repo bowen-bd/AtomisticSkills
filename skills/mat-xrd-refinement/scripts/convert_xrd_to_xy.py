@@ -6,7 +6,7 @@ Usage:
     python convert_xrd_to_xy.py input.dif output.xy  # or .txt DIF file
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: json
 """
 

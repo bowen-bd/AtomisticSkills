@@ -3,9 +3,23 @@ name: mat-defect-energy
 description: Calculate point-defect formation energies (vacancies, substitutions, interstitials) using MLIPs.
 metadata:
   category: [materials]
+  venv: [cpu, mlip]
 ---
 
 # Point-Defect Formation Energy (MLIP)
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `base.search_materials_project_by_formula` is the `search_materials_project_by_formula`
+> tool of the `base` server (`mcp__base__search_materials_project_by_formula`, or
+> `mcp__plugin_atomistic-skills_base__search_materials_project_by_formula` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli base search_materials_project_by_formula key=value
+> ${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli mace load_model key=value relax_structure key=value
+> ```
 
 ## Goal
 To calculate the formation energy ($E_f$) of neutral point defects (vacancies, substitutions, and interstitials) using Machine Learning Interatomic Potentials (MLIPs). Formation energy is defined as:
@@ -24,14 +38,14 @@ Choose an MLIP model. See [ml-foundation-potentials](../ml-foundation-potentials
 ### 2. Obtain Bulk Structure
 Start with a relaxed bulk primitive cell. You can retrieve one from Materials Project:
 ```bash
-mcp_base_search_materials_project_by_formula(formula="MgO", save_to_file="MgO.cif")
+base.search_materials_project_by_formula(formula="MgO", save_to_file="MgO.cif")
 ```
 
 ### 3. Relax Bulk Structure
 Relax the bulk unit cell to get the reference energy:
 ```bash
-mcp_mace_load_model(model_name="MACE-MH-1", task_name="matpes_r2scan")
-mcp_mace_relax_structure(
+mace.load_model(model_name="MACE-MH-1", task_name="matpes_r2scan")
+mace.relax_structure(
     structure_data="MgO.cif",
     relax_cell=True,
     fmax=0.01,
@@ -43,8 +57,7 @@ Record the final **energy per atom** from the output.
 ### 4. Generate Defect Supercells
 Use the defect generation script with `pymatgen-analysis-defects`:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-defect-energy/scripts/generate_defects.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/generate_defects.py \
     --bulk bulk_relaxation/relaxed_structure.cif \
     --supercell_size 2 2 2 \
     --defect_type vacancy \
@@ -62,7 +75,7 @@ Relax **without cell relaxation** (fixed supercell volume). This applies to the 
 supercells only -- the bulk cell in step 3 and the elemental references in step 6 are
 both relaxed with `relax_cell=True`:
 ```bash
-mcp_mace_relax_structure(
+mace.relax_structure(
     structure_data="defect_structures/",
     relax_cell=False,  # Fixed cell for defect calculations
     fmax=0.02,
@@ -73,8 +86,7 @@ mcp_mace_relax_structure(
 ### 6. Calculate Formation Energies
 Compute defect formation energies:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-defect-energy/scripts/calculate_defect_energy.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/calculate_defect_energy.py \
     --bulk_dir bulk_relaxation/ \
     --defect_dir defect_relaxations/ \
     --supercell_size 2 2 2 \
@@ -99,21 +111,21 @@ gives -4.968 eV/atom versus -5.118 fully relaxed -- a 0.15 eV/atom error.
 ### Oxygen Vacancy in MgO
 ```bash
 # 1. Get MgO structure
-mcp_base_search_materials_project_by_formula(formula="MgO")
+base.search_materials_project_by_formula(formula="MgO")
 
 # 2. Relax bulk
-mcp_mace_load_model(model_name="MACE-MH-1", task_name="matpes_r2scan")
-mcp_mace_relax_structure(structure_data="MgO.cif", relax_cell=True, fmax=0.01, output_dir="bulk/")
+mace.load_model(model_name="MACE-MH-1", task_name="matpes_r2scan")
+mace.relax_structure(structure_data="MgO.cif", relax_cell=True, fmax=0.01, output_dir="bulk/")
 
 # 3. Generate O vacancy supercells
-python skills/mat-defect-energy/scripts/generate_defects.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/generate_defects.py \
     --bulk bulk/relaxed_structure.cif --supercell_size 3 3 3 --defect_type vacancy --output vacancies/
 
 # 4. Relax defect structures
-mcp_mace_relax_structure(structure_data="vacancies/", relax_cell=False, fmax=0.02, output_dir="vac_relax/")
+mace.relax_structure(structure_data="vacancies/", relax_cell=False, fmax=0.02, output_dir="vac_relax/")
 
 # 5. Compute formation energies
-python skills/mat-defect-energy/scripts/calculate_defect_energy.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/calculate_defect_energy.py \
     --bulk_dir bulk/ --defect_dir vac_relax/ --supercell_size 3 3 3 --output vac_energies.json
 ```
 Expected: O vacancy formation energy ~6–8 eV (DFT reference: ~7.2 eV for neutral O vacancy in MgO).

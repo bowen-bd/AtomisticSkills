@@ -10,7 +10,7 @@ Usage:
     python visualize_box.py --protein protein.pdb --box binding_site.json --ligand_resname MK1 --output box_vis.png
 
 Requirements:
-    - Conda environment: drugdisc-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: pymol-open-source
 """
 

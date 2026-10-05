@@ -4,8 +4,7 @@ This example demonstrates a phonon calculation for bulk Lithium (BCC) using the 
 
 ## Command
 ```bash
-conda activate matgl-agent
-python skills/mat-phonon/scripts/calculate_phonon.py \
+venv/run mlip python skills/mat-phonon/scripts/calculate_phonon.py \
     --structure tests/Li.cif \
     --model_type matgl \
     --model_name TensorNet-MatPES-r2SCAN-v2025.1-PES \

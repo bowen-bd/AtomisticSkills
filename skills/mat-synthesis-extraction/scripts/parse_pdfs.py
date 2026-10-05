@@ -10,7 +10,7 @@ Usage:
         --output-dir /path/to/output_texts
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: pymupdf
 """
 

@@ -3,9 +3,18 @@ name: ml-generative-adit
 description: Generate novel crystal structures and molecules using ADiT (All-atom Diffusion Transformer), a unified latent diffusion model.
 metadata:
   category: [machine-learning, materials, chemistry]
+  venv: []
+  conda_env: adit-agent
 ---
 
 # ADiT Structure Generation Skill
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `adit.generate_structures` is the `generate_structures`
+> tool of the `adit` server (`mcp__adit__generate_structures`, or
+> `mcp__plugin_atomistic-skills_adit__generate_structures` when installed as a plugin).
+> `adit` run only as MCP servers, from the `generative` container image (arm64) or the matching conda environment in `conda-envs/`.
 
 ## Goal
 
@@ -36,7 +45,7 @@ The single checkpoint handles both crystal and molecule generation, selected via
 Generate novel periodic crystal structures (saved as CIF files):
 
 ```bash
-mcp_adit_generate_structures(
+adit.generate_structures(
     generation_type="crystals",    # Generate periodic crystals
     num_structures=10,             # Number of structures to generate
     batch_size=100,                # Batch size for GPU efficiency
@@ -50,7 +59,7 @@ mcp_adit_generate_structures(
 Generate novel non-periodic molecules (saved as XYZ files):
 
 ```bash
-mcp_adit_generate_structures(
+adit.generate_structures(
     generation_type="molecules",   # Generate molecules
     num_structures=10,
     batch_size=100,

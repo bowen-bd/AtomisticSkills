@@ -3,9 +3,23 @@ name: mat-raman-spectra
 description: Calculate Raman-active phonon mode frequencies and simulate Raman spectra from MLIP phonon calculations; optionally compute full Raman intensities with DFT Born charges via atomate2.
 metadata:
   category: [materials]
+  venv: [cpu, mlip]
 ---
 
 # Raman Spectra Calculation
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `mace.load_model` is the `load_model`
+> tool of the `mace` server (`mcp__mace__load_model`, or
+> `mcp__plugin_atomistic-skills_mace__load_model` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli mace load_model key=value relax_structure key=value
+> ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli atomate2 run_atomate2_vasp_calculation key=value get_atomate2_job_status key=value
+> ```
 
 ## Goal
 To calculate the Raman spectrum of a crystalline material by:
@@ -31,9 +45,8 @@ To calculate the Raman spectrum of a crystalline material by:
 Before computing phonons, ensure the structure is fully relaxed. Use the MCP tool for your chosen MLIP:
 
 ```bash
-# Venv: venv/mlip
-mcp_mace_load_model(model_name="MACE-MH-1")
-mcp_mace_relax_structure(
+mace.load_model(model_name="MACE-MH-1")
+mace.relax_structure(
     structure_data="input_structure.cif",
     relax_cell=True,
     fmax=0.001,       # tight convergence for phonons
@@ -49,8 +62,7 @@ mcp_mace_relax_structure(
 Use the [mat-phonon](../mat-phonon/SKILL.md) skill to compute Γ-point phonons. The output `phonon.yaml` is the required input for this skill.
 
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/mat-phonon/scripts/calculate_phonon.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/../mat-phonon/scripts/calculate_phonon.py \
     --structure relaxation/relaxed_structure.cif \
     --model_type mace \
     --model_name MACE-MH-1 \
@@ -63,8 +75,7 @@ Verify the output: check `phonon_results/phonon.yaml` exists and there are no la
 ### 3. Analyse Raman-Active Modes and Simulate Spectrum (MLIP Tier)
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-raman-spectra/scripts/analyze_raman_modes.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/analyze_raman_modes.py \
     --phonon-yaml phonon_results/phonon.yaml \
     --structure relaxation/relaxed_structure.cif \
     --output-dir raman_results/ \
@@ -97,34 +108,34 @@ This step uses VASP DFPT via atomate2 to obtain Born effective charges and the m
 
 **4a. Run VASP DFPT for Born charges + dielectric tensor:**
 
+The `atomate2` server has no dedicated DFPT job, so run a static calculation with
+the DFPT tags as INCAR overrides:
+
 ```bash
-# Venv: venv/cpu
-mcp_atomate2_submit_vasp_job(
-    structure_path="relaxation/relaxed_structure.cif",
-    job_type="dfpt_dielectric",     # computes LEPSILON + Born charges
-    vasp_settings_json='{"EDIFF": 1e-8, "ENCUT": 520}',
-    output_dir="vasp_dfpt/"
+atomate2.run_atomate2_vasp_calculation(
+    structures_path="relaxation/relaxed_structure.cif",
+    output_dir="vasp_dfpt/",
+    calculation_type="static",
+    # DFPT: macroscopic dielectric tensor and Born effective charges
+    config={"LEPSILON": True, "IBRION": 8, "EDIFF": 1e-8, "ENCUT": 520},
+    execution_mode="local",  # "remote" submits through jobflow-remote instead
 )
 ```
 
-Wait for the job to complete, then retrieve results:
+For a remote run, check on the job and fetch its results once it finishes:
 
 ```bash
-# Venv: venv/cpu
-mcp_atomate2_get_task_result(
-    task_id="<task_id>",
-    output_dir="vasp_dfpt/results/"
-)
+atomate2.get_atomate2_job_status(job_id="<job_id>")
+atomate2.get_atomate2_results_by_id(job_ids=["<job_id>"], save_to_file="vasp_dfpt/results.json")
 ```
 
 **4b. Compute Raman intensities:**
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-raman-spectra/scripts/analyze_raman_modes.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/analyze_raman_modes.py \
     --phonon-yaml phonon_results/phonon.yaml \
     --structure relaxation/relaxed_structure.cif \
-    --born-charges vasp_dfpt/results/OUTCAR \
+    --born-charges vasp_dfpt/OUTCAR \
     --output-dir raman_dft_results/ \
     --broadening 5.0
 ```
@@ -143,16 +154,16 @@ Rutile TiO₂ (point group D₄h) has 4 Raman-active modes at ~143, ~235, ~447, 
 
 ```bash
 # 1. Relax with MACE
-mcp_mace_load_model(model_name="MACE-MH-1")
-mcp_mace_relax_structure(structure_data="TiO2_rutile.cif", relax_cell=True, fmax=0.001, output_dir="relax/")
+mace.load_model(model_name="MACE-MH-1")
+mace.relax_structure(structure_data="TiO2_rutile.cif", relax_cell=True, fmax=0.001, output_dir="relax/")
 
 # 2. Phonons
-python skills/mat-phonon/scripts/calculate_phonon.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/../mat-phonon/scripts/calculate_phonon.py \
     --structure relax/relaxed_structure.cif --model_type mace --model_name MACE-MH-1 \
     --supercell_matrix '[[3,0,0],[0,3,0],[0,0,4]]' --output_dir phonon/
 
 # 3. Raman analysis
-python skills/mat-raman-spectra/scripts/analyze_raman_modes.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/analyze_raman_modes.py \
     --phonon-yaml phonon/phonon.yaml --structure relax/relaxed_structure.cif \
     --output-dir raman/ --freq-max 800 --broadening 8.0
 ```

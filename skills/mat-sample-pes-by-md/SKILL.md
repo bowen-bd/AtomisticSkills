@@ -3,6 +3,7 @@ name: mat-sample-pes-by-md
 description: Sample off-equilibrium potential energy surface (PES), used for benchmarking and fine-tuning MLIPs.
 metadata:
   category: [materials, chemistry, machine-learning]
+  venv: [mlip]
 ---
 
 # Sample PES by MD
@@ -19,16 +20,14 @@ To generate diverse and representative atomic configurations from a starting str
 
     Using MatGL (CHGNet):
     ```bash
-    # Venv: venv/mlip
-    uv run --project venv/mlip python skills/mat-sample-pes-by-md/scripts/run_sampling.py input.cif \
-        --model_type matgl --model_name CHGNet-PES-MatPES-PBE-2025.2.10 \
+    ${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/run_sampling.py input.cif \
+        --model_type matgl --model_name CHGNet-PES-MatPES-PBE-1M-2026.9 \
         --total_steps 2000 --temperature 1000 --n_clusters 10 --output_dir sampling_results
     ```
 
     Using MACE:
     ```bash
-    # Venv: venv/mlip
-    uv run --project venv/mlip python skills/mat-sample-pes-by-md/scripts/run_sampling.py input.cif \
+    ${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/run_sampling.py input.cif \
         --model_type mace --model_name MACE-OMAT-0-small \
         --total_steps 2000 --temperature 1000 --n_clusters 10 --output_dir sampling_results
     ```

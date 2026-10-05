@@ -14,7 +14,7 @@ Usage:
         --output_dir results/adsorption
 
 Requirements:
-    - Conda environment: mace-agent, matgl-agent, or fairchem-agent
+    - Environment: mlip, mlip, or fairchem (run with: venv/run fairchem python ...)
     - Required packages: matcalc, pymatgen, ase, mlip wrapper
 """
 

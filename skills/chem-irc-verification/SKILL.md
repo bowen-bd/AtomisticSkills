@@ -3,6 +3,7 @@ name: chem-irc-verification
 description: Verify non-periodic molecular TS connectivity with forward/reverse IRC using endpoint connectivity and RMSD checks.
 metadata:
   category: [chemistry]
+  venv: [fairchem, mlip]
 ---
 
 # IRC Verification with Sella
@@ -24,8 +25,7 @@ Runs forward/reverse IRC from the TS, optionally relaxes endpoints, then checks 
 ### Use with MACE
 
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/chem-irc-verification/scripts/verify_irc_sella.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/verify_irc_sella.py \
   --reactant reactant_optimized.xyz \
   --product product_optimized.xyz \
   --ts ts_optimized.xyz \
@@ -42,8 +42,7 @@ uv run --project venv/mlip python skills/chem-irc-verification/scripts/verify_ir
 ### Use with FAIRChem (UMA)
 
 ```bash
-# Venv: venv/fairchem
-uv run --project venv/fairchem python skills/chem-irc-verification/scripts/verify_irc_sella.py \
+${CLAUDE_SKILL_DIR}/../../venv/run fairchem python ${CLAUDE_SKILL_DIR}/scripts/verify_irc_sella.py \
   --reactant reactant_optimized.xyz \
   --product product_optimized.xyz \
   --ts ts_optimized.xyz \

@@ -11,7 +11,7 @@ Usage:
         --rdf_pairs "Na-O,Cl-O" --output_dir analysis
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: ase, numpy, matplotlib, pymatgen
 """
 

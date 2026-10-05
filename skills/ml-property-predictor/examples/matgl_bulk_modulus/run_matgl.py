@@ -76,7 +76,7 @@ def run_matgl():
 
 if __name__ == "__main__":
     if "matgl-agent" not in os.environ.get("CONDA_DEFAULT_ENV", ""):
-        print("Restarting MatGL test in matgl-agent environment...")
+        print("Restarting MatGL test in the 'mlip' environment...")
         subprocess.run(
             ["conda", "run", "-n", "matgl-agent", "python", __file__], check=True
         )

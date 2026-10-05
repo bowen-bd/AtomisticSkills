@@ -3,6 +3,7 @@ name: chem-dft-orca-optimization
 description: Run DFT geometry optimization (minimization or TS search) on a molecular structure using ORCA via SCINE/ReaDuct wrapper.
 metadata:
   category: [chemistry]
+  venv: [cpu]
 ---
 
 # DFT Geometry Optimization with ORCA
@@ -57,8 +58,7 @@ Geometry optimization iteratively adjusts nuclear positions to minimize (or, for
 ### Geometry minimization
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-dft-orca-optimization/scripts/run_optimization.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_optimization.py \
     --structure molecule.xyz \
     --functional B3LYP \
     --basis_set def2-TZVP \
@@ -70,8 +70,7 @@ uv run --project venv/cpu python skills/chem-dft-orca-optimization/scripts/run_o
 ### Transition state optimization
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-dft-orca-optimization/scripts/run_optimization.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_optimization.py \
     --structure ts_guess.xyz \
     --opt_type ts \
     --functional B3LYP \
@@ -87,8 +86,7 @@ uv run --project venv/cpu python skills/chem-dft-orca-optimization/scripts/run_o
 For settings not exposed as dedicated flags, pass JSON strings. `--calculator_settings` applies to the SCINE/ORCA calculator, `--optimizer_settings` applies to the ReaDuct optimization task. SCINE is strict about types, so JSON ensures values are passed with the correct type (int, float, string).
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-dft-orca-optimization/scripts/run_optimization.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_optimization.py \
     --structure molecule.xyz \
     --functional B3LYP \
     --basis_set def2-TZVP \
@@ -100,8 +98,7 @@ uv run --project venv/cpu python skills/chem-dft-orca-optimization/scripts/run_o
 ### With implicit solvation
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-dft-orca-optimization/scripts/run_optimization.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_optimization.py \
     --structure molecule.xyz \
     --functional PBE0 \
     --basis_set def2-TZVP \

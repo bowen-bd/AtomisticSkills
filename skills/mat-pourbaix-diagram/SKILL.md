@@ -3,9 +3,22 @@ name: mat-pourbaix-diagram
 description: Calculate Pourbaix (pH-voltage) diagrams for aqueous electrochemical stability using water-corrected MLIP energies and pymatgen.
 metadata:
   category: [materials]
+  venv: [cpu, fairchem]
 ---
 
 # Pourbaix Diagram
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `fairchem.load_model` is the `load_model`
+> tool of the `fairchem` server (`mcp__fairchem__load_model`, or
+> `mcp__plugin_atomistic-skills_fairchem__load_model` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run fairchem python -m src.mcp_server.cli fairchem load_model key=value relax_structure key=value
+> ```
 
 ## Goal
 
@@ -61,8 +74,7 @@ There are two ways to generate Pourbaix diagrams using this skill. **Prioritize 
 Use `calculate_pourbaix_mp.py` to fetch entries directly from Materials Project. This requires no local relaxation and uses MP's internal DFT energies.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-pourbaix-diagram/scripts/calculate_pourbaix_mp.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/calculate_pourbaix_mp.py \
     --comp_dict "Li=1,Fe=1" \
     --output ./output_dir
 ```
@@ -76,8 +88,7 @@ Use this workflow to calculate stability using specific MLIP models. This involv
 Query all relevant solid phases and reference molecules:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-pourbaix-diagram/scripts/get_pourbaix_structures.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/get_pourbaix_structures.py \
     --chemsys "Zn" \
     --output_dir ./structures/
 ```
@@ -88,12 +99,12 @@ This retrieves:
 
 #### 2. Select Foundation Potential
 
-Choose an appropriate MLIP based on your system (see `skills/ml-foundation-potentials/SKILL.md`).
+Choose an appropriate MLIP based on your system (see `${CLAUDE_SKILL_DIR}/../ml-foundation-potentials/SKILL.md`).
 
 > [!IMPORTANT]
 > **Recommended for Pourbaix diagrams: MatPES-r2SCAN**
 > To ensure energy scale compatibility with Materials Project aqueous ions (which are often based on r2SCAN or compatible corrections), prioritize using **r2SCAN-trained MLIPs**.
-> - **MatGL**: `CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES`
+> - **MatGL**: `CHGNet-PES-MatPES-r2SCAN-1M-2026.9`
 > - **MACE**: `MACE-MH-1` with `matpes_r2scan` head.
 
 
@@ -104,10 +115,10 @@ Relax it using the same MLIP model to allow internal calibration:
 
 ```python
 # Example with FairChem UMA-small (recommended)
-mcp_fairchem_load_model(model_name="uma-s-1p1")
+fairchem.load_model(model_name="uma-s-1p1")
 
 # Relax H2O reference
-mcp_fairchem_relax_structure(
+fairchem.relax_structure(
     structure_data="./structures/references/H2O.cif",
     fmax=0.02,
     steps=500,
@@ -126,7 +137,7 @@ Relax all solid phases (and included H2O) using the **same MLIP**:
 ```python
 # Batch relax all solids with same MLIP
 # (Model already loaded from step 3)
-mcp_fairchem_relax_structure(
+fairchem.relax_structure(
     structure_data="./structures/structures/",  # Directory with all CIF files
     relax_cell=True,
     fmax=0.02,
@@ -142,8 +153,7 @@ mcp_fairchem_relax_structure(
 Construct the diagram using automated referencing (fetching elemental energies and deriving corrections internally):
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-pourbaix-diagram/scripts/calculate_pourbaix.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/calculate_pourbaix.py \
     --relaxed_solids ./relaxed_solids/ \
     --target "Zn" \
     --mlip_name "uma-s-1p1" \

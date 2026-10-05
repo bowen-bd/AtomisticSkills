@@ -3,6 +3,7 @@ name: drug-trajectory-analysis
 description: Analyze a protein-ligand MD trajectory to compute ligand RMSD, pocket RMSF, hydrogen bonds, contact occupancy, and protein-ligand interaction fingerprints over time.
 metadata:
   category: [drug-discovery]
+  venv: [cpu]
 ---
 
 # drug-trajectory-analysis
@@ -29,8 +30,7 @@ Required:
 ### 2. Run trajectory analysis
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-trajectory-analysis/scripts/analyze_trajectory.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/analyze_trajectory.py \
   --topology md/system/complex_solvated.pdb \
   --trajectory md/run/production.dcd \
   --ligand_resname UNL \
@@ -70,8 +70,7 @@ Key indicators of a stable binding pose:
 For a fast assessment, check only ligand RMSD:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-trajectory-analysis/scripts/analyze_trajectory.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/analyze_trajectory.py \
   --topology md/system/complex_solvated.pdb \
   --trajectory md/run/production.dcd \
   --ligand_resname UNL \
@@ -84,8 +83,7 @@ uv run --project venv/cpu python skills/drug-trajectory-analysis/scripts/analyze
 ### Example: full analysis of TYK2 inhibitor trajectory
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-trajectory-analysis/scripts/analyze_trajectory.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/analyze_trajectory.py \
   --topology tyk2/md/system/complex_solvated.pdb \
   --trajectory tyk2/md/run/production.dcd \
   --ligand_resname UNL \

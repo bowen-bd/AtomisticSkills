@@ -9,6 +9,7 @@ description: >
   from a protein-ligand structure.
 metadata:
   category: [drug-discovery]
+  venv: [cpu]
 ---
 
 # drug-complex-system-builder
@@ -33,8 +34,7 @@ Required inputs:
 ### 2. Build the solvated complex
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-complex-system-builder/scripts/build_complex.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu+openmm python ${CLAUDE_SKILL_DIR}/scripts/build_complex.py \
   --receptor docking/inputs/protein_prepared.pdb \
   --ligand docking/validation/valid_poses.sdf \
   --ligand_ff openff-2.2.0 \
@@ -83,8 +83,7 @@ Common issues:
 ### Example: build TYK2 inhibitor complex
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-complex-system-builder/scripts/build_complex.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu+openmm python ${CLAUDE_SKILL_DIR}/scripts/build_complex.py \
   --receptor tyk2/inputs/4GIH_prepared.pdb \
   --ligand tyk2/validation/valid_poses.sdf \
   --ligand_ff openff-2.2.0 \

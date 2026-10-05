@@ -23,7 +23,7 @@ Usage:
         --output_dir rmsd_results/
 
 Requirements:
-    - Conda environment: drugdisc-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: rdkit (>= 2022.09 for symmetrizeConjugatedTerminalGroups default), meeko, numpy
 """
 

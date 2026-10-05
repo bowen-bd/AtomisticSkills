@@ -3,6 +3,7 @@ name: drug-docking-vina
 description: Dock small-molecule ligands into a protein receptor using AutoDock Vina (Python API) and save ranked poses + docking metadata for reproducible virtual screening.
 metadata:
   category: [drug-discovery]
+  venv: [cpu]
 ---
 
 # docking-vina
@@ -23,15 +24,13 @@ Docking accuracy is strongly affected by **structure preparation** (protonation,
 - [ligand-prep](../drug-ligand-prep/SKILL.md) to generate ligand `*.pdbqt` (consider multiple protomers/tautomers)
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-protein-prep/scripts/prepare_protein.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu+openmm python ${CLAUDE_SKILL_DIR}/../drug-protein-prep/scripts/prepare_protein.py \
   --pdb_id 1HSG \
   --heterogens none \
   --missing_residues ignore \
   --output_dir docking/inputs/
 
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-ligand-prep/scripts/prepare_ligand.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/../drug-ligand-prep/scripts/prepare_ligand.py \
   --smiles "CC(=O)Oc1ccccc1C(=O)O" \
   --name aspirin \
   --output_dir docking/inputs/
@@ -50,8 +49,7 @@ You must define the docking region. The most common approaches:
 If you have a reference ligand already positioned in the binding site (PDBQT), compute a reasonable box automatically:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-docking-vina/scripts/compute_box_from_pdbqt.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/compute_box_from_pdbqt.py \
   docking/inputs/reference_ligand.pdbqt \
   --padding 6.0 \
   --min_size 20.0 \
@@ -63,8 +61,7 @@ This writes `center_x/y/z` and `size_x/y/z` you can paste into the docking comma
 ### 3. Run docking (single ligand)
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-docking-vina/scripts/run_docking.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu+docking python ${CLAUDE_SKILL_DIR}/scripts/run_docking.py \
   --receptor docking/inputs/1HSG_prepared.pdbqt \
   --ligand docking/inputs/aspirin.pdbqt \
   --center_x 16.0 --center_y 25.0 --center_z 2.0 \
@@ -87,8 +84,7 @@ Outputs:
 ### 4. Run docking (batch mode / virtual screening)
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-docking-vina/scripts/run_docking.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu+docking python ${CLAUDE_SKILL_DIR}/scripts/run_docking.py \
   --receptor docking/inputs/1HSG_prepared.pdbqt \
   --ligand_dir docking/inputs/ligands_pdbqt/ \
   --center_x 16.0 --center_y 25.0 --center_z 2.0 \
@@ -108,16 +104,16 @@ uv run --project venv/cpu python skills/drug-docking-vina/scripts/run_docking.py
 `run_docking.py` writes a machine-readable JSON that is good for reproducibility but not directly consumable by downstream analysis tools (such as [drug-docking-analysis](../drug-docking-analysis/SKILL.md)). Use `collect_results.py` to produce a ranked CSV that joins the docking scores with library metadata (SMILES, labels, microstate/parent IDs).
 
 ```bash
-# Venv: venv/cpu (stdlib only, venv/cpu project works)
+# (stdlib only, venv/cpu project works)
 
 # Combined JSON from run_docking.py
-uv run --project venv/cpu python skills/drug-docking-vina/scripts/collect_results.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/collect_results.py \
   --results docking/results/docking_results.json \
   --library_csv library/library_master.csv \
   --output_dir docking/analysis/
 
 # Or a directory of per-ligand *_result.json files (SLURM array workflows)
-uv run --project venv/cpu python skills/drug-docking-vina/scripts/collect_results.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/collect_results.py \
   --results docking/results/ \
   --library_csv library/library_master.csv \
   --output_dir docking/analysis/
@@ -144,21 +140,18 @@ Docking is approximate; good practice is to validate your protocol for a given t
 ### Example: HIV-1 protease docking (1HSG + indinavir)
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-protein-prep/scripts/prepare_protein.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu+openmm python ${CLAUDE_SKILL_DIR}/../drug-protein-prep/scripts/prepare_protein.py \
   --pdb_id 1HSG \
   --heterogens none \
   --missing_residues ignore \
   --output_dir hiv_docking/inputs/
 
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-ligand-prep/scripts/prepare_ligand.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/../drug-ligand-prep/scripts/prepare_ligand.py \
   --smiles "CC(C)(C)NC(=O)C1CC2CCCCC2CN1CC(O)C(CC1=CC=CC=C1)NC(=O)C(CC(N)=O)NC(=O)C1=CC2=CC=CC=C2N1" \
   --name indinavir \
   --output_dir hiv_docking/inputs/
 
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-docking-vina/scripts/run_docking.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu+docking python ${CLAUDE_SKILL_DIR}/scripts/run_docking.py \
   --receptor hiv_docking/inputs/1HSG_prepared.pdbqt \
   --ligand hiv_docking/inputs/indinavir.pdbqt \
   --center_x 16.0 --center_y 25.0 --center_z 2.0 \

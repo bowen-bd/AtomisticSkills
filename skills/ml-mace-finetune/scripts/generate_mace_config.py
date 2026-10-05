@@ -209,8 +209,7 @@ def main():
     print(f"Configuration written to: {config_path}")
     print("=======================================================\\n")
     print("To start training, simply run:")
-    print("  conda activate mace-agent")
-    print(f"  mace_run_train --config {config_path.absolute()}")
+    print(f"  venv/run mlip mace_run_train --config {config_path.absolute()}")
 
 
 if __name__ == "__main__":

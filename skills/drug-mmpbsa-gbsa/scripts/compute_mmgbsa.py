@@ -20,7 +20,7 @@ Usage:
         --output_dir mmgbsa/
 
 Requirements:
-    - Conda environment: drugmd-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: openmm, openmmforcefields, openff-toolkit, rdkit, MDAnalysis
 """
 

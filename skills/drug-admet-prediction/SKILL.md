@@ -3,9 +3,22 @@ name: drug-admet-prediction
 description: Compute RDKit physicochemical descriptors and rule-based drug-likeness heuristics (Ro5, Veber, QED) from SMILES.
 metadata:
   category: [drug-discovery]
+  venv: [cpu]
 ---
 
 # admet-prediction
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `drugdisc.compute_molecular_descriptors` is the `compute_molecular_descriptors`
+> tool of the `drugdisc` server (`mcp__drugdisc__compute_molecular_descriptors`, or
+> `mcp__plugin_atomistic-skills_drugdisc__compute_molecular_descriptors` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli drugdisc compute_molecular_descriptors key=value
+> ```
 
 ## Goal
 Compute ADMET-relevant **physicochemical descriptors** and **rule-based drug-likeness heuristics** from SMILES strings using RDKit.
@@ -25,7 +38,7 @@ The drugdisc MCP server provides a `compute_molecular_descriptors` tool that can
 
 **Single molecule analysis:**
 ```bash
-mcp_drugdisc_compute_molecular_descriptors(
+drugdisc.compute_molecular_descriptors(
     smiles="CC(=O)Oc1ccccc1C(=O)O",
     output_file="aspirin_admet.json"
 )
@@ -33,15 +46,15 @@ mcp_drugdisc_compute_molecular_descriptors(
 
 **Batch analysis from a SMILES file:**
 ```bash
-mcp_drugdisc_compute_molecular_descriptors(
-    smiles_file="skills/drug-admet-prediction/examples/compounds.smi",
+drugdisc.compute_molecular_descriptors(
+    smiles_file="${CLAUDE_SKILL_DIR}/examples/compounds.smi",
     output_file="batch_admet.json"
 )
 ```
 
 **With S/P-inclusive TPSA:**
 ```bash
-mcp_drugdisc_compute_molecular_descriptors(
+drugdisc.compute_molecular_descriptors(
     smiles="OC(=O)P(=O)(O)O",
     include_sandp_tpsa=True,
     output_file="foscarnet_admet.json"
@@ -59,8 +72,8 @@ CC(C)Cc1ccc(cc1)C(C)C(=O)O	ibuprofen
 
 Run:
 ```bash
-mcp_drugdisc_compute_molecular_descriptors(
-    smiles_file="skills/drug-admet-prediction/examples/compounds.smi",
+drugdisc.compute_molecular_descriptors(
+    smiles_file="${CLAUDE_SKILL_DIR}/examples/compounds.smi",
     output_file="drug_admet.json"
 )
 ```

@@ -3,6 +3,7 @@ name: chem-db-qmof
 description: Query the Quantum MOF (QMOF) database via Materials Project's MPContribs platform for DFT-computed properties (bandgap) and optimized crystal structures of Metal-Organic Frameworks.
 metadata:
   category: [materials, chemistry]
+  venv: [cpu]
 ---
 
 # chem-db-qmof
@@ -22,8 +23,7 @@ To retrieve computational data and relaxed crystal structures (.cif) for roughly
 1. **Query Database**: Use the provided script `query_qmof.py` to search by formula or identifier.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-db-qmof/scripts/query_qmof.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_qmof.py \
     --formula "Zn" \
     --max-results 5 \
     --output-dir ./research/qmof_results
@@ -39,14 +39,12 @@ uv run --project venv/cpu python skills/chem-db-qmof/scripts/query_qmof.py \
 
 **Example 1: Automated testing script (Zinc MOF)**
 ```bash
-# Venv: venv/cpu
-bash skills/chem-db-qmof/examples/test_qmof.sh
+bash ${CLAUDE_SKILL_DIR}/examples/test_qmof.sh
 ```
 
 **Example 2: Query for 5 MOFs containing Zinc manually**
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-db-qmof/scripts/query_qmof.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_qmof.py \
     --formula "Zn" \
     --max-results 5 \
     --output-dir ./results/qmof_zn
@@ -54,8 +52,7 @@ uv run --project venv/cpu python skills/chem-db-qmof/scripts/query_qmof.py \
 
 **Example 2: Retrieve a specific MOF by identifier**
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-db-qmof/scripts/query_qmof.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_qmof.py \
     --identifier "KAXQIL" \
     --max-results 1 \
     --output-dir ./results/qmof_kaxqil

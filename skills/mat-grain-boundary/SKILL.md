@@ -3,9 +3,23 @@ name: mat-grain-boundary
 description: Calculate grain boundary energies for tilt/twist grain boundaries (Σ-CSL boundaries) using MLIPs; output γ_GB vs. misorientation angle curves and identify low-energy special boundaries.
 metadata:
   category: [materials]
+  venv: [cpu, mlip]
 ---
 
 # Grain Boundary Energy Calculation
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `matgl.load_model` is the `load_model`
+> tool of the `matgl` server (`mcp__matgl__load_model`, or
+> `mcp__plugin_atomistic-skills_matgl__load_model` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli matgl load_model key=value relax_structure key=value
+> ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli base search_materials_project_by_formula key=value
+> ```
 
 ## Goal
 To compute the specific grain boundary energy ($\gamma_{GB}$, J/m²) for a series of coincidence site lattice (CSL) grain boundaries using Machine Learning Interatomic Potentials. This enables:
@@ -25,7 +39,7 @@ where $E_{GB}$ is the total energy of the GB supercell, $N$ is the number of ato
 
 GB calculations benefit from accurate interatomic forces. Prefer r2SCAN-level models for energy accuracy:
 - `MACE-MH-1` with `matpes_r2scan` head (recommended)
-- `CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES` (MatGL)
+- `CHGNet-PES-MatPES-r2SCAN-1M-2026.9` (MatGL)
 - `TensorNet-MatPES-r2SCAN-v2025.1-PES` (MatGL, faster)
 
 Refer to [ml-foundation-potentials](../ml-foundation-potentials/SKILL.md).
@@ -35,9 +49,8 @@ Refer to [ml-foundation-potentials](../ml-foundation-potentials/SKILL.md).
 Perform a high-accuracy bulk relaxation to obtain $E_{bulk}$.
 
 ```bash
-# Venv: venv/mlip
-mcp_matgl_load_model(model_name="CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES")
-mcp_matgl_relax_structure(
+matgl.load_model(model_name="CHGNet-PES-MatPES-r2SCAN-1M-2026.9")
+matgl.relax_structure(
     structure_data="bulk.cif",
     relax_cell=True,
     fmax=0.005,
@@ -52,8 +65,7 @@ Record the final energy per atom ($E_{bulk}$) from the relaxation output JSON.
 Use pymatgen's `GrainBoundaryGenerator` to create CSL grain boundary supercells for a range of Σ values and rotation angles.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-grain-boundary/scripts/create_grain_boundary.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/create_grain_boundary.py \
     --bulk bulk_relaxation/relaxed_structure.cif \
     --rotation-axis 0 0 1 \
     --max-sigma 29 \
@@ -81,9 +93,8 @@ The script writes one CIF per unique GB, with filename format `sigma{Σ}_{angle:
 Relax all generated GB structures. **Do NOT relax the cell in directions parallel to the GB plane** — use `relax_cell=False` to fix the in-plane lattice vectors and only relax atomic positions.
 
 ```bash
-# Venv: venv/mlip
-mcp_matgl_load_model(model_name="CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES")
-mcp_matgl_relax_structure(
+matgl.load_model(model_name="CHGNet-PES-MatPES-r2SCAN-1M-2026.9")
+matgl.relax_structure(
     structure_data="gb_structures/",
     relax_cell=False,
     fmax=0.02,
@@ -97,8 +108,7 @@ mcp_matgl_relax_structure(
 ### 5. Calculate Grain Boundary Energies
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-grain-boundary/scripts/calculate_gb_energy.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/calculate_gb_energy.py \
     --bulk-energy-per-atom -4.567 \
     --gb-relaxation-dir gb_relaxations/ \
     --output-dir gb_results/
@@ -124,20 +134,20 @@ Copper is a well-benchmarked system. MLIP values should be compared to DFT/MD li
 
 ```bash
 # 1. Query and relax bulk Cu
-mcp_base_search_materials_project_by_formula(formula="Cu", save_to_file="Cu_bulk.cif")
-mcp_matgl_load_model(model_name="TensorNet-MatPES-r2SCAN-v2025.1-PES")
-mcp_matgl_relax_structure(structure_data="Cu_bulk.cif", relax_cell=True, fmax=0.005, output_dir="Cu_bulk_relax/")
+base.search_materials_project_by_formula(formula="Cu", save_to_file="Cu_bulk.cif")
+matgl.load_model(model_name="TensorNet-MatPES-r2SCAN-v2025.1-PES")
+matgl.relax_structure(structure_data="Cu_bulk.cif", relax_cell=True, fmax=0.005, output_dir="Cu_bulk_relax/")
 
 # 2. Generate [001] tilt GBs up to Σ13
-python skills/mat-grain-boundary/scripts/create_grain_boundary.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/create_grain_boundary.py \
     --bulk Cu_bulk_relax/relaxed_structure.cif \
     --rotation-axis 0 0 1 --max-sigma 13 --output-dir Cu_gb_structures/
 
 # 3. Relax GB structures
-mcp_matgl_relax_structure(structure_data="Cu_gb_structures/", relax_cell=False, fmax=0.02, output_dir="Cu_gb_relax/")
+matgl.relax_structure(structure_data="Cu_gb_structures/", relax_cell=False, fmax=0.02, output_dir="Cu_gb_relax/")
 
 # 4. Calculate GB energies (E_bulk ≈ -3.73 eV/atom for Cu with TensorNet)
-python skills/mat-grain-boundary/scripts/calculate_gb_energy.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/calculate_gb_energy.py \
     --bulk-energy-per-atom -3.73 \
     --gb-relaxation-dir Cu_gb_relax/ \
     --output-dir Cu_gb_results/

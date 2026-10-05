@@ -3,6 +3,7 @@ name: chem-conformer-search
 description: Generate molecular conformers with RDKit ETKDG, relax with MLIPs, and rank by energy with Boltzmann weighting.
 metadata:
   category: [chemistry]
+  venv: [mlip]
 ---
 
 # Molecular Conformer Search & Ranking
@@ -44,8 +45,7 @@ Generate a diverse ensemble of low-energy conformers for a given molecule. The w
 Generate 30 conformers for a molecule (e.g., aspirin) and relax with MACE-OFF23:
 
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/chem-conformer-search/scripts/conformer_search.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/conformer_search.py \
     --smiles "CC(=O)Oc1ccccc1C(=O)O" \
     --num_conformers 30 \
     --output_dir research/aspirin_conformers
@@ -54,8 +54,7 @@ uv run --project venv/mlip python skills/chem-conformer-search/scripts/conformer
 ### Advanced Usage (Structure File + Options)
 
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/chem-conformer-search/scripts/conformer_search.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/conformer_search.py \
     --structure my_molecule.sdf \
     --num_conformers 100 \
     --rms_threshold 0.5 \

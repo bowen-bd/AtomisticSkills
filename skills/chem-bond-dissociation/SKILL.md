@@ -3,6 +3,7 @@ name: chem-bond-dissociation
 description: Calculate homolytic and heterolytic bond dissociation energies (BDEs) for all single bonds in a molecule using MLIPs with RDKit fragmentation.
 metadata:
   category: [chemistry]
+  venv: [fairchem, mlip]
 ---
 
 # Bond Dissociation Energy Skill
@@ -78,8 +79,7 @@ Refer to the [foundation-potentials skill](../ml-foundation-potentials/SKILL.md)
 
 **Homolytic only** (default, no charge/spin needed):
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/chem-bond-dissociation/scripts/calculate_bde.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/calculate_bde.py \
     --smiles CCO \
     --all_bonds \
     --cleavage homolytic \
@@ -90,8 +90,7 @@ uv run --project venv/mlip python skills/chem-bond-dissociation/scripts/calculat
 
 **Both homolytic and heterolytic** (MACE-OMOL):
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/chem-bond-dissociation/scripts/calculate_bde.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/calculate_bde.py \
     --smiles CCO \
     --all_bonds \
     --cleavage both \
@@ -102,8 +101,7 @@ uv run --project venv/mlip python skills/chem-bond-dissociation/scripts/calculat
 
 **Both homolytic and heterolytic** (FairChem UMA omol):
 ```bash
-# Venv: venv/fairchem
-uv run --project venv/fairchem python skills/chem-bond-dissociation/scripts/calculate_bde.py \
+${CLAUDE_SKILL_DIR}/../../venv/run fairchem python ${CLAUDE_SKILL_DIR}/scripts/calculate_bde.py \
     --smiles CCO \
     --all_bonds \
     --cleavage both \
@@ -115,8 +113,7 @@ uv run --project venv/fairchem python skills/chem-bond-dissociation/scripts/calc
 
 **Heterolytic only** with FairChem UMA:
 ```bash
-# Venv: venv/fairchem
-uv run --project venv/fairchem python skills/chem-bond-dissociation/scripts/calculate_bde.py \
+${CLAUDE_SKILL_DIR}/../../venv/run fairchem python ${CLAUDE_SKILL_DIR}/scripts/calculate_bde.py \
     --smiles CCO \
     --all_bonds \
     --cleavage heterolytic \
@@ -171,22 +168,20 @@ uv run --project venv/fairchem python skills/chem-bond-dissociation/scripts/calc
 ### Ethanol — Homolytic BDE (MACE-OFF23)
 
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/chem-bond-dissociation/scripts/calculate_bde.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/calculate_bde.py \
     --smiles CCO \
     --all_bonds \
     --include_h_bonds \
     --cleavage homolytic \
     --model_type mace \
     --model_name MACE-OFF23-small \
-    --output_dir skills/chem-bond-dissociation/examples/ethanol_mace_off23_small
+    --output_dir ${CLAUDE_SKILL_DIR}/examples/ethanol_mace_off23_small
 ```
 
 ### Methanol — Both Homo and Heterolytic BDE (FairChem UMA omol)
 
 ```bash
-# Venv: venv/fairchem
-uv run --project venv/fairchem python skills/chem-bond-dissociation/scripts/calculate_bde.py \
+${CLAUDE_SKILL_DIR}/../../venv/run fairchem python ${CLAUDE_SKILL_DIR}/scripts/calculate_bde.py \
     --smiles CO \
     --all_bonds \
     --include_h_bonds \
@@ -194,7 +189,7 @@ uv run --project venv/fairchem python skills/chem-bond-dissociation/scripts/calc
     --model_type fairchem \
     --model_name uma-s-1p1 \
     --task_name omol \
-    --output_dir skills/chem-bond-dissociation/examples/methanol_uma_omol_both
+    --output_dir ${CLAUDE_SKILL_DIR}/examples/methanol_uma_omol_both
 ```
 
 Experimental BDEs for ethanol (Blanksby & Ellison, 2003):

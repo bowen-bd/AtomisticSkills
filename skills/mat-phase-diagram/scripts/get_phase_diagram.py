@@ -17,7 +17,7 @@ Usage:
     python get_phase_diagram.py --chemsys "Li-O" --output li_o_pd.json --plot li_o_pd.png
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - MP_API_KEY environment variable must be set
     - Required packages: mp-api, pymatgen, matplotlib
 """

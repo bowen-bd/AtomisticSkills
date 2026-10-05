@@ -3,6 +3,7 @@ name: mat-qha-thermal-expansion
 description: Calculate Quasi-Harmonic Approximation (QHA) thermal properties using MLIPs.
 metadata:
   category: [materials]
+  venv: [mlip]
 ---
 
 # QHA Thermal Expansion Skill
@@ -65,8 +66,7 @@ volume. Read which convention a tool means before comparing windows across codes
 To calculate thermal expansion and temperature-dependent Gibbs energy, use `calculate_qha.py`.
 
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/qha/scripts/calculate_qha.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/calculate_qha.py \
     --structure path/to/relaxed_structure.cif \
     --model_type matgl \
     --eos vinet \

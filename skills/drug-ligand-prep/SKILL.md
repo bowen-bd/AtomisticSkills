@@ -3,9 +3,22 @@ name: drug-ligand-prep
 description: Prepare small-molecule ligands for docking and analysis via optional state enumeration, 3D conformer generation, MMFF/UFF minimization, and export to SDF + AutoDock PDBQT.
 metadata:
   category: [drug-discovery]
+  venv: [cpu]
 ---
 
 # Ligand Preparation
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `drugdisc.convert_to_pdbqt` is the `convert_to_pdbqt`
+> tool of the `drugdisc` server (`mcp__drugdisc__convert_to_pdbqt`, or
+> `mcp__plugin_atomistic-skills_drugdisc__convert_to_pdbqt` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli drugdisc convert_to_pdbqt key=value
+> ```
 
 ## Goal
 To prepare small-molecule ligands for molecular docking and downstream analysis by:
@@ -23,8 +36,7 @@ This skill combines script-based state enumeration with MCP-based 3D generation 
 Use the script to process SMILES/SDF files and enumerate protonation/tautomer states. This outputs 2D SDFs.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-ligand-prep/scripts/prepare_ligand.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/prepare_ligand.py \
   --smiles_file ligands.smi \
   --enumerate_protomers \
   --output_dir ligand_states/
@@ -32,11 +44,11 @@ uv run --project venv/cpu python skills/drug-ligand-prep/scripts/prepare_ligand.
 
 ### 2. Generate 3D Conformer and PDBQT (using MCP)
 
-Use the `mcp_drugdisc_convert_to_pdbqt` tool to generate the final 3D docking input.
+Use the `drugdisc.convert_to_pdbqt` tool to generate the final 3D docking input.
 
 **From a single SMILES:**
 ```bash
-mcp_drugdisc_convert_to_pdbqt(
+drugdisc.convert_to_pdbqt(
     input_data="CC(=O)Oc1ccccc1C(=O)O",
     input_type="smiles",
     output_path="aspirin.pdbqt",
@@ -46,7 +58,7 @@ mcp_drugdisc_convert_to_pdbqt(
 
 **From an SDF (e.g. output of Step 1):**
 ```bash
-mcp_drugdisc_convert_to_pdbqt(
+drugdisc.convert_to_pdbqt(
     input_data="ligand_states/ligand_001.sdf",
     input_type="sdf",
     output_path="ligand_001.pdbqt",
@@ -60,7 +72,7 @@ mcp_drugdisc_convert_to_pdbqt(
 
 1. Enumerate inputs (if needed):
    ```bash
-   python skills/drug-ligand-prep/scripts/prepare_ligand.py \
+   ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/prepare_ligand.py \
      --smiles "CC(C)Cc1ccc(cc1)[C@@H](C)C(=O)O" \
      --name ibuprofen \
      --output_dir prep_stages/
@@ -68,7 +80,7 @@ mcp_drugdisc_convert_to_pdbqt(
 
 2. Generate PDBQT:
    ```bash
-   mcp_drugdisc_convert_to_pdbqt(
+   drugdisc.convert_to_pdbqt(
        input_data="prep_stages/ibuprofen.sdf",
        input_type="sdf",
        output_path="prep_stages/ibuprofen.pdbqt",
@@ -79,7 +91,7 @@ mcp_drugdisc_convert_to_pdbqt(
 ## Constraints
 
 * **Environment**: Requires `drugdisc-agent`.
-* **3D/PDBQT**: Delegated to `mcp_drugdisc_convert_to_pdbqt` (Meeko/RDKit).
+* **3D/PDBQT**: Delegated to `drugdisc.convert_to_pdbqt` (Meeko/RDKit).
 * **State Enumeration**: The script handles batch enumeration of protonation/tautomer states, but 3D generation is done by the MCP tool.
 ---
 

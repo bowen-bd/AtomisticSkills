@@ -19,7 +19,7 @@ Usage:
         --band-offset 12 --band-sum --output-dir results/
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: pyyaml (standard library otherwise)
 """
 

@@ -76,7 +76,7 @@ for SEED in 0 1 2; do
         --seed ${SEED} \
         --output-dir committee_models/seed_${SEED}
 
-    conda run -n mace-agent mace_run_train \
+    venv/run mlip mace_run_train \
         --config committee_models/seed_${SEED}/finetune_config.yaml
 done
 ```

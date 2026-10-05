@@ -11,7 +11,7 @@ Usage:
     python run_singlepoint.py --structure molecule.xyz --solvation SMD --solvent water
 
 Requirements:
-    - Conda environment: orca-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: scine_utilities, ase, numpy
     - Environment variable: ORCA_BINARY_PATH
 """

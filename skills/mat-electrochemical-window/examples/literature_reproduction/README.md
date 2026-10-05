@@ -13,9 +13,8 @@ Run the automated reproduction script directly from the project root:
 
 ```bash
 # Env: base-agent
-conda activate base-agent
 export MP_API_KEY=\"your_api_key_here\" # Ensure your environment has MP access
-python skills/mat-electrochemical-window/scripts/reproduce_table1.py
+venv/run cpu python skills/mat-electrochemical-window/scripts/reproduce_table1.py
 ```
 
 ## Expected Output

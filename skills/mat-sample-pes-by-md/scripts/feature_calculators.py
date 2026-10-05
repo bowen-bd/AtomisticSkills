@@ -6,11 +6,6 @@ crystal features (embeddings/descriptors) from various MLIP models (MatGL, MACE)
 These features are used for clustering and sampling in the OffEquilibriumSampler.
 """
 
-import os
-
-if "MATGL_BACKEND" not in os.environ:
-    os.environ["MATGL_BACKEND"] = "DGL"
-
 import logging
 import torch
 import torch.nn as nn
@@ -68,14 +63,14 @@ class MatGLCrystalFeaturePotential(nn.Module):
 
     def forward(
         self,
-        g: Any,  # dgl.DGLGraph
+        g: Any,  # PyG Data or Batch
         lat: torch.Tensor,
         state_attr: torch.Tensor | None = None,
-        l_g: Any | None = None,  # dgl.DGLGraph
+        l_g: Any | None = None,
     ) -> tuple[torch.Tensor, ...]:
         """
         Args:
-            g: dgl Graph
+            g: PyG graph (Data or Batch), as built by matgl's Structure2Graph
             lat: lattice
             lattice: lattice
             state_attr: state attributes
@@ -84,8 +79,7 @@ class MatGLCrystalFeaturePotential(nn.Module):
         Returns:
             (energy, forces, stress, hessian, crystal_features)
         """
-        # This logic is adapted from matgl.apps._pes_dgl.Potential.forward (DGL)
-        # and matgl.apps.pes.Potential.forward (PyG)
+        # Adapted from matgl.apps.pes.Potential.forward (matgl >= 4 is PyG only).
         batch_size = (
             g.batch_size
             if hasattr(g, "batch_size")
@@ -99,45 +93,24 @@ class MatGLCrystalFeaturePotential(nn.Module):
 
         lattice = lat @ (torch.eye(3, device=lat.device) + st)
 
-        # Check backend (DGL has .ndata, PyG has .pos etc directly)
-        is_dgl = hasattr(g, "ndata")
+        from torch_geometric.data import Batch
 
-        if is_dgl:
-            g.edata["lattice"] = torch.repeat_interleave(
-                lattice, g.batch_num_edges(), dim=0
-            )
-            g.edata["pbc_offshift"] = (
-                g.edata["pbc_offset"].unsqueeze(dim=-1) * g.edata["lattice"]
-            ).sum(dim=1)
-            g.ndata["pos"] = (
-                g.ndata["frac_coords"].unsqueeze(dim=-1)
-                * torch.repeat_interleave(lattice, g.batch_num_nodes(), dim=0)
-            ).sum(dim=1)
-            if self.calc_forces:
-                g.ndata["pos"].requires_grad_(True)
-            inner_g = g
+        if isinstance(g, Batch):
+            edge_batch = g.batch[g.edge_index[0]]
+            node_batch = g.batch
         else:
-            # PyG logic
-            from torch_geometric.data import Batch
+            edge_batch = torch.zeros(
+                g.edge_index.size(1), dtype=torch.long, device=lat.device
+            )
+            node_batch = torch.zeros(g.num_nodes, dtype=torch.long, device=lat.device)
 
-            if isinstance(g, Batch):
-                edge_batch = g.batch[g.edge_index[0]]
-                node_batch = g.batch
-            else:
-                edge_batch = torch.zeros(
-                    g.edge_index.size(1), dtype=torch.long, device=lat.device
-                )
-                node_batch = torch.zeros(
-                    g.num_nodes, dtype=torch.long, device=lat.device
-                )
-
-            g.lattice = lattice[edge_batch]
-            g.pbc_offshift = (g.pbc_offset.unsqueeze(dim=-1) * g.lattice).sum(dim=1)
-            lattice_per_node = lattice[node_batch]
-            g.pos = (g.frac_coords.unsqueeze(-1) * lattice_per_node).sum(dim=1)
-            if self.calc_forces:
-                g.pos.requires_grad_(True)
-            inner_g = g
+        g.lattice = lattice[edge_batch]
+        g.pbc_offshift = (g.pbc_offset.unsqueeze(dim=-1) * g.lattice).sum(dim=1)
+        lattice_per_node = lattice[node_batch]
+        g.pos = (g.frac_coords.unsqueeze(-1) * lattice_per_node).sum(dim=1)
+        if self.calc_forces:
+            g.pos.requires_grad_(True)
+        inner_g = g
 
         # Call model with return_all_layer_output=True to get energy and features in one go
         # Note: some models might need lattice passed as well
@@ -202,7 +175,7 @@ class MatGLCrystalFeaturePotential(nn.Module):
                 property_offset = torch.squeeze(self.element_refs(g))
             else:
                 # Fallback if it's just raw data
-                node_feat = g.ndata["node_type"]
+                node_feat = g.node_type
                 property_offset = torch.sum(self.element_refs[node_feat], dim=0)
             total_energy += property_offset
 
@@ -216,7 +189,7 @@ class MatGLCrystalFeaturePotential(nn.Module):
         stress = torch.zeros(1)
         hessian = torch.zeros(1)
 
-        pos_var = inner_g.ndata["pos"] if is_dgl else inner_g.pos
+        pos_var = inner_g.pos
         grad_vars = [pos_var, st] if self.calc_stresses else [pos_var]
 
         if self.calc_forces:
@@ -356,39 +329,15 @@ class MatGLCrystalFeatureCalculator(Calculator):
             cutoff = getattr(self.potential.model, "cutoff", 5.0)
             self.converter = Structure2Graph(element_types=elements, cutoff=cutoff)
 
-        # get_graph returns graph, state_attr, (optional) other info depending on MatGL version
-        graph_data = self.converter.get_graph(struct)
-        if len(graph_data) == 3:
-            graph, state_attr, _ = graph_data
-        else:
-            graph, state_attr = graph_data
-
+        # matgl >= 4 returns (graph, lattice, state_attr); the lattice is rebuilt
+        # from the structure below, with the gradient the stress needs.
+        graph, _, state_attr = self.converter.get_graph(struct)
         if self.state_attr is not None:
             state_attr = self.state_attr
 
-        # Prepare inputs
-        is_dgl = hasattr(graph, "ndata")
+        from torch_geometric.data import Batch
 
-        if is_dgl:
-            if "pos" not in graph.ndata:
-                pass
-            try:
-                graph.ndata["pos"].requires_grad_(True)
-            except Exception:
-                pass
-            import dgl
-
-            g_batch = dgl.batch([graph]).to(self.device)
-        else:
-            if not hasattr(graph, "pos"):
-                pass
-            try:
-                graph.pos.requires_grad_(True)
-            except Exception:
-                pass
-            from torch_geometric.data import Batch
-
-            g_batch = Batch.from_data_list([graph]).to(self.device)
+        g_batch = Batch.from_data_list([graph]).to(self.device)
 
         lattice = torch.tensor(
             struct.lattice.matrix, dtype=matgl.float_th, device=self.device

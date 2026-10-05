@@ -3,6 +3,7 @@ name: mat-synthesis-recommendation
 description: Query and rank synthesis recipes from Materials Project's text-mined literature database with precursors, procedures, and journal references.
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # Synthesis Recommendation
@@ -18,8 +19,7 @@ To provide experimentally validated synthesis routes for target inorganic materi
 Search for synthesis recipes for a target material using the Materials Project API:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-synthesis-recommendation/scripts/recommend_synthesis.py "LiFePO4" --limit 10 --output synthesis_recipes.json
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/recommend_synthesis.py "LiFePO4" --limit 10 --output synthesis_recipes.json
 ```
 
 **Parameters:**
@@ -52,7 +52,8 @@ Cross-check the recommended precursors with other skills:
 ```bash
 # Check if target material is thermodynamically stable
 # See: ../mat-stability/SKILL.md
-python skills/mat-stability/scripts/calculate_stability.py target.cif --output stability_analysis.json
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/../mat-stability/scripts/query_mp_hull.py \
+    --formula "Li-Fe-P-O" --target "LiFePO4" --output hull_structures/
 
 # Calculate formation energy to verify synthesizability
 # Energy above hull (E_hull) < 0.1 eV/atom indicates likely synthesizability
@@ -63,8 +64,7 @@ python skills/mat-stability/scripts/calculate_stability.py target.cif --output s
 ### Example 1: Basic Query for LiFePO4
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-synthesis-recommendation/scripts/recommend_synthesis.py "LiFePO4" --limit 5
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/recommend_synthesis.py "LiFePO4" --limit 5
 ```
 
 **Expected output:**
@@ -76,17 +76,15 @@ uv run --project venv/cpu python skills/mat-synthesis-recommendation/scripts/rec
 ### Example 2: Filter by Synthesis Type
 
 ```bash
-# Venv: venv/cpu
 # Query only hydrothermal synthesis routes for LiCoO2
-uv run --project venv/cpu python skills/mat-synthesis-recommendation/scripts/recommend_synthesis.py "LiCoO2" --type hydrothermal --limit 10 --output LiCoO2_hydrothermal.json
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/recommend_synthesis.py "LiCoO2" --type hydrothermal --limit 10 --output LiCoO2_hydrothermal.json
 ```
 
 ### Example 3: Temperature-Constrained Search
 
 ```bash
-# Venv: venv/cpu
 # Find low-temperature synthesis routes (< 600°C) for Li2CO3
-uv run --project venv/cpu python skills/mat-synthesis-recommendation/scripts/recommend_synthesis.py "Li2CO3" --max-temp 600 --limit 10
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/recommend_synthesis.py "Li2CO3" --max-temp 600 --limit 10
 ```
 
 ## Constraints

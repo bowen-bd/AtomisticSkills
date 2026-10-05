@@ -18,7 +18,7 @@ Usage:
     python prepare_ligand.py --smiles_file ligands.smi --output_dir prep/
 
 Requirements:
-    - Conda environment: drugdisc-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: rdkit, meeko
     - Optional packages:
         - dimorphite_dl (for protonation-state enumeration)

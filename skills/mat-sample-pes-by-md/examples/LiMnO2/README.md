@@ -26,7 +26,7 @@ mcp_base_search_materials_project_by_formula(
 
 ```bash
 # Env: matgl-agent
-conda run -n matgl-agent python skills/mat-sample-pes-by-md/scripts/run_sampling.py \
+venv/run mlip python skills/mat-sample-pes-by-md/scripts/run_sampling.py \
     LiMnO2_initial.cif \
     --model_type matgl --model_name CHGNet-PES-MatPES-PBE-2025.2.10 \
     --total_steps 2000 --temperature 2000 --ensemble nvt \

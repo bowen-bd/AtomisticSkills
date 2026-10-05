@@ -3,9 +3,23 @@ name: mat-defect-energy-dft
 description: Calculate charged defect formation energies and transition level diagrams using pymatgen-analysis-defects and atomate2 VASP workflows.
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # Point-Defect Formation Energy (DFT)
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `base.search_materials_project_by_formula` is the `search_materials_project_by_formula`
+> tool of the `base` server (`mcp__base__search_materials_project_by_formula`, or
+> `mcp__plugin_atomistic-skills_base__search_materials_project_by_formula` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli base search_materials_project_by_formula key=value
+> ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli atomate2 run_atomate2_vasp_calculation key=value
+> ```
 
 ## Goal
 To calculate the formation energy of point defects (vacancies, substitutions, interstitials) including **charged defect states** and **finite-size corrections** using DFT (VASP) via atomate2 workflows. This produces formation energy diagrams showing defect charge transition levels as a function of Fermi energy.
@@ -19,14 +33,13 @@ where $q$ is the charge state, $E_\text{VBM}$ is the valence band maximum, $\Del
 ### 1. Obtain Bulk Structure
 Start with a relaxed primitive cell:
 ```bash
-mcp_base_search_materials_project_by_formula(formula="MgO", save_to_file="MgO.cif")
+base.search_materials_project_by_formula(formula="MgO", save_to_file="MgO.cif")
 ```
 
 ### 2. Generate Defect Structures
 Use `pymatgen-analysis-defects` to generate all symmetry-unique defect supercells with charge states:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-defect-energy-dft/scripts/generate_defect_structures.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/generate_defect_structures.py \
     --bulk MgO.cif \
     --supercell_size 3 3 3 \
     --defect_type vacancy \
@@ -43,7 +56,7 @@ This generates:
 Submit calculations via the atomate2 MCP tool:
 ```python
 # Bulk supercell reference
-mcp_atomate2_run_atomate2_vasp_calculation(
+atomate2.run_atomate2_vasp_calculation(
     structures_path="dft_defects/pristine_supercell.cif",
     output_dir="./dft_bulk/",
     calculation_type="static",
@@ -52,7 +65,7 @@ mcp_atomate2_run_atomate2_vasp_calculation(
 )
 
 # All defect structures
-mcp_atomate2_run_atomate2_vasp_calculation(
+atomate2.run_atomate2_vasp_calculation(
     structures_path="dft_defects/",
     output_dir="./dft_defect_calcs/",
     calculation_type="relaxation",
@@ -64,7 +77,7 @@ mcp_atomate2_run_atomate2_vasp_calculation(
 ### Alternative: atomate2 `FormationEnergyMaker`
 For fully automated defect workflows with built-in corrections:
 ```python
-# Venv: venv/cpu (Python API)
+# (Python API)
 from atomate2.vasp.flows.defect import FormationEnergyMaker
 from pymatgen.analysis.defects.generators import VacancyGenerator
 from pymatgen.core import Structure
@@ -80,8 +93,7 @@ maker = FormationEnergyMaker()
 ### 4. Parse Results and Compute Formation Energies
 After DFT calculations complete:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-defect-energy-dft/scripts/parse_defect_results.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/parse_defect_results.py \
     --bulk_dir dft_bulk/ \
     --defect_dir dft_defect_calcs/ \
     --defect_index dft_defects/defect_index.json \
@@ -107,20 +119,20 @@ The formation energy diagram shows:
 ### Oxygen Vacancy in MgO
 ```bash
 # 1. Get MgO
-mcp_base_search_materials_project_by_formula(formula="MgO")
+base.search_materials_project_by_formula(formula="MgO")
 
 # 2. Generate defects with charges -2 to +2
-python skills/mat-defect-energy-dft/scripts/generate_defect_structures.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/generate_defect_structures.py \
     --bulk MgO.cif --supercell_size 3 3 3 --defect_type vacancy --charge_range -2 2 --output mgo_defects/
 
 # 3. Run DFT (remote)
-mcp_atomate2_run_atomate2_vasp_calculation(
+atomate2.run_atomate2_vasp_calculation(
     structures_path="mgo_defects/", output_dir="./mgo_dft/",
     calculation_type="relaxation", preset_type="matpes-pbe", execution_mode="remote"
 )
 
 # 4. Parse and plot (after DFT completes)
-python skills/mat-defect-energy-dft/scripts/parse_defect_results.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/parse_defect_results.py \
     --bulk_dir mgo_dft/pristine_supercell/ --defect_dir mgo_dft/ \
     --defect_index mgo_defects/defect_index.json --dielectric 9.8 --output mgo_fe.json
 ```

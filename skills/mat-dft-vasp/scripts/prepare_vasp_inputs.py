@@ -5,7 +5,7 @@ Usage:
     python prepare_vasp_inputs.py input.cif output_dir --calculation_type relaxation --preset_type omat
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: ase, pymatgen
 """
 

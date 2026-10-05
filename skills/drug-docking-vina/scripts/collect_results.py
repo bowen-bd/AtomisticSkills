@@ -28,7 +28,7 @@ which must match the `ligand` field in the docking JSON (this is the
 PDBQT filename stem set by drug-ligand-prep).
 
 Requirements:
-    - Conda environment: drugdisc-agent (stdlib-only; any env works)
+    - Environment: cpu (stdlib-only; any env works)
 """
 
 from __future__ import annotations

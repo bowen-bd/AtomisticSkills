@@ -3,6 +3,7 @@ name: chem-nmr-predict
 description: Predict 1H NMR spectra from SMILES strings via NMRdb.org SPINUS neural network prediction and nmrsim quantum mechanical spin simulation.
 metadata:
   category: [chemistry]
+  venv: [cpu]
 ---
 
 # 1H NMR Spectrum Prediction
@@ -32,8 +33,7 @@ The agent should use this skill when:
 If the user provides compound names instead of SMILES, the agent should first resolve them:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-db-pubchem/scripts/query_pubchem.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/../drug-db-pubchem/scripts/query_pubchem.py \
   --name "camphor" --outdir <research_dir>/pubchem/
 ```
 
@@ -44,8 +44,7 @@ The agent should extract `CanonicalSMILES` from the JSON output.
 ### Step 2 — Predict NMR Spectra
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-nmr-predict/scripts/predict_nmr.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/predict_nmr.py \
   --smiles "<smiles_1>" "<smiles_2>" \
   --names "compound1" "compound2" \
   --field_mhz 400 \
@@ -113,7 +112,6 @@ After prediction, the agent must:
 ## Environment
 
 ```bash
-# Venv: venv/cpu
 ```
 
 Install: `conda-envs/nmr-agent/install.sh`

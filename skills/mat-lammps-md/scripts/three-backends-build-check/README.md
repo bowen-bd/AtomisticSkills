@@ -29,15 +29,12 @@ bash conda-envs/fairchem-agent/install_lammps.sh
 4. Verify each binary with its matching environment:
 ```bash
 # Env: mace-agent
-conda activate mace-agent
 ./lammps/mace-agent/lmp -h
 
 # Env: matgl-agent
-conda activate matgl-agent
 ./lammps/matgl-agent/lmp -h
 
 # Env: fairchem-agent
-conda activate fairchem-agent
 ./lammps/fairchem-agent/lmp -h
 ```
 

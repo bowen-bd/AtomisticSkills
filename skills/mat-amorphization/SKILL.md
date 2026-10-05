@@ -3,9 +3,22 @@ name: mat-amorphization
 description: Generate amorphorized structures from crystalline starting points using a melt-quench MD protocol.
 metadata:
   category: [materials]
+  venv: [cpu, mlip]
 ---
 
 # Amorphorization
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `mace.load_model` is the `load_model`
+> tool of the `mace` server (`mcp__mace__load_model`, or
+> `mcp__plugin_atomistic-skills_mace__load_model` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli mace load_model key=value run_md key=value
+> ```
 
 ## Goal
 To generate disordered, amorphous structures from crystalline inputs using molecular dynamics (MD). This is achieved through a "melt-quench" protocol, where the material is heated above its melting point and then rapidly cooled to "freeze" the liquid-like disorder.
@@ -26,22 +39,22 @@ The standard Computational amorphization protocol involves:
 ### 1. Preparation
 - **Supercell**: Use the `prep_supercell.py` helper script. By default, it generates an orthorhombic conventional supercell with approximately 100 atoms, ensuring a robust starting point for amorphization.
 ```bash
-python skills/mat-amorphization/scripts/prep_supercell.py --input crystalline.cif --output supercell.cif
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/prep_supercell.py --input crystalline.cif --output supercell.cif
 ```
-- **Foundation Potential**: Select a robust model like `MACE-MP-large` or `CHGNet` using the `mcp_mace_load_model` (or similar) tool.
+- **Foundation Potential**: Select a robust model like `MACE-MP-large` or `CHGNet` using the `mace.load_model` (or similar) tool.
 
 ### 2. Execution (The Melt-Quench Cycle)
 Amorphization is performed by calling the `run_md` tool in a sequence:
 
 #### Stage 1: Melting
 Heat the system to a high temperature (e.g., 3000K) to eliminate crystalline order.
-- **Tool**: `mcp_mace_run_md`
+- **Tool**: `mace.run_md`
 - **Thermostat**: `nvt_langevin` (Robust for high-T dynamics).
 - **Parameters**: `temperature=3000`, `steps=5000` (10 ps), `ensemble="nvt_langevin"`, `timestep=2.0`.
 
 #### Stage 2: Quenching
 Cool the system rapidly to the target temperature (e.g., 300K).
-- **Tool**: `mcp_mace_run_md`
+- **Tool**: `mace.run_md`
 - **Thermostat**: `nvt_langevin` (Supports specific `set_temperature` ramping).
 - **Monitor**: Use `monitor_type="quenching"` and `monitor_params={"temperature_end": 300, "steps": 5000}`.
 - **Parameters**: `temperature=3000` (start), `steps=5000` (10 ps), `ensemble="nvt_langevin"`.
@@ -49,7 +62,7 @@ Cool the system rapidly to the target temperature (e.g., 300K).
 
 #### Stage 3: Equilibration
 Relax the structure at the target temperature to reach equilibrium distribution.
-- **Tool**: `mcp_mace_run_md`
+- **Tool**: `mace.run_md`
 - **Thermostat**: `nvt_bussi` (Bussi-Donadio-Parrinello) - Provides correct canonical sampling.
 - **Parameters**: `temperature=300`, `steps=2500` (5 ps), `ensemble="nvt_bussi"`.
 
@@ -69,7 +82,7 @@ Use the `analyze_amorphous.py` script to verify the results:
 - **MACE-MP-large** or **CHGNet** are recommended for high-temperature MD as they are trained on diverse configurations.
 
 ## Examples
-See `skills/mat-amorphization/examples/` for validated amorphous structures.
+See `${CLAUDE_SKILL_DIR}/examples/` for validated amorphous structures.
 ---
 
 **Author:** Bowen Deng

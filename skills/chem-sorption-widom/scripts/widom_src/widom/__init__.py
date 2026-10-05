@@ -8,7 +8,7 @@ to keep the chem-sorption skill self-contained. The public API is re-exported as
 - `run_widom_insertion()`
 
 Requirements:
-    - Conda environment: fairchem-agent
+    - Environment: fairchem (run with: venv/run fairchem python ...)
     - Required packages: ase, numpy, pydantic, pymatgen
 """
 

@@ -3,6 +3,7 @@ name: mat-phase-diagram
 description: Retrieve and visualize pre-computed phase diagrams from Materials Project for thermodynamic stability analysis.
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # Phase Diagram Retrieval
@@ -22,8 +23,7 @@ Retrieve pre-computed phase diagrams from Materials Project to analyze thermodyn
 Retrieve a phase diagram for a chemical system:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-phase-diagram/scripts/get_phase_diagram.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/get_phase_diagram.py \
   --chemsys "Li-O" \
   --output li_o_phase_diagram.json
 ```
@@ -35,8 +35,7 @@ uv run --project venv/cpu python skills/mat-phase-diagram/scripts/get_phase_diag
 Add `--plot` flag to create a visualization:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-phase-diagram/scripts/get_phase_diagram.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/get_phase_diagram.py \
   --chemsys "Li-O" \
   --output li_o_pd.json \
   --plot li_o_pd.png
@@ -49,8 +48,7 @@ uv run --project venv/cpu python skills/mat-phase-diagram/scripts/get_phase_diag
 By default, retrieves GGA+U phase diagrams. For R2SCAN data:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-phase-diagram/scripts/get_phase_diagram.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/get_phase_diagram.py \
   --chemsys "Li-Fe-P-O" \
   --thermo_type "R2SCAN" \
   --output lifepo4_r2scan_pd.json \
@@ -70,13 +68,13 @@ Use phase diagrams to visualize competing phases:
 
 ```bash
 # 1. Get phase diagram
-python skills/mat-phase-diagram/scripts/get_phase_diagram.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/get_phase_diagram.py \
   --chemsys "Li-O" \
   --output li_o_pd.json \
   --plot li_o_pd.png
 
 # 2. Check specific material's position on hull
-python skills/mat-db-mp/scripts/query_mp.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/../mat-db-mp/scripts/query_mp.py \
   --formula "Li2O" \
   --properties energy_above_hull formation_energy_per_atom \
   --output li2o_stability.json
@@ -88,13 +86,13 @@ Query stable structures from a chemical system for training data:
 
 ```bash
 # 1. Visualize phase diagram to understand stable phases
-python skills/mat-phase-diagram/scripts/get_phase_diagram.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/get_phase_diagram.py \
   --chemsys "Li-S" \
   --output li_s_pd.json \
   --plot li_s_pd.png
 
 # 2. Query all stable structures
-python skills/mat-db-mp/scripts/query_mp.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/../mat-db-mp/scripts/query_mp.py \
   --chemsys "Li-S" \
   --e_above_hull_max 0.0 \
   --properties energy_above_hull formation_energy_per_atom \

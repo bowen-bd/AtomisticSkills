@@ -24,7 +24,7 @@ Usage:
         --plot
 
 Requirements:
-    - Conda environment: nmr-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: numpy, scipy, rdkit, requests, matplotlib
 """
 

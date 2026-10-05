@@ -16,7 +16,7 @@ Due to cross-environment isolation (base vs. mlip agent), this pipeline is execu
 
 ### Step 1: Query Hull
 ```bash
-conda run -n base-agent python ../../scripts/query_mp_hull.py \
+venv/run cpu python ../../scripts/query_mp_hull.py \
     --formula "Li-P-S" \
     --target "Li3PS4" \
     --thermo_type "R2SCAN" \
@@ -38,7 +38,7 @@ mcp_matgl_relax_structure(
 
 ### Step 3: Compute E_hull and ECW
 ```bash
-conda run -n base-agent python ../../scripts/compute_ehull.py \
+venv/run cpu python ../../scripts/compute_ehull.py \
     --hull_manifest hull_entries.json \
     --relaxed_dir relaxed_structures/ \
     --target_material Li3PS4 \

@@ -3,6 +3,7 @@ name: drug-redocking-rmsd
 description: Compute symmetry-corrected heavy-atom RMSD between docked poses and a reference crystal ligand to validate docking protocols.
 metadata:
   category: [drug-discovery]
+  venv: [cpu]
 ---
 
 # drug-redocking-rmsd
@@ -20,8 +21,7 @@ To quantitatively validate a docking protocol by computing the symmetry-correcte
 When the reference ligand is extracted from a PDB (HETATM records, no bond orders), provide the SMILES so the script can assign bond orders via template matching:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-redocking-rmsd/scripts/compute_rmsd.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/compute_rmsd.py \
   --docked docking/ligand_docked.pdbqt \
   --reference crystal_ligand.pdb \
   --smiles "NS(=O)(=O)c1ccc(Nc2nc3[nH]cnc3c(OCC3CCCCC3)n2)cc1" \
@@ -33,8 +33,7 @@ uv run --project venv/cpu python skills/drug-redocking-rmsd/scripts/compute_rmsd
 When the reference ligand is an SDF with proper bond orders (e.g., from a database or ligand-prep), no SMILES is needed:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-redocking-rmsd/scripts/compute_rmsd.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/compute_rmsd.py \
   --docked docking/ligand_docked.pdbqt \
   --reference crystal_ligand.sdf \
   --output_dir validation/
@@ -53,8 +52,7 @@ The default threshold is 2.0 A, which is the classical success criterion from th
 Below about 1.5 A is typically considered "good" and below 1.0 A is "very good" for modern docking of small rigid compounds. Above roughly 3 A, numeric ordering loses meaning (a 4 A pose is not usefully "better" than a 6 A pose; both are wrong).
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-redocking-rmsd/scripts/compute_rmsd.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/compute_rmsd.py \
   --docked docking/ligand_docked.pdbqt \
   --reference crystal_ligand.sdf \
   --threshold 1.5 \

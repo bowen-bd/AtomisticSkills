@@ -3,9 +3,23 @@ name: general-workflow-planner
 description: Hierarchically decompose high-level scientific workflows (from literature or user-proposed) into executable sequences of existing SKILLs and MCP tools for the research plan.
 metadata:
   category: [general]
+  venv: [mlip]
 ---
 
 # General Workflow Planner
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `mace.run_md` is the `run_md`
+> tool of the `mace` server (`mcp__mace__run_md`, or
+> `mcp__plugin_atomistic-skills_mace__run_md` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli mace run_md key=value relax_structure key=value
+> ${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli matgl relax_structure key=value
+> ```
 
 ## Goal
 To decompose high-level scientific workflows (either sourced from literature or proposed directly by the user) into a concrete, executable sequence. This skill parses the objective and outputs a chronological "Detailed Action Plan" that feeds directly into the `research_plan.md` artifact, in accordance with `.agents/rules/research-standards.md`. Do not overcomplicate the output; it should be a straightforward list of steps.
@@ -20,11 +34,11 @@ To decompose high-level scientific workflows (either sourced from literature or 
    Analyze the high-level workflow to determine the key scientific steps (e.g., Structure Generation $\rightarrow$ Relaxation $\rightarrow$ Stability $\rightarrow$ Dynamics).
 
 2. **Skill Registry Mapping**
-   Scan the repository's capabilities. Map each conceptual step to existing project tools by searching the `skills/` directory and available MCP tools (e.g., `mcp_mace_run_md`, `mcp_matgl_relax_structure`).
+   Scan the repository's capabilities. Map each conceptual step to existing project tools by searching the `skills/` directory and available MCP tools (e.g., `mace.run_md`, `matgl.relax_structure`).
 
 3. **Dependency Construction**
    Map the dependencies between the identified SKILLs and MCP tools:
-   - Identify **data dependencies**: The output of Step A must act as the input for Step B (e.g., the `mat-db-mp` skill outputs a `.cif`, which serves as the input for the `mcp_mace_relax_structure` MCP tool).
+   - Identify **data dependencies**: The output of Step A must act as the input for Step B (e.g., the `mat-db-mp` skill outputs a `.cif`, which serves as the input for the `mace.relax_structure` MCP tool).
    - Identify parallelization opportunities if applicable.
 
 4. **Feasibility Analysis**

@@ -3,6 +3,7 @@ name: chem-neb-barrier
 description: Calculate activation barrier using Nudged Elastic Band (NEB) method with MLIPs.
 metadata:
   category: [chemistry, materials]
+  venv: [fairchem, mlip]
 ---
 
 # NEB Barrier Calculation
@@ -25,8 +26,7 @@ Performs the NEB calculation between two endpoint structures.
 
 ### Use with MACE (periodic materials)
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/chem-neb-barrier/scripts/calculate_barrier.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/calculate_barrier.py \
     --start_structure <path_to_start.cif> \
     --end_structure <path_to_end.cif> \
     --model_type mace \
@@ -37,8 +37,7 @@ uv run --project venv/mlip python skills/chem-neb-barrier/scripts/calculate_barr
 
 ### Use with MACE (non-periodic molecules)
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/chem-neb-barrier/scripts/calculate_barrier.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/calculate_barrier.py \
     --start_structure reactant.xyz \
     --end_structure product.xyz \
     --model_type mace \
@@ -50,8 +49,7 @@ uv run --project venv/mlip python skills/chem-neb-barrier/scripts/calculate_barr
 
 ### Use with FairChem
 ```bash
-# Venv: venv/fairchem
-uv run --project venv/fairchem python skills/chem-neb-barrier/scripts/calculate_barrier.py \
+${CLAUDE_SKILL_DIR}/../../venv/run fairchem python ${CLAUDE_SKILL_DIR}/scripts/calculate_barrier.py \
     --start_structure <path_to_start.cif> \
     --end_structure <path_to_end.cif> \
     --model_type fairchem \
@@ -62,8 +60,7 @@ uv run --project venv/fairchem python skills/chem-neb-barrier/scripts/calculate_
 
 ### Use with MatGL
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/chem-neb-barrier/scripts/calculate_barrier.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/calculate_barrier.py \
     --start_structure <path_to_start.cif> \
     --end_structure <path_to_end.cif> \
     --model_type matgl \
@@ -102,7 +99,7 @@ uv run --project venv/mlip python skills/chem-neb-barrier/scripts/calculate_barr
     - **MatPES**:
         - `MACE-MATPES-r2SCAN-0`
         - `MACE-MH-1` (head: `matpes_r2scan`)
-        - `CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES`
+        - `CHGNet-PES-MatPES-r2SCAN-1M-2026.9`
         - `TensorNet-MatPES-r2SCAN-v2025.1-PES`
     - These models are trained on datasets including transition states or diverse structures (OMat24, MatPES), making them more reliable for NEB.
 

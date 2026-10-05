@@ -15,7 +15,7 @@ Usage:
     python gen_kgrid.py 12 12 1 --output kpoints_block.txt
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: Python 3 standard library only
 """
 

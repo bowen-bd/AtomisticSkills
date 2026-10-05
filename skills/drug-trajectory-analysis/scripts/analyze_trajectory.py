@@ -8,7 +8,7 @@ Usage:
     python analyze_trajectory.py --topology complex.pdb --trajectory prod.dcd --output_dir analysis/
 
 Requirements:
-    - Conda environment: drugmd-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: MDAnalysis, matplotlib, (optional) prolif
 """
 

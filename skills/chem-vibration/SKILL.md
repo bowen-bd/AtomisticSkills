@@ -3,6 +3,7 @@ name: chem-vibration
 description: Calculate vibrational frequencies, normal modes, zero-point energy, and IR spectra of molecules and clusters using MLIPs.
 metadata:
   category: [chemistry]
+  venv: [mlip]
 ---
 
 # Molecular Vibration Analysis Skill
@@ -45,8 +46,7 @@ Use ASE's built-in molecule database or provide a structure file:
 ### Step 2: Run vibration analysis
 
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/chem-vibration/scripts/calculate_vibrations.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/calculate_vibrations.py \
     --molecule H2O \
     --model_type mace \
     --model_name MACE-OMAT-0-small \
@@ -55,8 +55,7 @@ uv run --project venv/mlip python skills/chem-vibration/scripts/calculate_vibrat
 
 With a structure file instead:
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/chem-vibration/scripts/calculate_vibrations.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/calculate_vibrations.py \
     --structure path/to/molecule.xyz \
     --model_type mace \
     --model_name MACE-OMAT-0-small \
@@ -88,12 +87,11 @@ uv run --project venv/mlip python skills/chem-vibration/scripts/calculate_vibrat
 See `examples/H2O/` for a water molecule vibration analysis.
 
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/chem-vibration/scripts/calculate_vibrations.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/calculate_vibrations.py \
     --molecule H2O \
     --model_type mace \
     --model_name MACE-OMAT-0-small \
-    --output_dir skills/chem-vibration/examples/H2O
+    --output_dir ${CLAUDE_SKILL_DIR}/examples/H2O
 ```
 
 Expected H2O vibrational modes (experimental reference):

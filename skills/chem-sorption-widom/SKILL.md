@@ -3,6 +3,7 @@ name: chem-sorption-widom
 description: Calculates Henry coefficient and heat of adsorption for a gas in a porous framework using Widom insertion with any supported MLIP.
 metadata:
   category: [materials, chemistry]
+  venv: [fairchem]
 ---
 
 # chem-sorption-widom
@@ -21,8 +22,8 @@ To determine the initial affinity of a porous material (e.g., MOFs, COFs) for a 
 1. **Perform Widom Insertion**: Use the `run_widom.py` script, specifying the structure, gas, temperature, and your MLIP of choice.
 
 ```bash
-# Venv: venv/fairchem (if using fairchem), venv/mlip (if using mace), etc.
-uv run --project venv/fairchem python skills/chem-sorption-widom/scripts/run_widom.py \
+# (if using fairchem), venv/mlip (if using mace), etc.
+${CLAUDE_SKILL_DIR}/../../venv/run fairchem python ${CLAUDE_SKILL_DIR}/scripts/run_widom.py \
     --structure path/to/relaxed_supercell.cif \
     --name MY_FRAMEWORK \
     --calculator fairchem \
@@ -49,8 +50,7 @@ uv run --project venv/fairchem python skills/chem-sorption-widom/scripts/run_wid
 
 **Example 1: Using FairChem UMA-S-1p2 for CO2 adsorption at 298K**
 ```bash
-# Venv: venv/fairchem
-uv run --project venv/fairchem python skills/chem-sorption-widom/scripts/run_widom.py \
+${CLAUDE_SKILL_DIR}/../../venv/run fairchem python ${CLAUDE_SKILL_DIR}/scripts/run_widom.py \
     --structure ./results/COF-1_supercell.cif \
     --name COF-1 \
     --calculator fairchem \

@@ -5,7 +5,7 @@ Usage:
     python calculate_surface_energy.py --bulk_energy_per_atom -4.567 --slab_dir slab_relaxations/ --output surface_energies.json
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: pymatgen, ase
 """
 

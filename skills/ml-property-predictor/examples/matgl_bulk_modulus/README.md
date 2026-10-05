@@ -9,7 +9,7 @@ This directory contains a complete, self-contained example demonstrating how to 
 First, ensure you are operating from the `base-agent` environment. The script will automatically trigger a sub-process inside the isolated `matgl-agent` conda environment for resolving dependency packages.
 
 ```bash
-conda run -n base-agent python run_matgl.py
+venv/run cpu python run_matgl.py
 ```
 
 ### Outputs

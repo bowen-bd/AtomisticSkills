@@ -3,6 +3,7 @@ name: chem-thermochemistry
 description: Compute gas-phase thermodynamic quantities (H, S, G) and reaction thermochemistry (ΔH, ΔS, ΔG) using MLIPs with the ideal-gas/rigid-rotor/harmonic-oscillator approximation.
 metadata:
   category: [chemistry]
+  venv: [mlip]
 ---
 
 # Gas-Phase Thermochemistry Skill
@@ -47,8 +48,7 @@ Refer to the [foundation-potentials skill](../ml-foundation-potentials/SKILL.md)
 Compute absolute H(T), S(T,P), G(T,P) for one species:
 
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/chem-thermochemistry/scripts/calculate_thermochemistry.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/calculate_thermochemistry.py \
     --molecule H2O \
     --temperature 298.15 \
     --pressure 101325 \
@@ -62,8 +62,7 @@ uv run --project venv/mlip python skills/chem-thermochemistry/scripts/calculate_
 Compute ΔH, ΔS, ΔG for a balanced gas-phase reaction:
 
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/chem-thermochemistry/scripts/calculate_thermochemistry.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/calculate_thermochemistry.py \
     --reaction "2H2 + O2 -> 2H2O" \
     --temperature 298.15 \
     --model_type mace \
@@ -101,13 +100,12 @@ uv run --project venv/mlip python skills/chem-thermochemistry/scripts/calculate_
 See `examples/H2O_formation/` for the water formation reaction:
 
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/chem-thermochemistry/scripts/calculate_thermochemistry.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/calculate_thermochemistry.py \
     --reaction "2H2 + O2 -> 2H2O" \
     --temperature 298.15 \
     --model_type mace \
     --model_name MACE-OMAT-0-small \
-    --output_dir skills/chem-thermochemistry/examples/H2O_formation
+    --output_dir ${CLAUDE_SKILL_DIR}/examples/H2O_formation
 ```
 
 **NIST reference values** for 2H₂(g) + O₂(g) → 2H₂O(g) at 298.15 K:

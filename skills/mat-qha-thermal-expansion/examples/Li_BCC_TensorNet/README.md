@@ -4,8 +4,7 @@ This example demonstrates a Quasi-Harmonic Approximation (QHA) calculation for b
 
 ## Command
 ```bash
-conda activate matgl-agent
-python skills/qha/scripts/calculate_qha.py \
+venv/run mlip python skills/qha/scripts/calculate_qha.py \
     --structure tests/Li.cif \
     --model_type matgl \
     --model_name TensorNet-MatPES-r2SCAN-v2025.1-PES \

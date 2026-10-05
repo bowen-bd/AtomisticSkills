@@ -12,7 +12,7 @@ Usage:
     python query_mof_db.py --database arcmof-majumdar --identifier MOFID-12345 --output-dir ./results
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: requests, pandas, pymatgen, mpcontribs-client
     - MP_API_KEY environment variable (for qmof only)
 """

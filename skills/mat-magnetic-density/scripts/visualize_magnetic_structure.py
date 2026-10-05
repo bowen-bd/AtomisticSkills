@@ -8,7 +8,7 @@ Usage:
     python visualize_magnetic_structure.py structure.cif moments.json --output image.png
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: pymatgen, matplotlib, numpy
 """
 
@@ -37,7 +37,7 @@ def visualize_magnetic_structure(
     except ImportError as e:
         print(f"Error: Required package not found: {e}", file=sys.stderr)
         print(
-            "Please ensure pymatgen and matplotlib are installed in base-agent.",
+            "Please ensure pymatgen and matplotlib are installed in the 'cpu'.",
             file=sys.stderr,
         )
         sys.exit(1)

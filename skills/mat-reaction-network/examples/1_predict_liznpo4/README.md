@@ -7,7 +7,6 @@ This example compares the synthesis pathways for $\text{LiZnPO}_4$ using traditi
 Activate the appropriate Conda environment (`base-agent`) and run the included bash script:
 
 ```bash
-conda activate base-agent
 ./run.sh
 ```
 

@@ -3,6 +3,7 @@ name: general-property-units
 description: Reference guide for energy, force, and stress units across MLIPs, DFT codes, and ASE, including conversion factors.
 metadata:
   category: [general, machine-learning]
+  venv: []
 ---
 
 # Units Reference for Atomistic Simulations
@@ -47,7 +48,7 @@ Measured on one compressed Si cell (xx component), 2026-08-25:
 | UMA `uma-s-1p1` (omat) | -0.0821809 | -0.0821810 | — |
 | CHGNet standalone 0.4.2 | -13.906347 | -0.0867966 | — |
 | MatGL `TensorNet-PES-MatPES-PBE-2025.2` | -10.780773 | -10.780773 | -0.067288 |
-| MatGL `CHGNet-PES-MatPES-PBE-2025.2.10` | — | -15.229350 | -0.095054 |
+| MatGL `CHGNet-PES-MatPES-PBE-1M-2026.9` | — | -15.229350 | -0.095054 |
 | MatGL `M3GNet-PES-MatPES-2025.2` | — | -20.293510 | -0.126662 |
 
 Every ratio above is exactly `160.21766208`, i.e. GPa per eV/Å³.
@@ -135,7 +136,6 @@ The sign flip is handled during VASP output parsing (e.g. in the `atomate2` MCP 
 ## Quick Reference: Python Conversions
 
 ```python
-# Venv: venv/cpu
 from ase import units
 
 # Stress conversions

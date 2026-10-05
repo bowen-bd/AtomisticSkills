@@ -3,6 +3,7 @@ name: general-publisher-access-guard
 description: Avoid bot-blocking publisher websites by routing paper retrieval through legal open-access APIs and mirrors.
 metadata:
   category: [general]
+  venv: [cpu]
 ---
 
 # General Publisher Access Guard
@@ -18,13 +19,11 @@ When the user asks you to fetch, read, summarize, or analyze scientific literatu
 Before attempting to download or scrape any paper URL or DOI, inspect the domain against the curated publisher policy matrix.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/general-publisher-access-guard/scripts/check_publisher.py --url "https://pubs.acs.org/doi/10.1021/acs.chemmater.9b04758"
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/check_publisher.py --url "https://pubs.acs.org/doi/10.1021/acs.chemmater.9b04758"
 ```
 Or with DOI:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/general-publisher-access-guard/scripts/check_publisher.py --doi "10.1103/PhysRevLett.120.145301" --json
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/check_publisher.py --doi "10.1103/PhysRevLett.120.145301" --json
 ```
 
 **Decision Rule:**
@@ -41,8 +40,7 @@ Run the safe paper retriever to query legitimate APIs in priority order:
 5. **Preprint APIs**: Queries arXiv API or ChemRxiv API with required rate throttling (minimum 3 seconds delay).
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/general-publisher-access-guard/scripts/safe_paper_retriever.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/safe_paper_retriever.py \
     --doi "10.1103/PhysRevLett.120.145301" \
     --output_dir ./papers
 ```
@@ -62,13 +60,11 @@ If no open-access copy exists across repository mirrors:
 To test live publisher WAF defenses or verify if a publisher's bot policy has updated:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/general-publisher-access-guard/scripts/audit_publishers.py --publisher acs
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/audit_publishers.py --publisher acs
 ```
 Or audit all major publishers:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/general-publisher-access-guard/scripts/audit_publishers.py --all
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/audit_publishers.py --all
 ```
 
 ## Examples
@@ -76,8 +72,7 @@ uv run --project venv/cpu python skills/general-publisher-access-guard/scripts/a
 ### Example 1: Bypassing ACS Bot Block for Perovskite Battery Paper
 Handling an ACS paper (`10.1021/acs.jpclett.7b00189`) where direct web scraping returns Cloudflare Turnstile 403:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/general-publisher-access-guard/scripts/safe_paper_retriever.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/safe_paper_retriever.py \
     --doi "10.1021/acs.jpclett.7b00189" \
     --output_dir examples/acs-blocked-paper
 ```
@@ -86,8 +81,7 @@ See [examples/acs-blocked-paper/README.md](examples/acs-blocked-paper/README.md)
 ### Example 2: Resolving APS Paper via Legal Open-Access Repository Mirror
 Handling an APS Physical Review Letters paper (`10.1103/PhysRevLett.120.145301`) by bypassing blocked `link.aps.org/pdf` and fetching the author manuscript from OSTI/MIT DSpace:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/general-publisher-access-guard/scripts/safe_paper_retriever.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/safe_paper_retriever.py \
     --doi "10.1103/PhysRevLett.120.145301" \
     --output_dir examples/oa-repository-bypass
 ```

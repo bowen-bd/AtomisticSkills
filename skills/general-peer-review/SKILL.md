@@ -3,6 +3,7 @@ name: general-peer-review
 description: Act as a reviewer to critically review research plans, manuscripts, or task summaries, pointing out missing baselines, statistical flaws, and weak assumptions.
 metadata:
   category: [general]
+  venv: []
 ---
 
 # General Peer Review

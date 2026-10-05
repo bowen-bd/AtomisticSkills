@@ -5,7 +5,7 @@ Usage:
     python apply_correction.py structure.cif --energy -123.45
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: pymatgen
 """
 

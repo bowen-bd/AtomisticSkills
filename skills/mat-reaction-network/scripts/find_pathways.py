@@ -5,7 +5,7 @@ Usage:
     python find_pathways.py --target YMnO3 --precursors YCl3 Mn2O3 Li2CO3 --byproducts LiCl CO2 --temperature 923
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: mp-api, rxn-network, pymatgen
 """
 

@@ -9,7 +9,7 @@ Usage:
     python validate_poses.py --poses docked.sdf --output_dir validation/
 
 Requirements:
-    - Conda environment: drugdisc-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: posebusters, rdkit
 """
 

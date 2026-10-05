@@ -3,6 +3,7 @@ name: chem-docking-void
 description: Dock small-molecule guests into a porous host material using the VOID library (Voronoi Clustering), generating multiple 3D conformers with RDKit and ranking generated complexes.
 metadata:
   category: [materials, chemistry]
+  venv: [cpu]
 ---
 
 # chem-docking-void
@@ -26,8 +27,7 @@ You will need:
 A standard run accepts the chemical inputs and saves outputs to a designated folder.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-docking-void/scripts/run_docking.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu+void python ${CLAUDE_SKILL_DIR}/scripts/run_docking.py \
   --smiles "CC12C3C4C5C6C1C7C2C3C4C5C67" \
   --host_cif /path/to/host/material.cif \
   --output_dir output/docked_poses \
@@ -40,7 +40,7 @@ uv run --project venv/cpu python skills/chem-docking-void/scripts/run_docking.py
 The clustering map and acceptance rates are highly sensitive to VOID's search parameters. Use the advanced arguments for dense loading or strict spatial tolerances:
 
 ```bash
-python skills/chem-docking-void/scripts/run_docking.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu+void python ${CLAUDE_SKILL_DIR}/scripts/run_docking.py \
   --smiles "CC(=O)Oc1ccccc1C(=O)O" \
   --host_cif /path/to/host/MOF.cif \
   --output_dir output/docked_poses \

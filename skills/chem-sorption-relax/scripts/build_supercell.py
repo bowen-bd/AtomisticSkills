@@ -6,7 +6,7 @@ Usage:
     python build_supercell.py --structure input.cif --min-plane-dist 12.0 --output-cif supercell.cif
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: ase
 """
 

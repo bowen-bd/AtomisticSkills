@@ -16,7 +16,7 @@ Usage:
         --output_dir gcmc_results/
 
 Requirements:
-    - Conda environment: smol-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: smol, pymatgen, numpy
 """
 

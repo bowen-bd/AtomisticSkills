@@ -3,9 +3,18 @@ name: ml-generative-mattergen
 description: Generate inorganic material structures using MatterGen, a diffusion-based generative model.
 metadata:
   category: [machine-learning, materials]
+  venv: []
+  conda_env: mattergen-agent
 ---
 
 # MatterGen Structure Generation Skill
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `mattergen.generate_structures` is the `generate_structures`
+> tool of the `mattergen` server (`mcp__mattergen__generate_structures`, or
+> `mcp__plugin_atomistic-skills_mattergen__generate_structures` when installed as a plugin).
+> `mattergen` run only as MCP servers, from the `generative` container image (arm64) or the matching conda environment in `conda-envs/`.
 
 This skill provides tools for generating novel inorganic material structures using MatterGen, a state-of-the-art diffusion-based generative model for crystalline materials.
 
@@ -36,9 +45,9 @@ The MCP tool automatically loads models when needed - no explicit load step requ
 Generate novel structures without conditioning:
 
 ```python
-from mcp_base import mcp_mattergen_generate_structures
+from mcp_base import mattergen.generate_structures
 
-result = mcp_mattergen_generate_structures(
+result = mattergen.generate_structures(
     model_name="mattergen_base",
     num_structures=10,
     batch_size=10,
@@ -51,7 +60,7 @@ result = mcp_mattergen_generate_structures(
 Generate structures from a specific chemical system (controls which elements appear):
 
 ```python
-result = mcp_mattergen_generate_structures(
+result = mattergen.generate_structures(
     chemical_system="Li-Fe-P-O",  # Automatically uses chemical_system model
     guidance_scale=1.0,  # Recommended for chemical system conditioning
     num_structures=20,

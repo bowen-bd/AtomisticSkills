@@ -3,9 +3,22 @@ name: ml-committee-uncertainty
 description: Quantify prediction uncertainty of MACE MLIPs using committee (ensemble) models; flag high-uncertainty structures for DFT verification.
 metadata:
   category: [machine-learning, materials, chemistry]
+  venv: [cpu, mlip]
 ---
 
 # MACE Committee Model Uncertainty Quantification
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `base.search_model_registry` is the `search_model_registry`
+> tool of the `base` server (`mcp__base__search_model_registry`, or
+> `mcp__plugin_atomistic-skills_base__search_model_registry` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli base search_model_registry key=value register_model key=value
+> ```
 
 ## Goal
 To estimate the epistemic uncertainty of a MACE MLIP by running inference with a committee (ensemble) of independently trained models. Structures where the committee disagrees strongly (high energy or force variance) are flagged as candidates for DFT labelling, supporting active learning workflows and validating MLIP reliability in under-sampled regions of configuration space.
@@ -32,10 +45,9 @@ A committee requires **N ≥ 3** independently trained MACE checkpoints covering
 Run [ml-mace-finetune](../ml-mace-finetune/SKILL.md) N times, varying only the random seed via the `--seed` flag in `generate_mace_config.py`. Save each checkpoint to a separate directory:
 
 ```bash
-# Venv: venv/mlip
 # Run for seed=0, seed=1, seed=2 (at minimum)
 for SEED in 0 1 2; do
-    uv run --project venv/mlip python skills/ml-mace-finetune/scripts/generate_mace_config.py \
+    ${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/../ml-mace-finetune/scripts/generate_mace_config.py \
         --train-file ./mace_data/train.xyz \
         --valid-file ./mace_data/valid.xyz \
         --model MACE-MH-1 \
@@ -45,7 +57,7 @@ for SEED in 0 1 2; do
         --freeze-backbone \
         --seed ${SEED} \
         --output-dir ./committee_models/seed_${SEED}
-    uv run --project venv/mlip mace_run_train \
+    ${CLAUDE_SKILL_DIR}/../../venv/run mlip mace_run_train \
         --config ./committee_models/seed_${SEED}/finetune_config.yaml
 done
 ```
@@ -53,7 +65,7 @@ done
 **Option B — Use pre-existing models from the registry**
 
 ```bash
-mcp_base_search_model_registry(
+base.search_model_registry(
     chemical_system="Li-Fe-P-O",
     backend="mace",
 )
@@ -65,8 +77,7 @@ mcp_base_search_model_registry(
 Pass all checkpoint paths to the inference script. It will run each model independently and compute mean ± std across the committee.
 
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/ml-committee-uncertainty/scripts/run_committee_inference.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/run_committee_inference.py \
     --structures /path/to/structures_dir_or_file.cif \
     --models ./committee_models/seed_0/mace_finetuned.model \
              ./committee_models/seed_1/mace_finetuned.model \
@@ -120,7 +131,7 @@ ls ./uncertainty_results/high_uncertainty_structures/
 After determining an appropriate uncertainty threshold for your system, update the registry so future tasks can apply the same criterion automatically:
 
 ```bash
-mcp_base_register_model(
+base.register_model(
     checkpoint_path="./committee_models/seed_0/mace_finetuned.model",
     chemical_system="Li-Fe-P-O",
     backend="mace",

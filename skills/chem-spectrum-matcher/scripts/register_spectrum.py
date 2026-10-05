@@ -23,7 +23,7 @@ Usage:
         --catalog_dir research/spectrum_catalog/
 
 Requirements:
-    - Conda environment: nmr-agent (or base-agent for IR-only registration)
+    - Environment: cpu (or cpu for IR-only registration)
     - Required packages: rdkit
 """
 

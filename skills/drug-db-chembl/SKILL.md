@@ -3,6 +3,7 @@ name: drug-db-chembl
 description: Query ChEMBL web services for targets, molecules, and curated bioactivity measurements (IC50, Ki, EC50, etc.).
 metadata:
   category: [drug-discovery]
+  venv: [cpu]
 ---
 
 # db-chembl
@@ -18,8 +19,7 @@ ChEMBL activity data is curated and standardized, but downstream modeling still 
 Use this when you only have a gene/protein string and want candidate ChEMBL target IDs.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_chembl.py \
   --target "EGFR" \
   --max_results 20 \
   --output egfr_targets.json
@@ -29,8 +29,7 @@ uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py \
 If you know a UniProt accession, this reduces ambiguity compared to free-text searching.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_chembl.py \
   --uniprot "P00533" \
   --target_type "SINGLE PROTEIN" \
   --max_results 10 \
@@ -49,8 +48,7 @@ Recommended for many QSAR/ML use cases:
 * require/compute pChEMBL (comparable negative log molar potency)
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_chembl.py \
   --target_id "CHEMBL203" \
   --activity_type "IC50" \
   --assay_type "B" \
@@ -66,15 +64,13 @@ uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py \
 Prefer **ChEMBL ID** or **InChIKey** for exact identity.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_chembl.py \
   --chembl_id "CHEMBL25" \
   --output aspirin_record.json
 ```
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_chembl.py \
   --inchi_key "BSYNRYMUTXBXSQ-UHFFFAOYSA-N" \
   --output aspirin_record_by_inchikey.json
 ```
@@ -85,8 +81,7 @@ SMILES strings often differ by canonicalization; similarity/substructure search 
 Similarity search (default cutoff 70):
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_chembl.py \
   --smiles "CC(=O)Oc1ccccc1C(=O)O" \
   --smiles_mode similarity \
   --similarity 80 \
@@ -97,8 +92,7 @@ uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py \
 Substructure search:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_chembl.py \
   --smiles "CC(=O)Oc1ccccc1C(=O)O" \
   --smiles_mode substructure \
   --max_results 10 \
@@ -108,8 +102,7 @@ uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py \
 ### 6. Export as CSV for quick inspection
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_chembl.py \
   --target_id "CHEMBL203" \
   --activity_type "IC50" \
   --assay_type "B" \
@@ -125,11 +118,9 @@ uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py \
 EGFR binding-potency dataset (IC50) with comparable pChEMBL values:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py --target "EGFR" --max_results 10 --output egfr_targets.json
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_chembl.py --target "EGFR" --max_results 10 --output egfr_targets.json
 
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-db-chembl/scripts/query_chembl.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_chembl.py \
   --target_id "CHEMBL203" \
   --activity_type "IC50" \
   --assay_type "B" \

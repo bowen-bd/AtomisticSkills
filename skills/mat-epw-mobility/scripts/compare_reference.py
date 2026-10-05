@@ -10,7 +10,7 @@ Usage:
     python compare_reference.py reference.json measured.json
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: none (Python standard library only)
 """
 

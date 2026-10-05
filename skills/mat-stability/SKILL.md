@@ -3,9 +3,22 @@ name: mat-stability
 description: Calculate the thermodynamic stability and energy above the convex hull (E_hull) of a material at 0K.
 metadata:
   category: [materials]
+  venv: [cpu, mlip]
 ---
 
 # Stability Calculation
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `matgl.relax_structure` is the `relax_structure`
+> tool of the `matgl` server (`mcp__matgl__relax_structure`, or
+> `mcp__plugin_atomistic-skills_matgl__relax_structure` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli matgl relax_structure key=value
+> ```
 
 ## Goal
 To determine the thermodynamic stability of a material at 0K by computing the energy above the convex hull ($E_{hull}$) using pymatgen phase diagram analysis with structures from Materials Project.
@@ -28,8 +41,7 @@ To determine the thermodynamic stability of a material at 0K by computing the en
 
 2.  **Query Materials Project Hull**: Retrieve all structures on the convex hull in the target material's chemical space.
     ```bash
-    # Venv: venv/cpu
-    uv run --project venv/cpu python skills/mat-stability/scripts/query_mp_hull.py \
+    ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_mp_hull.py \
         --formula "Li-Fe-P-O" \
         --target "LiFePO4" \
         --thermo_type "R2SCAN" \
@@ -45,8 +57,8 @@ To determine the thermodynamic stability of a material at 0K by computing the en
 
 3.  **Relax All Structures**: Perform structural relaxation on all hull structures using the same MLIP.
     ```bash
-    # Venv: venv/mlip (if using MatGL)
-    mcp_matgl_relax_structure(
+    # (if using MatGL)
+    matgl.relax_structure(
         structure_data="hull_structures/",  # Pass directory containing all CIF files
         relax_cell=True,
         model_name="TensorNet-MatPES-r2SCAN-v2025.1-PES",
@@ -65,8 +77,7 @@ To determine the thermodynamic stability of a material at 0K by computing the en
 
 4.  **Construct Convex Hull & Calculate Stability**: Build a pymatgen phase diagram using the relaxed energies.
     ```bash
-    # Venv: venv/cpu
-    uv run --project venv/cpu python skills/mat-stability/scripts/compute_ehull.py \
+    ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/compute_ehull.py \
         --hull_manifest hull_entries.json \
         --relaxed_dir relaxed/ \
         --target_material LiFePO4 \
@@ -94,15 +105,14 @@ To determine the thermodynamic stability of a material at 0K by computing the en
 ### Example 1: Integrated Stability and ECW Pipeline for Li3PS4
 ```bash
 # Step 1: Query Materials Project hull in Li-P-S space
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-stability/scripts/query_mp_hull.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_mp_hull.py \
     --formula "Li-P-S" \
     --target "Li3PS4" \
     --thermo_type "R2SCAN" \
     --output hull_structures/
 
 # Step 2: Batch relax all structures with MatGL r2SCAN
-mcp_matgl_relax_structure(
+matgl.relax_structure(
     structure_data="hull_structures/",
     relax_cell=True,
     model_name="TensorNet-MatPES-r2SCAN-v2025.1-PES",
@@ -112,8 +122,7 @@ mcp_matgl_relax_structure(
 )
 
 # Step 3: Compute Integrated Stability and ECW
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-stability/scripts/compute_ehull.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/compute_ehull.py \
     --hull_manifest hull_entries.json \
     --relaxed_dir relaxed/ \
     --target_material Li3PS4 \

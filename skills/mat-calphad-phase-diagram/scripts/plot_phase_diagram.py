@@ -5,7 +5,7 @@ Usage:
     python plot_phase_diagram.py input.tdb --elements Al Zn --t-range 300 1000 10 --output phase_diagram.png
 
 Requirements:
-    - Conda environment: calphad-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: pycalphad, matplotlib
 """
 

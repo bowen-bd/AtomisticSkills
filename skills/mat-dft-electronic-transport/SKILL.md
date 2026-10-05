@@ -3,6 +3,7 @@ name: mat-dft-electronic-transport
 description: Compute electronic transport properties (mobility, conductivity, Seebeck coefficient) using DFT and AMSET via atomate2.
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # mat-dft-electronic-transport
@@ -19,8 +20,7 @@ Machine Learning Interatomic Potentials (MLIPs) only predict energies, forces, a
 Use the provided script to generate the sequence (DAG) of VASP computations targeting electronic transport. This automated DAG coordinates structure relaxation, uniform band structure extraction, evaluation of the elastic tensor, and calculations of deformation potentials.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-dft-electronic-transport/scripts/generate_inputs.py --output amset_flow.json
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/generate_inputs.py --output amset_flow.json
 ```
 
 ### 2. Job Execution (via jobflow/Fireworks)
@@ -41,9 +41,8 @@ Once completed, the final node wraps the `AMSET` runner. Resulting transport par
 Run the example demonstrating the DAG generation for GaAs transport calculations.
 
 ```bash
-# Venv: venv/cpu
-cd skills/mat-dft-electronic-transport/examples/GaAs
-uv run --project venv/cpu python ../../scripts/generate_inputs.py --output gaas_flow.json
+cd ${CLAUDE_SKILL_DIR}/examples/GaAs
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ../../scripts/generate_inputs.py --output gaas_flow.json
 ```
 
 ## Constraints

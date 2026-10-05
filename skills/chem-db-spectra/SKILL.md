@@ -3,6 +3,7 @@ name: chem-db-spectra
 description: Search and download experimental InfraRed (IR), Mass spectra, and UV-Vis spectra data (JCAMP-DX format) for molecules.
 metadata:
   category: [chemistry]
+  venv: [cpu]
 ---
 
 # chem-db-spectra
@@ -17,8 +18,7 @@ To query experimental molecular spectra—such as Infrared (IR), Mass Spectromet
 Use the `query_spectra.py` script to fetch available spectrographic data for a given chemical formula. The script automatically searches the NIST Chemistry WebBook, resolves the compound, and downloads all available JCAMP-DX (`.jdx`) formatted spectra into the specified directory.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-db-spectra/scripts/query_spectra.py <formula> <output_dir> [--type {IR,Mass,UVVis,All}]
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_spectra.py <formula> <output_dir> [--type {IR,Mass,UVVis,All}]
 ```
 
 Parameters:

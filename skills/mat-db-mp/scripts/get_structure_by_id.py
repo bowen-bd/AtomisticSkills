@@ -12,7 +12,7 @@ Usage:
     python get_structure_by_id.py mp-1234 mp-5678 mp-9012 --output_dir structures/
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: mp-api, pymatgen, ase
 """
 

@@ -19,7 +19,7 @@ Usage:
     python extract_metadata.py plot.png --provider openai --output metadata.json
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Optional: google-generativeai (for Gemini), openai (for OpenAI)
     - API key in environment
 """

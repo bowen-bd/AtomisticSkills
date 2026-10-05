@@ -7,7 +7,7 @@ This example adapts the [icet AgPd tutorial](https://icet.materialsmodeling.org/
 Run the full chemical potential sweep:
 
 ```bash
-conda run -n smol-agent python ../../scripts/run_gcmc_sweep.py \
+venv/run cpu python ../../scripts/run_gcmc_sweep.py \
     --ce_file ../../../ml-cluster-expansion/examples/AgPd_DFT_CE/cluster_expansion.json \
     --supercell 3 3 3 \
     --temperatures 300 900 \
@@ -34,7 +34,7 @@ conda run -n smol-agent python ../../scripts/run_gcmc_sweep.py \
 To analyze results and generate all plots:
 
 ```bash
-conda run -n smol-agent python ../../scripts/analyze_gcmc_results.py \
+venv/run cpu python ../../scripts/analyze_gcmc_results.py \
     --results_file gcmc_results/results_summary.json \
     --output_dir ./ \
     --element Pd

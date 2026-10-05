@@ -3,6 +3,7 @@ name: mat-dft-ferroelectric
 description: Calculate the spontaneous ferroelectric polarization across a non-polar to polar structure transition using the Berry Phase method.
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # mat-dft-ferroelectric
@@ -19,8 +20,7 @@ Material spontaneous polarization arises when positive and negative charge cente
 Use the provided script to generate the sequence of calculation jobs evaluating the polarization across interpolated intermediate structures.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-dft-ferroelectric/scripts/generate_inputs.py --output ferroelectric_flow.json
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/generate_inputs.py --output ferroelectric_flow.json
 ```
 
 ### 2. Job Execution
@@ -34,9 +34,8 @@ The final job merges the electronic polarization and ionic dipoles for each inte
 Run the example demonstrating the DAG generation for Barium Titanate (BaTiO$_3$).
 
 ```bash
-# Venv: venv/cpu
-cd skills/mat-dft-ferroelectric/examples/BaTiO3
-uv run --project venv/cpu python ../../scripts/generate_inputs.py --output batio3_flow.json
+cd ${CLAUDE_SKILL_DIR}/examples/BaTiO3
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ../../scripts/generate_inputs.py --output batio3_flow.json
 ```
 
 ## Constraints

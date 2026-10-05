@@ -12,7 +12,7 @@ Usage:
     python get_mp_phonon.py --material_id mp-149 --phonon_method dfpt --output si_phonon_mp.json --plot
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - MP_API_KEY environment variable must be set
     - Required packages: mp-api, pymatgen, matplotlib
 """

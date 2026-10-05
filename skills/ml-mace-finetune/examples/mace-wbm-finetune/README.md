@@ -14,7 +14,7 @@ Because the raw `vasp_s` labels in this WBM extraction are recorded in `kB`, we 
 
 ```bash
 # Env: mace-agent
-conda run -n mace-agent python skills/ml-mace-finetune/scripts/prepare_mace_data.py \
+venv/run mlip python skills/ml-mace-finetune/scripts/prepare_mace_data.py \
     --data private_data/WBM_subset_200_configs.json \
     --model MACE-OMAT-0-small \
     --epochs 10 \
@@ -31,7 +31,7 @@ The script generates a `finetune_config.yaml` file natively compatible with the 
 ```bash
 # Env: mace-agent
 cd skills/ml-mace-finetune/examples/mace-wbm-finetune
-conda run -n mace-agent mace_run_train --config finetune_config.yaml
+venv/run mlip mace_run_train --config finetune_config.yaml
 ```
 
 ### 3. Extract Training Logs
@@ -40,7 +40,7 @@ Once training converges, extract the diagnostic learning curves (energy, forces,
 ```bash
 # Env: mace-agent
 cd /path/to/project_root
-conda run -n mace-agent python skills/ml-mace-finetune/scripts/extract_mace_logs.py \
+venv/run mlip python skills/ml-mace-finetune/scripts/extract_mace_logs.py \
     --results-dir skills/ml-mace-finetune/examples/mace-wbm-finetune/results
 ```
 

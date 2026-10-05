@@ -3,6 +3,7 @@ name: drug-protein-ligand-md
 description: Run a protein-ligand MD simulation in OpenMM with energy minimization, restrained equilibration, and production NPT, producing trajectory and checkpoint files for downstream analysis.
 metadata:
   category: [drug-discovery]
+  venv: [cpu]
 ---
 
 # drug-protein-ligand-md
@@ -28,8 +29,7 @@ Required from [drug-complex-system-builder](../drug-complex-system-builder/SKILL
 ### 2. Run the simulation
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-protein-ligand-md/scripts/run_md.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu+openmm python ${CLAUDE_SKILL_DIR}/scripts/run_md.py \
   --system_xml md/system/system.xml \
   --input_pdb md/system/complex_solvated.pdb \
   --temperature 300 \
@@ -73,9 +73,8 @@ The script produces:
 For statistical confidence, run multiple independent replicates with different random seeds:
 
 ```bash
-# Venv: venv/cpu
 for i in 1 2 3; do
-  uv run --project venv/cpu python skills/drug-protein-ligand-md/scripts/run_md.py \
+  ${CLAUDE_SKILL_DIR}/../../venv/run cpu+openmm python ${CLAUDE_SKILL_DIR}/scripts/run_md.py \
     --system_xml md/system/system.xml \
     --input_pdb md/system/complex_solvated.pdb \
     --production_steps 2500000 \
@@ -97,8 +96,7 @@ After the run, verify:
 ### Example: 10 ns production MD of TYK2 complex
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-protein-ligand-md/scripts/run_md.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu+openmm python ${CLAUDE_SKILL_DIR}/scripts/run_md.py \
   --system_xml tyk2/md/system/system.xml \
   --input_pdb tyk2/md/system/complex_solvated.pdb \
   --temperature 300 \
@@ -110,8 +108,7 @@ uv run --project venv/cpu python skills/drug-protein-ligand-md/scripts/run_md.py
 ### Example: short 1 ns refinement for pose assessment
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-protein-ligand-md/scripts/run_md.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu+openmm python ${CLAUDE_SKILL_DIR}/scripts/run_md.py \
   --system_xml md/system/system.xml \
   --input_pdb md/system/complex_solvated.pdb \
   --production_steps 250000 \

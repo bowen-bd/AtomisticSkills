@@ -3,6 +3,7 @@ name: ml-fairchem-finetune
 description: Fine-tune Fairchem machine learning interatomic potentials (UMA, ESEN) on custom datasets.
 metadata:
   category: [machine-learning]
+  venv: [fairchem]
 ---
 # Fairchem Fine-tuning
 
@@ -59,7 +60,7 @@ Fairchem fine-tuning relies heavily on the `fairchem` CLI, which uses Hydra for 
 Usage:
 ```bash
 # 1. Prepare Data and Config
-uv run --project venv/fairchem python skills/ml-fairchem-finetune/scripts/prepare_fairchem_data.py \
+${CLAUDE_SKILL_DIR}/../../venv/run fairchem python ${CLAUDE_SKILL_DIR}/scripts/prepare_fairchem_data.py \
     --data /path/to/training_data.json \
     --model uma-s-1p1 \
     --epochs 10 \
@@ -71,10 +72,10 @@ uv run --project venv/fairchem python skills/ml-fairchem-finetune/scripts/prepar
 # 2. Run Training
 export PYTHONPATH=/path/to/research/my_dir/fairchem_finetuning/lmdb_output:$PYTHONPATH
 cd /path/to/research/my_dir/fairchem_finetuning/lmdb_output
-uv run --project venv/fairchem fairchem -c uma_sm_finetune_template.yaml job.run_dir=/path/to/research/my_dir/fairchem_finetuning/runs +job.timestamp_id=run_10ep
+${CLAUDE_SKILL_DIR}/../../venv/run fairchem fairchem -c uma_sm_finetune_template.yaml job.run_dir=/path/to/research/my_dir/fairchem_finetuning/runs +job.timestamp_id=run_10ep
 
 # 3. Extract Training Logs (Optional, to create standard training_history.json)
-uv run --project venv/fairchem python skills/ml-fairchem-finetune/scripts/extract_fairchem_logs.py \
+${CLAUDE_SKILL_DIR}/../../venv/run fairchem python ${CLAUDE_SKILL_DIR}/scripts/extract_fairchem_logs.py \
     --log /path/to/research/my_dir/fairchem_finetuning/runs/run_10ep/logs/trainer.log \
     --output-dir /path/to/research/my_dir/fairchem_finetuning/results
 ```

@@ -3,6 +3,7 @@ name: drug-db-pdb
 description: Search, filter, and retrieve macromolecular structures from the RCSB Protein Data Bank (PDB), including metadata, bound ligands, and optional coordinate/validation downloads.
 metadata:
   category: [drug-discovery]
+  venv: [cpu]
 ---
 
 # db-pdb
@@ -16,7 +17,6 @@ To programmatically discover and retrieve protein (and protein-ligand complex) s
 Keep downloaded coordinates/JSON in a reproducible folder.
 
 ```bash
-# Venv: venv/cpu
 mkdir -p research/db-pdb/ace2_example
 ```
 
@@ -24,8 +24,7 @@ mkdir -p research/db-pdb/ace2_example
 Uses the RCSB Search API to return the top scoring PDB IDs for a query.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-db-pdb/scripts/query_pdb.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_pdb.py \
   --search "kinase inhibitor" \
   --max_results 10 \
   --output research/db-pdb/kinase_results.json
@@ -37,8 +36,7 @@ For ligand modeling, you often want:
 - A resolution cutoff (e.g., <= 2.5 A for X-ray, context dependent).
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-db-pdb/scripts/query_pdb.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_pdb.py \
   --search "ACE2" \
   --organism "Homo sapiens" \
   --method "X-RAY DIFFRACTION" \
@@ -51,8 +49,7 @@ uv run --project venv/cpu python skills/drug-db-pdb/scripts/query_pdb.py \
 This pulls metadata via the Data API and (by default) also collects bound ligands by enumerating non-polymer entities.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-db-pdb/scripts/query_pdb.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_pdb.py \
   --pdb_id 1HSG \
   --output research/db-pdb/1hsg_info.json
 ```
@@ -61,8 +58,7 @@ uv run --project venv/cpu python skills/drug-db-pdb/scripts/query_pdb.py \
 The PDB ecosystem's canonical archival format is PDBx/mmCIF (legacy PDB format can be unavailable or insufficient for very large structures).
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-db-pdb/scripts/query_pdb.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_pdb.py \
   --pdb_id 1HSG \
   --download mmcif \
   --download_dir research/db-pdb/structures \
@@ -73,8 +69,7 @@ uv run --project venv/cpu python skills/drug-db-pdb/scripts/query_pdb.py \
 Quality assessment for experimental structures is standardized via wwPDB validation reports; these are especially important for ligand-bound structures in drug discovery workflows.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-db-pdb/scripts/query_pdb.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_pdb.py \
   --pdb_id 1HSG \
   --download_validation \
   --download_dir research/db-pdb/validation \
@@ -86,8 +81,7 @@ uv run --project venv/cpu python skills/drug-db-pdb/scripts/query_pdb.py \
 Search HIV-1 protease entries, then fetch + download the best candidate:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-db-pdb/scripts/query_pdb.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_pdb.py \
   --search "HIV-1 protease" \
   --method "X-RAY DIFFRACTION" \
   --resolution 2.0 \
@@ -96,8 +90,7 @@ uv run --project venv/cpu python skills/drug-db-pdb/scripts/query_pdb.py \
 ```
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-db-pdb/scripts/query_pdb.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_pdb.py \
   --pdb_id 1HSG \
   --download mmcif \
   --download_validation \

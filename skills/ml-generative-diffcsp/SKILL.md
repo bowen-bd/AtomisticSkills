@@ -3,9 +3,18 @@ name: ml-generative-diffcsp
 description: Generate crystal structures with exact composition control using DiffCSP++ (space group + Wyckoff positions), or unconditionally from trained distributions.
 metadata:
   category: [machine-learning, materials]
+  venv: []
+  conda_env: diffcsp-agent
 ---
 
 # DiffCSP++ Crystal Structure Generation
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `diffcsp.generate_structures_with_symmetry` is the `generate_structures_with_symmetry`
+> tool of the `diffcsp` server (`mcp__diffcsp__generate_structures_with_symmetry`, or
+> `mcp__plugin_atomistic-skills_diffcsp__generate_structures_with_symmetry` when installed as a plugin).
+> `diffcsp` run only as MCP servers, from the `generative` container image (arm64) or the matching conda environment in `conda-envs/`.
 
 ## Goal
 
@@ -38,7 +47,7 @@ Generate novel crystal structures using DiffCSP++ (ICLR 2024), a diffusion model
 Generate structures with exact composition using the `generate_structures_with_symmetry` MCP tool:
 
 ```bash
-mcp_diffcsp_generate_structures_with_symmetry(
+diffcsp.generate_structures_with_symmetry(
     spacegroup=58,                        # Space group number (1-230)
     wyckoff_letters="2a,2d,4g",           # Wyckoff positions (comma-separated or shorthand "adg")
     atom_types="Mn,Li,O",                 # Element per Wyckoff position
@@ -63,9 +72,8 @@ JSON format (see [examples/example.json](examples/example.json)):
 
 Run the batch generation script:
 ```bash
-# Env: diffcsp-agent
-python skills/ml-generative-diffcsp/scripts/batch_generate.py \
-    --json_file skills/ml-generative-diffcsp/examples/example.json \
+conda run --no-capture-output -n diffcsp-agent python ${CLAUDE_SKILL_DIR}/scripts/batch_generate.py \
+    --json_file ${CLAUDE_SKILL_DIR}/examples/example.json \
     --model mp_csp \
     --output_dir diffcsp_batch_output \
     --step_lr 1e-5
@@ -76,8 +84,7 @@ python skills/ml-generative-diffcsp/scripts/batch_generate.py \
 Generate structures from the training distribution without specifying composition. Requires a generation model (`mp_gen`, `perov_gen`, or `carbon_gen`).
 
 ```bash
-# Env: diffcsp-agent
-python skills/ml-generative-diffcsp/scripts/unconditional_generate.py \
+conda run --no-capture-output -n diffcsp-agent python ${CLAUDE_SKILL_DIR}/scripts/unconditional_generate.py \
     --model mp_gen \
     --num_structures 100 \
     --output_dir diffcsp_gen_output \

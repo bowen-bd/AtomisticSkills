@@ -23,7 +23,7 @@ Usage:
     python skills/db-pubchem/scripts/query_pubchem.py --name "ibuprofen" --download_sdf --outdir out --output ibuprofen.json
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: standard library only (urllib, json, argparse, etc.)
 """
 

@@ -16,7 +16,7 @@ Usage:
     python skills/ml-mlip-nvalchemi/scripts/run_md_benchmark.py --env fairchem
 
 Requirements:
-    - Correct conda environment per env flag (mace-agent / matgl-agent / fairchem-agent)
+    - Correct Environment per env flag (mlip / mlip / fairchem)
     - nvalchemi-toolkit installed in the environment
 """
 

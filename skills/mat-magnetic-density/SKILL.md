@@ -3,9 +3,23 @@ name: mat-magnetic-density
 description: Calculate magnetic moments and spin density from spin-polarized DFT calculations using VASP.
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # Magnetic Density
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `atomate2.run_atomate2_vasp_calculation` is the `run_atomate2_vasp_calculation`
+> tool of the `atomate2` server (`mcp__atomate2__run_atomate2_vasp_calculation`, or
+> `mcp__plugin_atomistic-skills_atomate2__run_atomate2_vasp_calculation` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli atomate2 run_atomate2_vasp_calculation key=value get_atomate2_job_status key=value
+> ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli base search_materials_project_by_formula key=value
+> ```
 
 ## Goal
 
@@ -31,7 +45,7 @@ Obtain or prepare the structure of the magnetic material you want to study. You 
 Use the atomate2 MCP tool to run a spin-polarized static calculation. The `mp` preset (MPStaticSet) automatically enables spin polarization and applies appropriate settings for magnetic systems.
 
 ```python
-mcp_atomate2_run_atomate2_vasp_calculation(
+atomate2.run_atomate2_vasp_calculation(
     structures_path="structure.cif",  # Path to your structure file
     output_dir="magnetic_calc",       # Directory to save results
     preset_type="mp",  # MPStaticSet with PBE (includes spin polarization)
@@ -57,7 +71,7 @@ See the "Functional Selection Guide" section below for detailed recommendations.
 After submitting the calculation, monitor its progress:
 
 ```python
-mcp_atomate2_get_atomate2_job_status(
+atomate2.get_atomate2_job_status(
     job_id="<job_id_from_step_2>"  # Job ID returned from step 2
 )
 ```
@@ -67,7 +81,7 @@ mcp_atomate2_get_atomate2_job_status(
 Once the calculation is complete, retrieve the results to extract magnetic moments:
 
 ```python
-mcp_atomate2_get_atomate2_results_by_id(
+atomate2.get_atomate2_results_by_id(
     job_ids=["<job_id>"],  # List of job IDs
     save_to_file="magnetic_results.json"  # Save results to file
 )
@@ -83,8 +97,7 @@ The results will include:
 Use the provided script to parse the magnetic moments from the results:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-magnetic-density/scripts/parse_magnetic_moments.py magnetic_results.json --output magnetic_analysis.json
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/parse_magnetic_moments.py magnetic_results.json --output magnetic_analysis.json
 ```
 
 This script will:
@@ -98,8 +111,7 @@ This script will:
 For detailed analysis of spin density distribution, use the spin density extraction script:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-magnetic-density/scripts/extract_spin_density.py <output_dir> --output spin_density.json
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/extract_spin_density.py <output_dir> --output spin_density.json
 ```
 
 This requires access to the CHGCAR file from the VASP calculation and will:
@@ -112,8 +124,7 @@ This requires access to the CHGCAR file from the VASP calculation and will:
 Visualize the magnetic ordering by creating a structure with magnetic moment vectors:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-magnetic-density/scripts/visualize_magnetic_structure.py structure.cif magnetic_analysis.json --output magnetic_structure.png
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/visualize_magnetic_structure.py structure.cif magnetic_analysis.json --output magnetic_structure.png
 ```
 
 ## Examples
@@ -122,13 +133,13 @@ uv run --project venv/cpu python skills/mat-magnetic-density/scripts/visualize_m
 
 ```python
 # Step 1: Get Fe structure from Materials Project
-mcp_base_search_materials_project_by_formula(
+base.search_materials_project_by_formula(
     formula="Fe",
     save_to_file="Fe_mp.cif"
 )
 
 # Step 2: Run spin-polarized static calculation
-mcp_atomate2_run_atomate2_vasp_calculation(
+atomate2.run_atomate2_vasp_calculation(
     structures_path="Fe_mp.cif",
     output_dir="Fe_magnetic",
     preset_type="mp",  # MPStaticSet with PBE
@@ -137,7 +148,7 @@ mcp_atomate2_run_atomate2_vasp_calculation(
 )
 
 # Step 3: After completion, retrieve results
-mcp_atomate2_get_atomate2_results_by_id(
+atomate2.get_atomate2_results_by_id(
     job_ids=["<job_id>"],
     save_to_file="Fe_magnetic_results.json"
 )
@@ -145,8 +156,7 @@ mcp_atomate2_get_atomate2_results_by_id(
 
 ```bash
 # Step 4: Parse magnetic moments
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-magnetic-density/scripts/parse_magnetic_moments.py Fe_magnetic_results.json --output Fe_moments.json
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/parse_magnetic_moments.py Fe_magnetic_results.json --output Fe_moments.json
 ```
 
 ### Example 2: NiO with automatic GGA+U
@@ -156,7 +166,7 @@ uv run --project venv/cpu python skills/mat-magnetic-density/scripts/parse_magne
 # MPStaticSet automatically applies appropriate U parameters (e.g., U=6.2 eV for Ni in oxides)
 # This ensures correct insulating antiferromagnetic ground state
 
-mcp_atomate2_run_atomate2_vasp_calculation(
+atomate2.run_atomate2_vasp_calculation(
     structures_path="NiO.cif",
     output_dir="NiO_magnetic",
     preset_type="mp",  # MPStaticSet automatically handles +U for transition metal oxides

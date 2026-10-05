@@ -3,9 +3,22 @@ name: mat-surface-energy
 description: Calculate surface energy of various (hkl) planes and generate the equilibrium crystal shape (Wulff shape).
 metadata:
   category: [materials]
+  venv: [cpu, mlip]
 ---
 
 # Surface Energy Calculation
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `matgl.load_model` is the `load_model`
+> tool of the `matgl` server (`mcp__matgl__load_model`, or
+> `mcp__plugin_atomistic-skills_matgl__load_model` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli matgl load_model key=value relax_structure key=value
+> ```
 
 ## Goal
 To determine the surface energy ($\gamma$) of different crystallographic planes (hkl) and construct the equilibrium crystal shape (Wulff shape) using structural relaxation with Machine Learning Interatomic Potentials (MLIPs).
@@ -14,14 +27,13 @@ To determine the surface energy ($\gamma$) of different crystallographic planes 
 
 1.  **Select Level of Theory**: Choose the target accuracy level for surface energy calculations.
     - **Recommended**: r2SCAN-level foundation potentials for high accuracy in inorganic systems.
-    - **Examples**: `CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES` (MatGL), `TensorNet-MatPES-r2SCAN-v2025.1-PES` (MatGL), or `MACE-MH-1` with `matpes_r2scan` head.
+    - **Examples**: `CHGNet-PES-MatPES-r2SCAN-1M-2026.9` (MatGL), `TensorNet-MatPES-r2SCAN-v2025.1-PES` (MatGL), or `MACE-MH-1` with `matpes_r2scan` head.
     - See [ml-foundation-potentials](../../skills/ml-foundation-potentials/SKILL.md) for detailed guidance.
 
 2.  **Relax Bulk Reference**: Perform a high-accuracy relaxation of the bulk material to serve as the reference energy.
     ```bash
-    # Venv: venv/mlip
-    mcp_matgl_load_model(model_name="CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES")
-    mcp_matgl_relax_structure(
+    matgl.load_model(model_name="CHGNet-PES-MatPES-r2SCAN-1M-2026.9")
+    matgl.relax_structure(
         structure_data="bulk.cif",
         relax_cell=True,
         fmax=0.01,
@@ -32,8 +44,7 @@ To determine the surface energy ($\gamma$) of different crystallographic planes 
 
 3.  **Generate Slabs**: Create oriented slabs for the target (hkl) planes.
     ```bash
-    # Venv: venv/cpu
-    uv run --project venv/cpu python skills/mat-surface-energy/scripts/create_slabs.py \
+    ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/create_slabs.py \
         --bulk bulk_relaxation/relaxed_structure.cif \
         --max_index 1 \
         --min_thickness 10.0 \
@@ -44,9 +55,8 @@ To determine the surface energy ($\gamma$) of different crystallographic planes 
 
 4.  **Relax Slabs**: Perform structural relaxation on all generated slabs.
     ```bash
-    # Venv: venv/mlip
-    mcp_matgl_load_model(model_name="CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES")
-    mcp_matgl_relax_structure(
+    matgl.load_model(model_name="CHGNet-PES-MatPES-r2SCAN-1M-2026.9")
+    matgl.relax_structure(
         structure_data="slabs/",
         relax_cell=False,  # DO NOT relax cell for slabs (fixed area)
         fmax=0.02,
@@ -57,8 +67,7 @@ To determine the surface energy ($\gamma$) of different crystallographic planes 
 
 5.  **Calculate Surface Energy**: Compute the surface energy for each plane.
     ```bash
-    # Venv: venv/cpu
-    uv run --project venv/cpu python skills/mat-surface-energy/scripts/calculate_surface_energy.py \
+    ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/calculate_surface_energy.py \
         --bulk_energy_per_atom -4.567 \
         --slab_dir slab_relaxations/ \
         --output surface_energies.json
@@ -69,8 +78,7 @@ To determine the surface energy ($\gamma$) of different crystallographic planes 
 
 6.  **Generate Wulff Shape**: Construct the Wulff shape from the calculated surface energies.
     ```bash
-    # Venv: venv/cpu
-    uv run --project venv/cpu python skills/mat-surface-energy/scripts/generate_wulff.py \
+    ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/generate_wulff.py \
         --energies_json surface_energies.json \
         --bulk bulk_relaxation/relaxed_structure.cif \
         --output wulff_shape.png
@@ -81,16 +89,16 @@ To determine the surface energy ($\gamma$) of different crystallographic planes 
 ### Example 1: Aluminum (fcc) Surface Energy
 ```bash
 # Generate slabs up to index 1 (100, 110, 111)
-python skills/mat-surface-energy/scripts/create_slabs.py --bulk Al.cif --max_index 1
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/create_slabs.py --bulk Al.cif --max_index 1
 
 # Load and run relaxations using CHGNet
-mcp_matgl_load_model(model_name="CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES")
-mcp_matgl_relax_structure(structure_data="Al.cif", relax_cell=True, output_dir="bulk_relax")
-mcp_matgl_relax_structure(structure_data="slabs/", relax_cell=False, output_dir="slab_relax")
+matgl.load_model(model_name="CHGNet-PES-MatPES-r2SCAN-1M-2026.9")
+matgl.relax_structure(structure_data="Al.cif", relax_cell=True, output_dir="bulk_relax")
+matgl.relax_structure(structure_data="slabs/", relax_cell=False, output_dir="slab_relax")
 
 # Calculate and generate Wulff shape
-python skills/mat-surface-energy/scripts/calculate_surface_energy.py --bulk_energy_per_atom -3.36 --slab_dir slab_relax/
-python skills/mat-surface-energy/scripts/generate_wulff.py --energies_json surface_energies.json --bulk Al.cif
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/calculate_surface_energy.py --bulk_energy_per_atom -3.36 --slab_dir slab_relax/
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/generate_wulff.py --energies_json surface_energies.json --bulk Al.cif
 ```
 
 ## Constraints

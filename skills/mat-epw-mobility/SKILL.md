@@ -3,6 +3,7 @@ name: mat-epw-mobility
 description: Compute phonon-limited carrier mobility and mode-resolved electron-phonon coupling in 2D materials from first principles with Quantum ESPRESSO and EPW.
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # mat-epw-mobility
@@ -66,7 +67,7 @@ gauge-invariant sum.
 > compiled MPI binaries, exactly as VASP is in
 > [mat-dft-vasp](../mat-dft-vasp/SKILL.md). This skill was validated on a source
 > build of **QE 7.4.1 / EPW 5.8.1** with **ONCV SG15 PBE v1.2** pseudopotentials.
-> The `# Env: base-agent` annotations apply only to the Python parser scripts.
+> The `venv/run cpu` commands apply only to the Python parser scripts.
 > Reference input decks for every step are in
 > [`resources/inputs/`](resources/inputs/).
 
@@ -92,8 +93,7 @@ NSCF into its own `tmp/` so it does not overwrite the SCF save tree that DFPT
 needs. Deck: [`resources/inputs/nscf.in`](resources/inputs/nscf.in).
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-epw-mobility/scripts/gen_kpoints.py 12 12 1
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/gen_kpoints.py 12 12 1
 ```
 
 ```bash
@@ -145,8 +145,7 @@ mpirun -np <ranks> ph.x -in ph_single_q.in > ph_q.out
 ```
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-epw-mobility/scripts/parse_prt.py ph_q.out --fermi -5.655843
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/parse_prt.py ph_q.out --fermi -5.655843
 ```
 
 Compare on rank-sorted $|g|$ or the gauge-invariant $\sum |g|^2$ over the
@@ -178,8 +177,7 @@ mpirun -np <ranks> epw.x -npool <ranks> -in epw_write.in > epw_write.out
 ```
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-epw-mobility/scripts/parse_wout.py zrs2.wout
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/parse_wout.py zrs2.wout
 ```
 
 `-npool N` with N = ranks is **mandatory** (EPW aborts in < 1 s otherwise). For
@@ -199,8 +197,7 @@ mpirun -np <ranks> epw.x -npool <ranks> -in epw_prtgkk.in > epw_prtgkk.out
 ```
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-epw-mobility/scripts/parse_epw_prtgkk.py epw_prtgkk.out --fermi -5.655843
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/parse_epw_prtgkk.py epw_prtgkk.out --fermi -5.655843
 ```
 
 ### 9. SERTA carrier mobility

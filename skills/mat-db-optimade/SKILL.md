@@ -3,6 +3,7 @@ name: mat-db-optimade
 description: Query the Crystallography Open Database (COD) and other OPTIMADE-compliant databases for experimental crystal structures.
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # mat-db-optimade
@@ -17,8 +18,7 @@ To query experimental crystal structures (e.g. from the Crystallography Open Dat
 Use the `query_optimade.py` script to fetch structure data based on standard OPTIMADE query language filters.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-db-optimade/scripts/query_optimade.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_optimade.py \
     results.json \
     --filter 'elements HAS ALL "Na", "Cl"' \
     --provider cod \

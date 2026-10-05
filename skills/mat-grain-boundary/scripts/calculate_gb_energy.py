@@ -20,7 +20,7 @@ Usage:
         --output-dir gb_results/
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: pymatgen, numpy, matplotlib
 """
 

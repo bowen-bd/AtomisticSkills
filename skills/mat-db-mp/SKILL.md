@@ -3,9 +3,22 @@ name: mat-db-mp
 description: Query Materials Project database for crystal structures, computed properties, elastic/magnetic data, and structurally similar materials using the MP API.
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # Materials Project Database Query
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `base.search_materials_project_by_formula` is the `search_materials_project_by_formula`
+> tool of the `base` server (`mcp__base__search_materials_project_by_formula`, or
+> `mcp__plugin_atomistic-skills_base__search_materials_project_by_formula` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli base search_materials_project_by_formula key=value search_materials_project_by_chemsys key=value
+> ```
 
 ## Goal
 
@@ -25,8 +38,7 @@ Use `query_mp.py` to search for materials by chemical system, formula, or elemen
 
 **Basic Query (Summary Endpoint)**:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-db-mp/scripts/query_mp.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_mp.py \
     --chemsys "Li-S" \
     --properties energy_above_hull formation_energy_per_atom band_gap \
     --e_above_hull_max 0.05 \
@@ -37,8 +49,7 @@ uv run --project venv/cpu python skills/mat-db-mp/scripts/query_mp.py \
 
 **Detailed Thermodynamic Data (Thermo Endpoint)**:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-db-mp/scripts/query_mp.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_mp.py \
     --chemsys "Li-O" \
     --endpoint thermo \
     --limit 20 \
@@ -62,16 +73,14 @@ Use `get_elasticity.py` to retrieve bulk modulus, shear modulus, and elastic ten
 
 **Query Specific Material**:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-db-mp/scripts/get_elasticity.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/get_elasticity.py \
     --material_id mp-149 \
     --output si_elasticity.json
 ```
 
 **Filter by Bulk Modulus Range**:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-db-mp/scripts/get_elasticity.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/get_elasticity.py \
     --bulk_modulus_min 200 \
     --bulk_modulus_max 400 \
     --output high_bulk_modulus.json
@@ -90,16 +99,14 @@ Use `get_magnetism.py` to retrieve magnetic ordering, magnetization, and site-sp
 
 **Query Specific Material**:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-db-mp/scripts/get_magnetism.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/get_magnetism.py \
     --material_id mp-19770 \
     --output fe2o3_magnetism.json
 ```
 
 **Filter by Magnetic Ordering and Magnetization**:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-db-mp/scripts/get_magnetism.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/get_magnetism.py \
     --ordering FM \
     --total_magnetization_min 10.0 \
     --output ferromagnetic_materials.json
@@ -118,15 +125,13 @@ Use `get_structure_by_id.py` to retrieve crystal structures directly by their Ma
 
 **Single Structure Retrieval**:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-db-mp/scripts/get_structure_by_id.py mp-149 \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/get_structure_by_id.py mp-149 \
     --output Si_diamond.cif
 ```
 
 **Batch Retrieval**:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-db-mp/scripts/get_structure_by_id.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/get_structure_by_id.py \
     mp-149 mp-19017 mp-1143 \
     --output_dir structures/
 ```
@@ -145,8 +150,7 @@ Use `find_similar_structures.py` to find materials with similar crystal structur
 
 **Find Similar to MP Material**:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-db-mp/scripts/find_similar_structures.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/find_similar_structures.py \
     --material_id mp-149 \
     --top 15 \
     --output similar_to_si.json
@@ -154,8 +158,7 @@ uv run --project venv/cpu python skills/mat-db-mp/scripts/find_similar_structure
 
 **Find Similar to Custom Structure**:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-db-mp/scripts/find_similar_structures.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/find_similar_structures.py \
     --structure my_structure.cif \
     --top 20 \
     --output similar_structures.json
@@ -163,8 +166,7 @@ uv run --project venv/cpu python skills/mat-db-mp/scripts/find_similar_structure
 
 **Filter by Chemical System**:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-db-mp/scripts/find_similar_structures.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/find_similar_structures.py \
     --material_id mp-149 \
     --top 20 \
     --chemsys "C" \
@@ -227,7 +229,7 @@ For simple structure retrieval tasks, MCP tools provide a convenient alternative
 ### Retrieve Most Stable Structure by Formula
 
 ```python
-mcp_base_search_materials_project_by_formula(
+base.search_materials_project_by_formula(
     formula="LiFePO4",          # Chemical formula
     save_to_file="lifepo4.cif"  # Optional: save path (default: auto-generated)
 )
@@ -238,7 +240,7 @@ Returns **only the single most stable structure** (lowest energy above hull) mat
 ### Retrieve All Stable Structures by Chemical System
 
 ```python
-mcp_base_search_materials_project_by_chemsys(
+base.search_materials_project_by_chemsys(
     chemsys="Li-O",                    # Chemical system
     save_to_file="LiO_structures"      # Optional: directory path (default: {chemsys}_structures)
 )

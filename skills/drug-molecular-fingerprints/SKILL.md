@@ -3,9 +3,22 @@ name: drug-molecular-fingerprints
 description: Compute Morgan/ECFP fingerprints, Tanimoto similarity, and optional Butina clusters/heatmaps for small-molecule comparison.
 metadata:
   category: [drug-discovery]
+  venv: [cpu]
 ---
 
 # Molecular Fingerprints
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `drugdisc.compute_molecular_fingerprints` is the `compute_molecular_fingerprints`
+> tool of the `drugdisc` server (`mcp__drugdisc__compute_molecular_fingerprints`, or
+> `mcp__plugin_atomistic-skills_drugdisc__compute_molecular_fingerprints` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli drugdisc compute_molecular_fingerprints key=value
+> ```
 
 ## Goal
 To compute circular Morgan fingerprints (ECFP-style; default ECFP4 with radius=2) for a set of compounds, then calculate pairwise Tanimoto similarity for library comparison. Optionally perform Butina clustering for diversity analysis and generate a similarity heatmap for small sets.
@@ -18,7 +31,7 @@ The drugdisc MCP server provides a `compute_molecular_fingerprints` tool that ca
 
 **Basic usage with SMILES file:**
 ```bash
-mcp_drugdisc_compute_molecular_fingerprints(
+drugdisc.compute_molecular_fingerprints(
     smiles_file="compounds.smi",
     radius=2,
     fp_size=2048,
@@ -29,7 +42,7 @@ mcp_drugdisc_compute_molecular_fingerprints(
 
 **With Butina clustering:**
 ```bash
-mcp_drugdisc_compute_molecular_fingerprints(
+drugdisc.compute_molecular_fingerprints(
     smiles_file="library.smi",
     cluster=True,
     cluster_cutoff=0.7,
@@ -39,7 +52,7 @@ mcp_drugdisc_compute_molecular_fingerprints(
 
 **With similarity heatmap (small molecule sets, ≤250 compounds):**
 ```bash
-mcp_drugdisc_compute_molecular_fingerprints(
+drugdisc.compute_molecular_fingerprints(
     smiles_file="hits.smi",
     save_heatmap="heatmap.png",
     output_file="similarity.json"
@@ -48,7 +61,7 @@ mcp_drugdisc_compute_molecular_fingerprints(
 
 **Feature Morgan (FCFP-like) fingerprints:**
 ```bash
-mcp_drugdisc_compute_molecular_fingerprints(
+drugdisc.compute_molecular_fingerprints(
     smiles_file="compounds.smi",
     use_features=True,
     output_file="fcfp_similarity.json"
@@ -57,7 +70,7 @@ mcp_drugdisc_compute_molecular_fingerprints(
 
 **Chirality-aware fingerprints:**
 ```bash
-mcp_drugdisc_compute_molecular_fingerprints(
+drugdisc.compute_molecular_fingerprints(
     smiles_file="enantiomers.smi",
     use_chirality=True,
     output_file="chiral_sim.json"
@@ -78,8 +91,8 @@ c1ccc(cc1)O	phenol
 ### Basic similarity analysis
 
 ```bash
-mcp_drugdisc_compute_molecular_fingerprints(
-    smiles_file="skills/drug-molecular-fingerprints/examples/compounds.smi",
+drugdisc.compute_molecular_fingerprints(
+    smiles_file="${CLAUDE_SKILL_DIR}/examples/compounds.smi",
     output_file="similarity.json"
 )
 ```
@@ -87,7 +100,7 @@ mcp_drugdisc_compute_molecular_fingerprints(
 ### Diversity-based clustering for library selection
 
 ```bash
-mcp_drugdisc_compute_molecular_fingerprints(
+drugdisc.compute_molecular_fingerprints(
     smiles_file="screening_library.smi",
     cluster=True,
     cluster_cutoff=0.5,

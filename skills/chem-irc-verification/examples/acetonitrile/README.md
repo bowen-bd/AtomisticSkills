@@ -37,7 +37,7 @@ CH3CN (reactant)  <->  TS  <->  CH3NC (product)
 ## Usage
 
 ```bash
-micromamba run -n fairchem-agent bash skills/chem-irc-verification/examples/acetonitrile/run_example.sh
+venv/run fairchem bash skills/chem-irc-verification/examples/acetonitrile/run_example.sh
 ```
 
 ## Example Results

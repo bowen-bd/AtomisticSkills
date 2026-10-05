@@ -24,7 +24,7 @@ Usage:
         - a wrapper output directory containing `results/structure_*/job_*/vasprun.xml(.gz)`
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: pymatgen, matplotlib, numpy
 """
 

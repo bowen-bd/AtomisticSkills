@@ -58,9 +58,10 @@ def relax_structures(structures, mlip_model, output_dir):
     """
     Relax structures using the specified MLIP model.
 
-    The relaxation runs in a subprocess under the ``venv/mlip`` uv project,
-    because the MLIP stack is not part of the ``venv/cpu`` project this
-    script runs in.
+    The relaxation runs in a subprocess in the ``mlip`` environment, started
+    through ``venv/run`` (uv or a container, whichever this host supports),
+    because the MLIP stack is not part of the ``cpu`` environment this script
+    runs in.
 
     Args:
         structures: List of ASE Atoms to relax.
@@ -89,10 +90,8 @@ def relax_structures(structures, mlip_model, output_dir):
         write(str(relax_input_dir / f"{name}.cif"), atoms)
 
     cmd = [
-        "uv",
-        "run",
-        "--project",
-        str(project_root / "venv" / "mlip"),
+        str(project_root / "venv" / "run"),
+        "mlip",
         "python",
         str(relax_script),
         "--input_dir",

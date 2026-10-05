@@ -8,7 +8,7 @@ Usage:
     python get_pricing.py "Gold"
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: pubchempy, beautifulsoup4, requests
 """
 

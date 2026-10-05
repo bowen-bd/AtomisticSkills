@@ -3,6 +3,7 @@ name: general-chemical-pricing
 description: Retrieves averaged elemental prices and provides direct vendor purchase links for elements and precursor compounds.
 metadata:
   category: [general, materials, chemistry]
+  venv: [cpu]
 ---
 
 # General Chemical Pricing
@@ -16,8 +17,7 @@ To programmatically query averaged bulk commodity prices for pure chemical eleme
 Use this script to search for the pricing details of a given element or chemical compound. The script aggregates Wikipedia's USGS elemental data with PubChem's registered supplier vendor lists.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/general-chemical-pricing/scripts/get_pricing.py <Query Name or Symbol>
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/get_pricing.py <Query Name or Symbol>
 ```
 
 **Parameters:**

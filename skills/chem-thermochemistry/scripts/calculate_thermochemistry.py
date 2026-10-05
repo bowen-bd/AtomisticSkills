@@ -14,7 +14,7 @@ Usage:
     python calculate_thermochemistry.py --reaction "2H2 + O2 -> 2H2O" --model_type mace --output_dir results
 
 Requirements:
-    - Conda environment: mace-agent, matgl-agent, or fairchem-agent
+    - Environment: mlip, mlip, or fairchem (run with: venv/run fairchem python ...)
     - Required packages: ase, numpy
 """
 

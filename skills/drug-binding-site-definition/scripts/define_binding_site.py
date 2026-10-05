@@ -11,7 +11,7 @@ Usage:
     python define_binding_site.py --mode json --input_json box.json
 
 Requirements:
-    - Conda environment: drugdisc-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: MDAnalysis, numpy, rdkit
 """
 

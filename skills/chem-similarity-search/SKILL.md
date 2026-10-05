@@ -3,6 +3,7 @@ name: chem-similarity-search
 description: Find structurally similar chemical compounds using PubChem's 2D fast similarity engine via the PUG-REST API.
 metadata:
   category: [chemistry, drug-discovery]
+  venv: [cpu]
 ---
 
 # Chemical Similarity Search
@@ -18,8 +19,7 @@ Adjust the `--threshold` (similarity cutoff 0-100, default is 95) to widen or na
 Adjust `--max_records` to limit the output length.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-similarity-search/scripts/similarity_search.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/similarity_search.py \
   --smiles "CC(=O)Oc1ccccc1C(=O)O" \
   --threshold 95 \
   --max_records 5 \
@@ -31,8 +31,7 @@ uv run --project venv/cpu python skills/chem-similarity-search/scripts/similarit
 Search directly using an exact compound's CID. This avoids translation steps for SMILES parsing.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-similarity-search/scripts/similarity_search.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/similarity_search.py \
   --cid 2244 \
   --threshold 90 \
   --max_records 10 \
@@ -45,12 +44,11 @@ uv run --project venv/cpu python skills/chem-similarity-search/scripts/similarit
 We can test extracting highly similar analogs (Threshold 95) for Aspirin (CID: 2244 or SMILES: `CC(=O)Oc1ccccc1C(=O)O`).
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-similarity-search/scripts/similarity_search.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/similarity_search.py \
   --cid 2244 \
   --threshold 95 \
   --max_records 5 \
-  --outdir skills/chem-similarity-search/examples/aspirin_analogs \
+  --outdir ${CLAUDE_SKILL_DIR}/examples/aspirin_analogs \
   --output aspirin_analogs.json
 ```
 

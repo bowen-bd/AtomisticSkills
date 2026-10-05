@@ -5,7 +5,7 @@ Usage:
     python query_google_patents.py "query string" --limit 10
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: requests, beautifulsoup4
 """
 

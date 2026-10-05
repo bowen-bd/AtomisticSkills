@@ -3,9 +3,23 @@ name: mat-electronic-structure
 description: Calculate electronic band structure and density of states using atomate2 and VASP.
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # Electronic Structure
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `base.search_materials_project_by_formula` is the `search_materials_project_by_formula`
+> tool of the `base` server (`mcp__base__search_materials_project_by_formula`, or
+> `mcp__plugin_atomistic-skills_base__search_materials_project_by_formula` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli base search_materials_project_by_formula key=value
+> ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli atomate2 run_atomate2_vasp_calculation key=value
+> ```
 
 ## Goal
 
@@ -17,7 +31,7 @@ To calculate the electronic band structure of a crystalline material, revealing 
 
 Start with a relaxed crystalline structure in CIF or POSCAR format. You can:
 
-- Search Materials Project using the [`mcp_base_search_materials_project_by_formula`](../../src/mcp_server/base_server.py) tool
+- Search Materials Project using the [`base.search_materials_project_by_formula`](../../src/mcp_server/base_server.py) tool
 - Use a structure from previous calculations
 - Create a structure manually using pymatgen or ASE
 
@@ -26,7 +40,7 @@ Start with a relaxed crystalline structure in CIF or POSCAR format. You can:
 Use the `atomate2` MCP tool with `calculation_type="band_structure"`:
 
 ```python
-mcp_atomate2_run_atomate2_vasp_calculation(
+atomate2.run_atomate2_vasp_calculation(
     structures_path="structure.cif",           # Input structure file
     output_dir="./band_structure_results",     # Output directory
     calculation_type="band_structure",         # Band structure calculation
@@ -54,8 +68,7 @@ The workflow automatically:
 Instead of running DFT calculations, you can retrieve existing electronic structure data from Materials Project:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-electronic-structure/scripts/get_mp_electronic_structure.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/get_mp_electronic_structure.py \
     --material_id mp-149 \
     --output si_mp_bands.json \
     --plot
@@ -76,8 +89,7 @@ uv run --project venv/cpu python skills/mat-electronic-structure/scripts/get_mp_
 After the calculation completes, parse the results and generate a band structure plot:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-electronic-structure/scripts/plot_band_structure.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/plot_band_structure.py \
     band_structure_results \
     --output band_structure.png
 ```
@@ -90,8 +102,7 @@ The script will:
 **For DOS (uniform mode)**:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-electronic-structure/scripts/plot_dos.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/plot_dos.py \
     dos_results \
     --output dos.png
 ```
@@ -131,13 +142,13 @@ ax.get_figure().savefig("band_structure.png", dpi=300, bbox_inches='tight')
 
 ```python
 # 1. Search for Si structure
-mcp_base_search_materials_project_by_formula(
+base.search_materials_project_by_formula(
     formula="Si",
     save_to_file="Si.cif"
 )
 
 # 2. Run band structure calculation
-mcp_atomate2_run_atomate2_vasp_calculation(
+atomate2.run_atomate2_vasp_calculation(
     structures_path="Si.cif",
     output_dir="./Si_bands",
     calculation_type="band_structure",
@@ -147,8 +158,7 @@ mcp_atomate2_run_atomate2_vasp_calculation(
 )
 
 # 3. Plot results
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-electronic-structure/scripts/plot_band_structure.py Si_bands --output Si_bands.png
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/plot_band_structure.py Si_bands --output Si_bands.png
 ```
 
 See [examples/](examples/) for a complete Si band structure calculation showing an indirect band gap of 0.581 eV.
@@ -159,7 +169,7 @@ See [examples/](examples/) for a complete Si band structure calculation showing 
 # 1. Use existing Si structure (or search Materials Project)
 
 # 2. Run DOS calculation with uniform k-mesh
-mcp_atomate2_run_atomate2_vasp_calculation(
+atomate2.run_atomate2_vasp_calculation(
     structures_path="Si.cif",
     output_dir="./Si_dos",
     calculation_type="band_structure",
@@ -169,8 +179,7 @@ mcp_atomate2_run_atomate2_vasp_calculation(
 )
 
 # 3. Plot DOS
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-electronic-structure/scripts/plot_dos.py Si_dos --output Si_dos.png
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/plot_dos.py Si_dos --output Si_dos.png
 ```
 
 See [examples/](examples/) for the complete DOS calculation showing the distribution of electronic states.

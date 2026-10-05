@@ -5,7 +5,7 @@ Usage:
     python generate_inputs.py --output elph_flow.json
 
 Requirements:
-    - Conda environment: atomate2-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: atomate2, phonopy, pymatgen, jobflow
 """
 
@@ -23,7 +23,16 @@ def main():
         default="elph_flow.json",
         help="Output JSON path to save the DAG representation.",
     )
+    parser.add_argument(
+        "--submit",
+        action="store_true",
+        help="Also submit the flow with jobflow-remote (requires --project and --worker).",
+    )
+    parser.add_argument("--project", help="jobflow-remote project to submit to.")
+    parser.add_argument("--worker", help="jobflow-remote worker to run the jobs on.")
     args = parser.parse_args()
+    if args.submit and not (args.project and args.worker):
+        parser.error("--submit requires --project and --worker")
 
     # Silicon primitive cell (FCC)
     si_structure = Structure(
@@ -51,17 +60,21 @@ def main():
 
     flow = maker.make(si_structure)
 
-    # Submit workflow to remote worker
-    from jobflow_remote import submit_flow
+    # Write the flow, as --output promises, so it can be inspected or
+    # submitted later. Submitting is opt-in: the target project and worker
+    # belong to the user, and nothing should reach a queue by default.
+    from monty.serialization import dumpfn
 
-    flow_ids = submit_flow(
-        flow, project="remote_perlmutter", worker="perlmutter_worker"
-    )
-
+    dumpfn(flow, args.output)
     print(
-        f"✅ Submitted Electron-Phonon workflow DAG with {len(flow.jobs)} top-level job nodes."
+        f"Wrote the Electron-Phonon workflow ({len(flow.jobs)} top-level jobs) to {args.output}"
     )
-    print(f"Flow IDs: {flow_ids}")
+
+    if args.submit:
+        from jobflow_remote import submit_flow
+
+        flow_ids = submit_flow(flow, project=args.project, worker=args.worker)
+        print(f"Submitted to {args.project}/{args.worker}: {flow_ids}")
 
 
 if __name__ == "__main__":

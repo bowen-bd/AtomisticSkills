@@ -3,9 +3,22 @@ name: ml-foundation-potentials
 description: Guide for selecting the most appropriate foundation MLIP model based on simulation requirements.
 metadata:
   category: [machine-learning, materials, chemistry, drug-discovery]
+  venv: [cpu]
 ---
 
 # Foundation Potentials Selection
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `base.search_model_registry` is the `search_model_registry`
+> tool of the `base` server (`mcp__base__search_model_registry`, or
+> `mcp__plugin_atomistic-skills_base__search_model_registry` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli base search_model_registry key=value
+> ```
 
 ## Goal
 Select the appropriate machine learning interatomic potential (MLIP) for a given atomistic simulation task, balancing accuracy, computational cost, and material composition.
@@ -16,20 +29,19 @@ Select the appropriate machine learning interatomic potential (MLIP) for a given
 > This list is not exhaustive. For a full list of available pre-trained checkpoints, refer to the `load_model` function documentation for each respective MCP server.
 
 ### MatGL Models
-**Environment:** `matgl-agent`
+**Environment:** `mlip` (MatGL >= 4, PyTorch Geometric)
 
-- **CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES**:
-  - Use for r2SCAN-level inorganic materials simulation.
+- **CHGNet-PES-MatPES-PBE-1M-2026.9** (the default CHGNet):
+  - Use for PBE-level inorganic materials simulation.
   - Recommended when charge information and magnetic moments are involved (e.g., calculating transition metal valence states).
-- **CHGNet-MPtrj-2023.12.1-2.7M-PES**:
-  - Use for compatibility with standard Materials Project (GGA/GGA+U) data.
-  - Recommended when working with legacy MP data.
-- **TensorNet-MatPES-r2SCAN-v2025.1-PES**:
-  - Use for r2SCAN-level inorganic materials simulation.
+- **CHGNet-PES-MatPES-r2SCAN-1M-2026.9**:
+  - Use for r2SCAN-level inorganic materials simulation, with the same strengths.
+- **TensorNet-PES-MatPES-r2SCAN-2025.2** / **TensorNet-PES-MatPES-PBE-2025.2**:
+  - Use for r2SCAN- or PBE-level inorganic materials simulation.
   - Smaller and faster than CHGNet, suitable for dynamic simulations (MD, NEB, phonons).
 
 ### FAIRCHEM Models
-**Environment:** `fairchem-agent`
+**Environment:** `fairchem`
 
 - **uma-s-1p1**:
   - Use for organic and inorganic simulations.
@@ -40,7 +52,7 @@ Select the appropriate machine learning interatomic potential (MLIP) for a given
   - Use for organic ionic relaxation (ground state calculations).
 
 ### MACE Models
-**Environment:** `mace-agent`
+**Environment:** `mlip`
 
 - **MACE-MH-1**:
   - Latest multi-head foundation model. Use as default for most tasks.
@@ -62,7 +74,7 @@ Prioritize criteria in the following order:
 Before selecting any foundation model, call `search_model_registry` to check whether a fine-tuned checkpoint already exists for the target chemical system:
 
 ```bash
-mcp_base_search_model_registry(
+base.search_model_registry(
     chemical_system="Li-Fe-P-O",   # elements of interest
     max_energy_mae=5.0,            # optional accuracy filter (meV/atom)
 )

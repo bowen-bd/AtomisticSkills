@@ -10,7 +10,7 @@ Usage:
     python query_pdb.py --pdb_id 1HSG --download_validation --download_dir ./validation --output 1hsg.json
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: Python standard library only (urllib, json, argparse, time, pathlib, typing)
 """
 

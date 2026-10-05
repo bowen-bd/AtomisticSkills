@@ -3,6 +3,7 @@ name: ml-mlip-speed
 description: Benchmark of inference speed of Machine Learning Interatomic Potentials (MLIPs).
 metadata:
   category: [machine-learning]
+  venv: [fairchem, mlip]
 ---
 
 # MLIP Performance Benchmarking
@@ -16,23 +17,22 @@ The `benchmark_mlips.py` script measures performance by running short MD simulat
 
 ### Usage
 
-Run the script within the appropriate conda environment for the models being tested. The script automatically skips models not supported by the current environment.
+Run the script once per environment: `mlip` covers MACE and MatGL, `fairchem` covers FairChem. The script automatically skips models not supported by the current environment.
 
 ### Multi-Environment Benchmarking
 
-Because different MLIPs require isolated Conda environments (e.g., `mace-agent`, `matgl-agent`, `fairchem-agent`), the benchmark results are built incrementally.
+Because FairChem cannot share an environment with MACE (their `e3nn` requirements conflict), the benchmark results are built incrementally.
 
 1. **Run the script in each environment:** The script gracefully skips models whose libraries are missing while preserving and updating the central `speed_benchmark.yaml` file.
 2. **Consolidate:** Run the script in any environment (that has `matplotlib`) with the `--only_plot` flag to generate the combined graphs from the accumulated total data.
 
 ```bash
-# Example: Running in different environments sequentially
-/path/to/mace-python benchmark_mlips.py --output_dir results/
-/path/to/matgl-python benchmark_mlips.py --output_dir results/
-/path/to/fairchem-python benchmark_mlips.py --output_dir results/
+# One run per environment; each adds to the shared results file
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/benchmark_mlips.py --output_dir results/
+${CLAUDE_SKILL_DIR}/../../venv/run fairchem python ${CLAUDE_SKILL_DIR}/scripts/benchmark_mlips.py --output_dir results/
 
 # Generate final combined plots
-python benchmark_mlips.py --only_plot --output_dir results/
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/benchmark_mlips.py --only_plot --output_dir results/
 ```
 
 **Key Arguments:**

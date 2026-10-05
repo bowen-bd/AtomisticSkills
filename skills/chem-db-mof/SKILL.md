@@ -3,6 +3,7 @@ name: chem-db-mof
 description: Query multiple MOF databases (QMOF via MPContribs; ARC-MOF DB7/Majumdar et al. via Zenodo) and download CIF structures with optional element or identifier filters.
 metadata:
   category: [chemistry]
+  venv: [cpu]
 ---
 
 # chem-db-mof
@@ -40,9 +41,8 @@ Decide which database to query and which element/identifier filters to apply.
 ### Step 2: Run the query
 
 ```bash
-# Venv: venv/cpu
 # QMOF — 10 Zn-containing MOFs
-MP_API_KEY=<your_key> uv run --project venv/cpu python skills/chem-db-mof/scripts/query_mof_db.py \
+MP_API_KEY=<your_key> ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_mof_db.py \
     --database qmof \
     --formula Zn \
     --max-results 10 \
@@ -50,9 +50,8 @@ MP_API_KEY=<your_key> uv run --project venv/cpu python skills/chem-db-mof/script
 ```
 
 ```bash
-# Venv: venv/cpu
 # ARC-MOF DB7 (Majumdar) — 20 Zn,O,C hypothetical MOFs
-uv run --project venv/cpu python skills/chem-db-mof/scripts/query_mof_db.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_mof_db.py \
     --database arcmof-majumdar \
     --elements Zn,O,C \
     --max-results 20 \
@@ -60,9 +59,8 @@ uv run --project venv/cpu python skills/chem-db-mof/scripts/query_mof_db.py \
 ```
 
 ```bash
-# Venv: venv/cpu
 # ARC-MOF DB7 — retrieve a specific structure by identifier
-uv run --project venv/cpu python skills/chem-db-mof/scripts/query_mof_db.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_mof_db.py \
     --database arcmof-majumdar \
     --identifier DB7_00042 \
     --output-dir ./research/<date>_<task>/structures/arcmof_db7
@@ -105,9 +103,8 @@ Subsequent runs with the same `--output-dir` skip already-downloaded CIFs.
 
 **Example 1: Query Zn MOFs from QMOF for CO₂ screening pre-processing**
 ```bash
-# Venv: venv/cpu
 MP_API_KEY=<your_mp_api_key> \
-uv run --project venv/cpu python skills/chem-db-mof/scripts/query_mof_db.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_mof_db.py \
     --database qmof \
     --formula Zn \
     --max-results 10 \
@@ -116,23 +113,22 @@ uv run --project venv/cpu python skills/chem-db-mof/scripts/query_mof_db.py \
 
 **Example 2: Query Zn, Ni, or Mg hypothetical MOFs from ARC-MOF DB7**
 ```bash
-# Venv: venv/cpu
 # Zn-based
-uv run --project venv/cpu python skills/chem-db-mof/scripts/query_mof_db.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_mof_db.py \
     --database arcmof-majumdar \
     --elements Zn,O,C \
     --max-results 50 \
     --output-dir ./research/2026-03-27_arcmof_zn
 
 # Ni-based
-uv run --project venv/cpu python skills/chem-db-mof/scripts/query_mof_db.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_mof_db.py \
     --database arcmof-majumdar \
     --elements Ni,O,C \
     --max-results 50 \
     --output-dir ./research/2026-03-27_arcmof_ni
 
 # Mg-based
-uv run --project venv/cpu python skills/chem-db-mof/scripts/query_mof_db.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_mof_db.py \
     --database arcmof-majumdar \
     --elements Mg,O,C \
     --max-results 50 \

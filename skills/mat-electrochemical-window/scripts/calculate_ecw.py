@@ -5,7 +5,7 @@ Usage:
     python calculate_ecw.py --mp-id mp-1183147 --mobile-ion Li
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: pymatgen, mp_api
 """
 

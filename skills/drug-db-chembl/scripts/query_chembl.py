@@ -25,7 +25,7 @@ Usage examples:
     python query_chembl.py --smiles "CC(=O)Oc1ccccc1C(=O)O" --smiles_mode similarity --similarity 80 --output sim.json
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: standard library only (urllib, json, csv, argparse)
 """
 

@@ -15,7 +15,7 @@ Usage:
         --force-threshold 200.0
 
 Requirements:
-    - Conda environment: mace-agent
+    - Environment: mlip (run with: venv/run mlip python ...)
     - Required packages: mace-torch, ase, numpy, matplotlib
 """
 

@@ -3,6 +3,8 @@ name: chem-msms-predict
 description: Predict LC-MS/MS (MS2, tandem mass spectra) from SMILES via ICEBERG, a two-stage deep neural network. Outputs predicted m/z vs intensity spectrum, fragment ion SMILES, and a spectrum plot.
 metadata:
   category: [chemistry, drug-discovery]
+  venv: []
+  conda_env: ms-gen
 ---
 
 # LC-MS/MS Spectrum Prediction
@@ -42,7 +44,7 @@ downloads/
 ### 2. Set up the conda environment
 
 ```bash
-bash conda-envs/msms-agent/install.sh
+bash ${CLAUDE_SKILL_DIR}/../../conda-envs/msms-agent/install.sh
 ```
 
 The `ms_pred` Python package is installed from GitHub automatically by the install script.
@@ -52,8 +54,7 @@ The `ms_pred` Python package is installed from GitHub automatically by the insta
 ### Step 1 — Run inference and generate spectrum
 
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/chem-msms-predict/scripts/predict_msms.py \
+conda run --no-capture-output -n ms-gen python ${CLAUDE_SKILL_DIR}/scripts/predict_msms.py \
     --smiles "c1ccccc1C(=O)OCCN" \
     --gen_ckpt downloads/iceberg_dag_gen_msg_best.ckpt \
     --inten_ckpt downloads/iceberg_dag_inten_msg_best.ckpt \
@@ -106,8 +107,7 @@ If an experimental spectrum is available, use the companion skill:
 ### 2-Aminoethyl benzoate (`c1ccccc1C(=O)OCCN`)
 
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/chem-msms-predict/examples/predict_smiles.py \
+conda run --no-capture-output -n ms-gen python ${CLAUDE_SKILL_DIR}/examples/predict_smiles.py \
     --gen_ckpt downloads/iceberg_dag_gen_msg_best.ckpt \
     --inten_ckpt downloads/iceberg_dag_inten_msg_best.ckpt \
     --output_dir .agents/test/msms_example

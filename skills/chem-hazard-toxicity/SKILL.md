@@ -3,6 +3,7 @@ name: chem-hazard-toxicity
 description: Extract explicit safety warnings, GHS classifications, LD50 toxicity profiles, and acute oral toxicity triage from PubChem PUG VIEW.
 metadata:
   category: [chemistry, drug-discovery]
+  venv: [cpu]
 ---
 
 # Chemical Hazard and Toxicity Profiling
@@ -16,8 +17,7 @@ To programmatically extract critical safety information from the PubChem PUG-VIE
 Provide the precise CID of the molecule to query safety metadata.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-hazard-toxicity/scripts/get_safety_data.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/get_safety_data.py \
   --cid 2519 \
   --outdir research/caffeine_safety \
   --output safety_caffeine.json
@@ -27,8 +27,7 @@ uv run --project venv/cpu python skills/chem-hazard-toxicity/scripts/get_safety_
 Use `--triage` to extract consensus GHS statements ($\ge 50\%$), lowest rat oral LD50, GHS acute oral category (1–5 or `unclassified`), and check oral hazard code consistency:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-hazard-toxicity/scripts/get_safety_data.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/get_safety_data.py \
   --cid 2519 \
   --triage \
   --outdir research/caffeine_safety \

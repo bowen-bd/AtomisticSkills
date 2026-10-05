@@ -12,7 +12,7 @@ Usage:
     python parse_prt.py <ph.out> [--fermi <eV>]
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: none (Python standard library only)
 """
 

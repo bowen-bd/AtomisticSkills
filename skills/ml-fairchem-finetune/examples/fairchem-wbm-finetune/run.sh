@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"  # repository root, for venv/run
 
 # Target directory
 EX_DIR="skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune"
@@ -9,13 +10,13 @@ mkdir -p "$OUT_DIR"
 
 # 1. Prepare Data and Config
 echo "Preparing FAIRCHEM Finetuning Data..."
-conda run -n fairchem-agent python skills/ml-fairchem-finetune/scripts/prepare_fairchem_data.py \
+"$ROOT/venv/run" fairchem python skills/ml-fairchem-finetune/scripts/prepare_fairchem_data.py \
     --data private_data/WBM_subset_200_configs.json \
     --vasp-stress-conversion \
     --output-dir "$OUT_DIR"
 
 echo "Generating FAIRCHEM Config..."
-conda run -n fairchem-agent python skills/ml-fairchem-finetune/scripts/generate_fairchem_config.py \
+"$ROOT/venv/run" fairchem python skills/ml-fairchem-finetune/scripts/generate_fairchem_config.py \
     --data-metadata "$OUT_DIR/dataset_metadata.json" \
     --model uma-s-1p1 \
     --task-name omat \
@@ -31,12 +32,12 @@ echo "Running FAIRCHEM Training (uma-s-1p1)..."
 export PYTHONPATH="$OUT_DIR/:$PYTHONPATH"
 cd "$OUT_DIR/"
 
-conda run --live-stream -n fairchem-agent fairchem -c uma_sm_finetune_template.yaml job.run_dir=runs/run_10ep +job.timestamp_id=run_10ep > train.log 2>&1
+"$ROOT/venv/run" fairchem fairchem -c uma_sm_finetune_template.yaml job.run_dir=runs/run_10ep +job.timestamp_id=run_10ep > train.log 2>&1
 cd -
 
 # 3. Extract Logs
 echo "Extracting training metrics and generating plots..."
-conda run -n fairchem-agent python skills/ml-fairchem-finetune/scripts/extract_fairchem_logs.py \
+"$ROOT/venv/run" fairchem python skills/ml-fairchem-finetune/scripts/extract_fairchem_logs.py \
     --log "$OUT_DIR//train.log" \
     --output-dir "$OUT_DIR"
 

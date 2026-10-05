@@ -16,7 +16,7 @@ summarizing the **mat-amorphorization** skill with LiCl as the example material.
 
 ```bash
 # Env: base-agent
-conda run -n base-agent python skills/general-presentation/examples/amorphorization/amorphorization_slides.py
+venv/run cpu python skills/general-presentation/examples/amorphorization/amorphorization_slides.py
 ```
 
 ## Slide Contents

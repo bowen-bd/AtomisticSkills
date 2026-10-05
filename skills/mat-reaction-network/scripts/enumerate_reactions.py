@@ -6,7 +6,7 @@ Usage:
     python enumerate_reactions.py --chemsys Y-Mn-O --enumerator-type minimize_grand_potential --open-elem O
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: mp-api, rxn-network, pymatgen
 """
 

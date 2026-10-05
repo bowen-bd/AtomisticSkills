@@ -3,6 +3,7 @@ name: mat-ionic-substitution
 description: Discover new crystal structures by data-mined ionic substitution — propose candidates from existing structures (forward) or find potential structures for a target composition (reverse).
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # Ionic Substitution
@@ -27,8 +28,7 @@ The substitution probability model is trained on the ICSD (Inorganic Crystal Str
 
 2. **Run the forward proposal script**:
    ```bash
-   # Venv: venv/cpu
-   uv run --project venv/cpu python skills/mat-ionic-substitution/scripts/propose_substitutions.py \
+   ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/propose_substitutions.py \
        --structure source.cif \
        --threshold 0.001 \
        --output_dir proposed_substitutions/
@@ -47,8 +47,7 @@ The substitution probability model is trained on the ICSD (Inorganic Crystal Str
 
 1. **Run the reverse search script**:
    ```bash
-   # Venv: venv/cpu
-   uv run --project venv/cpu python skills/mat-ionic-substitution/scripts/find_structures_for_composition.py \
+   ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/find_structures_for_composition.py \
        --composition LiCl \
        --threshold 0.001 \
        --output_dir structures_for_LiCl/
@@ -77,8 +76,7 @@ If you already know the exact substitution you want to make on a specific struct
 
 ### Example 1: Discover new Li-ion cathode from NaCoO₂
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-ionic-substitution/scripts/propose_substitutions.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/propose_substitutions.py \
     --structure NaCoO2.cif \
     --threshold 0.001 \
     --output_dir NaCoO2_substitutions/
@@ -87,8 +85,7 @@ Expected output includes: LiCoO₂, KCoO₂, NaNiO₂, NaMnO₂, LiNiO₂, etc.
 
 ### Example 2: Find all crystal structures for LiCl
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-ionic-substitution/scripts/find_structures_for_composition.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/find_structures_for_composition.py \
     --composition LiCl \
     --output_dir LiCl_structures/
 ```

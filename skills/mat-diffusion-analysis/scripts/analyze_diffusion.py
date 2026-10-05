@@ -9,7 +9,7 @@ Usage:
     python analyze_diffusion.py <traj_path> --species <specie> --temperature <T> [options]
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: ase, numpy, matplotlib, pymatgen
 """
 

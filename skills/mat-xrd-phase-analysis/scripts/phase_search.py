@@ -20,7 +20,7 @@ Output (default: same directory as the pattern, under phase_analysis_results/):
     - cifs/ (if CIFs were downloaded by chemical system)
 
 Requirements:
-    - Conda environment with dara-xrd (e.g. xrd-agent)
+    - Environment with dara-xrd (e.g. cpu)
     - BGMN installed; DARA may download it on first run
 """
 

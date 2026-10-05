@@ -9,7 +9,7 @@ Usage:
     python remove_atoms.py LiFePO4.cif --remove Li --output FePO4.cif
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: pymatgen, argparse
 """
 

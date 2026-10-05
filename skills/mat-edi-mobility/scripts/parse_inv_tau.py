@@ -14,7 +14,7 @@ Usage:
     python parse_inv_tau.py mos2_inv_tau.dat --output-dir results/
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: pyyaml (standard library otherwise)
 """
 

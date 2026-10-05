@@ -8,7 +8,7 @@ Usage:
         --gas CO2 --temperature 298 --output-dir ./out
 
 Requirements:
-    - Conda environment: Varies based on `--calculator` (e.g. fairchem-agent, mace-agent, matgl-agent)
+    - Environment: Varies based on `--calculator` (e.g. fairchem, mlip, mlip)
     - Required packages: ase, torch, pydantic, pymatgen, tqdm, plus the MLIP package
 """
 

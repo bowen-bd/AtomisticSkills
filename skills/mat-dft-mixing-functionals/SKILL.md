@@ -3,6 +3,7 @@ name: mat-dft-mixing-functionals
 description: Energy corrections needed when using certain MLIPs for phase diagram construction / formation energy calculations.
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # MP2020 Compatibility
@@ -40,7 +41,7 @@ This correction is **REQUIRED** for:
 - **uma-s-1**, **uma-s-1p1**, **uma-m-1p1** (with `omat` head)
 
 This correction is **NOT** for:
-- **CHGNet** (e.g. `CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES`)
+- **CHGNet** (e.g. `CHGNet-PES-MatPES-r2SCAN-1M-2026.9`)
 - **MACE-MATPES-r2SCAN-0**
 - **TensorNet-MatPES-r2SCAN-v2025.1-PES**
 
@@ -53,7 +54,7 @@ This correction is **NOT** for:
 Use the `check_compatibility.py` script to programmatically determine if a model/head requires correction.
 
 ```bash
-python skills/mat-dft-mixing-functionals/scripts/check_compatibility.py --name "MACE-MH-1" --head "omat_pbe"
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/check_compatibility.py --name "MACE-MH-1" --head "omat_pbe"
 # Exit code 0 if required, 1 if not.
 ```
 
@@ -63,13 +64,12 @@ Use the `apply_correction.py` script to calculate the corrected energy for a sin
 To run on a directory of structure files (batch mode):
 ```bash
 # Energy defaults to 0.0 if not specified (useful for just checking corrections)
-python skills/mat-dft-mixing-functionals/scripts/apply_correction.py /path/to/structure_dir/
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/apply_correction.py /path/to/structure_dir/
 ```
 
 To run on a specific file with known energy:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-dft-mixing-functionals/scripts/apply_correction.py structure.cif --energy -123.45
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/apply_correction.py structure.cif --energy -123.45
 ```
 
 ### 2. Batch Processing

@@ -3,6 +3,7 @@ name: chem-dft-orca-singlepoint
 description: Run a DFT or Coupled Cluster single-point energy calculation (with optional gradients/Hessian) on a molecular structure with ORCA through SCINE wrapper.
 metadata:
   category: [chemistry]
+  venv: [cpu]
 ---
 
 # DFT Single-Point Calculation with ORCA
@@ -48,8 +49,7 @@ The calculation relies on the SCINE wrapper for automated input generation, outp
 ### Basic energy calculation
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_singlepoint.py \
     --structure molecule.xyz \
     --output_dir research/my_project/singlepoint
 ```
@@ -57,8 +57,7 @@ uv run --project venv/cpu python skills/chem-dft-orca-singlepoint/scripts/run_si
 ### Energy + forces with a hybrid functional and dispersion
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_singlepoint.py \
     --structure molecule.xyz \
     --functional B3LYP \
     --basis_set def2-TZVP \
@@ -71,8 +70,7 @@ uv run --project venv/cpu python skills/chem-dft-orca-singlepoint/scripts/run_si
 ### With implicit solvation
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_singlepoint.py \
     --structure molecule.xyz \
     --functional PBE0 \
     --basis_set def2-TZVP \
@@ -87,8 +85,7 @@ uv run --project venv/cpu python skills/chem-dft-orca-singlepoint/scripts/run_si
 For settings not exposed as dedicated flags, pass a JSON string via `--calculator_settings`. SCINE is strict about types, so JSON ensures values are passed with the correct type (int, float, string).
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_singlepoint.py \
     --structure molecule.xyz \
     --functional B3LYP \
     --basis_set def2-TZVP \
@@ -103,8 +100,7 @@ uv run --project venv/cpu python skills/chem-dft-orca-singlepoint/scripts/run_si
 ### Hessian calculation
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_singlepoint.py \
     --structure molecule.xyz \
     --functional B3LYP \
     --basis_set def2-TZVP \
@@ -123,8 +119,7 @@ ORCA also supports post-HF methods useful for reference calculations, such as lo
 This is also available through this skill.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_singlepoint.py \
     --structure molecule.xyz \
     --functional DLPNO-CCSD(T) \
     --basis_set def2-TZVP \

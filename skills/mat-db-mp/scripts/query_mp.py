@@ -42,7 +42,7 @@ Usage:
     python query_mp.py --chemsys "Si-O" --training_data --thermo_type r2SCAN --output si_o_r2scan_training.json
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: mp-api, pymatgen
     - MP_API_KEY environment variable must be set
 """

@@ -3,6 +3,7 @@ name: mat-synthesis-extraction
 description: Extract structured synthesis procedures from a folder of PDFs using the LeMat-Synth GeneralSynthesisOntology schema, producing one JSON file per paper with per-material synthesis records.
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # mat-synthesis-extraction
@@ -22,8 +23,7 @@ The ontology captures: target compound, compound type, synthesis method, startin
 Run the PDF parser to extract plain text from all PDFs in the input folder.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-synthesis-extraction/scripts/parse_pdfs.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/parse_pdfs.py \
     --pdf-dir /path/to/pdf_folder \
     --output-dir /path/to/output/texts
 ```

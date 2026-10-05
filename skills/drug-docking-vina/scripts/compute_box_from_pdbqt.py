@@ -8,7 +8,7 @@ Usage:
     python compute_box_from_pdbqt.py reference_ligand.pdbqt --padding 6.0 --min_size 20.0 --output_json box.json
 
 Requirements:
-    - Conda environment: drugdisc-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - No external dependencies
 """
 

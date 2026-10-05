@@ -14,7 +14,7 @@ Because the raw `vasp_s` labels in this dataset are recorded in `kB`, we MUST pa
 
 ```bash
 # Env: matgl-agent
-conda run -n matgl-agent python skills/ml-matgl-finetune/scripts/prepare_matgl_data.py \
+venv/run mlip python skills/ml-matgl-finetune/scripts/prepare_matgl_data.py \
     --data private_data/WBM_high_energy_states.json \
     --output-dir skills/ml-matgl-finetune/examples/matgl-wbm-finetune \
     --val-split 0.1 \
@@ -26,7 +26,7 @@ The script structures data internally with `MGLDataset` and natively connects di
 
 ```bash
 # Env: matgl-agent
-conda run -n matgl-agent python skills/ml-matgl-finetune/scripts/train_matgl.py \
+venv/run mlip python skills/ml-matgl-finetune/scripts/train_matgl.py \
     --train-data skills/ml-matgl-finetune/examples/matgl-wbm-finetune/train_data.json \
     --val-data skills/ml-matgl-finetune/examples/matgl-wbm-finetune/val_data.json \
     --model CHGNet-MatPES-PBE-2025.2.10-2.7M-PES \

@@ -3,9 +3,23 @@ name: ml-cluster-expansion
 description: train a Cluster Expansion (CE) for lattice-based Monte Carlo simulation of disordered materials.
 metadata:
   category: [machine-learning, materials]
+  venv: [cpu, mlip]
 ---
 
 # Cluster Expansion
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `smol.train_cluster_expansion` is the `train_cluster_expansion`
+> tool of the `smol` server (`mcp__smol__train_cluster_expansion`, or
+> `mcp__plugin_atomistic-skills_smol__train_cluster_expansion` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli smol train_cluster_expansion key=value run_monte_carlo key=value
+> ${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli mace load_model key=value relax_structure key=value
+> ```
 
 ## Goal
 
@@ -16,8 +30,8 @@ To automatically build and refine a Cluster Expansion (CE) model for a disordere
 1.  **Preparation**: Generate a disordered primordial structure.
 2.  **Iteration 0**: systematic enumeration to generate initial structures.
 3.  **Labeling**: Relax structures with an MLIP (e.g., MACE, CHGNet) via MCP.
-4.  **Training**: Train the CE model using `mcp_smol_train_cluster_expansion`.
-5.  **Sampling**: Run MC with `mcp_smol_run_monte_carlo` to explore configuration space.
+4.  **Training**: Train the CE model using `smol.train_cluster_expansion`.
+5.  **Sampling**: Run MC with `smol.run_monte_carlo` to explore configuration space.
 6.  **Selection**: Extract structures from MC, compute features, and select novel configurations.
 7.  **Loop**: Repeat labeling, training, and sampling until convergence.
 
@@ -28,8 +42,7 @@ To automatically build and refine a Cluster Expansion (CE) model for a disordere
 Use `prepare_disordered.py` to handle symmetry refinement and disorder creation. It is highly recommended to save the primordial structure as a **JSON** file to preserve exact occupancy and species information, avoiding "unrecognized species" errors during matching.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/ml-cluster-expansion/scripts/prepare_disordered.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/prepare_disordered.py \
     input_structure.cif \
     Li \
     0.5 \
@@ -43,8 +56,8 @@ uv run --project venv/cpu python skills/ml-cluster-expansion/scripts/prepare_dis
 Generate an initial set of structures using systematic enumeration and D-optimality via the MCP tool. It is recommended to generate around **1000 structures** to ensure high coverage of the configuration space.
 
 ```python
-# MCP Tool: mcp_smol_sample_ordered_structures
-result = mcp_smol_sample_ordered_structures(
+# MCP Tool: smol.sample_ordered_structures
+result = smol.sample_ordered_structures(
     disordered_structure="primordial.cif",
     cutoffs={2: 5.0, 3: 4.0},
     num_structures=1000,
@@ -71,8 +84,8 @@ Use the appropriate MLIP MCP tool to **relax** the structures.
 
 **Example (MACE)**:
 ```python
-mcp_mace_load_model(model_name="MACE-OMAT-0-small", device="cuda")
-mcp_mace_relax_structure(
+mace.load_model(model_name="MACE-OMAT-0-small", device="cuda")
+mace.relax_structure(
     structure_data="./ce_project/iter_0/to_label",
     fmax=0.02,
     relax_cell=False,
@@ -84,10 +97,10 @@ mcp_mace_relax_structure(
 
 ### Step 4: Train CE
 
-The `mcp_smol_train_cluster_expansion` tool can directly accept the directory containing relaxation results (from Step 3). It will automatically find and aggregate the training data.
+The `smol.train_cluster_expansion` tool can directly accept the directory containing relaxation results (from Step 3). It will automatically find and aggregate the training data.
 
 ```python
-result = mcp_smol_train_cluster_expansion(
+result = smol.train_cluster_expansion(
     disordered_structure="primordial.cif",
     training_data="ce_project/iter_0/results",
     cutoffs={2: 5.0, 3: 4.0},
@@ -102,11 +115,11 @@ result = mcp_smol_train_cluster_expansion(
 
 ### Step 5: Direct Feature Matrix Fitting (Optional)
 
-In some scenarios, you may have pre-computed feature matrices and energies (e.g., from literature or external workflows). You can directly fit these without building a `ClusterSubspace` first, using the `mcp_smol_fit_feature_matrix` tool. This is also how you can utilize advanced techniques like **Sparse Group Lasso (SGL)**.
+In some scenarios, you may have pre-computed feature matrices and energies (e.g., from literature or external workflows). You can directly fit these without building a `ClusterSubspace` first, using the `smol.fit_feature_matrix` tool. This is also how you can utilize advanced techniques like **Sparse Group Lasso (SGL)**.
 
 ```python
-# MCP Tool: mcp_smol_fit_feature_matrix
-result = mcp_smol_fit_feature_matrix(
+# MCP Tool: smol.fit_feature_matrix
+result = smol.fit_feature_matrix(
     feature_matrix_path="fm.npy",
     energies_path="e.npy",
     groups_path="groups.npy", # Required for sgl
@@ -125,7 +138,7 @@ result = mcp_smol_fit_feature_matrix(
 
 #### A. Run Monte Carlo Sampling
 ```python
-mc_result = mcp_smol_run_monte_carlo(
+mc_result = smol.run_monte_carlo(
     supercell_matrix=[[2,0,0], [0,2,0], [0,0,2]],
     temperature=2000,
     steps=100000,
@@ -138,7 +151,7 @@ mc_result = mcp_smol_run_monte_carlo(
 Extract structures from the trajectory. The skill script handles dimension squeeze for single-sample trajectories.
 
 ```bash
-python skills/ml-cluster-expansion/scripts/extract_mc_structures.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/extract_mc_structures.py \
     --trajectory_file ./ce_project/iter_1/mc_trajectory.h5 \
     --cluster_expansion ./ce_project/cluster_expansion.json \
     --output_dir ./ce_project/iter_1/to_label \

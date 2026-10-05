@@ -9,7 +9,7 @@ Usage:
     python run_md.py --system_xml system.xml --input_pdb complex.pdb --output_dir run/
 
 Requirements:
-    - Conda environment: drugmd-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: openmm
 """
 

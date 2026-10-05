@@ -9,8 +9,7 @@ No bonds are broken/formed, just a dihedral rotation through an eclipsed TS.
 Literature barrier: ~0.15 eV (3.4 kcal/mol) for gauche-to-anti via eclipsed TS
 
 Usage (from project root):
-    conda activate mace-agent
-    python skills/chem-neb-barrier/examples/butane_conformer/run_example.py
+    venv/run mlip python skills/chem-neb-barrier/examples/butane_conformer/run_example.py
 """
 
 import os

@@ -3,9 +3,22 @@ name: mat-random-structure-search
 description: Generate random crystal structures for a given composition (AIRSS-style) and relax with MLIPs to find low-energy candidates.
 metadata:
   category: [materials]
+  venv: [cpu, mlip]
 ---
 
 # Random Structure Search (AIRSS-Style)
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `mace.relax_structure` is the `relax_structure`
+> tool of the `mace` server (`mcp__mace__relax_structure`, or
+> `mcp__plugin_atomistic-skills_mace__relax_structure` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli mace relax_structure key=value
+> ```
 
 ## Goal
 
@@ -18,8 +31,7 @@ To perform random structure searching (RSS) for a given chemical composition —
 
 1. **Generate random structures** for the target composition:
    ```bash
-   # Venv: venv/cpu
-   uv run --project venv/cpu python skills/mat-random-structure-search/scripts/generate_random_structures.py \
+   ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/generate_random_structures.py \
        --composition NaCl \
        --num_structures 100 \
        --output_dir random_NaCl/
@@ -39,7 +51,7 @@ To perform random structure searching (RSS) for a given chemical composition —
 
 2. **Relax all structures** with an MLIP:
    ```bash
-   mcp_mace_relax_structure(
+   mace.relax_structure(
        structure_data="random_NaCl/",
        relax_cell=True,
        fmax=0.02,
@@ -58,8 +70,7 @@ To perform random structure searching (RSS) for a given chemical composition —
 
 ### Example 1: Search for NaCl ground state
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-random-structure-search/scripts/generate_random_structures.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/generate_random_structures.py \
     --composition NaCl \
     --num_structures 100 \
     --seed 42 \
@@ -69,8 +80,7 @@ Expected: Rocksalt (SG 225) should emerge as the lowest-energy structure after M
 
 ### Example 2: Search for Li₂ZrCl₆ polymorphs
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-random-structure-search/scripts/generate_random_structures.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/generate_random_structures.py \
     --composition Li2ZrCl6 \
     --num_structures 200 \
     --spacegroups 12,14,62,148,166,167 \

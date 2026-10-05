@@ -13,16 +13,13 @@ import os
 import sys
 from pathlib import Path
 import numpy as np
+import torch
 import logging
 
 # Add project root to sys.path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
-
-# Set MATGL_BACKEND to DGL by default for better performance and TensorNet support
-if "MATGL_BACKEND" not in os.environ:
-    os.environ["MATGL_BACKEND"] = "DGL"
 
 from src.utils.mlips.device_utils import get_best_device
 import ase
@@ -50,7 +47,7 @@ def main():
     )
     parser.add_argument(
         "--model",
-        default="CHGNet-MatPES-PBE-2025.2.10-2.7M-PES",
+        default="CHGNet-PES-MatPES-PBE-1M-2026.9",
         help="Base model name or path to a checkpoint",
     )
     parser.add_argument(
@@ -147,7 +144,10 @@ def main():
 
     import matgl
 
-    pot = matgl.load_model(args.model)
+    # Accept legacy names (matgl 4 renamed every pretrained model).
+    from src.utils.mlips.matgl.matgl_wrapper import AVAILABLE_MATGL_MODELS
+
+    pot = matgl.load_model(AVAILABLE_MATGL_MODELS.get(args.model, args.model))
     pot.to(device)
 
     # Convert dict structures to ASE Atoms
@@ -206,29 +206,16 @@ def main():
     # --- Fine-tune Logic ---
     logger.info("Starting fine-tuning...")
 
-    # Imports
-    try:
-        from matgl.utils.training import PotentialLightningModule
-        from matgl.graph.data import MGLDataLoader, MGLDataset, collate_fn_pes
-
-        try:
-            from matgl.graph.data import split_dataset
-        except ImportError:
-            from dgl.data.utils import split_dataset
-        import lightning as pl
-        from matgl.ext.pymatgen import Structure2Graph
-    except ImportError as e:
-        logger.debug(f"Primary MatGL training imports failed: {e}")
-        try:
-            # MatGL < 1.0 or specific versions might have it here
-            from matgl.utils._training_dgl import PotentialLightningModule
-            from matgl.graph.data import MGLDataLoader, MGLDataset, collate_fn_pes
-            from dgl.data.utils import split_dataset
-            import lightning as pl
-            from matgl.ext.pymatgen import Structure2Graph
-        except ImportError as e2:
-            logger.error(f"MatGL training imports failed: {e2}")
-            sys.exit(1)
+    # matgl >= 4 is PyTorch Geometric only; the DGL training path no longer exists.
+    from matgl.utils.training import PotentialLightningModule
+    from matgl.graph.data import (
+        MGLDataLoader,
+        MGLDataset,
+        collate_fn_pes,
+        split_dataset,
+    )
+    import lightning as pl
+    from matgl.ext.pymatgen import Structure2Graph
 
     # Re-implement TrainingHistoryCallback
     class TrainingHistoryCallback(pl.Callback):

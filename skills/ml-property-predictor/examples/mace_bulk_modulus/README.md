@@ -9,7 +9,7 @@ This directory contains a complete, self-contained example demonstrating how to 
 First, ensure you are operating from the `base-agent` environment to kick off the master pipeline. The script will automatically trigger a sub-process inside the designated `mace-agent` conda environment.
 
 ```bash
-conda run -n base-agent python run_mace.py
+venv/run cpu python run_mace.py
 ```
 
 ### Outputs

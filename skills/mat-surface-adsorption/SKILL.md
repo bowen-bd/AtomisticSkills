@@ -3,6 +3,7 @@ name: mat-surface-adsorption
 description: Calculate surface adsorption energies for adsorbate-surface combinations using MLIPs.
 metadata:
   category: [materials, chemistry]
+  venv: [fairchem, mlip]
 ---
 
 # Surface Adsorption Skill
@@ -40,7 +41,7 @@ Adsorption energy calculations require accurate prediction of both energies and 
 >    - FAIRChem UMA: `uma-s-1p1`, `uma-m-1p1` (universal, includes OC20/OC25 data)
 >    - MACE-OMAT: `MACE-OMAT-0-small`, `MACE-OMAT-0-medium` (trained on OC datasets)
 > 2. **MatPES trained models** (Good for general surfaces):
->    - `CHGNet-MatPES-PBE-2025.2.10-2.7M-PES`
+>    - `CHGNet-PES-MatPES-PBE-1M-2026.9`
 >    - `M3GNet-MatPES-PBE-v2025.1-PES`
 >    - `MACE-MatPES-PBE-0`
 > 3. **Avoid MPtrj-only models**: Models trained primarily on the `MPtrj` dataset may suffer from force prediction issues critical for adsorption.
@@ -54,8 +55,7 @@ Refer to the [foundation-potentials skill](../ml-foundation-potentials/SKILL.md)
 To calculate adsorption energies, use the `calculate_adsorption.py` script:
 
 ```bash
-# Venv: venv/fairchem
-uv run --project venv/fairchem python skills/mat-surface-adsorption/scripts/calculate_adsorption.py \
+${CLAUDE_SKILL_DIR}/../../venv/run fairchem python ${CLAUDE_SKILL_DIR}/scripts/calculate_adsorption.py \
     --bulk path/to/bulk_structure.cif \
     --adsorbate path/to/adsorbate.xyz \
     --miller_index '[1,1,1]' \
@@ -108,8 +108,7 @@ The calculation generates the following files in the output directory:
 Calculate the adsorption energy of CO on the (111) surface of Cu using an Open Catalyst trained model:
 
 ```bash
-# Venv: venv/fairchem
-uv run --project venv/fairchem python skills/mat-surface-adsorption/scripts/calculate_adsorption.py \
+${CLAUDE_SKILL_DIR}/../../venv/run fairchem python ${CLAUDE_SKILL_DIR}/scripts/calculate_adsorption.py \
     --bulk examples/CO_on_Cu111/Cu_bulk.cif \
     --adsorbate examples/CO_on_Cu111/CO.xyz \
     --miller_index '[1,1,1]' \
@@ -128,13 +127,12 @@ uv run --project venv/fairchem python skills/mat-surface-adsorption/scripts/calc
 Use a SMILES string to define the adsorbate:
 
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/mat-surface-adsorption/scripts/calculate_adsorption.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/calculate_adsorption.py \
     --bulk Pt_bulk.cif \
     --adsorbate "O=C=O" \
     --miller_index '[1,1,1]' \
     --model_type matgl \
-    --model_name CHGNet-MatPES-PBE-2025.2.10-2.7M-PES \
+    --model_name CHGNet-PES-MatPES-PBE-1M-2026.9 \
     --output_dir research/Pt_CO2_adsorption
 ```
 
@@ -143,8 +141,7 @@ uv run --project venv/mlip python skills/mat-surface-adsorption/scripts/calculat
 Calculate adsorption on a (100) surface:
 
 ```bash
-# Venv: venv/fairchem
-uv run --project venv/fairchem python skills/mat-surface-adsorption/scripts/calculate_adsorption.py \
+${CLAUDE_SKILL_DIR}/../../venv/run fairchem python ${CLAUDE_SKILL_DIR}/scripts/calculate_adsorption.py \
     --bulk Ni_bulk.cif \
     --adsorbate H2.xyz \
     --miller_index '[1,0,0]' \
@@ -188,8 +185,8 @@ The `adsorption_results.json` file contains:
   - Critical for accurate energy calculations
 
 - **Environments**:
-  - Scripts require specific Conda environments (mace-agent, matgl-agent, or fairchem-agent)
-  - **Each code block MUST specify the environment** using `# Env:` annotation
+  - Each command names its environment through `venv/run`: `mlip` for MACE and
+    MatGL, `fairchem` for FairChem. Use the one that matches the chosen model.
 
 - **Computational Cost**:
   - Multiple adsorption sites are calculated automatically

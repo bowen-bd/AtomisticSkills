@@ -14,7 +14,6 @@ Because the raw `vasp_s` labels in this WBM extraction are recorded in `kB`, we 
 
 ```bash
 # Env: fairchem-agent
-conda activate fairchem-agent
 
 # Execute the data preparation and runner script
 bash skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune/run.sh
@@ -40,7 +39,7 @@ The script generates a `uma_sm_finetune_template.yaml` file compatible with the 
 ```bash
 # Env: fairchem-agent
 cd skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune
-conda run -n fairchem-agent fairchem-train --config-yml uma_sm_finetune_template.yaml
+venv/run fairchem fairchem-train --config-yml uma_sm_finetune_template.yaml
 ```
 
 ### 3. Extract Training Logs
@@ -48,7 +47,7 @@ Once training converges, extract the diagnostic learning curves (energy, forces,
 
 ```bash
 # Env: fairchem-agent
-conda run -n fairchem-agent python skills/ml-fairchem-finetune/scripts/extract_fairchem_logs.py \
+venv/run fairchem python skills/ml-fairchem-finetune/scripts/extract_fairchem_logs.py \
     --log-file skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune/tensorboard/uma_sm_finetune*/train.log \
     --output-dir skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune
 ```

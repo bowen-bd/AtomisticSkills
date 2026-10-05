@@ -13,11 +13,10 @@ Aspirin is a classic benchmark for retrosynthesis tools. Its single-step synthes
 ## How to reproduce
 
 ```bash
-conda activate drugdisc-agent
 pip install rxn4chemistry   # one-time install if not present
 export RXN_API_KEY="your-api-key-here"
 
-python skills/drug-retrosynthesis/scripts/evaluate_ibm_rxn.py \
+venv/run cpu python skills/drug-retrosynthesis/scripts/evaluate_ibm_rxn.py \
     "CC(=O)Oc1ccccc1C(=O)O" --steps 3
 ```
 

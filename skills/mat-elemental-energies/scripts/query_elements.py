@@ -5,7 +5,7 @@ Usage:
     python query_elements.py --elements H Li Fe O Si --output_dir ../resources/structures
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: pymatgen, mp_api
 """
 

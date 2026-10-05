@@ -12,7 +12,7 @@ Usage:
         --element Ag
 
 Requirements:
-    - Conda environment: smol-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: matplotlib, numpy, json
 """
 

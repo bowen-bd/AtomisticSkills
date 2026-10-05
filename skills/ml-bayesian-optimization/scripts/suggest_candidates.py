@@ -22,7 +22,7 @@ Usage:
         --output_dir bo_campaign/
 
 Requirements:
-    Conda environment: base-agent
+    Environment: cpu (run with: venv/run cpu python ...)
     Packages: scikit-learn, scipy, numpy, pandas, pyyaml
 """
 

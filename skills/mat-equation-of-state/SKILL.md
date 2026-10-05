@@ -3,6 +3,7 @@ name: mat-equation-of-state
 description: Calculate equation of state (bulk modulus, equilibrium volume) using MLIPs.
 metadata:
   category: [materials]
+  venv: [mlip]
 ---
 
 # Equation of State Skill
@@ -34,8 +35,7 @@ Refer to the [foundation-potentials skill](../ml-foundation-potentials/SKILL.md)
 To calculate the equation of state, use the `calculate_eos.py` script:
 
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/mat-equation-of-state/scripts/calculate_eos.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/calculate_eos.py \
     --structure path/to/relaxed_structure.cif \
     --model_type mace \
     --model_name MACE-OMAT-0-small \

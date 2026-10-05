@@ -3,6 +3,7 @@ name: mat-xrd-digitizer
 description: Digitize an image of an XRD plot into a numeric .xy data file by extracting visual peaks.
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # XRD Digitizer
@@ -41,8 +42,7 @@ Example `peaks.json` format:
 Use the provided script to generate the experimental `.xy` file based on the extracted peaks.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-xrd-digitizer/scripts/digitize_plot.py peaks.json --output digitized_plot.xy --min-x 5.0 --max-x 80.0
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/digitize_plot.py peaks.json --output digitized_plot.xy --min-x 5.0 --max-x 80.0
 ```
 
 **Parameters:**
@@ -60,8 +60,7 @@ For a full working example of extracting and digitizing a YBCO plot:
 See [`examples/digitize-ybco/README.md`](examples/digitize-ybco/README.md).
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-xrd-digitizer/scripts/digitize_plot.py skills/mat-xrd-digitizer/examples/digitize-ybco/peaks.json --output test_ybco.xy
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/digitize_plot.py ${CLAUDE_SKILL_DIR}/examples/digitize-ybco/peaks.json --output test_ybco.xy
 ```
 
 ## Constraints

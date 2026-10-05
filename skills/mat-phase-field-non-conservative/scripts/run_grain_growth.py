@@ -6,7 +6,7 @@ Usage:
     python run_grain_growth.py --grid-size 100 --radius 30 --steps 300 --dt 0.5 --output out.gif
 
 Requirements:
-    - Conda environment: phasefield-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: fipy, numpy, imageio, tqdm, matplotlib
 """
 

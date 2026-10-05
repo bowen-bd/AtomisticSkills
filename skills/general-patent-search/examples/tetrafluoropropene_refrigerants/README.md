@@ -12,8 +12,7 @@ HFO-1234yf (2,3,3,3-tetrafluoropropene) is a next-generation refrigerant replaci
 ## How to reproduce
 
 ```bash
-conda activate base-agent
-python skills/general-patent-search/scripts/query_google_patents.py \
+venv/run cpu python skills/general-patent-search/scripts/query_google_patents.py \
     "tetrafluoropropene OR HFO-1234yf" --limit 5 \
     --output skills/general-patent-search/examples/tetrafluoropropene_refrigerants/results.json
 ```

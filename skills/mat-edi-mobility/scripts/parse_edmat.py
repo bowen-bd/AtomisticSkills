@@ -26,7 +26,7 @@ Usage:
     python parse_edmat.py mos2_edmat_interp.dat --ibnd 2 --jbnd 2 --output-dir results/
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: pyyaml (standard library otherwise)
 """
 

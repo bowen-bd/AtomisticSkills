@@ -3,6 +3,7 @@ name: mat-phase-field-non-conservative
 description: Simulate non-conservative phase-fields (grain growth and phase transformations) using the Allen-Cahn equation.
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # Non-Conservative Phase-Field: Allen-Cahn
@@ -23,8 +24,7 @@ Unlike Cahn-Hilliard, Allen-Cahn does not conserve the integral of $\phi$. It na
 Use the provided script to set up a 2D grid containing a circular solid grain in a liquid matrix and observe its capillarity-driven shrinkage.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-phase-field-non-conservative/scripts/run_grain_growth.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_grain_growth.py \
     --grid-size 100 \
     --radius 30 \
     --steps 200 \
@@ -45,8 +45,7 @@ uv run --project venv/cpu python skills/mat-phase-field-non-conservative/scripts
 A universal mathematical benchmark for the Allen-Cahn equation is proving that a circular domain shrinks at a rate proportional to its curvature (the $v = M \gamma K$ law). The area of the circle must decrease linearly with time.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-phase-field-non-conservative/scripts/run_grain_growth.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_grain_growth.py \
     --grid-size 100 \
     --radius 35 \
     --steps 300 \

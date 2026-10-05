@@ -3,6 +3,7 @@ name: general-fair-data-review
 description: Review a manuscript or code repository for FAIR data compliance (Findable, Accessible, Interoperable, Reusable), producing a structured report with pass/fail per principle and actionable remediation steps.
 metadata:
   category: [general]
+  venv: []
 ---
 
 # General FAIR Data Review

@@ -13,7 +13,7 @@ Usage:
         --output pockets_vis.png
 
 Requirements:
-    - Conda environment: drugdisc-agent (or any env with pymol-open-source)
+    - Environment: cpu (or any env with pymol-open-source)
     - Required packages: pymol-open-source
 """
 

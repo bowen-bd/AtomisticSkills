@@ -3,9 +3,22 @@ name: mat-intercalation-voltage
 description: Calculate the average intercalation voltage of cathode materials using MLIPs.
 metadata:
   category: [materials]
+  venv: [cpu, mlip]
 ---
 
 # Intercalation Voltage
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `mace.load_model` is the `load_model`
+> tool of the `mace` server (`mcp__mace__load_model`, or
+> `mcp__plugin_atomistic-skills_mace__load_model` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli mace load_model key=value relax_structure key=value
+> ```
 
 ## Goal
 To calculate the average open-circuit voltage (OCV) of an intercalation cathode material (e.g., Li$_x$M$_y$O$_z$) by computing the energy difference between the fully intercalated (charged) and de-intercalated (discharged) states.
@@ -21,8 +34,7 @@ where $E$ is the total energy, $n$ is the number of intercalated ions, and $\mu_
     - Create the de-intercalated structure by removing intercalating ions:
 
     ```bash
-    # Venv: venv/cpu
-    uv run --project venv/cpu python skills/mat-intercalation-voltage/scripts/remove_atoms.py \
+    ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/remove_atoms.py \
         LiFePO4.cif \
         --remove Li \
         --output FePO4.cif
@@ -39,23 +51,23 @@ where $E$ is the total energy, $n$ is the number of intercalated ions, and $\mu_
 
     ```bash
     # Load the model (example with MACE)
-    mcp_mace_load_model(model_name="MACE-MH-1", task_name="matpes_r2scan")
+    mace.load_model(model_name="MACE-MH-1", task_name="matpes_r2scan")
 
     # Relax full structure
-    mcp_mace_relax_structure(
+    mace.relax_structure(
         structure_data="LiFePO4.cif",
         output_dir="voltage_calc/full_relax"
     )
 
     # Relax empty structure
-    mcp_mace_relax_structure(
+    mace.relax_structure(
         structure_data="FePO4.cif",
         output_dir="voltage_calc/empty_relax"
     )
 
     # Relax bulk metal
-    mcp_mace_relax_structure(
-        structure_data="skills/mat-intercalation-voltage/resources/Li_metal.cif",
+    mace.relax_structure(
+        structure_data="${CLAUDE_SKILL_DIR}/resources/Li_metal.cif",
         output_dir="voltage_calc/metal_relax"
     )
     ```
@@ -71,8 +83,7 @@ where $E$ is the total energy, $n$ is the number of intercalated ions, and $\mu_
 5.  **Calculate Voltage**:
 
     ```bash
-    # Venv: venv/cpu
-    uv run --project venv/cpu python skills/mat-intercalation-voltage/scripts/calculate_voltage.py \
+    ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/calculate_voltage.py \
         --e_full -123.45 \
         --e_empty -98.76 \
         --e_metal -1.23 \

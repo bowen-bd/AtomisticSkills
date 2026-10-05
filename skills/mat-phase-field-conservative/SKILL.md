@@ -3,6 +3,7 @@ name: mat-phase-field-conservative
 description: Simulate conservative phase-fields (spinodal decomposition and phase separation) using the Cahn-Hilliard equation.
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # Conservative Phase-Field: Cahn-Hilliard
@@ -21,8 +22,7 @@ Where $M$ is the mobility, and $F$ is the Ginzburg-Landau free energy functional
 Use the provided script to set up a 2D grid and solve the Cahn-Hilliard equation using FiPy.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-phase-field-conservative/scripts/run_spinodal_decomposition.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_spinodal_decomposition.py \
     --grid-size 100 \
     --dx 0.25 \
     --steps 100 \
@@ -43,8 +43,7 @@ uv run --project venv/cpu python skills/mat-phase-field-conservative/scripts/run
 To benchmark the solver and reproduce the classic interconnected "worm-like" bicontinuous morphology of spinodal decomposition:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-phase-field-conservative/scripts/run_spinodal_decomposition.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_spinodal_decomposition.py \
     --grid-size 100 \
     --steps 200 \
     --dt 1e-2 \

@@ -3,6 +3,7 @@ name: mat-kinetic-monte-carlo
 description: Simulate long-time kinetics using rejection-free kinetic Monte Carlo (KMC) with event catalog construction, rate assignment via TST/Arrhenius, detailed-balance validation, superbasin handling, and transport analysis.
 metadata:
   category: [materials]
+  venv: [cpu, mlip]
 ---
 
 # Kinetic Monte Carlo (KMC)
@@ -113,8 +114,7 @@ For lattice KMC you need:
 - hop distances are physically reasonable (cutoffs/NN shells).
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-kinetic-monte-carlo/scripts/build_lattice_from_structure.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/build_lattice_from_structure.py \
     --structure relaxed.cif \
     --site_element Li \
     --cutoff 3.2 \
@@ -159,8 +159,7 @@ k_ij / k_ji ~ exp(-(E_j - E_i) / kBT)
 - rates have correct units and magnitudes
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-kinetic-monte-carlo/scripts/validate_detailed_balance.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/validate_detailed_balance.py \
     --config kmc_config.json
 ```
 
@@ -189,8 +188,7 @@ Use a rejection-free algorithm (residence-time / Gillespie / n-fold way):
 - advance time by exponential waiting time.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-kinetic-monte-carlo/scripts/run_lattice_kmc.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_lattice_kmc.py \
     --config kmc_config.json
 ```
 
@@ -206,8 +204,7 @@ Typical outputs:
 - Arrhenius fits across temperature.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-kinetic-monte-carlo/scripts/analyze_kmc_msd.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/analyze_kmc_msd.py \
     --trace kmc_run_T800K/kmc_trace.npz \
     --dim 3 \
     --out kmc_run_T800K/D_fit.json
@@ -248,26 +245,22 @@ The included engine supports:
 ### Example A: Vacancy Diffusion on Li Sublattice
 ```bash
 # 1) Build site network from relaxed structure
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-kinetic-monte-carlo/scripts/build_lattice_from_structure.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/build_lattice_from_structure.py \
     --structure relaxed.cif \
     --site_element Li \
     --cutoff 3.2 \
     --out lattice.json
 
 # 2) Validate detailed balance (if using site energies)
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-kinetic-monte-carlo/scripts/validate_detailed_balance.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/validate_detailed_balance.py \
     --config kmc_config.json
 
 # 3) Run KMC
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-kinetic-monte-carlo/scripts/run_lattice_kmc.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_lattice_kmc.py \
     --config kmc_config.json
 
 # 4) Analyze -> D_tracer, D_J, Haven ratio
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-kinetic-monte-carlo/scripts/analyze_kmc_msd.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/analyze_kmc_msd.py \
     --trace kmc_run_T800K/kmc_trace.npz \
     --dim 3 \
     --out kmc_run_T800K/D_fit.json
@@ -281,16 +274,16 @@ python examples/literature_validation/prepare_h_migration.py \
     --model_type mace --model_name MACE-OMAT-0-small
 
 # 2) NEB barrier (Env: mace-agent, GPU)
-python skills/chem-neb-barrier/scripts/calculate_barrier.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/../chem-neb-barrier/scripts/calculate_barrier.py \
     --start_structure start_relaxed.cif --end_structure end_relaxed.cif \
     --model_type mace --model_name MACE-OMAT-0-small \
     --n_images 5 --fmax 0.02 --output_dir neb_results
 
 # 3) Phonon at equilibrium + saddle point (Env: mace-agent, GPU)
-python skills/mat-phonon/scripts/calculate_phonon.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/../mat-phonon/scripts/calculate_phonon.py \
     --structure start_relaxed.cif --model_type mace --model_name MACE-OMAT-0-small \
     --supercell_matrix "[[2,0,0],[0,2,0],[0,0,2]]" --output_dir phonon_eq
-python skills/mat-phonon/scripts/calculate_phonon.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/../mat-phonon/scripts/calculate_phonon.py \
     --structure saddle_point.cif --model_type mace --model_name MACE-OMAT-0-small \
     --supercell_matrix "[[2,0,0],[0,2,0],[0,0,2]]" --output_dir phonon_ts
 

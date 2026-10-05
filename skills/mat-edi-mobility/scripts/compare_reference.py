@@ -11,7 +11,7 @@ Usage:
         --tol 0.10 --output-dir results/
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: pyyaml (standard library otherwise)
 """
 

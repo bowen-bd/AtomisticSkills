@@ -9,7 +9,7 @@ Usage:
     python isolate_curves.py plot.png metadata.json --color "#1f77b4" --output pixels.csv
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: opencv, scikit-image, numpy
 """
 

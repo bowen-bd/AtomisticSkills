@@ -3,6 +3,7 @@ name: ml-mlip-automl
 description: Automate hyperparameter tuning for MLIPs (MACE, MatGL, FairChem) using an LLM-driven search framework.
 metadata:
   category: [machine-learning]
+  venv: []
 ---
 
 # LLM-Coupled MLIP Hyperparameter Search (AutoML)

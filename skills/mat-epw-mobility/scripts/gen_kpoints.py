@@ -10,7 +10,7 @@ Usage:
     python gen_kpoints.py 12 12 1
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: none (Python standard library only)
 """
 

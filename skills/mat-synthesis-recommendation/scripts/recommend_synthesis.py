@@ -10,7 +10,7 @@ Usage:
     python recommend_synthesis.py "Li2CO3" --type solid-state --min-temp 500
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: mp-api, pymatgen
     - MP_API_KEY environment variable or ~/.atomistic_skills.yaml configuration
 """
@@ -27,7 +27,7 @@ try:
     from pymatgen.core import Composition
 except ImportError as e:
     print(f"Error: Missing required package: {e}")
-    print("Please activate the base-agent conda environment")
+    print("Please activate the cpu Environment")
     sys.exit(1)
 
 

@@ -14,7 +14,7 @@ Usage:
     python parse_transport.py mos2_transport.dat --output-dir results/
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: pyyaml (standard library otherwise)
 """
 

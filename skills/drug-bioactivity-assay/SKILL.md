@@ -3,6 +3,7 @@ name: drug-bioactivity-assay
 description: Fetch biological assays and target proteins a chemical has been tested against via PubChem.
 metadata:
   category: [drug-discovery]
+  venv: [cpu]
 ---
 
 # Bioactivity and Assay Data Retrieval
@@ -16,8 +17,7 @@ To programmatically retrieve the testing history of a specific chemical compound
 Retrieve all assays for a given compound (CID), regardless of outcome:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-bioactivity-assay/scripts/get_assays.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/get_assays.py \
   --cid 2244 \
   --limit 50 \
   --outdir research/aspirin_assays \
@@ -28,8 +28,7 @@ uv run --project venv/cpu python skills/drug-bioactivity-assay/scripts/get_assay
 Use the `--active_only` flag to strictly return assays where the compound was marked as "Active" or showed positive binding/inhibition.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-bioactivity-assay/scripts/get_assays.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/get_assays.py \
   --cid 5291 \
   --active_only \
   --limit 50 \
@@ -49,12 +48,11 @@ uv run --project venv/cpu python skills/drug-bioactivity-assay/scripts/get_assay
 We can test extracting known active targets for the cancer drug Imatinib (CID: 5291).
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-bioactivity-assay/scripts/get_assays.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/get_assays.py \
   --cid 5291 \
   --active_only \
   --limit 20 \
-  --outdir skills/drug-bioactivity-assay/examples/imatinib \
+  --outdir ${CLAUDE_SKILL_DIR}/examples/imatinib \
   --output assays_imatinib_active.json
 ```
 

@@ -3,6 +3,7 @@ name: general-query-literature-database
 description: Find relevant simulation workflows in the in-house literature database.
 metadata:
   category: [general]
+  venv: []
 ---
 
 # Query Literature Databases

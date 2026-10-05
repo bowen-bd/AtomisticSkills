@@ -70,7 +70,7 @@ try:
 except (ImportError, ValueError, TypeError, AttributeError) as e:
     MATGL_AVAILABLE = False
     logger.warning(
-        f"MatGL not available: {e}. Required for MatGL model operations in matgl-agent environment."
+        f"MatGL not available: {e}. Required for MatGL model operations in the 'mlip' environment."
     )
     matgl = None
 

@@ -9,7 +9,7 @@ Usage:
     python run_orca_input.py --input_file calculation.inp --output_dir results
 
 Requirements:
-    - Conda environment: orca-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: ase (optional, for structure handling)
     - Environment variable: ORCA_BINARY_PATH
 """

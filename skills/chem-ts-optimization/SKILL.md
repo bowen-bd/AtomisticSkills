@@ -3,6 +3,7 @@ name: chem-ts-optimization
 description: Optimize non-periodic molecular TS guesses and verify first-order saddle point from vibrational modes.
 metadata:
   category: [chemistry]
+  venv: [fairchem, mlip]
 ---
 
 # TS Optimization with Sella
@@ -24,8 +25,7 @@ Runs Sella TS optimization followed by finite-difference vibrations.
 ### Use with MACE
 
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/chem-ts-optimization/scripts/optimize_ts_sella.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/optimize_ts_sella.py \
   --ts_guess ts_guess.xyz \
   --model_type mace \
   --model_name MACE-OFF23-small \
@@ -38,8 +38,7 @@ uv run --project venv/mlip python skills/chem-ts-optimization/scripts/optimize_t
 ### Use with FAIRChem (UMA)
 
 ```bash
-# Venv: venv/fairchem
-uv run --project venv/fairchem python skills/chem-ts-optimization/scripts/optimize_ts_sella.py \
+${CLAUDE_SKILL_DIR}/../../venv/run fairchem python ${CLAUDE_SKILL_DIR}/scripts/optimize_ts_sella.py \
   --ts_guess ts_guess.xyz \
   --model_type fairchem \
   --model_name uma-s-1p1 \

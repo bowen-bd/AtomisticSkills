@@ -11,7 +11,7 @@ Usage:
     python run_optimization.py --structure ts_guess.xyz --opt_type ts --functional B3LYP --basis_set def2-TZVP
 
 Requirements:
-    - Conda environment: orca-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: scine_utilities, scine_readuct, ase, numpy
     - Environment variable: ORCA_BINARY_PATH
 """

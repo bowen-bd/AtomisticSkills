@@ -3,6 +3,7 @@ name: ml-mlip-nvalchemi
 description: GPU-accelerated batched inference for MACE, MatGL (TensorNet/M3GNet/CHGNet), and FairChem MLIPs using NValchemi, enabling parallel static, relax, and MD workflows across multiple structures simultaneously.
 metadata:
   category: [machine-learning]
+  venv: [fairchem, mlip]
 ---
 
 # ml-mlip-nvalchemi
@@ -135,7 +136,7 @@ Speedup comparison for a 100-step MD simulation under the `nvt_nose_hoover` ense
 ### Step 1 — Verify NValchemi is Available
 
 ```python
-# Venv: venv/mlip (or venv/fairchem for FairChem models)
+# (or venv/fairchem for FairChem models)
 from src.utils.mlips.nvalchemi.nvalchemi_utils import NVALCHEMI_AVAILABLE
 print(NVALCHEMI_AVAILABLE)  # must be True
 
@@ -151,7 +152,6 @@ print(nv)  # should be non-None MACEWrapper(nvalchemi)
 Pass a list of ASE Atoms objects to `static_calculation`. The result dict includes a `"backend": "nvalchemi"` key when the batch path was used:
 
 ```python
-# Venv: venv/mlip
 from ase.build import bulk
 import numpy as np
 
@@ -165,7 +165,6 @@ result = wrapper.static_calculation(structures)
 Identical API for MatGL and FairChem wrappers:
 
 ```python
-# Venv: venv/mlip
 from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
 wrapper = MatGLWrapper(model_name="TensorNet-PES-MatPES-PBE-2025.2", device="cuda")
 wrapper.load()
@@ -173,7 +172,6 @@ result = wrapper.static_calculation(structures)
 ```
 
 ```python
-# Venv: venv/fairchem
 from src.utils.mlips.fairchem.fairchem_wrapper import FAIRCHEMWrapper
 wrapper = FAIRCHEMWrapper(model_name="uma-s-1p2", device="cuda")
 wrapper.load()
@@ -183,7 +181,6 @@ result = wrapper.static_calculation(structures)
 ### Step 3 — Batch Geometry Relaxation
 
 ```python
-# Venv: venv/mlip
 result = wrapper.relax_structure(
     structure_data=structures,   # list of ASE Atoms
     fmax=0.05,                   # eV/Å convergence
@@ -200,7 +197,6 @@ Per-structure `relax.log` files (ASE FIRE format) are written incrementally to `
 ### Step 4 — Batch Molecular Dynamics
 
 ```python
-# Venv: venv/mlip
 result = wrapper.run_md(
     structure_data=structures,
     temperature=1000,
@@ -219,7 +215,6 @@ Unsupported (Berendsen, Andersen, inhomogeneous NPT) fall back to sequential aut
 To force sequential processing (e.g., debugging):
 
 ```python
-# Venv: venv/cpu
 import src.utils.mlips.nvalchemi.nvalchemi_utils as _nv
 _nv.check_nvalchemi_available = lambda: False   # temporary
 result = wrapper.static_calculation(structures)  # sequential
@@ -231,20 +226,17 @@ _nv.check_nvalchemi_available = lambda: True    # restore
 To re-run the full accuracy and speed benchmark for any environment:
 
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/ml-mlip-nvalchemi/scripts/run_nvalchemi_benchmark.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/run_nvalchemi_benchmark.py \
     --env mace \
     --n-repeat 3 \
     --output results_mace.json
 
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/ml-mlip-nvalchemi/scripts/run_nvalchemi_benchmark.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/run_nvalchemi_benchmark.py \
     --env matgl \
     --n-repeat 3 \
     --output results_matgl.json
 
-# Venv: venv/fairchem
-uv run --project venv/mlip python skills/ml-mlip-nvalchemi/scripts/run_nvalchemi_benchmark.py \
+${CLAUDE_SKILL_DIR}/../../venv/run fairchem python ${CLAUDE_SKILL_DIR}/scripts/run_nvalchemi_benchmark.py \
     --env fairchem \
     --n-repeat 3 \
     --output results_fairchem.json
@@ -271,8 +263,8 @@ See [resources/benchmark_results.md](resources/benchmark_results.md) for the ful
 | TensorNet-PES-MatPES-r2SCAN-2025.2 | 3.8× | **12×** | 8.0e-07 |
 | M3GNet-PES-MatPES-PBE-2025.2 | 3.7× | **11×** | 1.3e-03¹ |
 | M3GNet-PES-MatPES-r2SCAN-2025.2 | 3.9× | **11×** | 7.2e-04¹ |
-| CHGNet-PES-MatPES-PBE-2025.2.10 | 4.3× | **12×** | 2.4e-07 |
-| CHGNet-PES-MatPES-r2SCAN-2025.2.10 | 4.2× | **13×** | 9.5e-07 |
+| CHGNet-PES-MatPES-PBE-1M-2026.9 | 4.3× | **12×** | 2.4e-07 |
+| CHGNet-PES-MatPES-r2SCAN-1M-2026.9 | 4.2× | **13×** | 9.5e-07 |
 | QET-PES-MatPES-PBE-2025.2 | 4.2× | **13×** | 7.2e-07 |
 | QET-PES-MatPES-r2SCAN-2025.2 | 3.9× | **14×** | 9.5e-07 |
 | SO3Net-PES-ANI-1x-Subset | — | — | not supported |

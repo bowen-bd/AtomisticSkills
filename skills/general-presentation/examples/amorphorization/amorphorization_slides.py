@@ -6,7 +6,7 @@ Usage:
     python skills/general-presentation/examples/amorphorization/amorphorization_slides.py
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: python-pptx, Pillow
 """
 

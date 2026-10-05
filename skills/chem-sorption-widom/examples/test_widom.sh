@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"  # repository root, for venv/run
 cd $(dirname "$0")
 
 # Run Widom insertion using UMA
 export PYTHONPATH=$(dirname $(dirname $(dirname $(dirname "$PWD"))))
-conda run -n fairchem-agent python ../scripts/run_widom.py \
+"$ROOT/venv/run" fairchem python ../scripts/run_widom.py \
   --structure test_structure_supercell.relaxed.cif \
   --name test_structure \
   --calculator fairchem \

@@ -323,9 +323,8 @@ def main():
     print(f"Dataset metadata written to: {metadata_path}")
     print("=======================================================\n")
     print("To generate training configs and start training, run:")
-    print("  conda activate fairchem-agent")
     print(
-        f"  python generate_fairchem_config.py --data-metadata {metadata_path.absolute()} --output-dir {save_dir.absolute()}"
+        f"  venv/run fairchem python {Path(__file__).resolve().parent / 'generate_fairchem_config.py'} --data-metadata {metadata_path.absolute()} --output-dir {save_dir.absolute()}"
     )
 
     # Save input configs for reproducibility

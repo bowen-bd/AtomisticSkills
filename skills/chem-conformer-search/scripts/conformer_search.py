@@ -58,7 +58,7 @@ def smiles_to_atoms_list(
     """
     if not HAS_RDKIT:
         raise ImportError(
-            "RDKit is required for processing SMILES. Please install rdkit or use mace-agent environment."
+            "RDKit is required for processing SMILES. Please install rdkit or use the 'mlip' environment."
         )
 
     logger.info(f"Generating {num_conformers} initial conformers for SMILES: {smiles}")

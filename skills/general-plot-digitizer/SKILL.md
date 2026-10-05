@@ -3,6 +3,7 @@ name: general-plot-digitizer
 description: Extract continuous X-Y data from experimental spectrum images (Raman, XRD, UV-Vis, IR, etc.) via hybrid VLM + CV pipeline and agent-in-the-loop workflow.
 metadata:
   category: [general, machine-learning]
+  venv: [cpu]
 ---
 
 # General Plot Digitizer
@@ -23,8 +24,7 @@ Do **not** attempt to generate JSON with the VLM. It acts only as a visual senso
 
 1. **Generate grid overlay**:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/general-plot-digitizer/scripts/plot_utils.py plot.png --draw-grid
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/plot_utils.py plot.png --draw-grid
 ```
 This produces `plot_grid.png` with a labeled pixel grid for precise coordinate reading.
 
@@ -73,8 +73,7 @@ Read the VLM narrative and construct `metadata.json`. Schema: [resources/metadat
 
 **If the VLM color guess is uncertain**, run:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/general-plot-digitizer/scripts/suggest_colors.py plot.png \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/suggest_colors.py plot.png \
   --bounding-box x_min,y_min,x_max,y_max
 ```
 This reports dominant non-background colors in the cropped region. Use the top result as `color_hint`.
@@ -93,8 +92,7 @@ This reports dominant non-background colors in the cropped region. Use the top r
 
 **Run the pipeline:**
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/general-plot-digitizer/scripts/digitize_pipeline.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/digitize_pipeline.py \
   plot.png \
   --full \
   --metadata metadata.json \
@@ -160,7 +158,7 @@ Append the VLM-dictated flags from the table above. The pipeline also reads `cli
 | `--debug` | Save intermediate crops/masks for diagnosing failures | off |
 | `--json-summary` | Emit machine-readable JSON summary to stdout after completion | off |
 
-Full flag list: `python skills/general-plot-digitizer/scripts/digitize_pipeline.py --help`
+Full flag list: `python ${CLAUDE_SKILL_DIR}/scripts/digitize_pipeline.py --help`
 
 ## Examples
 

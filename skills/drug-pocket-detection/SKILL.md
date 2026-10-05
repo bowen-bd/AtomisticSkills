@@ -10,6 +10,7 @@ description: >
   needs to assess druggability, or wants to choose where to dock.
 metadata:
   category: [drug-discovery]
+  venv: [cpu]
 ---
 
 # drug-pocket-detection
@@ -48,8 +49,7 @@ Prepare inputs explicitly: strip unwanted waters, buffer ions, and ligands; keep
 ### 2. Detect pockets with fpocket (default)
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-pocket-detection/scripts/detect_pockets.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/detect_pockets.py \
   --protein receptor_prepared.pdb \
   --backend fpocket \
   --top_n 10 \
@@ -80,8 +80,7 @@ default and always records the exact command line in the output JSON
 ### 3. Detect pockets with P2Rank (optional ML backend)
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-pocket-detection/scripts/detect_pockets.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/detect_pockets.py \
   --protein receptor_prepared.pdb \
   --backend p2rank \
   --top_n 10 \
@@ -91,7 +90,7 @@ uv run --project venv/cpu python skills/drug-pocket-detection/scripts/detect_poc
 For predicted structures (AlphaFold, NMR, cryo-EM) use the dedicated profile, which avoids relying on B-factor as a feature:
 
 ```bash
-python skills/drug-pocket-detection/scripts/detect_pockets.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/detect_pockets.py \
   --protein af_model.pdb \
   --backend p2rank \
   --p2rank_config alphafold \
@@ -163,8 +162,7 @@ The broad qualitative interpretation (>0.5 promising, ~0 unlikely) is from fpock
 ### 5. Visualize the top pockets
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-pocket-detection/scripts/visualize_pockets.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu+pymol python ${CLAUDE_SKILL_DIR}/scripts/visualize_pockets.py \
   --protein receptor_prepared.pdb \
   --pockets pockets.json \
   --top_n 3 \
@@ -178,8 +176,7 @@ Renders the protein as a transparent cartoon, draws a colored sphere at each poc
 Convert the chosen pocket into a docking-box JSON consumable by the downstream skills:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-pocket-detection/scripts/pocket_to_box.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/pocket_to_box.py \
   --pockets pockets.json \
   --rank 1 \
   --padding 6.0 \

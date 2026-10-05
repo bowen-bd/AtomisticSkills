@@ -14,7 +14,7 @@ Usage:
     python prepare_protein.py --pdb_id 1iep --assembly 1 --output_dir prep/
 
 Requirements:
-    - Conda environment: drugdisc-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: pdbfixer, openmm
 """
 

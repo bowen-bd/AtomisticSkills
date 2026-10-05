@@ -3,6 +3,7 @@ name: mat-xrd-refinement
 description: Perform Rietveld refinement from experimental XRD patterns using DARA (BGMN).
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # Rietveld Refinement
@@ -36,10 +37,10 @@ Two columns (2θ and intensity), space-separated. Options:
 
 ```bash
 # From JSON (e.g. xrd-spectrum output)
-python skills/mat-xrd-refinement/scripts/convert_xrd_to_xy.py --input_file path/to/xrd.json
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/convert_xrd_to_xy.py --input_file path/to/xrd.json
 
 # From DIF
-python skills/mat-xrd-refinement/scripts/convert_xrd_to_xy.py --input_file path/to/scan.txt
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/convert_xrd_to_xy.py --input_file path/to/scan.txt
 ```
 
 **Convert arguments:**
@@ -81,9 +82,8 @@ No BGMN working files (`.str`, `.par`, `.lst`, etc.) are saved; DARA runs in a t
 Layout: `examples/LiFePO4/LiFePO4_xrd.xy` and `examples/LiFePO4/cifs/LiFePO4.cif`, `Li3PO4.cif`. No `--cifs` needed.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-xrd-refinement/scripts/refine.py \
-  --xrd_data skills/mat-xrd-refinement/examples/LiFePO4/LiFePO4_xrd.xy
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/refine.py \
+  --xrd_data ${CLAUDE_SKILL_DIR}/examples/LiFePO4/LiFePO4_xrd.xy
 ```
 
 Results: `examples/LiFePO4/refinement_results/LiFePO4/` (refinement_result.json, HTML/PNG, peak_data CSV).
@@ -91,14 +91,9 @@ Results: `examples/LiFePO4/refinement_results/LiFePO4/` (refinement_result.json,
 ### Example 2: CaNi(PO3)4 (path with parentheses — must quote)
 
 ```bash
-# Venv: venv/cpu. Quote the path because of (PO3), (OH), (NH4).
-uv run --project venv/cpu python skills/mat-xrd-refinement/scripts/refine.py \
-  --xrd_data "skills/mat-xrd-refinement/examples/CaNi(PO3)4_800_240_Ca(OH)2_(NH4)2HPO4_NiO/CaNi(PO3)4_800_240_Ca(OH)2_(NH4)2HPO4_NiO.xy"
-
-# If your shell or conda run still has trouble with parentheses in the path,
-# you can invoke the environment's Python explicitly instead of using `conda run`:
-/home/USER/.conda/envs/xrd-agent/bin/python skills/mat-xrd-refinement/scripts/refine.py \
-  --xrd_data "skills/mat-xrd-refinement/examples/CaNi(PO3)4_800_240_Ca(OH)2_(NH4)2HPO4_NiO/CaNi(PO3)4_800_240_Ca(OH)2_(NH4)2HPO4_NiO.xy"
+# Quote the path because of (PO3), (OH), (NH4).
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/refine.py \
+  --xrd_data "${CLAUDE_SKILL_DIR}/examples/CaNi(PO3)4_800_240_Ca(OH)2_(NH4)2HPO4_NiO/CaNi(PO3)4_800_240_Ca(OH)2_(NH4)2HPO4_NiO.xy"
 ```
 
 CIFs are taken from `examples/CaNi(PO3)4_.../cifs/` (NiO_225_sym.cif, CaNi(PO3)4_15_sym.cif). Results under that example’s `refinement_results/`.
@@ -106,7 +101,7 @@ CIFs are taken from `examples/CaNi(PO3)4_.../cifs/` (NiO_225_sym.cif, CaNi(PO3)4
 ### Example 3: Explicit CIFs and optional parameters
 
 ```bash
-python skills/mat-xrd-refinement/scripts/refine.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/refine.py \
   --xrd_data pattern.xy \
   --cifs phase1.cif phase2.cif \
   --phase_params phase_params.json \
@@ -118,7 +113,7 @@ python skills/mat-xrd-refinement/scripts/refine.py \
 If you want to adjust the visualization (e.g. dimensions, font sizes, legend position) without re-running the heavy DARA refinement process, you can use the standalone `plot.py` script. This script reads the `*_curve_data.csv` exported by `refine.py`.
 
 ```bash
-python skills/mat-xrd-refinement/scripts/plot.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/plot.py \
   --data_dir refinement_results/my_pattern \
   --output refinement_results/my_pattern/reformatted_plot
 ```

@@ -10,7 +10,7 @@ Usage:
     python run_sampling.py disordered.cif --sampling_type order_disorder --n_structures 50 --output_dir ordered_dir
 
 Requirements:
-    - Conda environment: matgl-agent (for MatGL/CHGNet), mace-agent (for MACE), or base-agent (for Order-Disorder)
+    - Environment: mlip (for MatGL/CHGNet), mlip (for MACE), or cpu (for Order-Disorder)
     - Required packages: ase, pymatgen, matgl/mace, matcalc
 """
 
@@ -27,9 +27,6 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from ase.io import read
-
-# Set MatGL backend
-os.environ["MATGL_BACKEND"] = "DGL"
 
 
 def setup_logging(output_dir: Optional[str] = None):
@@ -141,7 +138,7 @@ def run_sampling():
     if args.model_type == "matgl":
         from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
 
-        model_name = args.model_name or "CHGNet-PES-MatPES-PBE-2025.2.10"
+        model_name = args.model_name or "CHGNet-PES-MatPES-PBE-1M-2026.9"
         wrapper = MatGLWrapper(model_name=model_name, device="auto")
         wrapper.load()
         pes_calc = wrapper.create_calculator()

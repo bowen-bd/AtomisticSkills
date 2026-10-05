@@ -8,7 +8,7 @@ Usage:
     python pixel_to_data.py pixels.csv metadata.json --output data.csv
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: numpy, pandas
 """
 

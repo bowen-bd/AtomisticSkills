@@ -3,6 +3,7 @@ name: mat-solid-free-energy
 description: Calculate absolute solid Helmholtz free energy, and optional Gibbs free energy, with Frenkel-Ladd switching using portable MLIP wrappers on a pre-equilibrated periodic structure.
 metadata:
   category: [materials]
+  venv: [mlip]
 ---
 
 # Solid Free Energy
@@ -50,8 +51,7 @@ This skill assumes the input structure is already appropriate for the target the
 Run the standalone Frenkel-Ladd script:
 
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/mat-solid-free-energy/scripts/run_frenkel_ladd.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/run_frenkel_ladd.py \
     --structure path/to/pre_equilibrated_structure.cif \
     --name my_solid \
     --calculator mace \
@@ -107,9 +107,8 @@ The script defaults are:
 See `examples/Si_MACE/` for a minimal silicon example using MACE with reduced step counts for demonstration.
 
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/mat-solid-free-energy/scripts/run_frenkel_ladd.py \
-    --structure skills/mat-solid-free-energy/examples/Si_MACE/Si.cif \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/run_frenkel_ladd.py \
+    --structure ${CLAUDE_SKILL_DIR}/examples/Si_MACE/Si.cif \
     --name Si_demo \
     --calculator mace \
     --model-name MACE-OMAT-0-small \

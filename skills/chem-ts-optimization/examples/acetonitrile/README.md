@@ -35,7 +35,7 @@ CH3CN (acetonitrile)  <->  CH3NC (isocyanomethane)
 ## Usage
 
 ```bash
-micromamba run -n fairchem-agent bash skills/chem-ts-optimization/examples/acetonitrile/run_example.sh
+venv/run fairchem bash skills/chem-ts-optimization/examples/acetonitrile/run_example.sh
 ```
 
 ## Example Results

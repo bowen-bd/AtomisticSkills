@@ -9,7 +9,7 @@ Usage:
     python calculate_elasticity.py --structure Cu.cif --model_type mace --output_dir elasticity_results
 
 Requirements:
-    - Conda environment: mace-agent, matgl-agent, or fairchem-agent
+    - Environment: mlip, mlip, or fairchem (run with: venv/run fairchem python ...)
     - Required packages: ase, matcalc, pymatgen
 """
 
@@ -523,7 +523,7 @@ if __name__ == "__main__":
         "CLAMPED-ION (frozen-ion) response, in which every atom is carried rigidly by "
         "the affine strain: cheaper, and matcalc's own default, but systematically "
         "stiffer whenever the structure has internal degrees of freedom. The gap is "
-        "the non-affine softening and is not small -- for Pnma CaMgSi it reaches 7.5% "
+        "the non-affine softening and is not small -- for Pnma CaMgSi it reaches 7.5%% "
         "on the shear modulus. Defaults to the physical answer rather than inheriting "
         "matcalc's screening default.",
     )

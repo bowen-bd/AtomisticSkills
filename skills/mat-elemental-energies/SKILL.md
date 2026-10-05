@@ -3,6 +3,7 @@ name: mat-elemental-energies
 description: A library of ground-state element structures and their energies calculated from MLIPs. Used to calculate formation energies of compounds.
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # Elemental Energies
@@ -15,8 +16,7 @@ To provide a centralized library of the most stable phases (ground states) for e
 ### 1. Retrieve Elemental Energies
 To get the energies for a list of elements from a specific checkpoint:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-elemental-energies/scripts/get_elemental_energies.py --elements Li Fe O --checkpoint mace-mp-medium
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/get_elemental_energies.py --elements Li Fe O --checkpoint mace-mp-medium
 ```
 
 

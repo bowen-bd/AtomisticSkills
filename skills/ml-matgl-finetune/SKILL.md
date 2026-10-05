@@ -3,6 +3,7 @@ name: ml-matgl-finetune
 description: Fine-tune MatGL machine learning interatomic potentials on custom datasets.
 metadata:
   category: [machine-learning]
+  venv: [mlip]
 ---
 # MatGL Fine-tuning
 
@@ -23,9 +24,9 @@ To evaluate and improve the accuracy of a foundation MatGL potential (e.g., CHGN
 ### 1. Data Preparation
 Convert your dataset into the appropriate JSON format for MatGL training:
 ```bash
-uv run --project venv/mlip python skills/ml-matgl-finetune/scripts/prepare_matgl_data.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/prepare_matgl_data.py \
     --data /path/to/training_data.json \
-    --model CHGNet-MatPES-PBE-2025.2.10-2.7M-PES \
+    --model CHGNet-PES-MatPES-PBE-1M-2026.9 \
     --val-split 0.1 \
     --output-dir ./matgl_finetuned
 ```
@@ -33,10 +34,10 @@ uv run --project venv/mlip python skills/ml-matgl-finetune/scripts/prepare_matgl
 ### 2. Run Training
 Fine-tune the model using the prepared data:
 ```bash
-uv run --project venv/mlip python skills/ml-matgl-finetune/scripts/train_matgl.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/train_matgl.py \
     --train-data ./matgl_finetuned/train_data.json \
     --val-data ./matgl_finetuned/val_data.json \
-    --model CHGNet-MatPES-PBE-2025.2.10-2.7M-PES \
+    --model CHGNet-PES-MatPES-PBE-1M-2026.9 \
     --epochs 10 \
     --lr 1e-3 \
     --batch-size 4 \
@@ -82,7 +83,7 @@ MatGL fine-tuning is divided into a data preparation step (formatting nested dic
 ## Constraints
 - **Data Size**: For small datasets, `--freeze-backbone` is strongly recommended to prevent catastrophic forgetting.
 - **Reference Energies (`element_refs`)**: If your fine-tuning data is computed using the same DFT functional (e.g., PBE) as the foundation model's original training data, you should reuse the foundation model's original isolated atom reference energies instead of re-fitting them. This maintains thermodynamic compatibility across the periodic table.
-- **Environment**: Must be executed within the `matgl-agent` conda environment where MatGL and DGL are properly configured.
+- **Environment**: Runs in the `mlip` environment (`venv/run mlip ...`). MatGL >= 4 uses PyTorch Geometric only; there is no DGL backend.
 - **Stress Units**: MatGL inherently converts stress internally to GPa, however the standard expected inputs directly into its JSON files are `eV/Å³`. Raw VASP stress obtained directly via some JSON files may be in kilo-Bar (`kB`). The Atomate2 MCP tool handles this conversion automatically when `convert_units=True`. However, if your JSON labels contain raw `kB` stress, you MUST pass the `--vasp-stress-conversion` flag to `scripts/prepare_matgl_data.py` to automatically scale them by `-1/160.2x`. For more details on unit standardization, see @[skills/general-property-units/SKILL.md].
 
 ---

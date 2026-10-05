@@ -3,6 +3,7 @@ name: mat-grand-canonical-mc
 description: Run Grand Canonical Monte Carlo (GCMC) simulations with cluster expansion models to map composition-temperature phase diagrams via chemical potential sweeps.
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # Grand Canonical Monte Carlo
@@ -41,8 +42,7 @@ print(f"Loaded CE with {len(ce.cluster_subspace)} clusters")
 Use the `run_gcmc_sweep.py` script to perform systematic sweeps of chemical potential at different temperatures.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-grand-canonical-mc/scripts/run_gcmc_sweep.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_gcmc_sweep.py \
     --ce_file cluster_expansion.json \
     --supercell 3 3 3 \
     --temperatures 400 600 800 1000 \
@@ -76,8 +76,7 @@ uv run --project venv/cpu python skills/mat-grand-canonical-mc/scripts/run_gcmc_
 Use the analysis script to visualize the results and create phase diagrams.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-grand-canonical-mc/scripts/analyze_gcmc_results.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/analyze_gcmc_results.py \
     --results_file gcmc_results/results_summary.json \
     --output_dir gcmc_results/ \
     --element Ag
@@ -95,9 +94,8 @@ uv run --project venv/cpu python skills/mat-grand-canonical-mc/scripts/analyze_g
 Using the pre-trained Cu-Ag cluster expansion:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-grand-canonical-mc/scripts/run_gcmc_sweep.py \
-    --ce_file skills/ml-cluster-expansion/examples/CuAg_CE/cluster_expansion.json \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_gcmc_sweep.py \
+    --ce_file ${CLAUDE_SKILL_DIR}/../ml-cluster-expansion/examples/CuAg_CE/cluster_expansion.json \
     --supercell 4 4 4 \
     --temperatures 300 400 500 600 700 800 900 1000 \
     --mu_min -0.3 \
@@ -106,16 +104,15 @@ uv run --project venv/cpu python skills/mat-grand-canonical-mc/scripts/run_gcmc_
     --steps 30000 \
     --equilibration_steps 5000 \
     --element Ag \
-    --output_dir skills/mat-grand-canonical-mc/examples/CuAg/gcmc_results/
+    --output_dir ${CLAUDE_SKILL_DIR}/examples/CuAg/gcmc_results/
 ```
 
 Then analyze:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-grand-canonical-mc/scripts/analyze_gcmc_results.py \
-    --results_file skills/mat-grand-canonical-mc/examples/CuAg/gcmc_results/results_summary.json \
-    --output_dir skills/mat-grand-canonical-mc/examples/CuAg/ \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/analyze_gcmc_results.py \
+    --results_file ${CLAUDE_SKILL_DIR}/examples/CuAg/gcmc_results/results_summary.json \
+    --output_dir ${CLAUDE_SKILL_DIR}/examples/CuAg/ \
     --element Ag
 ```
 

@@ -3,9 +3,22 @@ name: chem-solution-md
 description: Set up and run molecular dynamics simulations of molecules in explicit solvent boxes using Packmol for box construction and MLIPs for dynamics.
 metadata:
   category: [chemistry]
+  venv: [cpu, mlip]
 ---
 
 # Solution-Phase Molecular Dynamics
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `mace.load_model` is the `load_model`
+> tool of the `mace` server (`mcp__mace__load_model`, or
+> `mcp__plugin_atomistic-skills_mace__load_model` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli mace load_model key=value run_md key=value
+> ```
 
 ## Goal
 
@@ -36,15 +49,14 @@ Refer to the [foundation-potentials skill](../ml-foundation-potentials/SKILL.md)
 Use the box-building script to create a solvated system with Packmol:
 
 ```bash
-# Venv: venv/cpu
 # Pure solvent box (64 water molecules)
-uv run --project venv/cpu python skills/chem-solution-md/scripts/build_solvation_box.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/build_solvation_box.py \
     --solvent water \
     --num_solvent 64 \
     --output_dir research/my_folder/solvation_box
 
 # Solute in solvent (NaCl in 64 water molecules)
-uv run --project venv/cpu python skills/chem-solution-md/scripts/build_solvation_box.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/build_solvation_box.py \
     --solute_smiles "[Na+].[Cl-]" \
     --solvent water \
     --num_solvent 64 \
@@ -78,11 +90,11 @@ Use MCP `run_md` tools for NPT equilibration followed by NVT production.
 
 **NPT Equilibration** (stabilize density):
 ```bash
-mcp_mace_load_model(
+mace.load_model(
     model_name="MACE-MH-1",
     task_name="omol"
 )
-mcp_mace_run_md(
+mace.run_md(
     structure_data="research/my_folder/solvation_box/solvated_box.cif",
     temperature=300,
     ensemble="npt",
@@ -98,7 +110,7 @@ mcp_mace_run_md(
 
 **NVT Production** (use the equilibrated structure):
 ```bash
-mcp_mace_run_md(
+mace.run_md(
     structure_data="research/my_folder/npt_equilibration/final_structure.cif",
     temperature=300,
     ensemble="nvt",
@@ -116,8 +128,7 @@ mcp_mace_run_md(
 Run the analysis script on the production trajectory:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-solution-md/scripts/analyze_solution_md.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/analyze_solution_md.py \
     --trajectory research/my_folder/nvt_production/trajectory.traj \
     --rdf_pairs "Na-O,Cl-O,O-O" \
     --msd_elements "Na,Cl" \
@@ -148,20 +159,18 @@ uv run --project venv/cpu python skills/chem-solution-md/scripts/analyze_solutio
 ### Pure Water Box
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-solution-md/scripts/build_solvation_box.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/build_solvation_box.py \
     --solvent water --num_solvent 64 \
-    --output_dir skills/chem-solution-md/examples/pure_water
+    --output_dir ${CLAUDE_SKILL_DIR}/examples/pure_water
 ```
 Expected: 192 atoms (64 × 3), box ~12.4 Å
 
 ### NaCl in Water
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/chem-solution-md/scripts/build_solvation_box.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/build_solvation_box.py \
     --solute_smiles "[Na+].[Cl-]" --solvent water --num_solvent 64 \
-    --output_dir skills/chem-solution-md/examples/NaCl_in_water
+    --output_dir ${CLAUDE_SKILL_DIR}/examples/NaCl_in_water
 ```
 
 After MD + analysis, expected RDF peak positions:

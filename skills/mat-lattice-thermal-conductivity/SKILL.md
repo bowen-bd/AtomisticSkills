@@ -3,6 +3,7 @@ name: mat-lattice-thermal-conductivity
 description: Calculate lattice thermal conductivity of materials with MLIPs.
 metadata:
   category: [materials]
+  venv: [mlip]
 ---
 
 # Lattice Thermal Conductivity Calculation Skill
@@ -51,8 +52,7 @@ Check the `phonon_results.json` file and phonon band structure to see if the pho
 ### Step Three: Calculate lattice thermal conductivity
 
 ```sh
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/mat-lattice-thermal-conductivity/scripts/calculate_thermal_conductivity.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/calculate_thermal_conductivity.py \
     --structure Si.cif \
     --model_type mace \
     --model_name MACE-OMAT-0-small \

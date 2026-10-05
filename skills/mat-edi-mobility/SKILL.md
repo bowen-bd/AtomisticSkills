@@ -3,6 +3,7 @@ name: mat-edi-mobility
 description: Compute defect-limited carrier mobility and electron-defect scattering matrix elements in 2D and 3D semiconductors from first principles with Quantum ESPRESSO and the EDI plugin.
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # mat-edi-mobility
@@ -98,7 +99,7 @@ S UPFs are used as `Mo.upf` and `S.upf`. QE 7.5 must be built with Wannier90.
 > compiled MPI binaries, exactly as VASP is in
 > [mat-dft-vasp](../mat-dft-vasp/SKILL.md). This skill targets a source build of
 > **QE 7.5 + EDI v2.0** (repo `main` @ `41fed72`) with **PseudoDojo NC-SR v0.5 PBE stringent**
-> pseudopotentials. The `# Env: base-agent` annotations apply only to the Python
+> pseudopotentials. The `venv/run cpu` commands apply only to the Python
 > parser scripts. Reference input decks for every step are in
 > [`resources/inputs/`](resources/inputs/). Replace `<ranks>` with your MPI rank
 > count; `mpirun -np` and `srun -n` are interchangeable. Set `pseudo_dir` in each
@@ -130,8 +131,7 @@ with the helper, then splice it into the NSCF deck
 already contains the 144-point 12x12x1 card):
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-edi-mobility/scripts/gen_kgrid.py 12 12 1
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/gen_kgrid.py 12 12 1
 ```
 
 ```bash
@@ -225,9 +225,8 @@ in cm^2/Vs) and `mos2_inv_tau.dat` (state-resolved
 `ik ibnd E inv_tau_SERTA inv_tau_MRTA tau_SERTA tau_MRTA`). Parse them:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-edi-mobility/scripts/parse_transport.py mos2_transport.dat --output-dir results/
-uv run --project venv/cpu python skills/mat-edi-mobility/scripts/parse_inv_tau.py mos2_inv_tau.dat --output-dir results/
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/parse_transport.py mos2_transport.dat --output-dir results/
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/parse_inv_tau.py mos2_inv_tau.dat --output-dir results/
 ```
 
 Fine-grid convergence is cheap to sweep: because `edwread = .true.` reuses
@@ -271,9 +270,8 @@ This writes `mos2_edmat_direct.dat` (direct $M$, **absolute** NSCF band indices)
 `mos2_edmat_interp.dat` (interpolated $M$, Wannier-subspace indices 1-5). Compare:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-edi-mobility/scripts/parse_edmat.py mos2_edmat_interp.dat --output-dir results/
-uv run --project venv/cpu python skills/mat-edi-mobility/scripts/compare_edmat.py mos2_edmat_direct.dat mos2_edmat_interp.dat --band-offset 12 --band-sum --output-dir results/
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/parse_edmat.py mos2_edmat_interp.dat --output-dir results/
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/compare_edmat.py mos2_edmat_direct.dat mos2_edmat_interp.dat --band-offset 12 --band-sum --output-dir results/
 ```
 
 `--band-offset 12` maps the two files' band conventions (direct = interp + number

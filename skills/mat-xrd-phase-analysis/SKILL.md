@@ -3,6 +3,7 @@ name: mat-xrd-phase-analysis
 description: Phase identification from experimental XRD using DARA's tree search (Ray-based).
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # XRD Phase Analysis (DARA Tree Search)
@@ -57,9 +58,8 @@ DARA searches for structures in experimental databases. It supports:
 Use this script when the node where you run it can reach the database servers (for automatic COD CIF download), or when you have a local directory of CIFs/local database installed.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-xrd-phase-analysis/scripts/phase_search.py \
-  --xrd_data skills/mat-xrd-phase-analysis/examples/GeO2-ZnO/GeO2-ZnO_700C_60min.xrdml \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/phase_search.py \
+  --xrd_data ${CLAUDE_SKILL_DIR}/examples/GeO2-ZnO/GeO2-ZnO_700C_60min.xrdml \
   --chemical_system "Ge-O-Zn" \
   --database icsd
 ```
@@ -85,8 +85,8 @@ Specific example:
 
 ```bash
 python .../phase_search.py \
-  --xrd_data skills/mat-xrd-phase-analysis/examples/GeO2-ZnO/GeO2-ZnO_700C_60min.xrdml \
-  --cif_dir skills/mat-xrd-phase-analysis/examples/GeO2-ZnO/phase_analysis_results/cifs
+  --xrd_data ${CLAUDE_SKILL_DIR}/examples/GeO2-ZnO/GeO2-ZnO_700C_60min.xrdml \
+  --cif_dir ${CLAUDE_SKILL_DIR}/examples/GeO2-ZnO/phase_analysis_results/cifs
 ```
 
 ## Arguments (`phase_search.py`)

@@ -3,6 +3,7 @@ name: drug-retrosynthesis
 description: Predict synthetic accessibility and retrosynthetic pathways for novel molecules using the IBM RXN API.
 metadata:
   category: [drug-discovery]
+  venv: [cpu]
 ---
 
 # drug-retrosynthesis
@@ -29,17 +30,15 @@ export RXN_API_KEY="your-api-key-here"
 Use the wrapper script to submit the SMILES string to the IBM RXN API. The script will poll the server and return the predicted pathway and a confidence score for synthetic feasibility.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/drug-retrosynthesis/scripts/evaluate_ibm_rxn.py "target_smiles" --steps 3
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/evaluate_ibm_rxn.py "target_smiles" --steps 3
 ```
 
 ## Examples
 
 Evaluating the synthetic pathway for a fluorinated gas analog (e.g., 2,3,3,3-tetrafluoropropene: `FC(F)(F)C(F)=C`):
 ```bash
-# Venv: venv/cpu
 export RXN_API_KEY="api-key-here"
-uv run --project venv/cpu python skills/drug-retrosynthesis/scripts/evaluate_ibm_rxn.py "FC(F)(F)C(F)=C" --steps 3
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/evaluate_ibm_rxn.py "FC(F)(F)C(F)=C" --steps 3
 ```
 
 ## Constraints

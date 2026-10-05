@@ -3,9 +3,25 @@ name: ml-bayesian-optimization
 description: Iteratively optimize expensive black-box objectives — such as materials properties, experimental yields, or simulation outputs — by learning from past evaluations to select the most promising next candidates.
 metadata:
   category: [machine-learning]
+  venv: [cpu, mlip]
 ---
 
 # Bayesian Optimization
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `mace.relax_structure` is the `relax_structure`
+> tool of the `mace` server (`mcp__mace__relax_structure`, or
+> `mcp__plugin_atomistic-skills_mace__relax_structure` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli mace relax_structure key=value predict_structure key=value
+> ${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli matgl relax_structure key=value predict_bandgap key=value
+> ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli atomate2 run_atomate2_vasp_calculation key=value
+> ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli base visualize_structure key=value
+> ```
 
 ## Goal
 Efficiently find the optimal input parameters (e.g., alloy composition, simulation hyperparameters, process conditions) that minimize or maximize one or more expensive black-box objectives (e.g., formation energy, bandgap, elastic modulus) using Bayesian Optimization (BO). BO builds a probabilistic surrogate model (Gaussian Process) over the objective landscape and uses an acquisition function to intelligently select the next most informative experiments, minimizing the number of expensive evaluations required.
@@ -57,8 +73,7 @@ objectives:
 Generate an initial space-filling design using Sobol sequences. Use a power-of-2 `batch_size` (4, 8, 16, …) for optimal Sobol balance:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/ml-bayesian-optimization/scripts/suggest_candidates.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/suggest_candidates.py \
     --config research_dir/search_space.yaml \
     --batch_size 8 \
     --output research_dir/candidates_round_0.csv \
@@ -73,10 +88,10 @@ For each row in `candidates_round_0.csv`, call the appropriate MCP tool to evalu
 
 | Objective type | Recommended MCP tool |
 |---|---|
-| Energy / formation energy | `mcp_mace_relax_structure` or `mcp_matgl_relax_structure` |
-| Bandgap | `mcp_matgl_predict_bandgap` |
-| Arbitrary property | `mcp_mace_predict_structure` |
-| DFT reference | `mcp_atomate2_run_atomate2_vasp_calculation` |
+| Energy / formation energy | `mace.relax_structure` or `matgl.relax_structure` |
+| Bandgap | `matgl.predict_bandgap` |
+| Arbitrary property | `mace.predict_structure` |
+| DFT reference | `atomate2.run_atomate2_vasp_calculation` |
 
 Save all results to `evaluated.csv` — one row per candidate, parameter columns plus objective column(s):
 
@@ -92,8 +107,7 @@ x_Fe,formation_energy_eV_atom
 With evaluated results, fit the GP surrogate and suggest the next batch:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/ml-bayesian-optimization/scripts/suggest_candidates.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/suggest_candidates.py \
     --config research_dir/search_space.yaml \
     --results research_dir/evaluated.csv \
     --batch_size 4 \
@@ -114,8 +128,7 @@ The script will:
 ### Step 5: Convergence Check and Analysis
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/ml-bayesian-optimization/scripts/plot_bo_results.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/plot_bo_results.py \
     --results research_dir/evaluated.csv \
     --config research_dir/search_space.yaml \
     --output_dir research_dir/
@@ -132,7 +145,7 @@ This generates:
 - Single-objective: best value improves by < 1% over the last 5 rounds.
 - Multi-objective: hypervolume of the Pareto front changes by < 2% over the last 5 rounds.
 
-**Visual Inspection**: Use `mcp_base_visualize_structure` to inspect the best-found structure, and inspect all generated plots.
+**Visual Inspection**: Use `base.visualize_structure` to inspect the best-found structure, and inspect all generated plots.
 
 ---
 
@@ -143,9 +156,8 @@ This generates:
 Validate the BO workflow on a known 2D benchmark with three global minima at $f^* = 0.3979$:
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/ml-bayesian-optimization/scripts/suggest_candidates.py \
-    --config skills/ml-bayesian-optimization/examples/branin-function/search_space.yaml \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/suggest_candidates.py \
+    --config ${CLAUDE_SKILL_DIR}/examples/branin-function/search_space.yaml \
     --batch_size 8 \
     --output /tmp/bo_test/candidates_round_0.csv \
     --output_dir /tmp/bo_test/

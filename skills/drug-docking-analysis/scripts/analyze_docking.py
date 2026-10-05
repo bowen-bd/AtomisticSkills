@@ -24,7 +24,7 @@ Usage:
         --output_dir docking_analysis/
 
 Requirements:
-    - Conda environment: drugdisc-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: rdkit, numpy, scipy, matplotlib
 """
 

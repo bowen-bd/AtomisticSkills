@@ -13,7 +13,7 @@ Usage:
         --output-dir gb_structures/
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: pymatgen
 """
 

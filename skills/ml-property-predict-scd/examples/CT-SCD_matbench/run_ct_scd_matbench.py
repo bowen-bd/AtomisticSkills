@@ -168,7 +168,7 @@ def require_cuda_for_training():
         return
 
     raise RuntimeError(
-        "No CUDA GPUs are available in the active scd-agent environment. "
+        "No CUDA GPUs are available in the active the 'mlip' environment. "
         "The upstream SelfConditionedDenoisingAtoms train.py entrypoint hard-codes "
         "GPU training, so use --dry-run on CPU-only hosts or rerun this example on a CUDA machine."
     )

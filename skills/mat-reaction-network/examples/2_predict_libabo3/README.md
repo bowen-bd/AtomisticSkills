@@ -7,7 +7,6 @@ This example compares the theoretical synthesis pathways for the phosphor materi
 Activate the appropriate Conda environment (`base-agent`) and run the included bash script:
 
 ```bash
-conda activate base-agent
 ./run.sh
 ```
 

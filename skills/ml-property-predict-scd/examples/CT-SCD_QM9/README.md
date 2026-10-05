@@ -29,7 +29,7 @@ python run_ct_scd_qm9.py
 For first-run smoke tests, prefer observing live stdout instead of launching through buffered wrappers. This is general guidance for SCD runs, not just this example. A good pattern is:
 
 ```bash
-conda run --no-capture-output -n scd-agent env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=0 python -u run_ct_scd_qm9.py --num-steps 2 --val-interval 1
+venv/run mlip env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=0 python -u run_ct_scd_qm9.py --num-steps 2 --val-interval 1
 ```
 
 This makes checkpoint downloads, dataset downloads, split creation, and normalization startup visible in the terminal.
@@ -45,13 +45,13 @@ On shared machines, prefer a GPU with no active compute job and low memory usage
 If you want one selected GPU, expose it explicitly:
 
 ```bash
-conda run --no-capture-output -n scd-agent env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=2 python -u run_ct_scd_qm9.py --num-steps 2 --val-interval 1
+venv/run mlip env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=2 python -u run_ct_scd_qm9.py --num-steps 2 --val-interval 1
 ```
 
 If you want all selected visible GPUs, expose them and tell the wrapper to use them all:
 
 ```bash
-conda run --no-capture-output -n scd-agent env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=0,1,2,3 python -u run_ct_scd_qm9.py --num-steps 2 --val-interval 1 --use-all-visible-gpus
+venv/run mlip env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=0,1,2,3 python -u run_ct_scd_qm9.py --num-steps 2 --val-interval 1 --use-all-visible-gpus
 ```
 
 The wrapper defaults to a single visible GPU unless `--use-all-visible-gpus` is requested.

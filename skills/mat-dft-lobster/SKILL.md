@@ -3,9 +3,22 @@ name: mat-dft-lobster
 description: Construct computational flows for VASP electronic structure projection via LOBSTER to calculate chemical bonding insights (COHP, atomic charges, DOS).
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # mat-dft-lobster
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `atomate2.run_atomate2_vasp_calculation` is the `run_atomate2_vasp_calculation`
+> tool of the `atomate2` server (`mcp__atomate2__run_atomate2_vasp_calculation`, or
+> `mcp__plugin_atomistic-skills_atomate2__run_atomate2_vasp_calculation` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli atomate2 run_atomate2_vasp_calculation key=value
+> ```
 
 ## Goal
 To calculate advanced chemical bonding properties—like Crystal Orbital Hamilton Populations (COHP), atomic charges, projected DOS, and bonding integrands (ICOHP)—by projecting converged plane-wave Density Functional Theory (DFT) wavefunctions onto a localized, atomic-like basis set using the LOBSTER code.
@@ -26,7 +39,7 @@ To use this skill, deploy the compiled `lobster` binary to your remote HPC worke
 ### 1. Generate and Execute the Workflow
 To submit a LOBSTER workflow, utilize the built-in MCP tool. This natively maps the `VaspLobsterMaker` directed acyclic graph (DAG) to your HPC resources:
 
-**Tool:** `mcp_atomate2_run_atomate2_vasp_calculation`
+**Tool:** `atomate2.run_atomate2_vasp_calculation`
 **Arguments:**
 - `structures_path`: Path to your POSCAR or CIF.
 - `calculation_type`: `"lobster"`
@@ -41,8 +54,7 @@ To analyze COHP outputs, the standard package is **LobsterPy**. It offers both C
 
 **Via CLI:**
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu lobsterpy automatic-plot
+${CLAUDE_SKILL_DIR}/../../venv/run cpu lobsterpy automatic-plot
 ```
 
 **Via Python API:**
@@ -51,15 +63,13 @@ Use the provided `analyze_lobster.py` script as a baseline to parse and visualiz
 You can test the DAG generation by running the MCP tool with `check_only=True` on a structure, or if testing scripts manually:
 
 ```bash
-# Venv: venv/cpu
-cd skills/mat-dft-lobster/examples/GaAs
-uv run --project venv/cpu python ../../scripts/generate_inputs.py --output gaas_flow.json
+cd ${CLAUDE_SKILL_DIR}/examples/GaAs
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ../../scripts/generate_inputs.py --output gaas_flow.json
 ```
 
 To plot a sample COHPCAR:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-dft-lobster/scripts/analyze_lobster.py --cohpcar COHPCAR.lobster --poscar POSCAR --save cohp_plot.png
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/analyze_lobster.py --cohpcar COHPCAR.lobster --poscar POSCAR --save cohp_plot.png
 ```
 
 ## Constraints

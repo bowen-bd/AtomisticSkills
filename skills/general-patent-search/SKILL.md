@@ -3,6 +3,7 @@ name: general-patent-search
 description: Search for patents by keyword, material name, or assignee using free data sources (Google Patents).
 metadata:
   category: [general]
+  venv: [cpu]
 ---
 
 # general-patent-search
@@ -21,22 +22,19 @@ Determine exactly what you are searching for.
 Use the python script to query Google Patents. It will return global patents matching your query string.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/general-patent-search/scripts/query_google_patents.py "query string" --limit 10
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_google_patents.py "query string" --limit 10
 ```
 
 ## Examples
 
 Searching for recent global patents on a novel refrigerant by chemical name:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/general-patent-search/scripts/query_google_patents.py "tetrafluoropropene OR HFO-1234yf" --limit 5
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_google_patents.py "tetrafluoropropene OR HFO-1234yf" --limit 5
 ```
 
 Searching for global patents assigned to SK Innovation regarding electrolytes:
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/general-patent-search/scripts/query_google_patents.py "assignee:(SK Innovation) AND electrolyte" --limit 5
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/query_google_patents.py "assignee:(SK Innovation) AND electrolyte" --limit 5
 ```
 
 ## Constraints

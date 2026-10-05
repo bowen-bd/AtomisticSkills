@@ -11,7 +11,6 @@ This example demonstrates how to perform molecular docking into a porous materia
 Make sure you have the `void-agent` conda environment installed and activated. Run the provided script from this directory:
 
 ```bash
-conda activate void-agent
 bash ./run_example.sh
 ```
 

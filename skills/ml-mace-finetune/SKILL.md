@@ -3,6 +3,7 @@ name: ml-mace-finetune
 description: Fine-tune MACE machine learning interatomic potentials on custom datasets.
 metadata:
   category: [machine-learning]
+  venv: [cpu, mlip]
 ---
 # MACE Fine-tuning
 
@@ -121,12 +122,12 @@ MACE fine-tuning is divided into a data preparation step, a configuration genera
 Usage:
 ```bash
 # 1. Prepare Data
-uv run --project venv/mlip python skills/ml-mace-finetune/scripts/prepare_mace_data.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/prepare_mace_data.py \
     --data /path/to/training_data.json \
     --output-dir ./mace_finetuned_data
 
 # 2. Generate Configuration
-uv run --project venv/mlip python skills/ml-mace-finetune/scripts/generate_mace_config.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/generate_mace_config.py \
     --train-file ./mace_finetuned_data/train.xyz \
     --valid-file ./mace_finetuned_data/valid.xyz \
     --model MACE-OMAT-0-small \
@@ -137,10 +138,10 @@ uv run --project venv/mlip python skills/ml-mace-finetune/scripts/generate_mace_
     --output-dir ./mace_finetuned
 
 # 3. Run Training
-uv run --project venv/mlip mace_run_train --config ./mace_finetuned/finetune_config.yaml
+${CLAUDE_SKILL_DIR}/../../venv/run mlip mace_run_train --config ./mace_finetuned/finetune_config.yaml
 
 # 4. Extract Training Logs (Optional, to create standard training_history.json)
-uv run --project venv/cpu python skills/ml-mace-finetune/scripts/extract_mace_logs.py \
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/extract_mace_logs.py \
     --results-dir ./mace_finetuned/results
 ```
 

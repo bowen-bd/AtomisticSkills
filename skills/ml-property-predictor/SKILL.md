@@ -3,6 +3,7 @@ name: ml-property-predictor
 description: Train a property predictor head on top of a Machine Learning Interatomic Potential (MLIP) backbone (MACE or MatGL) to predict custom intensive or extensive properties from crystal or molecular structures.
 metadata:
   category: [machine-learning, materials, chemistry]
+  venv: [mlip]
 ---
 
 # MLIP Property Predictor Training
@@ -15,7 +16,7 @@ To leverage pre-trained GNN representations from MLIPs to train an independent r
 
 This skill allows you to leverage pre-trained GNN representations from MLIPs to train an independent readout head for any custom scalar target property, such as bulk modulus, bandgap, formation energy, or spin states.
 
-To keep the core MLIP wrappers clean, property prediction in AtomisticSkills is handled by standalone training scripts located in the `skills/ml-property-predictor/scripts/` directory.
+To keep the core MLIP wrappers clean, property prediction in AtomisticSkills is handled by standalone training scripts located in the `${CLAUDE_SKILL_DIR}/scripts/` directory.
 
 ## Workflow
 
@@ -32,10 +33,9 @@ To keep the core MLIP wrappers clean, property prediction in AtomisticSkills is 
 MACE property training is handled by `scripts/train_mace_property.py`. It dynamically patches the `mace.cli.run_train` module to freeze the backbone (if requested) and inject a custom intensive/extensive property readout.
 
 ```bash
-# Venv: venv/mlip
 
 # Run the standalone MACE property training script
-uv run --project venv/mlip python skills/ml-property-predictor/scripts/train_mace_property.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/train_mace_property.py \
     --data_path .agents/test/mp_bulk_modulus.json \
     --model_name MACE-OMAT-0-small \
     --target_property bulk_modulus \
@@ -56,12 +56,11 @@ uv run --project venv/mlip python skills/ml-property-predictor/scripts/train_mac
 MatGL property training is handled by `scripts/train_matgl_property.py`. It loads a pretrained `M3GNet` model, replaces the data collater to safely handle graph caching, and trains the property explicitly.
 
 ```bash
-# Venv: venv/mlip
 
 # Run the standalone MatGL property training script
-uv run --project venv/mlip python skills/ml-property-predictor/scripts/train_matgl_property.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/train_matgl_property.py \
     --data_path .agents/test/mp_bulk_modulus.json \
-    --model_name M3GNet-MP-2021.2.8-PES \
+    --model_name M3GNet-PES-MatPES-PBE-2025.2 \
     --target_property bulk_modulus \
     --property_type intensive \
     --epochs 30 \

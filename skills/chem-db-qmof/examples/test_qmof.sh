@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"  # repository root, for venv/run
 cd $(dirname "$0")
 
 echo "=========================================================="
@@ -10,7 +11,7 @@ mkdir -p ./out_zn
 
 # Run the query script in the correct environment
 export PYTHONPATH=$(dirname $(dirname $(dirname $(dirname "$PWD"))))
-conda run -n base-agent python ../scripts/query_qmof.py \
+"$ROOT/venv/run" cpu python ../scripts/query_qmof.py \
     --formula "Zn" \
     --max-results 1 \
     --output-dir ./out_zn

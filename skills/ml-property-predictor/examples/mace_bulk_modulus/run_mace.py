@@ -82,7 +82,7 @@ def run_mace():
 
 if __name__ == "__main__":
     if "mace-agent" not in os.environ.get("CONDA_DEFAULT_ENV", ""):
-        print("Restarting MACE test in mace-agent environment...")
+        print("Restarting MACE test in the 'mlip' environment...")
         subprocess.run(
             ["conda", "run", "-n", "mace-agent", "python", __file__], check=True
         )

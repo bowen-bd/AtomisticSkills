@@ -5,7 +5,7 @@ Usage:
     python run_spinodal_decomposition.py --grid-size 100 --dx 0.25 --steps 200 --dt 0.01 --output examples/benchmark-spinodal/classic_spinodal.gif
 
 Requirements:
-    - Conda environment: phasefield-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: fipy, numpy, imageio, tqdm, matplotlib
 """
 

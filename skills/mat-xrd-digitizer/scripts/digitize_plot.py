@@ -8,7 +8,7 @@ Usage:
     python digitize_plot.py peaks.json --output digitized.xy --min-x 5 --max-x 80 --points 4000
 
 Requirements:
-    - Conda environment: base-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: numpy
 """
 

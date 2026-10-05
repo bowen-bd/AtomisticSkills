@@ -3,6 +3,7 @@ name: mat-elasticity
 description: Calculate the full elastic tensor and mechanical properties (bulk modulus, shear modulus, Young's modulus, Poisson's ratio) using MLIPs.
 metadata:
   category: [materials]
+  venv: [mlip]
 ---
 
 # Elastic Tensor Skill
@@ -38,8 +39,7 @@ Refer to the [foundation-potentials skill](../ml-foundation-potentials/SKILL.md)
 To calculate the elastic tensor, use the `calculate_elasticity.py` script:
 
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/mat-elasticity/scripts/calculate_elasticity.py \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/calculate_elasticity.py \
     --structure path/to/structure.cif \
     --model_type mace \
     --model_name MACE-OMAT-0-small \
@@ -76,9 +76,8 @@ uv run --project venv/mlip python skills/mat-elasticity/scripts/calculate_elasti
 See `examples/Cu/` for a copper elastic tensor calculation using MACE-OMAT-0-small.
 
 ```bash
-# Venv: venv/mlip
-uv run --project venv/mlip python skills/mat-elasticity/scripts/calculate_elasticity.py \
-    --structure skills/mat-elasticity/examples/Cu/Cu.cif \
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/calculate_elasticity.py \
+    --structure ${CLAUDE_SKILL_DIR}/examples/Cu/Cu.cif \
     --model_type mace \
     --model_name MACE-OMAT-0-small \
     --output_dir research/elasticity/Cu

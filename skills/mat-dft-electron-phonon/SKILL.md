@@ -3,6 +3,7 @@ name: mat-dft-electron-phonon
 description: Computes electron-phonon coupling to calculate temperature-dependent bandgap renormalization using atomate2.
 metadata:
   category: [materials]
+  venv: [cpu]
 ---
 
 # mat-dft-electron-phonon
@@ -19,8 +20,7 @@ Standard DFT predicts bandgaps under the Born-Oppenheimer limit (fixed infinite 
 Generating the inputs uses the `ElectronPhononMaker`. You only need to provide the target primitive structure and the temperature list you want dynamically sampled.
 
 ```bash
-# Venv: venv/cpu
-uv run --project venv/cpu python skills/mat-dft-electron-phonon/scripts/generate_inputs.py --output elph_flow.json
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/generate_inputs.py --output elph_flow.json
 ```
 
 ### 2. Job Execution
@@ -34,9 +34,8 @@ The termination node evaluates the mean and variance of the bandgap/band edges f
 Run the DAG generation for pristine primitive Silicon.
 
 ```bash
-# Venv: venv/cpu
-cd skills/mat-dft-electron-phonon/examples/silicon
-uv run --project venv/cpu python ../../scripts/generate_inputs.py --output si_flow.json
+cd ${CLAUDE_SKILL_DIR}/examples/silicon
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ../../scripts/generate_inputs.py --output si_flow.json
 ```
 
 ## Constraints
