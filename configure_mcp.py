@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
 """Configure AtomisticSkills MCP servers for any supported AI agent.
 
-Writes MCP server configs to the correct location for each agent, adapting
-paths to the local conda installation.
+Writes MCP server configs to the correct location for each agent. Every server
+starts through ``venv/run --server <name>``, which runs it from its uv project
+on this host or, where the host cannot, from its container image -- the same
+launcher the Claude Code plugin uses. The server list comes from
+``venv/servers.tsv`` (rendered from ``docker/images.json``).
+
+The generative servers (adit, diffcsp, mattergen) have no uv project. If this
+machine has their conda environments (``<conda>/envs/<name>-agent``), those are
+used directly; otherwise they too go through the launcher's container path.
 
 Supported agents:
   claude   - Claude Code (.mcp.json or ~/.claude/settings.json)
@@ -20,7 +27,7 @@ Usage:
     python configure_mcp.py                        # auto-detect installed agents
     python configure_mcp.py --agent claude         # specific agent only
     python configure_mcp.py --agent claude codex   # multiple agents
-    python configure_mcp.py --conda /path/to/miniforge3
+    python configure_mcp.py --conda /path/to/miniforge3   # find generative conda envs here
     python configure_mcp.py --scope global         # write to global config only
     python configure_mcp.py --scope project        # write to project config only
     python configure_mcp.py --list-agents          # show detected agents
@@ -37,9 +44,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
-ENV_PATTERN = re.compile(r".*/envs/([^/]+)/bin/python$")
 PROJECT_ROOT = Path(__file__).resolve().parent
-MCP_SOURCE = PROJECT_ROOT / "mcp_config.json"
+SERVERS_TABLE = PROJECT_ROOT / "venv" / "servers.tsv"
+LAUNCHER = PROJECT_ROOT / "venv" / "run"
 
 # Instruction file stub used when a target agent has no instruction file yet.
 INSTRUCTION_STUB = """\
@@ -312,49 +319,40 @@ def detect_conda_base() -> str | None:
 # ---------------------------------------------------------------------------
 
 
-def load_mcp_servers(conda_base: str) -> dict[str, Any]:
-    """Load mcp_config.json and rewrite conda env paths for this machine."""
-    with open(MCP_SOURCE) as fh:
-        config = json.load(fh)
+def load_mcp_servers(conda_base: str | None) -> dict[str, Any]:
+    """Return an MCP server config for every server in venv/servers.tsv.
 
-    project_root = str(PROJECT_ROOT)
+    Args:
+        conda_base: Conda installation searched for the generative servers'
+            environments, or None to always use the launcher.
 
-    for server in config.get("mcpServers", {}).values():
-        match = ENV_PATTERN.match(server.get("command", ""))
-        if match:
-            env_name = match.group(1)
-            server["command"] = f"{conda_base}/envs/{env_name}/bin/python"
-        env = server.get("env", {})
-        if "PYTHONPATH" in env:
-            env["PYTHONPATH"] = project_root
-        # Rewrite CONDA_PREFIX so Triton's ptxas-blackwell fallback resolves
-        # correctly on Blackwell+ GPUs even when the MCP server is launched
-        # without full conda activation (no PATH / CONDA_PREFIX from conda init).
-        if "CONDA_PREFIX" in env and match:
-            env["CONDA_PREFIX"] = f"{conda_base}/envs/{env_name}"
-        # Explicit Triton ptxas-blackwell path: more direct than CONDA_PREFIX
-        # fallback. Required on Blackwell GPUs (sm_100+, compute capability ≥ 12.0)
-        # where torch.compile triggers Triton JIT compilation via nvalchemi hooks.
-        if "TRITON_PTXAS_BLACKWELL_PATH" in env and match:
-            env["TRITON_PTXAS_BLACKWELL_PATH"] = (
-                f"{conda_base}/envs/{env_name}/bin/ptxas"
-            )
-        # Rewrite PATH: replace the placeholder conda env bin dir so that
-        # shutil.which('ptxas-blackwell') resolves correctly in MCP server
-        # processes that do not have full conda activation.
-        if "PATH" in env and match:
-            env_bin = f"{conda_base}/envs/{env_name}/bin"
-            # Replace any existing envs/<name>/bin prefix in PATH
-            import re as _re
-
-            env["PATH"] = _re.sub(
-                r"[^ ]*?/envs/[^/]+/bin",
-                env_bin,
-                env["PATH"],
-                count=1,
-            )
-
-    return config.get("mcpServers", {})
+    Returns:
+        ``{server: {"command", "args", "env"}}``, the shape every agent writer
+        below expects.
+    """
+    servers: dict[str, Any] = {}
+    for line in SERVERS_TABLE.read_text().splitlines():
+        if not line or line.startswith("#"):
+            continue
+        name, venv, module, _image, _gpu, _platforms = line.split("\t")
+        conda_python = (
+            Path(conda_base) / "envs" / f"{name}-agent" / "bin" / "python"
+            if conda_base
+            else None
+        )
+        if venv == "-" and conda_python is not None and conda_python.exists():
+            servers[name] = {
+                "command": str(conda_python),
+                "args": ["-m", module],
+                "env": {"PYTHONPATH": str(PROJECT_ROOT)},
+            }
+        else:
+            servers[name] = {
+                "command": str(LAUNCHER),
+                "args": ["--server", name],
+                "env": {},
+            }
+    return servers
 
 
 # ---------------------------------------------------------------------------
@@ -729,7 +727,8 @@ def main() -> None:
         "--conda",
         default=None,
         metavar="PATH",
-        help="Path to conda/mamba base directory (auto-detected if omitted).",
+        help="Conda/mamba base holding the generative servers' environments "
+        "(auto-detected; optional -- without it they run from containers).",
     )
     parser.add_argument(
         "--scope",
@@ -753,25 +752,14 @@ def main() -> None:
             print("No supported agents detected.")
         return
 
-    # Resolve conda base
+    # A conda installation is optional: it only provides the generative
+    # servers' environments on machines that already have them.
     conda_base: str | None = args.conda
-    if conda_base is not None:
-        if not Path(conda_base).is_dir():
-            print(f"Error: {conda_base} is not a valid directory.", file=sys.stderr)
-            sys.exit(1)
-    else:
-        conda_base = detect_conda_base()
-        if conda_base is None:
-            print(
-                "Error: Could not auto-detect a conda/mamba installation.\n"
-                "Provide the base path explicitly: --conda /path/to/miniforge3",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-
-    if not MCP_SOURCE.exists():
-        print(f"Error: {MCP_SOURCE} not found.", file=sys.stderr)
+    if conda_base is not None and not Path(conda_base).is_dir():
+        print(f"Error: {conda_base} is not a valid directory.", file=sys.stderr)
         sys.exit(1)
+    if conda_base is None:
+        conda_base = detect_conda_base()
 
     servers = load_mcp_servers(conda_base)
 
@@ -792,7 +780,8 @@ def main() -> None:
         agents = args.agent
 
     print(f"Project root : {PROJECT_ROOT}")
-    print(f"Conda base   : {conda_base}")
+    print(f"Launcher     : {LAUNCHER}")
+    print(f"Conda base   : {conda_base or 'none (generative servers use containers)'}")
     print(f"Scope        : {args.scope}")
     print()
 

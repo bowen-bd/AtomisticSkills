@@ -1,0 +1,563 @@
+#!/usr/bin/env bash
+# Run AtomisticSkills code -- a skill script or an MCP server -- in the right
+# Python environment, on whichever backend this machine supports.
+#
+# Usage:
+#   venv/run <venv>[+<extra>...] <command> [args...]
+#       Run a command in one of the uv projects under venv/, e.g.
+#         venv/run mlip python skills/mat-phonon/scripts/calculate_phonon.py --help
+#         venv/run cpu+openmm python skills/drug-protein-prep/scripts/prepare_protein.py ...
+#   venv/run --server <name>
+#       Start an MCP server over stdio. plugin.json and configure_mcp.py call this.
+#   venv/run --setup [venv|image...]
+#       Create the environments (or fetch their images) now instead of on first
+#       use -- several GB for mlip and fairchem. Naming a container-only image,
+#       e.g. `--setup generative`, fetches it too. Apptainer users should run
+#       this once before starting Claude Code: converting an image to a SIF
+#       takes minutes, longer than an MCP client waits for a server.
+#   venv/run --doctor
+#       Report what this machine supports and which backend each venv uses.
+#
+# Backend: ATOMISTIC_RUNTIME, else the config file below, else "auto".
+#   uv         the uv project under venv/ on this host
+#   docker | podman | apptainer | singularity
+#              the published image built from the same uv.lock, run with the
+#              same paths mounted, so a command needs no changes
+#   auto       uv when this host can run the environment (uv installed, Linux,
+#              glibc new enough per venv/platforms.tsv), otherwise the first
+#              container runtime found
+#
+# Settings come from the environment, else from ~/.config/atomistic_skills.yaml
+# -- the same file that holds API keys such as MP_API_KEY -- as plain
+# "KEY: value" lines: ATOMISTIC_RUNTIME, ATOMISTIC_IMAGE_REGISTRY, ATOMISTIC_IMAGE_TAG.
+#
+# stdout belongs to the command, and is the MCP transport in --server mode, so
+# every diagnostic here goes to stderr.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd -P)"
+VENV_DIR="${ROOT}/venv"
+SERVERS_TABLE="${VENV_DIR}/servers.tsv"
+PLATFORMS_TABLE="${VENV_DIR}/platforms.tsv"
+# The user config src/utils/config_utils.py reads (with its legacy location).
+CONFIG_FILE="$HOME/.config/atomistic_skills.yaml"
+[[ -f "$CONFIG_FILE" || ! -f "$HOME/.atomistic_skills.yaml" ]] || CONFIG_FILE="$HOME/.atomistic_skills.yaml"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/atomisticskills"
+
+log() { printf 'atomisticskills: %s\n' "$*" >&2; }
+die() { log "$*"; exit 1; }
+
+# --- configuration ------------------------------------------------------------
+
+# Read the launcher's keys from the config without sourcing it, and never
+# override the environment.
+if [[ -f "$CONFIG_FILE" ]]; then
+    while IFS= read -r line; do
+        key="${line%%:*}"
+        value="$(sed -E 's/^[^:]+:[[:space:]]*//; s/[[:space:]]+#.*$//; s/^["'\'']//; s/["'\'']$//' <<<"$line")"
+        [[ -z "${!key:-}" && -n "$value" ]] && export "$key=$value"
+    done < <(grep -E '^(ATOMISTIC_RUNTIME|ATOMISTIC_IMAGE_REGISTRY|ATOMISTIC_IMAGE_TAG)[[:space:]]*:' "$CONFIG_FILE" || true)
+fi
+
+RUNTIME="${ATOMISTIC_RUNTIME:-auto}"
+# An unset plugin option arrives as an empty string; treat it as the default.
+[[ -n "$RUNTIME" ]] || RUNTIME=auto
+REGISTRY="${ATOMISTIC_IMAGE_REGISTRY:-ghcr.io/learningmatter-mit}"
+TAG="${ATOMISTIC_IMAGE_TAG:-$(tr -d '[:space:]' < "${ROOT}/VERSION")}"
+MODEL_CACHE="${ATOMISTIC_MODEL_CACHE:-$HOME/.cache/atomisticskills}"
+CONTAINER_RUNTIMES=(apptainer singularity docker podman)
+
+case "$(uname -m)" in
+    x86_64|amd64)  ARCH=x86_64;  OCI_ARCH=amd64 ;;
+    aarch64|arm64) ARCH=aarch64; OCI_ARCH=arm64 ;;
+    *)             ARCH="$(uname -m)"; OCI_ARCH="$ARCH" ;;
+esac
+
+# Credentials the code reads from the environment. Forwarded into containers
+# only when set, so an unset variable does not arrive as an empty one.
+CREDENTIALS=(MP_API_KEY HF_TOKEN OPENALEX_EMAIL ELSEVIER_API_KEY ELSEVIER_INST_TOKEN
+             SPRINGER_API_KEY UNPAYWALL_EMAIL RXN_API_KEY ORCA_BINARY_PATH VASP_COMMAND)
+
+# --- host capability ------------------------------------------------------------
+
+glibc_version() {
+    local v
+    v="$(getconf GNU_LIBC_VERSION 2>/dev/null | awk '{print $2}')" || true
+    [[ -n "$v" ]] || v="$(ldd --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+$')" || true
+    printf '%s' "${v:-0}"
+}
+
+version_ge() {  # version_ge A B: true when A >= B
+    [[ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | head -1)" == "$2" ]]
+}
+
+# min_glibc VENV EXTRA -> the floor recorded for this architecture, or "unavailable..."
+min_glibc() {
+    awk -F'\t' -v v="$1" -v e="$2" -v a="$ARCH" \
+        '$1 == v && $2 == e && $3 == a { print $4; found = 1 } END { if (!found) print "unknown" }' \
+        "$PLATFORMS_TABLE"
+}
+
+# host_supports_uv VENV EXTRAS... -> 0 when uv can install the set here, else
+# prints the reason and returns 1.
+host_supports_uv() {
+    local venv="$1"; shift
+    if [[ "$(uname -s)" != "Linux" ]]; then
+        echo "the uv environments are built for Linux; this host is $(uname -s)"; return 1
+    fi
+    if [[ "$ARCH" != x86_64 && "$ARCH" != aarch64 ]]; then
+        echo "the uv environments are built for x86_64 and aarch64; this host is $ARCH"; return 1
+    fi
+    if ! command -v uv >/dev/null 2>&1; then
+        echo "uv is not installed (install: curl -LsSf https://astral.sh/uv/install.sh | sh)"; return 1
+    fi
+    # A few packages ship no wheel and compile on install (smol everywhere;
+    # MDAnalysis, pycalphad and others on aarch64), so building an environment
+    # needs a C compiler. Running one that already exists does not.
+    if ! uv_is_synced "$venv" "$@" && ! command -v cc >/dev/null 2>&1 && ! command -v gcc >/dev/null 2>&1; then
+        echo "creating the '${venv}' environment needs a C compiler (gcc), and none is on PATH"; return 1
+    fi
+    local glibc need extra
+    glibc="$(glibc_version)"
+    for extra in - "$@"; do
+        need="$(min_glibc "$venv" "$extra")"
+        case "$need" in
+            unknown) continue ;;
+            unavailable*) echo "'${venv}+${extra}' has no wheels for ${ARCH} (${need#unavailable:})"; return 1 ;;
+        esac
+        if ! version_ge "$glibc" "$need"; then
+            local what="$venv"; [[ "$extra" != - ]] && what="${venv}+${extra}"
+            echo "'${what}' needs glibc >= ${need}; this host has ${glibc}"; return 1
+        fi
+    done
+    return 0
+}
+
+first_container_runtime() {
+    local c
+    for c in "${CONTAINER_RUNTIMES[@]}"; do
+        command -v "$c" >/dev/null 2>&1 && { echo "$c"; return 0; }
+    done
+    return 1
+}
+
+# choose_backend VENV EXTRAS... -> uv or a container runtime name
+choose_backend() {
+    local venv="$1"; shift
+    case "$RUNTIME" in
+        uv)
+            local why
+            if ! why="$(host_supports_uv "$venv" "$@")"; then
+                log "warning: ATOMISTIC_RUNTIME=uv, but ${why}"
+            fi
+            echo uv ;;
+        docker|podman|apptainer|singularity)
+            if ! command -v "$RUNTIME" >/dev/null 2>&1; then
+                # Name what the host does have: Claude Code reports a missing
+                # binary as the baffling 'Executable not found in $PATH: "stdio"'.
+                local found=""
+                for rt in "${CONTAINER_RUNTIMES[@]}"; do command -v "$rt" >/dev/null 2>&1 && found="$found $rt"; done
+                command -v uv >/dev/null 2>&1 && found="$found uv"
+                die "runtime '${RUNTIME}' is not on PATH. Available on this host:${found:- nothing}.
+       Change the plugin's 'runtime' option (or ATOMISTIC_RUNTIME in the environment or ${CONFIG_FILE});
+       'auto' picks uv when the host can run it and a container runtime otherwise."
+            fi
+            echo "$RUNTIME" ;;
+        auto)
+            local why rt
+            if why="$(host_supports_uv "$venv" "$@")"; then echo uv; return 0; fi
+            if rt="$(first_container_runtime)"; then
+                log "using ${rt}: ${why}"
+                echo "$rt"; return 0
+            fi
+            if command -v uv >/dev/null 2>&1; then
+                die "cannot run this environment natively: ${why}.
+       Install a container runtime (apptainer on HPC clusters, docker elsewhere)
+       and this falls back to it automatically, with no other change."
+            fi
+            die "cannot run this environment: ${why}.
+       Install uv (curl -LsSf https://astral.sh/uv/install.sh | sh),
+       or a container runtime (apptainer on HPC clusters, docker elsewhere)." ;;
+        *)
+            die "unknown ATOMISTIC_RUNTIME '${RUNTIME}' (expected auto, uv, docker, podman, apptainer or singularity)" ;;
+    esac
+}
+
+# --- workspace ------------------------------------------------------------------
+
+# The directory that holds research/ -- the same rule as
+# src/utils/research_utils.workspace_root(), so scripts, servers and containers
+# agree: an explicit ATOMISTIC_WORKSPACE, else the repository when working
+# inside the checkout, else the current directory (the user's project).
+workspace() {
+    if [[ -n "${ATOMISTIC_WORKSPACE:-}" ]]; then
+        printf '%s' "$ATOMISTIC_WORKSPACE"
+    elif [[ -n "${ATOMISTIC_WORK_DIR:-}" ]]; then  # the 1.4 plugin option
+        printf '%s' "$ATOMISTIC_WORK_DIR"
+    else
+        local here; here="$(pwd -P)"
+        if [[ "$here" == "$ROOT" || "$here" == "$ROOT"/* ]]; then printf '%s' "$ROOT"; else printf '%s' "$here"; fi
+    fi
+}
+
+# --- uv backend -----------------------------------------------------------------
+
+uv_project_args() {  # uv_project_args VENV EXTRAS... -> prints one argument per line
+    printf '%s\n' --frozen --project "${VENV_DIR}/$1"
+    shift
+    local extra
+    for extra in "$@"; do printf '%s\n' --extra "$extra"; done
+}
+
+# Whether an environment is ready is recorded in a marker written after each
+# successful sync: the lock's hash, then the extras installed. `uv sync --check`
+# cannot serve, because uv reinstalls nvidia-cusparselt-cu13 on every sync and
+# so never reports the CUDA environments as current.
+sync_marker() { printf '%s' "${VENV_DIR}/$1/.venv/.atomisticskills-synced"; }
+lock_hash() { sha256sum "${VENV_DIR}/$1/uv.lock" | cut -c1-16; }
+
+uv_is_synced() {  # uv_is_synced VENV EXTRAS...
+    local venv="$1"; shift
+    local marker extra
+    marker="$(sync_marker "$venv")"
+    [[ -x "${VENV_DIR}/${venv}/.venv/bin/python" && -f "$marker" ]] || return 1
+    [[ "$(head -1 "$marker")" == "$(lock_hash "$venv")" ]] || return 1
+    for extra in "$@"; do
+        tail -n +2 "$marker" | grep -qx -- "$extra" || return 1
+    done
+}
+
+record_sync() {  # record_sync VENV EXTRAS... -- after a successful sync
+    local venv="$1"; shift
+    { lock_hash "$venv"; printf '%s\n' "$@" | awk 'NF' | sort -u; } > "$(sync_marker "$venv")"
+}
+
+# uv_sync VENV EXTRAS... -- in the foreground, progress on stderr. The sync is
+# exact, because the lock is the contract: a package dropped from the lock
+# leaves the environment too. Extras installed earlier are carried over, so
+# asking for one extra never uninstalls another.
+uv_sync() {
+    local venv="$1"; shift
+    local marker extras=("$@") previous=() args
+    marker="$(sync_marker "$venv")"
+    [[ -f "$marker" ]] && mapfile -t previous < <(tail -n +2 "$marker")
+    mapfile -t extras < <(printf '%s\n' "${extras[@]}" "${previous[@]}" | awk 'NF' | sort -u)
+    mapfile -t args < <(uv_project_args "$venv" "${extras[@]}")
+    uv sync "${args[@]}" >&2
+    record_sync "$venv" "${extras[@]}"
+}
+
+# A first sync downloads several GB, far longer than an MCP client waits for a
+# server to start. Run it detached, so it survives this process being killed on
+# timeout, and serialised, so parallel server starts do not race.
+uv_sync_in_background() {  # uv_sync_in_background VENV
+    local venv="$1" logf lockf
+    mkdir -p "$STATE_DIR"
+    logf="${STATE_DIR}/setup-${venv}.log"
+    lockf="${STATE_DIR}/setup-${venv}.lock"
+    if command -v flock >/dev/null 2>&1 && command -v setsid >/dev/null 2>&1; then
+        setsid nohup flock -n "$lockf" "${BASH_SOURCE[0]}" --setup "$venv" \
+            >"$logf" 2>&1 </dev/null &
+    else
+        nohup "${BASH_SOURCE[0]}" --setup "$venv" >"$logf" 2>&1 </dev/null &
+    fi
+    printf '%s' "$logf"
+}
+
+# --- container backend ------------------------------------------------------------
+
+image_ref() { printf '%s/atomisticskills-%s:%s' "$REGISTRY" "$1" "$TAG"; }
+
+# Apptainer runs a SIF built once and cached, never a docker:// URI per launch:
+# MCP clients start every server in parallel with ~30 s each, and an on-the-fly
+# conversion of a multi-GB image takes minutes and runs once per server.
+apptainer_sif() {  # apptainer_sif RUNTIME IMAGE_NAME -> path of a ready SIF
+    local rt="$1" name="$2" ref sif sif_name alt lock tmp build_log procs nproc_count proc_limit headroom
+    ref="$(image_ref "$name")"
+    export APPTAINER_CACHEDIR="${APPTAINER_CACHEDIR:-${MODEL_CACHE}/apptainer-cache}"
+    export SINGULARITY_CACHEDIR="${SINGULARITY_CACHEDIR:-$APPTAINER_CACHEDIR}"
+    # Clusters often mount /tmp nodev, which can break the build.
+    export APPTAINER_TMPDIR="${APPTAINER_TMPDIR:-${MODEL_CACHE}/apptainer-tmp}"
+    export SINGULARITY_TMPDIR="${SINGULARITY_TMPDIR:-$APPTAINER_TMPDIR}"
+    mkdir -p "$APPTAINER_CACHEDIR" "$APPTAINER_TMPDIR" "${MODEL_CACHE}/sif"
+
+    sif_name="atomisticskills-${name}-${TAG}.sif"
+    sif="${MODEL_CACHE}/sif/${sif_name}"
+    if [[ ! -f "$sif" ]]; then
+        for alt in "${ATOMISTIC_SIF_DIR:-}" "$HOME/.cache/atomisticskills"; do
+            [[ -n "$alt" && -f "${alt}/sif/${sif_name}" ]] || continue
+            sif="${alt}/sif/${sif_name}"; break
+        done
+    fi
+    [[ -f "$sif" ]] && { printf '%s' "$sif"; return 0; }
+
+    # mksquashfs defaults to one thread per core, which exhausts `ulimit -u` on
+    # a many-core login node ("Failed to create thread"). Bound it, and fall
+    # back to a single thread if even that fails.
+    if [[ -z "${ATOMISTIC_SQUASHFS_PROCS:-}" ]]; then
+        nproc_count="$(nproc 2>/dev/null || echo 4)"
+        proc_limit="$(ulimit -u 2>/dev/null || echo 4096)"
+        [[ "$proc_limit" == unlimited ]] && proc_limit=4096
+        headroom=$(( (proc_limit - 256) / 8 )); (( headroom < 1 )) && headroom=1
+        ATOMISTIC_SQUASHFS_PROCS=$(( nproc_count < headroom ? nproc_count : headroom ))
+        (( ATOMISTIC_SQUASHFS_PROCS > 4 )) && ATOMISTIC_SQUASHFS_PROCS=4
+    fi
+    procs="$ATOMISTIC_SQUASHFS_PROCS"
+
+    lock="${MODEL_CACHE}/sif/.${name}.lock"
+    log "building ${sif_name} from ${ref} (minutes; 'venv/run --setup' does this ahead of time)"
+    if command -v flock >/dev/null 2>&1; then
+        exec {lockfd}>"$lock"
+        flock -w "${ATOMISTIC_BUILD_TIMEOUT:-1800}" "$lockfd" \
+            || die "timed out waiting for another process to build ${sif_name}"
+    fi
+    if [[ ! -f "$sif" ]]; then
+        tmp="${sif}.$$.partial"; build_log="${tmp}.log"
+        if ! APPTAINER_MKSQUASHFS_ARGS="-processors ${procs}" SINGULARITY_MKSQUASHFS_ARGS="-processors ${procs}" \
+                "$rt" build --force "$tmp" "docker://${ref}" >"$build_log" 2>&1; then
+            cat "$build_log" >&2
+            if grep -qi "Failed to create thread" "$build_log" && [[ "$procs" != 1 ]]; then
+                log "mksquashfs hit the thread limit; retrying single-threaded"
+                rm -f "$tmp"
+                APPTAINER_MKSQUASHFS_ARGS="-processors 1" SINGULARITY_MKSQUASHFS_ARGS="-processors 1" \
+                    "$rt" build --force "$tmp" "docker://${ref}" >"$build_log" 2>&1 \
+                    || { cat "$build_log" >&2; rm -f "$tmp" "$build_log"; die "failed to build ${sif_name}"; }
+            else
+                rm -f "$tmp" "$build_log"
+                die "failed to build ${sif_name} from ${ref}; see the output above.
+       To force a specific mksquashfs worker count, set ATOMISTIC_SQUASHFS_PROCS."
+            fi
+        fi
+        rm -f "$build_log"
+        mv -f "$tmp" "$sif"
+    fi
+    [[ -n "${lockfd:-}" ]] && exec {lockfd}>&-
+    printf '%s' "$sif"
+}
+
+platform_allowed() {  # platform_allowed "linux/amd64,linux/arm64"
+    [[ -z "$1" || ",$1," == *",linux/${OCI_ARCH},"* ]]
+}
+
+# run_container RUNTIME IMAGE_NAME GPU MODE COMMAND...
+#   MODE "server" passes COMMAND (a server name) to the image entrypoint; MODE
+#   "command" runs COMMAND inside the image's environment.
+run_container() {
+    local rt="$1" name="$2" gpu="$3" mode="$4"; shift 4
+    local ws here cwd_mount="" root_mode=ro gpu_ok=0 v
+    ws="$(workspace)"; here="$(pwd -P)"
+    mkdir -p "$ws" "$MODEL_CACHE" 2>/dev/null || true
+    # The repository is mounted read-only unless it is itself the workspace.
+    [[ "$ws" == "$ROOT" ]] && root_mode=rw
+    # Paths are mounted at the same location inside the container, so a path a
+    # container writes is a path the host (and the agent) can read, and the
+    # skill's script paths resolve unchanged.
+    if [[ "$here" != "$ws" && "$here" != "$ws"/* && "$here" != "$ROOT" && "$here" != "$ROOT"/* ]]; then
+        cwd_mount="$here"
+    fi
+    if [[ "$gpu" == 1 ]] && command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -L >/dev/null 2>&1; then
+        gpu_ok=1
+    fi
+
+    local envs=(
+        "ATOMISTIC_WORKSPACE=${ws}"
+        # Import the mounted repository's code, so a container runs exactly
+        # what the host has; the image's own copy is only a fallback.
+        "PYTHONPATH=${ROOT}"
+        "PYTHONUNBUFFERED=1"
+        "HF_HOME=/opt/model-cache/huggingface"
+        "TORCH_HOME=/opt/model-cache/torch"
+        "MATGL_CACHE=/opt/model-cache/matgl"
+    )
+    for v in "${CREDENTIALS[@]}"; do [[ -n "${!v:-}" ]] && envs+=("${v}=${!v}"); done
+
+    case "$rt" in
+        docker|podman)
+            local args=(run --rm --interactive
+                        --user "$(id -u):$(id -g)" --env HOME=/tmp
+                        --volume "${ROOT}:${ROOT}:${root_mode}"
+                        --volume "${MODEL_CACHE}:/opt/model-cache")
+            [[ "$root_mode" == ro ]] && args+=(--volume "${ws}:${ws}")
+            # HOME is /tmp inside, so the user config (API keys) goes there.
+            [[ -f "$CONFIG_FILE" ]] && args+=(--volume "${CONFIG_FILE}:/tmp/.config/atomistic_skills.yaml:ro")
+            [[ -n "$cwd_mount" ]] && args+=(--volume "${cwd_mount}:${cwd_mount}")
+            for v in "${envs[@]}"; do args+=(--env "$v"); done
+            [[ "$gpu_ok" == 1 ]] && args+=(--gpus all)
+            args+=(--workdir "$here" "$(image_ref "$name")" "$@")
+            exec "$rt" "${args[@]}"
+            ;;
+        apptainer|singularity)
+            local sif binds=() args=(exec --pwd "$here")
+            sif="$(apptainer_sif "$rt" "$name")"
+            # $HOME and the current directory are bound by default; bind the rest.
+            local d
+            for d in "$ROOT" "$ws" "$cwd_mount"; do
+                [[ -z "$d" || "$d" == "$HOME" || "$d" == "$HOME"/* ]] && continue
+                binds+=(--bind "${d}:${d}")
+            done
+            args+=("${binds[@]}" --bind "${MODEL_CACHE}:/opt/model-cache")
+            for v in "${envs[@]}"; do args+=(--env "$v"); done
+            [[ "$gpu_ok" == 1 ]] && args+=(--nv)
+            if [[ "$mode" == server ]]; then
+                # `exec` bypasses the image ENTRYPOINT, so name it.
+                args+=("$sif" /opt/atomisticskills/docker/entrypoint.sh "$@")
+            else
+                args+=("$sif" "$@")
+            fi
+            exec "$rt" "${args[@]}"
+            ;;
+    esac
+}
+
+# --- modes ------------------------------------------------------------------------
+
+server_row() {  # server_row NAME -> "venv module image gpu platforms"
+    awk -F'\t' -v s="$1" '!/^#/ && $1 == s { print $2, $3, $4, $5, $6; found = 1 }
+                          END { exit !found }' "$SERVERS_TABLE"
+}
+
+start_server() {
+    local name="$1" row venv module image gpu platforms backend
+    row="$(server_row "$name")" || die "unknown MCP server '${name}'; servers: $(awk -F'\t' '!/^#/ {print $1}' "$SERVERS_TABLE" | paste -sd' ' -)"
+    read -r venv module image gpu platforms <<<"$row"
+
+    if [[ "$venv" == - ]]; then
+        # No uv project: this server exists only as a container image.
+        if [[ "$RUNTIME" == auto || "$RUNTIME" == uv ]]; then
+            backend="$(first_container_runtime)" || die "server '${name}' runs only from the '${image}' container image (${platforms//,/ }), and no container runtime (apptainer, docker, podman) is installed."
+        else
+            backend="$(choose_backend cpu)"
+        fi
+    else
+        backend="$(choose_backend "$venv")"
+    fi
+
+    if [[ "$backend" != uv ]]; then
+        platform_allowed "$platforms" || die "server '${name}' is unavailable on this machine: its image (${image}) is built for ${platforms//,/ } and this host is linux/${OCI_ARCH}. Nothing was downloaded; the other servers still work."
+        log "starting ${name} from image ${image} via ${backend}"
+        run_container "$backend" "$image" "$gpu" server "$name"
+    fi
+
+    export ATOMISTIC_WORKSPACE="${ATOMISTIC_WORKSPACE:-$(workspace)}"
+    export PYTHONUNBUFFERED=1 UV_NO_PROGRESS=1
+    if ! uv_is_synced "$venv"; then
+        local logf waited=0
+        logf="$(uv_sync_in_background "$venv")"
+        # A warm uv cache often finishes in seconds; give it a short window,
+        # well inside the ~30 s an MCP client allows a server to start.
+        while (( waited < ${ATOMISTIC_SERVER_SETUP_WAIT:-15} )); do
+            sleep 1; waited=$((waited + 1))
+            uv_is_synced "$venv" && break
+        done
+        uv_is_synced "$venv" || die "the '${venv}' environment for server '${name}' is being created in the background (first run only; several GB for mlip and fairchem).
+       Progress: ${logf}
+       When it finishes, reconnect the server (/mcp in Claude Code) or restart the session.
+       To do this ahead of time: ${ROOT}/venv/run --setup"
+    fi
+    cd "$ATOMISTIC_WORKSPACE" 2>/dev/null || true
+    log "starting ${name} (venv ${venv})"
+    exec uv run --frozen --no-sync --project "${VENV_DIR}/${venv}" python -m "$module"
+}
+
+run_command() {
+    local spec="$1"; shift
+    [[ $# -gt 0 ]] || die "usage: venv/run <venv>[+extra...] <command> [args...]"
+    local venv rest="" extras=() backend
+    IFS='+' read -r venv rest <<<"$spec"
+    [[ -n "${rest:-}" ]] && IFS='+' read -r -a extras <<<"$rest"
+    [[ -f "${VENV_DIR}/${venv}/pyproject.toml" ]] \
+        || die "unknown venv '${venv}'; available: $(cd "$VENV_DIR" && ls -d */ | tr -d / | paste -sd' ' -)"
+
+    backend="$(choose_backend "$venv" "${extras[@]}")"
+    if [[ "$backend" != uv ]]; then
+        local gpu=0
+        [[ "$venv" != cpu ]] && gpu=1
+        run_container "$backend" "$venv" "$gpu" command "$@"
+    fi
+
+    if [[ " ${extras[*]} " == *" docking "* && "$ARCH" == aarch64 && ! -d /usr/include/boost ]] \
+       && ! uv_is_synced "$venv" "${extras[@]}"; then
+        log "note: AutoDock Vina has no aarch64 wheel and is compiled here; that needs the Boost headers (e.g. sudo apt install libboost-all-dev). Without them, set ATOMISTIC_RUNTIME=docker or apptainer."
+    fi
+    if ! uv_is_synced "$venv" "${extras[@]}"; then
+        log "preparing the '${spec}' environment (first use downloads several GB for mlip and fairchem)..."
+        uv_sync "$venv" "${extras[@]}"
+    fi
+    local args; mapfile -t args < <(uv_project_args "$venv" "${extras[@]}")
+    exec uv run "${args[@]}" --no-sync "$@"
+}
+
+# fetch_image BACKEND IMAGE_NAME PLATFORMS -- pull, or build the cached SIF
+fetch_image() {
+    local backend="$1" name="$2" platforms="$3"
+    if ! platform_allowed "$platforms"; then
+        log "== ${name}: skipped, built for ${platforms//,/ } and this host is linux/${OCI_ARCH}"
+        return 0
+    fi
+    if [[ "$backend" == apptainer || "$backend" == singularity ]]; then
+        log "== ${name}: $(apptainer_sif "$backend" "$name")"
+    else
+        log "== ${name}: pulling $(image_ref "$name")"
+        "$backend" pull "$(image_ref "$name")" >&2
+    fi
+}
+
+# setup [target...] -- a target is a venv (cpu, mlip, fairchem) or the name of
+# a container-only image (generative). The default is every venv.
+setup() {
+    local targets=("$@") target backend platforms
+    [[ ${#targets[@]} -gt 0 ]] || mapfile -t targets < <(cd "$VENV_DIR" && ls -d */ | tr -d / )
+    for target in "${targets[@]}"; do
+        if [[ -f "${VENV_DIR}/${target}/pyproject.toml" ]]; then
+            backend="$(choose_backend "$target")"
+            if [[ "$backend" == uv ]]; then
+                log "== ${target}: uv sync"
+                uv_sync "$target"
+            else
+                fetch_image "$backend" "$target" ""
+            fi
+            continue
+        fi
+        platforms="$(awk -F'\t' -v i="$target" '!/^#/ && $4 == i { print $6; exit }' "$SERVERS_TABLE")"
+        [[ -n "$platforms" ]] || die "unknown setup target '${target}'; expected a venv ($(cd "$VENV_DIR" && ls -d */ | tr -d / | paste -sd' ' -)) or an image name from venv/servers.tsv"
+        if [[ "$RUNTIME" == auto || "$RUNTIME" == uv ]]; then
+            backend="$(first_container_runtime)" || die "'${target}' is a container image and no container runtime is installed"
+        else
+            backend="$(choose_backend cpu)"
+        fi
+        fetch_image "$backend" "$target" "$platforms"
+    done
+    log "ready"
+}
+
+doctor() {
+    local venv why rt
+    {
+        echo "AtomisticSkills runtime report"
+        echo "  repository : ${ROOT}"
+        echo "  host       : $(uname -s) ${ARCH}, glibc $(glibc_version)"
+        echo "  uv         : $(command -v uv >/dev/null 2>&1 && uv --version || echo 'not installed')"
+        echo "  containers : $(for rt in "${CONTAINER_RUNTIMES[@]}"; do command -v "$rt" >/dev/null 2>&1 && printf '%s ' "$rt"; done; echo)"
+        echo "  GPU        : $( (command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi --query-gpu=name,driver_version --format=csv,noheader 2>/dev/null | head -1) || echo none)"
+        echo "  runtime    : ${RUNTIME} (from ATOMISTIC_RUNTIME or ${CONFIG_FILE})"
+        echo "  workspace  : $(workspace)"
+        for venv in $(cd "$VENV_DIR" && ls -d */ | tr -d /); do
+            if why="$(host_supports_uv "$venv")"; then
+                if uv_is_synced "$venv"; then echo "  ${venv}: uv, ready"; else echo "  ${venv}: uv, not created yet (venv/run --setup ${venv})"; fi
+            elif rt="$(first_container_runtime)"; then
+                echo "  ${venv}: ${rt} image $(image_ref "$venv") -- ${why}"
+            else
+                echo "  ${venv}: UNAVAILABLE -- ${why}"
+            fi
+        done
+    } >&2
+}
+
+case "${1:-}" in
+    --server) [[ -n "${2:-}" ]] || die "usage: venv/run --server <name>"; start_server "$2" ;;
+    --setup)  shift; setup "$@" ;;
+    --doctor) doctor ;;
+    -h|--help|"") sed -n '2,32p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' >&2; [[ -n "${1:-}" ]] ;;
+    -*)       die "unknown option '$1' (see venv/run --help)" ;;
+    *)        run_command "$@" ;;
+esac

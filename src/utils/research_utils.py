@@ -11,17 +11,29 @@ inject_config_into_env()
 def workspace_root() -> Path:
     """Return the directory that holds ``research/`` and ``.env``.
 
-    For a local checkout this is the repository root, derived from this file's
-    location. That derivation breaks inside a container: the repository lives on
-    a read-only filesystem, so creating a research directory fails with
-    ``[Errno 30] Read-only file system: '/opt/atomisticskills/research'``.
-    Containers therefore set ``ATOMISTIC_WORKSPACE`` to the writable mount, and
-    it takes precedence when present.
+    In order of precedence:
+
+    1. ``ATOMISTIC_WORKSPACE``, when set. MCP servers started by the plugin get
+       the Claude Code project directory here, and containers started by
+       ``venv/run`` get the host workspace, mounted at the same path.
+    2. The repository, when the current directory is inside a checkout of it:
+       the development layout, where ``research/`` sits next to the code.
+    3. Otherwise the current directory. A plugin install keeps this code in
+       Claude Code's plugin cache, which is replaced on every update and must
+       never receive results, while the agent runs scripts from the user's
+       project -- so the project is where results belong.
+
+    ``venv/run`` applies the same rule, so a skill script and an MCP server
+    started from the same project always agree on the research directory.
     """
     override = os.environ.get("ATOMISTIC_WORKSPACE")
     if override:
         return Path(override).expanduser().absolute()
-    return Path(__file__).parent.parent.parent.absolute()
+    repo = Path(__file__).resolve().parents[2]
+    cwd = Path.cwd().resolve()
+    if cwd == repo or repo in cwd.parents:
+        return repo
+    return cwd
 
 
 def load_env(project_root: Path) -> Dict[str, str]:
