@@ -3,8 +3,7 @@ name: chem-msms-predict
 description: Predict LC-MS/MS (MS2, tandem mass spectra) from SMILES via ICEBERG, a two-stage deep neural network. Outputs predicted m/z vs intensity spectrum, fragment ion SMILES, and a spectrum plot.
 metadata:
   category: [chemistry, drug-discovery]
-  venv: []
-  conda_env: ms-gen
+  venv: [msms]
 ---
 
 # LC-MS/MS Spectrum Prediction
@@ -29,35 +28,38 @@ Predict the LC-MS/MS (tandem mass) spectrum of a molecule given its SMILES strin
 
 ## Prerequisites
 
-### 1. Download ICEBERG checkpoints
+Scripts run in the `msms` environment, created on first use by `venv/run`. It
+installs ICEBERG 2.1 (`ms-pred`, pinned to a commit) on a CPU torch build, and
+is x86_64 Linux only: DGL publishes no aarch64 wheels.
 
-Download from [coleygroup/ms-pred releases](https://github.com/coleygroup/ms-pred) and place in `downloads/`:
-
-```
-downloads/
-├── iceberg_dag_gen_msg_best.ckpt     # generator (stage 1)
-└── iceberg_dag_inten_msg_best.ckpt   # intensity predictor (stage 2)
-```
-
-**Flag error and stop** if either checkpoint is missing.
-
-### 2. Set up the conda environment
+### Download the ICEBERG 2.1 checkpoints
 
 ```bash
-bash ${CLAUDE_SKILL_DIR}/../../conda-envs/msms-agent/install.sh
+${CLAUDE_SKILL_DIR}/../../venv/run msms python ${CLAUDE_SKILL_DIR}/scripts/download_weights.py
 ```
 
-The `ms_pred` Python package is installed from GitHub automatically by the install script.
+This fetches the public weights trained on MassSpecGym (`msg_all`, ~80 MB) from
+the ms-pred authors:
+
+```
+downloads/iceberg_msg_all/
+├── gen/best.ckpt           # generator (stage 1)
+└── inten_contr/best.ckpt   # intensity predictor (stage 2)
+```
+
+Weights trained on NIST are available from the ms-pred authors on proof of a
+NIST license. ICEBERG 2.0 checkpoints do not load: 2.1 adds instrument types.
+**Flag error and stop** if either checkpoint is missing.
 
 ## Instructions
 
 ### Step 1 — Run inference and generate spectrum
 
 ```bash
-conda run --no-capture-output -n ms-gen python ${CLAUDE_SKILL_DIR}/scripts/predict_msms.py \
+${CLAUDE_SKILL_DIR}/../../venv/run msms python ${CLAUDE_SKILL_DIR}/scripts/predict_msms.py \
     --smiles "c1ccccc1C(=O)OCCN" \
-    --gen_ckpt downloads/iceberg_dag_gen_msg_best.ckpt \
-    --inten_ckpt downloads/iceberg_dag_inten_msg_best.ckpt \
+    --gen_ckpt downloads/iceberg_msg_all/gen/best.ckpt \
+    --inten_ckpt downloads/iceberg_msg_all/inten_contr/best.ckpt \
     --collision_energies 20 40 \
     --adduct "[M+H]+" \
     --instrument "Orbitrap" \
@@ -72,7 +74,7 @@ conda run --no-capture-output -n ms-gen python ${CLAUDE_SKILL_DIR}/scripts/predi
 - `--instrument` — instrument type for intensity prediction (e.g. `"Orbitrap"`, `"QTOF"`)
 - `--threshold` — confidence cutoff for DAG fragment generator (default `0.1`; lower = more fragments)
 - `--sparse_k` — maximum number of peaks returned (default `100`)
-- `--cuda_devices` — GPU device IDs (e.g. `"0"` or `"0,1"`); omit or set to `None` for CPU
+- `--num_workers` — parallel CPU workers (default `0`: serial); inference runs on the CPU
 
 **Outputs written to `--output_dir`:**
 | File | Description |
@@ -107,9 +109,9 @@ If an experimental spectrum is available, use the companion skill:
 ### 2-Aminoethyl benzoate (`c1ccccc1C(=O)OCCN`)
 
 ```bash
-conda run --no-capture-output -n ms-gen python ${CLAUDE_SKILL_DIR}/examples/predict_smiles.py \
-    --gen_ckpt downloads/iceberg_dag_gen_msg_best.ckpt \
-    --inten_ckpt downloads/iceberg_dag_inten_msg_best.ckpt \
+${CLAUDE_SKILL_DIR}/../../venv/run msms python ${CLAUDE_SKILL_DIR}/examples/predict_smiles.py \
+    --gen_ckpt downloads/iceberg_msg_all/gen/best.ckpt \
+    --inten_ckpt downloads/iceberg_msg_all/inten_contr/best.ckpt \
     --output_dir .agents/test/msms_example
 ```
 
@@ -120,7 +122,7 @@ Expected output:
 
 ## Constraints
 
-- **Environment**: All scripts require the `ms-gen` conda environment. `ms_pred` is installed automatically from GitHub by `conda-envs/msms-agent/install.sh`.
+- **Environment**: All scripts run in the `msms` environment (`venv/run msms`, x86_64 Linux only), on the CPU.
 - **Checkpoints required**: Script raises `FileNotFoundError` if `--gen_ckpt` or `--inten_ckpt` are missing.
 - **Collision energy units**: Use absolute eV values. To convert NCE → eV, set `nce=True` in `iceberg_prediction()` directly.
 - **Non-binned output only**: This skill uses `binned_out=False` (high-precision m/z). Binned output disables fragment assignment.

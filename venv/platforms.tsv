@@ -65,5 +65,7 @@ mlip	transport	x86_64	2.28
 mlip	transport	aarch64	2.34
 mlip	void	x86_64	2.28
 mlip	void	aarch64	2.34
+msms	-	x86_64	2.28
+msms	-	aarch64	unavailable:not built for aarch64
 reactot	-	x86_64	2.28
 reactot	-	aarch64	2.28

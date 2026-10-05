@@ -60,8 +60,9 @@ def collect(skills: list[str] | None, venv: str | None) -> list[tuple[str, str, 
 def not_built_for(spec: str, arch: str) -> str | None:
     """Skip reason when the spec's uv project is not built for this architecture.
 
-    Such projects (the generative stacks on aarch64) run from a container image
-    there; a --help sweep should not pull a multi-GB image to find that out.
+    Such projects run from a container image there, if any carries them (the
+    generative stacks on aarch64); a --help sweep should not pull a multi-GB
+    image to find that out.
     """
     venv = spec.split("+")[0]
     table = PROJECT_ROOT / "venv" / "platforms.tsv"
@@ -69,7 +70,7 @@ def not_built_for(spec: str, arch: str) -> str | None:
         cols = line.split("\t")
         if len(cols) == 4 and cols[0] == venv and cols[1] == "-" and cols[2] == arch:
             if cols[3].startswith("unavailable:not built for"):
-                return f"the {venv} environment is not built for {arch} (container image only)"
+                return f"the {venv} environment is not built for {arch}"
     return None
 
 

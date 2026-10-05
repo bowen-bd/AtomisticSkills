@@ -55,7 +55,6 @@ SKILL_DIR = "${CLAUDE_SKILL_DIR}"
 # Skills whose dependencies cannot live in a uv project; their commands run in
 # the named conda environment from conda-envs/.
 CONDA_SKILLS = {
-    "chem-msms-predict": "ms-gen",
     # LAMMPS is compiled against each MLIP's conda environment.
     "mat-lammps-md": "[mace-agent, matgl-agent, fairchem-agent]",
 }

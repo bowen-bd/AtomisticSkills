@@ -3,10 +3,9 @@
 Example: predict LC-MS/MS spectrum for 2-aminoethyl benzoate (c1ccccc1C(=O)OCCN).
 
 Run from project root:
-    # Env: ms-gen
-    python skills/chem-msms-predict/examples/predict_smiles.py \\
-        --gen_ckpt downloads/iceberg_dag_gen_msg_best.ckpt \\
-        --inten_ckpt downloads/iceberg_dag_inten_msg_best.ckpt
+    venv/run msms python skills/chem-msms-predict/examples/predict_smiles.py \\
+        --gen_ckpt downloads/iceberg_msg_all/gen/best.ckpt \\
+        --inten_ckpt downloads/iceberg_msg_all/inten_contr/best.ckpt
 """
 
 import argparse
@@ -22,7 +21,6 @@ def main() -> None:
     p.add_argument("--gen_ckpt", required=True, type=Path)
     p.add_argument("--inten_ckpt", required=True, type=Path)
     p.add_argument("--output_dir", type=Path, default=Path(".agents/test/msms_example"))
-    p.add_argument("--cuda_devices", default=None)
     args = p.parse_args()
 
     script = Path(__file__).parent.parent / "scripts" / "predict_msms.py"
@@ -45,8 +43,6 @@ def main() -> None:
         "--num_workers",
         "0",
     ]
-    if args.cuda_devices:
-        cmd += ["--cuda_devices", args.cuda_devices]
 
     print(f"Predicting spectrum for: {EXAMPLE_SMILES}")
     subprocess.run(cmd, check=True)

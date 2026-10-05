@@ -4,10 +4,11 @@ One worked example demonstrating LC-MS/MS spectrum prediction via ICEBERG for a 
 
 ## Prerequisites
 
-- `ms-gen` conda environment activated (see `conda-envs/msms-agent/install.sh`)
-- ICEBERG checkpoints downloaded to `downloads/`:
-  - `downloads/iceberg_dag_gen_msg_best.ckpt` (stage 1: fragment DAG generator)
-  - `downloads/iceberg_dag_inten_msg_best.ckpt` (stage 2: intensity predictor)
+- The `msms` environment (`venv/run msms ...`; x86_64 Linux), created on first use.
+- ICEBERG 2.1 checkpoints in `downloads/iceberg_msg_all/`, fetched by
+  `venv/run msms python skills/chem-msms-predict/scripts/download_weights.py`:
+  - `gen/best.ckpt` (stage 1: fragment DAG generator)
+  - `inten_contr/best.ckpt` (stage 2: intensity predictor)
 
 ## Example: 2-Aminoethyl benzoate
 
@@ -18,10 +19,9 @@ One worked example demonstrating LC-MS/MS spectrum prediction via ICEBERG for a 
 Runs inference at collision energies 20 eV and 40 eV and writes results to `.agents/test/msms_example/`.
 
 ```bash
-# Env: ms-gen
-python skills/chem-msms-predict/examples/predict_smiles.py \
-    --gen_ckpt downloads/iceberg_dag_gen_msg_best.ckpt \
-    --inten_ckpt downloads/iceberg_dag_inten_msg_best.ckpt \
+venv/run msms python skills/chem-msms-predict/examples/predict_smiles.py \
+    --gen_ckpt downloads/iceberg_msg_all/gen/best.ckpt \
+    --inten_ckpt downloads/iceberg_msg_all/inten_contr/best.ckpt \
     --output_dir .agents/test/msms_example
 ```
 
@@ -38,11 +38,10 @@ python skills/chem-msms-predict/examples/predict_smiles.py \
 Adapt `predict_smiles.py` or call the underlying script directly:
 
 ```bash
-# Env: ms-gen
-python skills/chem-msms-predict/scripts/predict_msms.py \
+venv/run msms python skills/chem-msms-predict/scripts/predict_msms.py \
     --smiles "<your SMILES>" \
-    --gen_ckpt downloads/iceberg_dag_gen_msg_best.ckpt \
-    --inten_ckpt downloads/iceberg_dag_inten_msg_best.ckpt \
+    --gen_ckpt downloads/iceberg_msg_all/gen/best.ckpt \
+    --inten_ckpt downloads/iceberg_msg_all/inten_contr/best.ckpt \
     --collision_energies 20 40 60 \
     --adduct "[M+H]+" \
     --output_dir results/my_compound

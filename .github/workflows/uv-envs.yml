@@ -70,6 +70,7 @@ jobs:
           - { runner: ubuntu-24.04, venv: diffcsp, torch: cu126 }
           - { runner: ubuntu-24.04, venv: reactot, torch: cu130 }
           - { runner: ubuntu-24.04-arm, venv: reactot, torch: cu130 }
+          - { runner: ubuntu-24.04, venv: msms, torch: cu130 }
     env:
       ATOMISTIC_TORCH_CUDA: ${{ matrix.torch }}
     steps:
@@ -103,6 +104,7 @@ jobs:
       - name: MCP server smoke test
         run: |
           SERVERS="$(awk -F'\t' -v v="${{ matrix.venv }}" '$2 == v { printf "%s ", $1 }' venv/servers.tsv)"
+          if [ -z "$SERVERS" ]; then echo "No MCP servers run from ${{ matrix.venv }}"; exit 0; fi
           echo "Smoke testing servers: $SERVERS"
           venv/run cpu python tools/mcp_smoke.py $SERVERS
 

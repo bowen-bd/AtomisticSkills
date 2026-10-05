@@ -5,18 +5,18 @@ Predict LC-MS/MS spectra from SMILES via ICEBERG (two-stage DAG + intensity GNN)
 Runs inference, saves fragment SMILES assignments, and plots the predicted spectrum.
 
 Usage:
-    # Env: ms-gen
-    python skills/chem-msms-predict/scripts/predict_msms.py \\
+    venv/run msms python skills/chem-msms-predict/scripts/predict_msms.py \\
         --smiles "c1ccccc1C(=O)OCCN" \\
-        --gen_ckpt downloads/iceberg_dag_gen_msg_best.ckpt \\
-        --inten_ckpt downloads/iceberg_dag_inten_msg_best.ckpt \\
+        --gen_ckpt downloads/iceberg_msg_all/gen/best.ckpt \\
+        --inten_ckpt downloads/iceberg_msg_all/inten_contr/best.ckpt \\
         --collision_energies 20 40 \\
         --output_dir results/msms_prediction
 
 Requirements:
-    - Conda environment: ms-gen
-    - Checkpoints: downloads/iceberg_dag_gen_msg_best.ckpt
-                   downloads/iceberg_dag_inten_msg_best.ckpt
+    - Environment: msms (run with: venv/run msms python ...; x86_64 only)
+    - ICEBERG 2.1 checkpoints, fetched by download_weights.py:
+      downloads/iceberg_msg_all/gen/best.ckpt
+      downloads/iceberg_msg_all/inten_contr/best.ckpt
 """
 
 import argparse
@@ -37,15 +37,14 @@ def run_iceberg(
     collision_energies: list,
     adduct: str,
     instrument: str,
-    cuda_devices,
     batch_size: int,
     num_workers: int,
     sparse_k: int,
     max_nodes: int,
     threshold: float,
 ) -> tuple:
-    """Run ICEBERG two-stage inference. Returns (save_dir, precursor_mass)."""
-    from ms_pred.dag_pred.iceberg_elucidation import iceberg_prediction
+    """Run ICEBERG two-stage inference on the CPU. Returns (save_dir, precursor_mass)."""
+    from ms_pred.iceberg.iceberg_elucidation import iceberg_prediction
 
     save_dir, precursor_mass = iceberg_prediction(
         candidate_smiles=[smiles],
@@ -57,15 +56,18 @@ def run_iceberg(
         python_path=sys.executable,
         gen_ckpt=str(gen_ckpt),
         inten_ckpt=str(inten_ckpt),
-        cuda_devices=cuda_devices,
+        cuda_devices=None,
         batch_size=batch_size,
-        num_workers=num_workers,
+        num_cpu_workers=num_workers,
         sparse_k=sparse_k,
         max_nodes=max_nodes,
         threshold=threshold,
         binned_out=False,
         force_recompute=True,
     )
+    # iceberg_prediction reports a failed prediction run only by not writing this.
+    if not (Path(save_dir) / "iceberg_run_successful").exists():
+        sys.exit("ICEBERG prediction failed; see its output above.")
     return save_dir, precursor_mass
 
 
@@ -78,10 +80,26 @@ def load_predictions(save_dir: Path) -> tuple:
         frag_dict: {collision_energy_str -> list of fragment SMILES}
         canonical_smi: SMILES as stored in HDF5
     """
-    from ms_pred.dag_pred.iceberg_elucidation import load_pred_spec
+    from ms_pred.iceberg.iceberg_elucidation import load_pred_spec
+    from rdkit import Chem
 
-    smiles_arr, pred_specs, pred_frags = load_pred_spec(save_dir, merge_spec=False)
-    return pred_specs[0], pred_frags[0], smiles_arr[0]
+    smiles, pred_specs = load_pred_spec(save_dir)
+    canonical_smi, composite = smiles[0], pred_specs[0]
+    # Each fragment is a mask over the atoms of the root molecule as ICEBERG
+    # parses it. Kekulized, so a fragment that cuts an aromatic ring is still
+    # valid SMILES.
+    mol = Chem.MolFromSmiles(canonical_smi)
+    Chem.Kekulize(mol, clearAromaticFlags=True)
+    spec_dict, frag_dict = {}, {}
+    for ce, ms in composite.items():
+        spec_dict[ce] = ms.spec
+        frag_dict[ce] = [
+            Chem.MolFragmentToSmiles(
+                mol, atomsToUse=np.flatnonzero(mask).tolist(), kekuleSmiles=True
+            )
+            for mask in (ms.frags if ms.has_frags else [])
+        ]
+    return spec_dict, frag_dict, canonical_smi
 
 
 def plot_spectrum(
@@ -199,13 +217,10 @@ def parse_args() -> argparse.Namespace:
         default=Path("results/msms_prediction"),
         help="Output directory",
     )
-    p.add_argument(
-        "--cuda_devices",
-        default=None,
-        help="CUDA device IDs e.g. '0' or '0,1'. Omit for CPU.",
-    )
     p.add_argument("--batch_size", type=int, default=8)
-    p.add_argument("--num_workers", type=int, default=0)
+    p.add_argument(
+        "--num_workers", type=int, default=0, help="Parallel CPU workers (0: serial)"
+    )
     p.add_argument("--sparse_k", type=int, default=100, help="Top-K peaks to output")
     p.add_argument("--max_nodes", type=int, default=100, help="Max fragment DAG nodes")
     p.add_argument(
@@ -229,8 +244,8 @@ def main() -> None:
         if not ckpt.exists():
             raise FileNotFoundError(
                 f"Checkpoint not found: {ckpt}\n"
-                "Download from https://github.com/coleygroup/ms-pred "
-                "and place in downloads/."
+                "Fetch the ICEBERG 2.1 weights with "
+                "skills/chem-msms-predict/scripts/download_weights.py."
             )
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -248,7 +263,6 @@ def main() -> None:
         collision_energies=args.collision_energies,
         adduct=args.adduct,
         instrument=args.instrument,
-        cuda_devices=args.cuda_devices,
         batch_size=args.batch_size,
         num_workers=args.num_workers,
         sparse_k=args.sparse_k,

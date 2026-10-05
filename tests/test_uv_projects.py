@@ -35,6 +35,9 @@ STACKS = tuple(
     )
 )
 ALL = PROJECTS + STACKS
+# Stacks that install an upstream package pinned to a commit, with its own
+# requirements, rather than a closed set: their uv.lock is the pin.
+LOCK_PINNED = ("msms",)
 ARCHES = {
     "sys_platform == 'linux' and platform_machine == 'x86_64'",
     "sys_platform == 'linux' and platform_machine == 'aarch64'",
@@ -190,7 +193,7 @@ def test_base_sets_install_on_rhel8_era_x86():
             ), f"{venv} needs glibc {glibc} on x86_64"
 
 
-@pytest.mark.parametrize("project", STACKS)
+@pytest.mark.parametrize("project", [s for s in STACKS if s not in LOCK_PINNED])
 def test_research_stacks_reproduce_their_verified_environment(project):
     """A closed set like the verified `pip install --no-deps`, with the torch build
     still chosen per driver."""
