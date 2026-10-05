@@ -7,10 +7,6 @@ on this host or, where the host cannot, from its container image -- the same
 launcher the Claude Code plugin uses. The server list comes from
 ``venv/servers.tsv`` (rendered from ``docker/images.json``).
 
-The generative servers (adit, diffcsp, mattergen) have no uv project. If this
-machine has their conda environments (``<conda>/envs/<name>-agent``), those are
-used directly; otherwise they too go through the launcher's container path.
-
 Supported agents:
   claude   - Claude Code (.mcp.json or ~/.claude/settings.json)
   codex    - OpenAI Codex CLI (.codex/config.toml)
@@ -27,7 +23,6 @@ Usage:
     python configure_mcp.py                        # auto-detect installed agents
     python configure_mcp.py --agent claude         # specific agent only
     python configure_mcp.py --agent claude codex   # multiple agents
-    python configure_mcp.py --conda /path/to/miniforge3   # find generative conda envs here
     python configure_mcp.py --scope global         # write to global config only
     python configure_mcp.py --scope project        # write to project config only
     python configure_mcp.py --list-agents          # show detected agents
@@ -39,7 +34,6 @@ import argparse
 import json
 import re
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -286,45 +280,12 @@ If the current workspace is already `{PROJECT_ROOT}` or a subdirectory, prefer t
 
 
 # ---------------------------------------------------------------------------
-# Conda detection
-# ---------------------------------------------------------------------------
-
-
-def detect_conda_base() -> str | None:
-    for cmd in ("conda", "mamba", "micromamba"):
-        try:
-            result = subprocess.run(
-                [cmd, "info", "--base"],
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
-            if result.returncode == 0:
-                base = result.stdout.strip()
-                if base and Path(base).is_dir():
-                    return base
-        except (FileNotFoundError, subprocess.TimeoutExpired):
-            continue
-
-    for name in ("miniforge3", "mambaforge", "miniconda3", "anaconda3"):
-        candidate = Path.home() / name
-        if candidate.is_dir():
-            return str(candidate)
-
-    return None
-
-
-# ---------------------------------------------------------------------------
 # MCP config loading and path patching
 # ---------------------------------------------------------------------------
 
 
-def load_mcp_servers(conda_base: str | None) -> dict[str, Any]:
+def load_mcp_servers() -> dict[str, Any]:
     """Return an MCP server config for every server in venv/servers.tsv.
-
-    Args:
-        conda_base: Conda installation searched for the generative servers'
-            environments, or None to always use the launcher.
 
     Returns:
         ``{server: {"command", "args", "env"}}``, the shape every agent writer
@@ -334,24 +295,12 @@ def load_mcp_servers(conda_base: str | None) -> dict[str, Any]:
     for line in SERVERS_TABLE.read_text().splitlines():
         if not line or line.startswith("#"):
             continue
-        name, venv, module, _image, _gpu, _platforms = line.split("\t")
-        conda_python = (
-            Path(conda_base) / "envs" / f"{name}-agent" / "bin" / "python"
-            if conda_base
-            else None
-        )
-        if venv == "-" and conda_python is not None and conda_python.exists():
-            servers[name] = {
-                "command": str(conda_python),
-                "args": ["-m", module],
-                "env": {"PYTHONPATH": str(PROJECT_ROOT)},
-            }
-        else:
-            servers[name] = {
-                "command": str(LAUNCHER),
-                "args": ["--server", name],
-                "env": {},
-            }
+        name = line.split("\t")[0]
+        servers[name] = {
+            "command": str(LAUNCHER),
+            "args": ["--server", name],
+            "env": {},
+        }
     return servers
 
 
@@ -724,13 +673,6 @@ def main() -> None:
         "(default: auto-detect installed agents)",
     )
     parser.add_argument(
-        "--conda",
-        default=None,
-        metavar="PATH",
-        help="Conda/mamba base holding the generative servers' environments "
-        "(auto-detected; optional -- without it they run from containers).",
-    )
-    parser.add_argument(
         "--scope",
         choices=["project", "global", "both"],
         default="project",
@@ -752,16 +694,7 @@ def main() -> None:
             print("No supported agents detected.")
         return
 
-    # A conda installation is optional: it only provides the generative
-    # servers' environments on machines that already have them.
-    conda_base: str | None = args.conda
-    if conda_base is not None and not Path(conda_base).is_dir():
-        print(f"Error: {conda_base} is not a valid directory.", file=sys.stderr)
-        sys.exit(1)
-    if conda_base is None:
-        conda_base = detect_conda_base()
-
-    servers = load_mcp_servers(conda_base)
+    servers = load_mcp_servers()
 
     # Resolve agent list
     if args.agent is None:
@@ -781,7 +714,6 @@ def main() -> None:
 
     print(f"Project root : {PROJECT_ROOT}")
     print(f"Launcher     : {LAUNCHER}")
-    print(f"Conda base   : {conda_base or 'none (generative servers use containers)'}")
     print(f"Scope        : {args.scope}")
     print()
 
