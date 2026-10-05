@@ -6,9 +6,27 @@ heavy dependencies like lightning/pytorch-lightning.
 """
 
 import logging
+import os
+
 import torch
 
 logger = logging.getLogger(__name__)
+
+
+def _visible_physical_indices() -> list[int] | None:
+    """Physical GPU indices, in torch-ordinal order, from CUDA_VISIBLE_DEVICES.
+
+    Returns None when the variable is unset (torch ordinal == nvidia-smi index),
+    and an empty list when it names devices by UUID or MIG slice, which cannot
+    be matched to nvidia-smi indices.
+    """
+    value = os.environ.get("CUDA_VISIBLE_DEVICES")
+    if value is None:
+        return None
+    entries = [e.strip() for e in value.split(",") if e.strip()]
+    if all(e.isdigit() for e in entries):
+        return [int(e) for e in entries]
+    return []
 
 
 def get_best_device(device_preference: str = "auto") -> str:
@@ -89,6 +107,18 @@ def get_best_device(device_preference: str = "auto") -> str:
                         gpu_memory.append((gpu_idx, memory_free))
                     except ValueError:
                         continue
+
+            # nvidia-smi numbers every physical GPU; torch numbers only the
+            # visible ones. Translate, or leave the choice to torch below when
+            # the mapping is unknown (UUIDs or MIG slices in CUDA_VISIBLE_DEVICES).
+            visible = _visible_physical_indices()
+            if visible is not None:
+                gpu_memory = [
+                    (visible.index(idx), free)
+                    for idx, free in gpu_memory
+                    if idx in visible
+                ]
+            gpu_memory = [g for g in gpu_memory if g[0] < torch.cuda.device_count()]
 
             if gpu_memory:
                 # Sort by free memory (descending) and select the GPU with most free VRAM

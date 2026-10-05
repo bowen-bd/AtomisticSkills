@@ -935,3 +935,17 @@ class TestTorchCudaBuild:
         host.run("--server", "mace")
         run = [c for c in host.calls(host.logs / "uv.calls") if c and c[0] == "run"][-1]
         assert flag_value(run, "--extra") == ["cu126"]
+
+    def test_doctor_lists_one_gpu_line_on_a_multi_gpu_host(self, host):
+        """head -1 closed the pipe on 8 GPUs; under pipefail that also printed 'none'."""
+        lines = "\n".join(["NVIDIA A100 80GB PCIe, 550.107.02"] * 8)
+        host.stub(
+            "nvidia-smi",
+            f'if [[ "$*" == *name,driver_version* ]]; then printf "%s\\n" "{lines}";\n'
+            'elif [[ "$*" == *driver_version* ]]; then for i in 1 2 3 4 5 6 7 8; do echo 550.107.02; done;\n'
+            'else echo "GPU 0: NVIDIA A100"; fi\n',
+        )
+        result = host.run("--doctor")
+        gpu = [ln for ln in result.stderr.splitlines() if ln.strip().startswith("GPU")]
+        assert gpu == ["  GPU        : NVIDIA A100 80GB PCIe, 550.107.02"]
+        assert "\nnone\n" not in result.stderr

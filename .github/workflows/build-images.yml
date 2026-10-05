@@ -224,6 +224,10 @@ jobs:
           ")"
           echo "smoke testing: $SERVERS"
           bash docker/smoke_test.sh "$IMAGE" $SERVERS
+          # The pymol extra (x86_64 only) needs a system libGL the wheel does not bundle.
+          if [ "${{ matrix.arch }}" = "amd64" ]; then
+            docker run --rm "$IMAGE" python -c "import pymol; print('pymol imports')"
+          fi
 
   manifest:
     needs: build

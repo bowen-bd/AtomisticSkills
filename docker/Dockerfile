@@ -39,6 +39,9 @@ RUN apt-get update \
         ca-certificates curl git util-linux \
         build-essential cmake pkg-config swig libboost-all-dev libnetcdf-dev \
         packmol \
+        # libGL.so.1 for PyMOL (the pymol extra): its wheel bundles libpng,
+        # freetype, libxml2, GLEW and netcdf, but not the system OpenGL loader.
+        libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
 RUN set -eux; \

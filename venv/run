@@ -210,7 +210,7 @@ workspace() {
 nvidia_driver_major() {
     command -v nvidia-smi >/dev/null 2>&1 || return 0
     local d
-    d="$(nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null | head -1 || true)"
+    d="$(nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null | sed -n 1p || true)"
     d="${d%%.*}"
     [[ "$d" =~ ^[0-9]+$ ]] && printf '%s' "$d"
     return 0
@@ -610,9 +610,13 @@ doctor() {
         echo "  host       : $(uname -s) ${ARCH}, glibc $(glibc_version)"
         echo "  uv         : $(command -v uv >/dev/null 2>&1 && uv --version || echo 'not installed')"
         echo "  containers : $(for rt in "${CONTAINER_RUNTIMES[@]}"; do command -v "$rt" >/dev/null 2>&1 && printf '%s ' "$rt"; done; echo)"
-        echo "  GPU        : $( (command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi --query-gpu=name,driver_version --format=csv,noheader 2>/dev/null | head -1) || echo none)"
+        # sed reads all of nvidia-smi's output; head -1 would close the pipe on a
+        # multi-GPU host, and under pipefail the SIGPIPE also printed "none".
+        local gpu=""
+        command -v nvidia-smi >/dev/null 2>&1 && gpu="$(nvidia-smi --query-gpu=name,driver_version --format=csv,noheader 2>/dev/null | sed -n 1p || true)"
+        echo "  GPU        : ${gpu:-none}"
         local driver
-        driver="$(command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null | head -1 || true)"
+        driver="$(command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null | sed -n 1p || true)"
         if [[ -n "$driver" && "${driver%%.*}" =~ ^[0-9]+$ ]]; then
             if (( ${driver%%.*} < 525 )); then
                 echo "  WARNING    : NVIDIA driver ${driver} is older than 525, too old for the CUDA 12.6"
