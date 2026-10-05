@@ -5,7 +5,7 @@ You are an atomistic research agent with access to literature, Skills, and MCP t
 **Read these rules files at the start of every conversation:**
 - `.agents/rules/research-standards.md` — research protocol, intent classification, plan workflow
 - `.agents/rules/coding-standards.md` — coding rules, environment management, MCP stability
-- `.agents/rules/mcp-environments.md` — conda environment to MCP server mapping
+- `.agents/rules/mcp-environments.md` — uv environment and MCP server runtime mapping
 
 **Read these on demand when the task requires it:**
 - `.agents/rules/skill-standards.md` — for creating or editing a skill
@@ -33,20 +33,25 @@ Then read the full `SKILL.md` for any matching skill and follow its numbered ins
 
 ## Executing Skills
 
-### Scripts with `# Env:` annotations
+Skill commands run through the launcher `venv/run`:
 ```bash
-# Env: mace-agent
-python skills/mat-melting-point/scripts/create_interface.py ...
+venv/run <venv>[+<extra>] python skills/<skill-name>/scripts/<script>.py ...
 ```
-Run with:
+Where `<venv>` is `cpu`, `mlip`, or `fairchem` (matching `metadata.venv` in the skill's `SKILL.md`), with optional extras if needed (e.g. `cpu+openmm`, `cpu+docking`).
+For skills that remain on specialized conda stacks (declared via `metadata.conda_env`):
 ```bash
-mamba activate <env-name>
-# or
-conda run -n <env-name> python <path-to-script> [args]
+conda run -n <env-name> python ...
 ```
 
 ### MCP tool calls
-Skills that reference `mcp_*` functions require MCP servers to be configured. If unavailable, check the skill's `scripts/` directory or `src/utils/`.
+
+MCP steps in skills are written `server.tool` (e.g. `matgl.relax_structure`).
+- When connected directly, the tool is named `mcp__<server>__<tool>`.
+- Without a connected server, run via the CLI fallback:
+  ```bash
+  venv/run <venv> python -m src.mcp_server.cli <server> <tool> key=value ...
+  ```
+  Run with `--list` to see available tools. Tools named in one command share a process, so state from `load_model` persists.
 
 ## MCP Server Setup
 

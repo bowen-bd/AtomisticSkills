@@ -22,26 +22,38 @@ Use [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.PATCH`
    `.claude-plugin/marketplace.json` and `server.json` are derived from it.
    The tag must match `VERSION` exactly.
    ```bash
-   conda run -n base-agent python tools/sync_version.py --set 1.x.y
-   conda run -n base-agent python tools/sync_version.py --check
+   python tools/sync_version.py --set 1.x.y
+   python tools/sync_version.py --check
    ```
    > CI runs `--check` on every push, so a tag can never ship with the four
-   > files disagreeing. Before `VERSION` existed, `server.json` had drifted to
-   > `1.0.0` while the repository was tagged `v1.3.4`.
+   > files disagreeing.
 
    If `docker/images.json` changed in this release, re-render the plugin's MCP
    wiring as well, since the image tags follow the version:
    ```bash
-   conda run -n base-agent python docker/render.py plugin-mcp
+   python docker/render.py plugin-mcp
    ```
 
-1. Rebuild the doc site to get accurate public counts:
+1. Verify derived files, platform locks, and migrations:
    ```bash
-   conda run -n base-agent python site/build_skills.py
+   python docker/render.py servers --check
+   python docker/render.py plugin-mcp --check
+   venv/run cpu python tools/lock_platforms.py --check
+   python tools/migrate_skill_commands.py --check
    ```
-2. Read counts from `site/skills_index.js` and git (source of truth):
+
+2. Run the test suites:
    ```bash
-   # skills, tools, servers (= conda-env dirs) — from rebuilt index
+   venv/run cpu python -m pytest tests/test_launcher.py tests/test_skill_runtime.py tests/test_uv_projects.py tests/test_images_and_manifests.py tests/test_tool_cli.py -q
+   ```
+
+3. Rebuild the doc site to get accurate public counts:
+   ```bash
+   venv/run cpu python site/build_skills.py
+   ```
+4. Read counts from `site/skills_index.js` and git (source of truth):
+   ```bash
+   # skills, tools, servers — from rebuilt index
    python3 -c "
    import re
    content = open('site/skills_index.js').read()
@@ -55,8 +67,8 @@ Use [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.PATCH`
    ```
 
    > **Note**: Workflows live as plain `*.md` files in `.agents/workflows/` (e.g. `drug-hit-finding-htvs.md`), **not** as `WORKFLOW.md`. Always use `ls .agents/workflows/*.md | wc -l` for the current count and `git ls-tree -r <tag> --name-only | grep "workflows/.*\.md" | wc -l` for the previous-tag count.
-3. Ensure all pre-commit hooks pass on HEAD.
-4. Confirm the MCP server does not expose built-in agent tools (e.g. `task_boundary`, `notify_user`).
+5. Ensure all pre-commit hooks pass on HEAD.
+6. Confirm the MCP server does not expose built-in agent tools (e.g. `task_boundary`, `notify_user`).
 
 ## Tag Message Format
 

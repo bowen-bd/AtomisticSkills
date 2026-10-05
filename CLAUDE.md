@@ -12,7 +12,7 @@ You are an atomistic research agent with access to literature, Skills, and MCP t
 **Read these rules files at the start of every conversation** (imported below via @):
 - `.agents/rules/research-standards.md` — research protocol, intent classification, plan workflow
 - `.agents/rules/coding-standards.md` — coding rules, environment management, MCP stability
-- `.agents/rules/mcp-environments.md` — conda environment to MCP server mapping
+- `.agents/rules/mcp-environments.md` — uv environment and MCP server runtime mapping
 
 @.agents/rules/coding-standards.md
 @.agents/rules/mcp-environments.md
@@ -62,20 +62,30 @@ Use the `/skill-search` command for interactive discovery: `/skill-search [searc
 
 ## Executing Skills
 
-### Scripts with `# Env:` annotations
+Skill commands run through the launcher `venv/run`:
 ```bash
-# Env: mace-agent
-python skills/mat-melting-point/scripts/create_interface.py ...
+${CLAUDE_SKILL_DIR}/../../venv/run <venv>[+<extra>] python ${CLAUDE_SKILL_DIR}/scripts/<script>.py ...
 ```
-Run with:
+Or from the repository root:
 ```bash
-mamba activate <env-name>
-# or
-conda run -n <env-name> python <path-to-script> [args]
+venv/run <venv>[+<extra>] python skills/<skill-name>/scripts/<script>.py ...
+```
+Where `<venv>` is `cpu`, `mlip`, or `fairchem` (matching `metadata.venv` in the skill's `SKILL.md`), with optional extras if needed (e.g. `cpu+openmm`, `cpu+docking`).
+For skills that remain on specialized conda stacks (declared via `metadata.conda_env`):
+```bash
+conda run -n <env-name> python ...
 ```
 
 ### MCP tool calls
-Skills that reference `mcp_*` functions require MCP servers to be configured. If unavailable, check the skill's `scripts/` directory or `src/utils/`.
+
+MCP steps in skills are written `server.tool` (e.g. `matgl.relax_structure`).
+- When connected directly, the tool is named `mcp__<server>__<tool>`.
+- When installed as a plugin, it is named `mcp__plugin_atomistic-skills_<server>__<tool>`.
+- Without a connected server, the same tool runs from the shell via the CLI fallback:
+  ```bash
+  venv/run <venv> python -m src.mcp_server.cli <server> <tool> key=value ...
+  ```
+  Run with `--list` to see available tools. Several tools named in one command share a process, so state from `load_model` persists.
 
 ## MCP Server Setup
 
@@ -88,23 +98,24 @@ python configure_mcp.py --scope global    # write to global user config
 
 See `README.md` for full installation instructions.
 
-### Containerised servers
+### Containerised servers and images
 
-The same servers also ship as container images so the plugin can be installed
-without building the ~58 GB of conda environments. `docker/images.json` is the
-single source of truth mapping each server to its image; the Dockerfiles, the CI
-matrix, the in-image server table and the `mcpServers` block of
-`.claude-plugin/plugin.json` are all rendered from it.
+The `cpu`, `mlip`, and `fairchem` container images (for linux/amd64 and linux/arm64)
+are built directly from their respective `venv/<name>/uv.lock` files via `docker/Dockerfile`,
+guaranteeing identical package environments natively and in containers without `--no-deps`.
+The `generative` image (arm64 only) is built via `docker/Dockerfile.cuda` from conda locks.
 
-**When you change anything about a server's packaging**, re-render rather than
-hand-editing the derived files:
+`docker/images.json` is the single source of truth mapping each server to its runtime image.
+The server table `venv/servers.tsv`, the `mcpServers` block of `.claude-plugin/plugin.json`,
+the CI build matrix, and the in-image server maps are all rendered from it.
+
+**When you change anything about a server's packaging or images**, re-render rather than
+hand-editing derived files:
 ```bash
-conda run -n base-agent python docker/render.py plugin-mcp   # plugin wiring
-conda run -n base-agent python docker/export_locks.py        # refresh lockfiles
-conda run -n base-agent python tools/sync_version.py --check # manifest versions
+python docker/render.py servers --check        # or without --check to rewrite venv/servers.tsv
+python docker/render.py plugin-mcp --check     # plugin wiring in .claude-plugin/plugin.json
+python docker/render.py matrix                 # CI build matrix for build-images.yml
+python tools/sync_version.py --check           # manifest versions match VERSION
 ```
-CI fails if any of those are stale. Read `docker/README.md` before touching the
-images — in particular, the GPU environments are installed from lockfiles with
-`--no-deps` because they cannot be resolved (`fairchem-core 2.19.0` declares
-`torch~=2.8.0` while the environment must run torch 2.10.0, since torch 2.8 has
-no sm_121 build). Do not "fix" that by relaxing the pins.
+Run `docker/export_locks.py` to refresh conda locks for the generative conda-lock image only.
+CI validates that rendered files and version manifests are current.
