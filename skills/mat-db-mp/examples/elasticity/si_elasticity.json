@@ -792,12 +792,12 @@
           "mp-fwrjt"
         ],
         "deformation_dir_names": [
-          "login09.chn:/pscratch/sd/t/tsm/mjwen-elastic-tasks-2022-reparse/block_2022-02-07-01-00-55-832121/launcher_2022-02-07-04-12-00-571134",
-          "login09.chn:/pscratch/sd/t/tsm/mjwen-elastic-tasks-2022-reparse/block_2022-02-07-01-00-55-832121/launcher_2022-02-07-03-30-30-642322",
-          "login09.chn:/pscratch/sd/t/tsm/mjwen-elastic-tasks-2022-reparse/block_2022-02-07-01-00-55-832121/launcher_2022-02-07-04-11-39-762260",
-          "login09.chn:/pscratch/sd/t/tsm/mjwen-elastic-tasks-2022-reparse/block_2022-02-06-17-01-08-362618/launcher_2022-02-07-00-06-04-962986",
-          "login09.chn:/pscratch/sd/t/tsm/mjwen-elastic-tasks-2022-reparse/block_2022-02-06-17-01-08-362618/launcher_2022-02-07-00-07-10-225618",
-          "login09.chn:/pscratch/sd/t/tsm/mjwen-elastic-tasks-2022-reparse/block_2022-02-06-17-01-08-362618/launcher_2022-02-07-00-08-15-506780"
+          "cluster:/scratch/elastic-tasks/block_2022-02-07-01-00-55-832121/launcher_2022-02-07-04-12-00-571134",
+          "cluster:/scratch/elastic-tasks/block_2022-02-07-01-00-55-832121/launcher_2022-02-07-03-30-30-642322",
+          "cluster:/scratch/elastic-tasks/block_2022-02-07-01-00-55-832121/launcher_2022-02-07-04-11-39-762260",
+          "cluster:/scratch/elastic-tasks/block_2022-02-06-17-01-08-362618/launcher_2022-02-07-00-06-04-962986",
+          "cluster:/scratch/elastic-tasks/block_2022-02-06-17-01-08-362618/launcher_2022-02-07-00-07-10-225618",
+          "cluster:/scratch/elastic-tasks/block_2022-02-06-17-01-08-362618/launcher_2022-02-07-00-08-15-506780"
         ],
         "equilibrium_cauchy_stress": [
           [

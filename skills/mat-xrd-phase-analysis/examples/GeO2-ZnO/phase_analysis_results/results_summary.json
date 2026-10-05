@@ -1,7 +1,7 @@
 {
-  "pattern": "/home/gridsan/nsegal/AtomisticSkills/skills/mat-xrd-phase-analysis/examples/GeO2-ZnO/GeO2-ZnO_700C_60min.xrdml",
+  "pattern": "GeO2-ZnO_700C_60min.xrdml",
   "chemical_system": "Ge-O-Zn",
-  "cif_dir": "/home/gridsan/nsegal/AtomisticSkills/skills/mat-xrd-phase-analysis/examples/GeO2-ZnO/phase_analysis_results/cifs",
+  "cif_dir": "phase_analysis_results/cifs",
   "num_solutions": 1,
   "best_rwp": 12.11,
   "solutions": [

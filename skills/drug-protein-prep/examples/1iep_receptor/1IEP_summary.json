@@ -1,6 +1,6 @@
 {
     "name": "1IEP",
-    "input_file": "/Users/matthewcox/Documents/GitHub/AtomisticSkills/skills/protein-prep/examples/1iep_receptor/1IEP_raw.pdb",
+    "input_file": "1IEP_raw.pdb",
     "success": true,
     "settings": {
         "chains": [
@@ -84,19 +84,19 @@
         "residues": 274,
         "atoms": 4411
     },
-    "pdb_file": "/Users/matthewcox/Documents/GitHub/AtomisticSkills/skills/protein-prep/examples/1iep_receptor/1IEP_prepared.pdb",
+    "pdb_file": "1IEP_prepared.pdb",
     "meeko_cmd": [
-        "/Users/matthewcox/miniforge3/envs/drugdisc-agent/bin/mk_prepare_receptor.py",
+        "mk_prepare_receptor.py",
         "--read_pdb",
-        "/Users/matthewcox/Documents/GitHub/AtomisticSkills/skills/protein-prep/examples/1iep_receptor/1IEP_prepared.pdb",
+        "1IEP_prepared.pdb",
         "--write_pdbqt",
-        "/Users/matthewcox/Documents/GitHub/AtomisticSkills/skills/protein-prep/examples/1iep_receptor/1IEP_prepared.pdbqt",
+        "1IEP_prepared.pdbqt",
         "--write_json",
-        "/Users/matthewcox/Documents/GitHub/AtomisticSkills/skills/protein-prep/examples/1iep_receptor/1IEP_prepared.meeko.json"
+        "1IEP_prepared.meeko.json"
     ],
-    "meeko_log": "/Users/matthewcox/Documents/GitHub/AtomisticSkills/skills/protein-prep/examples/1iep_receptor/1IEP_meeko.log",
-    "pdbqt_file": "/Users/matthewcox/Documents/GitHub/AtomisticSkills/skills/protein-prep/examples/1iep_receptor/1IEP_prepared.pdbqt",
-    "meeko_json": "/Users/matthewcox/Documents/GitHub/AtomisticSkills/skills/protein-prep/examples/1iep_receptor/1IEP_prepared.meeko.json",
+    "meeko_log": "1IEP_meeko.log",
+    "pdbqt_file": "1IEP_prepared.pdbqt",
+    "meeko_json": "1IEP_prepared.meeko.json",
     "rcsb_url": "https://files.rcsb.org/download/1IEP.pdb",
     "versions": {
         "openmm": "8.4.0.dev-4768436",
