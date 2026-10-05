@@ -62,10 +62,12 @@ COPY pyproject.toml VERSION ${REPO_DIR}/
 COPY venv/${VENV}/pyproject.toml venv/${VENV}/uv.lock ${REPO_DIR}/venv/${VENV}/
 # The GPU projects lock two torch builds that exclude each other (cu126, cu130);
 # images carry the CUDA 13 one, so a host with a driver older than 580 runs them
-# on the CPU (venv/run on the host picks cu126 there instead).
+# on the CPU (venv/run on the host picks cu126 there instead). The `lammps`
+# extras build or run LAMMPS on the host, so images leave them out.
 RUN --mount=type=cache,target=/root/.cache/uv \
     extras="--all-extras"; \
-    if grep -q '^cu126 = ' venv/${VENV}/pyproject.toml; then extras="--all-extras --no-extra cu126"; fi; \
+    if grep -q '^cu126 = ' venv/${VENV}/pyproject.toml; then extras="${extras} --no-extra cu126"; fi; \
+    if grep -q '^lammps = ' venv/${VENV}/pyproject.toml; then extras="${extras} --no-extra lammps"; fi; \
     uv sync --frozen --project venv/${VENV} ${extras} --no-dev \
         --no-install-package atomisticskills
 
@@ -75,7 +77,8 @@ COPY venv/run venv/servers.tsv venv/platforms.tsv ${REPO_DIR}/venv/
 COPY docker/entrypoint.sh docker/images.json docker/render.py ${REPO_DIR}/docker/
 RUN --mount=type=cache,target=/root/.cache/uv \
     extras="--all-extras"; \
-    if grep -q '^cu126 = ' venv/${VENV}/pyproject.toml; then extras="--all-extras --no-extra cu126"; fi; \
+    if grep -q '^cu126 = ' venv/${VENV}/pyproject.toml; then extras="${extras} --no-extra cu126"; fi; \
+    if grep -q '^lammps = ' venv/${VENV}/pyproject.toml; then extras="${extras} --no-extra lammps"; fi; \
     uv sync --frozen --project venv/${VENV} ${extras} --no-dev \
     && venv/${VENV}/.venv/bin/python docker/render.py server-map "${IMAGE_NAME}" \
         > docker/server-map.txt \

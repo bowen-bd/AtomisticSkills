@@ -368,6 +368,10 @@ cu130 = [
 docking = [
     { name = "vina", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
 ]
+lammps = [
+    { name = "fairchem-lammps", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "lammps", extra = ["mpi"], marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+]
 openmm = [
     { name = "openmm", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
     { name = "parmed", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
@@ -402,6 +406,7 @@ requires-dist = [
     { name = "datasets" },
     { name = "dimorphite-dl" },
     { name = "fairchem-core", specifier = ">=2.23" },
+    { name = "fairchem-lammps", marker = "extra == 'lammps'" },
     { name = "feedparser" },
     { name = "fipy" },
     { name = "gemmi" },
@@ -412,6 +417,7 @@ requires-dist = [
     { name = "jobflow" },
     { name = "jobflow-remote" },
     { name = "kaleido" },
+    { name = "lammps", extras = ["mpi"], marker = "extra == 'lammps'" },
     { name = "lobsterpy" },
     { name = "matcalc" },
     { name = "matplotlib" },
@@ -464,7 +470,7 @@ requires-dist = [
     { name = "void", marker = "extra == 'void'", git = "https://github.com/learningmatter-mit/VOID.git" },
     { name = "xarray" },
 ]
-provides-extras = ["openmm", "pymol", "docking", "void", "transport", "cu126", "cu130"]
+provides-extras = ["openmm", "pymol", "docking", "void", "transport", "lammps", "cu126", "cu130"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1471,6 +1477,18 @@ wheels = [
 ]
 
 [[package]]
+name = "fairchem-lammps"
+version = "0.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "fairchem-core", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9a/9c/e67bfbe11a245fd9d5b2ea51f7bafdd27484585a2951e2d7c47c2d9bf887/fairchem_lammps-0.4.0.tar.gz", hash = "sha256:25b417c3ede249e83dafa938522f8bad004ade50a004ef34954b2646e690e248", size = 18831, upload-time = "2026-02-17T20:53:23.054Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3f/46/36c1eb261c84658c2514eb65de3b99038ec51c37852284fb9f5202c08dbd/fairchem_lammps-0.4.0-py3-none-any.whl", hash = "sha256:b914f1ca1fc0fc5e7ca38045dc0b3e9efd848b0c9b357b5b15fb6c1ff6242570", size = 20236, upload-time = "2026-02-17T20:53:21.5Z" },
+]
+
+[[package]]
 name = "fastapi"
 version = "0.142.2"
 source = { registry = "https://pypi.org/simple" }
@@ -2301,6 +2319,24 @@ wheels = [
 ]
 
 [[package]]
+name = "lammps"
+version = "2025.7.22.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/99/55/ed0073bd359382307f1f299796901cacde495c5503c6857fd7e229624392/lammps-2025.7.22.4.0.tar.gz", hash = "sha256:c54bbac7c32cad3f9003a9275dad74c8c2d6639a21f6d9011c370f6c1329a9d0", size = 18212, upload-time = "2026-04-19T14:03:12.208Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/69/b7/537a4b660aaad09fb4943a7a976bbe17e89aa265bcd5148b14678932db5f/lammps-2025.7.22.4.0-py2.py3-none-macosx_11_0_arm64.whl", hash = "sha256:c2abccad4fa7f776ca8f3db6ea47bc0fce6d5e208da77c880220cd0cb0ef6996", size = 74690424, upload-time = "2026-04-19T14:02:44.527Z" },
+    { url = "https://files.pythonhosted.org/packages/89/7d/c290e7cdbc5b1927c714c47b52d8d6d4c7e59b972f147b31f21c634986bc/lammps-2025.7.22.4.0-py2.py3-none-macosx_11_0_x86_64.whl", hash = "sha256:18383eade8c6472546630bf1ce262a39b60e499e464f2b96cf4e9bb4f1084210", size = 77816312, upload-time = "2026-04-19T14:02:50.165Z" },
+    { url = "https://files.pythonhosted.org/packages/d0/02/80dd946021de731a7b99a55be698e45cecf128a54bb03f922d8ad21d3982/lammps-2025.7.22.4.0-py2.py3-none-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:a714cbb1bb1e487b16aec023255d867a3a560ae44a47dc7cd21d72a29a0ab755", size = 81842060, upload-time = "2026-04-19T14:02:56.695Z" },
+    { url = "https://files.pythonhosted.org/packages/7f/fa/6b9baa96d67a5344912330770fd431c46df4fab0bd48cd7f73ddd3a0c938/lammps-2025.7.22.4.0-py2.py3-none-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:d41e4a016cfcf23031af507b0bddaa21e72c5b9a8516e3e9c73d9ad6dfadd6f1", size = 85770974, upload-time = "2026-04-19T14:03:03.194Z" },
+    { url = "https://files.pythonhosted.org/packages/0f/ac/582faf660faa8fb85e8dfd03d4a9c81c0ae24fbd024ae822fb953e07e02c/lammps-2025.7.22.4.0-py2.py3-none-win_amd64.whl", hash = "sha256:784fc1d6867108c1fcdb10e36f9b24dedc9c7fb0f97b45087f943230d0bd54ae", size = 67602887, upload-time = "2026-04-19T14:03:09.168Z" },
+]
+
+[package.optional-dependencies]
+mpi = [
+    { name = "mpich", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+]
+
+[[package]]
 name = "lark"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2773,6 +2809,17 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c3/86/76078128ddb89828849f276ecedcf42153facc7a2ca79692c5a941861f9c/mpcontribs_client-5.10.5.tar.gz", hash = "sha256:a26adfae9dbd34fc0164e477afcd3beefda25537301272909723cbd1b242ee13", size = 29887, upload-time = "2026-02-09T20:38:59.288Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d5/31/a6920b1b4f19513b59c59b528c1d384bc2c8081331f6db5cf1d3704b8cbf/mpcontribs_client-5.10.5-py3-none-any.whl", hash = "sha256:aaa2a9d5d19b576a13691f6375a279fc80c1f3ba83a61d4a9a004c267f8f20bb", size = 24984, upload-time = "2026-02-09T20:38:58.326Z" },
+]
+
+[[package]]
+name = "mpich"
+version = "5.0.2"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/99/dc/9d06268d543aebdca7030e4b91b2fec00a946a14543d6b53d761b05e78c4/mpich-5.0.2-py3-none-macosx_11_0_arm64.whl", hash = "sha256:fa6611d3efa2d5a5f624976458d25988bfd5626afc09402f662ff0defbb45cd4", size = 9541867, upload-time = "2026-09-29T12:22:12.359Z" },
+    { url = "https://files.pythonhosted.org/packages/b6/e6/534a4b4a8412027ec9eb3aa6cb51464bd994b9b66dd7acf2e9dde38e631c/mpich-5.0.2-py3-none-macosx_11_0_x86_64.whl", hash = "sha256:425ec71e34fe588f4a917cd4c042fab84a70006537e36bfd6bb0d6ae274bb13c", size = 12681364, upload-time = "2026-09-29T12:22:15.117Z" },
+    { url = "https://files.pythonhosted.org/packages/63/7f/79f678b1342fe0f0f2a4046ebb3bf009d3045fa35a2f45d76de7e05cae9f/mpich-5.0.2-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:992ae6ebb0da97d49d7a67000ae8112da9a3825da1bb1e6f1d196428a0410f2d", size = 10390986, upload-time = "2026-09-29T12:22:17.934Z" },
+    { url = "https://files.pythonhosted.org/packages/d0/4d/e75f3ac876dc25d65a19d82b6e067289313fbf81857e42c442b475a320da/mpich-5.0.2-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:8fed465ebff269ea2ebac179a25de02671ddf8df476e0f115be089015015cfd4", size = 13282595, upload-time = "2026-09-29T12:22:20.747Z" },
 ]
 
 [[package]]

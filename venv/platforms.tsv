@@ -35,6 +35,8 @@ fairchem	cu130	x86_64	2.28
 fairchem	cu130	aarch64	2.34
 fairchem	docking	x86_64	2.28
 fairchem	docking	aarch64	2.34
+fairchem	lammps	x86_64	2.28
+fairchem	lammps	aarch64	2.34
 fairchem	openmm	x86_64	2.34
 fairchem	openmm	aarch64	2.34
 fairchem	pymol	x86_64	2.35
@@ -57,6 +59,8 @@ mlip	cu130	x86_64	2.28
 mlip	cu130	aarch64	2.34
 mlip	docking	x86_64	2.28
 mlip	docking	aarch64	2.34
+mlip	lammps	x86_64	2.28
+mlip	lammps	aarch64	2.34
 mlip	openmm	x86_64	2.34
 mlip	openmm	aarch64	2.34
 mlip	pymol	x86_64	2.35

@@ -1,18 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Env: fairchem-agent
-# CO adsorption on Cu(111) via FAIR-Chem lmp_fc.
+# CO adsorption on Cu(111) via FAIR-Chem lmp_fc. Run in the fairchem
+# environment with its lammps extra (the LAMMPS wheel and fairchem-lammps):
+#   venv/run fairchem+lammps bash skills/mat-lammps-md/examples/fairchem/run_fairchem_co_cu111_adsorption.sh
 
 OUT_DIR="${OUT_DIR:-./out-fairchem-co-cu111}"
-TASK_NAME="${TASK_NAME:-omol}"
+TASK_NAME="${TASK_NAME:-oc20}"  # UMA task: oc20 for adsorbates on surfaces
 LMP_FC_BIN="${LMP_FC_BIN:-lmp_fc}"
 
 mkdir -p "${OUT_DIR}"
 
+# The LAMMPS wheel's Python module, which lmp_fc drives, does not find the
+# MPICH library the mpich wheel installs into the environment's lib/ (its
+# `lmp` launcher does), so put that directory on the loader path.
+export LD_LIBRARY_PATH="$(python -c 'import sys; print(sys.prefix)')/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+
 if ! command -v "${LMP_FC_BIN}" >/dev/null 2>&1; then
   echo "Missing '${LMP_FC_BIN}' in PATH." >&2
-  echo "Install with: bash conda-envs/fairchem-agent/install_lammps.sh" >&2
+  echo "Run this script with: venv/run fairchem+lammps bash $0" >&2
   exit 1
 fi
 
@@ -28,13 +34,14 @@ out_dir = os.environ["OUT_DIR"]
 slab = fcc111("Cu", size=(4, 4, 4), vacuum=15.0, orthogonal=True)
 slab.center(axis=2, vacuum=15.0)
 
+# ASE's CO stands along z with O (index 0) above C (index 1): carbon-down,
+# the way CO binds a Cu top site.
 co = molecule("CO")
-co.rotate(90.0, "y", center="COM")
 co.center(vacuum=12.0)
 co.set_pbc((True, True, True))
 
 ads = slab.copy()
-add_adsorbate(ads, co, height=1.85, position="ontop")
+add_adsorbate(ads, co, height=1.85, position="ontop", mol_index=1)  # C 1.85 A above Cu
 ads.center(axis=2, vacuum=15.0)
 
 write_lammps_data(f"{out_dir}/cu111_clean.data", slab, atom_style="atomic", masses=True)

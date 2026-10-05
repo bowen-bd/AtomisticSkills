@@ -3,8 +3,7 @@ name: mat-lammps-md
 description: Build and run LAMMPS molecular dynamics with isolated MLIP-specific binaries (MACE, MatGL/CHGNet, FairChem) to avoid Python and Torch stack conflicts.
 metadata:
   category: [materials]
-  venv: []
-  conda_env: [mace-agent, matgl-agent, fairchem-agent]
+  venv: [fairchem, mlip]
 ---
 
 # LAMMPS Molecular Dynamics with MLIPs
@@ -16,7 +15,7 @@ Run GPU-accelerated LAMMPS molecular dynamics with MLIP backends using three iso
 
 1. **Select the MLIP backend and model family first** using the foundation-potential guide:
    - [ml-foundation-potentials](../ml-foundation-potentials/SKILL.md)
-   - This determines which conda env and which LAMMPS binary you must use.
+   - This determines which environment (`mlip` for MACE and MatGL, `fairchem` for FairChem) and which LAMMPS binary you must use.
 
 2. **Check system prerequisites**.
 ```bash
@@ -37,45 +36,37 @@ nvidia-smi --query-gpu=name,compute_cap --format=csv,noheader
   - `8.9` -> `Kokkos_ARCH_ADA89`
   - `9.0` -> `Kokkos_ARCH_HOPPER90`
 
-4. **Build the environment-matched LAMMPS binary** (choose one of the three paths below).
+4. **Build the environment-matched LAMMPS binary** (choose one of the three paths below). Builds go to `$LAMMPS_ROOT` (default `~/.cache/atomisticskills/lammps`) and need the environment to run natively on the host.
 
-   **Path A: MACE**
+   **Path A: MACE** (ACEsuit's LAMMPS fork with `ML-MACE`, linked against the `mlip` environment's libtorch)
 ```bash
-bash ${CLAUDE_SKILL_DIR}/../../conda-envs/mace-agent/install.sh
-KOKKOS_ARCH_FLAG=Kokkos_ARCH_AMPERE86 \
-LAMMPS_REF="stable_2Aug2023_update2" \
-bash ${CLAUDE_SKILL_DIR}/../../conda-envs/mace-agent/install_lammps.sh
+bash ${CLAUDE_SKILL_DIR}/scripts/build_lammps_mace.sh
 ```
-   - Binary: `./lammps/mace-agent/lmp`
-   - Runtime env: `mace-agent`
+   - Binary: `~/.cache/atomisticskills/lammps/mace/lmp`
+   - Runtime env: `mlip+lammps`
 
-   **Path B: MatGL/CHGNet**
+   **Path B: MatGL/CHGNet** (Kokkos with CUDA, ML-IAP with the Python coupling, embedding the `mlip` environment's Python)
 ```bash
-bash ${CLAUDE_SKILL_DIR}/../../conda-envs/matgl-agent/install.sh
-KOKKOS_ARCH_FLAG=Kokkos_ARCH_AMPERE86 \
-LAMMPS_REF="stable_2Aug2023_update2" \
-bash ${CLAUDE_SKILL_DIR}/../../conda-envs/matgl-agent/install_lammps.sh
+KOKKOS_ARCH_FLAG=Kokkos_ARCH_AMPERE80 \
+bash ${CLAUDE_SKILL_DIR}/scripts/build_lammps_matgl.sh
 ```
-   - Binary: `./lammps/matgl-agent/lmp`
-   - Runtime env: `matgl-agent`
+   - Binary: `~/.cache/atomisticskills/lammps/matgl/lmp`
+   - Runtime env: `mlip+lammps`
+   - `LAMMPS_REF` defaults to `stable_22Jul2025_update4`, whose Kokkos knows current GPU architectures.
 
-   **Path C: FairChem**
+   **Path C: FairChem** (no build: the `lammps` extra installs the LAMMPS wheel and `fairchem-lammps`)
 ```bash
-bash ${CLAUDE_SKILL_DIR}/../../conda-envs/fairchem-agent/install.sh
-KOKKOS_ARCH_FLAG=Kokkos_ARCH_AMPERE86 \
-LAMMPS_REF="stable_2Aug2023_update2" \
-bash ${CLAUDE_SKILL_DIR}/../../conda-envs/fairchem-agent/install_lammps.sh
+${CLAUDE_SKILL_DIR}/../../venv/run fairchem+lammps lmp_fc --help
 ```
-   - Binary: `./lammps/fairchem-agent/lmp`
-   - Runtime env: `fairchem-agent`
+   - Binaries: `lmp` and `lmp_fc` in the `fairchem+lammps` environment
 
-5. **Run the selected binary with its matching conda environment**.
+5. **Run the selected binary in its matching environment**.
 ```bash
-# (example; switch env/binary pair as needed)
-./lammps/mace-agent/lmp -h
+# (example; switch environment/binary pair as needed)
+${CLAUDE_SKILL_DIR}/../../venv/run mlip+lammps ~/.cache/atomisticskills/lammps/mace/lmp -h
 ```
 
-6. **Launch MD with the same binary-env pair used during build**; do not cross-run binaries between MLIP stacks.
+6. **Launch MD with the same binary-environment pair used during build**; do not cross-run binaries between MLIP stacks.
 
 ## Examples
 
@@ -83,8 +74,8 @@ See [scripts/three-backends-build-check/README.md](scripts/three-backends-build-
 See the respective README.md files under [examples/mace/](examples/mace/), [examples/matgl/](examples/matgl/), and [examples/fairchem/](examples/fairchem/) for model-specific run scripts.
 
 ## Constraints
-- **Strict binary-env pairing**: each LAMMPS binary must run only with its own conda env.
-- **No stack mixing**: never run MACE binary in `matgl-agent`/`fairchem-agent`, etc.
+- **Strict binary-env pairing**: each LAMMPS binary must run only in the environment it was built against (`venv/run mlip+lammps` or `venv/run fairchem+lammps`).
+- **No stack mixing**: never run the MACE or MatGL binary in the `fairchem` environment, or `lmp_fc` in `mlip`.
 - **GPU arch alignment**: choose `KOKKOS_ARCH_*` from actual `compute_cap` output.
 - **Python-coupled mode**: this workflow targets `ML-IAP`/`mliappy` usage.
 

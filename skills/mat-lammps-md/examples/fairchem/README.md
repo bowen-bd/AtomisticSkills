@@ -8,8 +8,7 @@ This example runs adsorption energy with FAIR-Chem `lmp_fc`:
    `E_ads = E(CO/Cu111) - E(Cu111) - E(CO)`.
 
 ```bash
-# Env: fairchem-agent
-bash skills/mat-lammps-md/examples/fairchem/run_fairchem_co_cu111_adsorption.sh
+venv/run fairchem+lammps bash skills/mat-lammps-md/examples/fairchem/run_fairchem_co_cu111_adsorption.sh
 ```
 
 ## Output
@@ -18,3 +17,10 @@ bash skills/mat-lammps-md/examples/fairchem/run_fairchem_co_cu111_adsorption.sh
 - `./out-fairchem-co-cu111/co_on_cu111.data`
 - `./out-fairchem-co-cu111/energies.json`
 - `./out-fairchem-co-cu111/adsorption_summary.txt`
+
+## Expected result
+
+With the default UMA task `oc20` (adsorbates on surfaces) and these unrelaxed
+geometries, `E_adsorption_eV` is about -0.39 eV (CO carbon-down on a Cu top
+site; experiment about -0.5 eV). Other tasks are trained on other chemistry:
+`TASK_NAME=omat` (bulk materials) overbinds here at about -1.35 eV.

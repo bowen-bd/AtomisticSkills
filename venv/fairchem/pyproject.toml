@@ -92,6 +92,10 @@ void = ["VOID"]
 # dependency compiles from source and clones GoogleTest with git at build time,
 # so it stays out of the base set; install it to run AMSET jobs locally.
 transport = ["amset"]
+# LAMMPS with FairChem models (mat-lammps-md): the LAMMPS wheel provides `lmp`
+# and its Python module, which fairchem-lammps' `lmp_fc` drives. Runs on the
+# host, so the images leave it out.
+lammps = ["lammps[mpi]", "fairchem-lammps"]
 # Exactly one torch build per environment, chosen by venv/run from the NVIDIA
 # driver: cu130 (CUDA 13; driver >= 580; GB10's sm_121 needs it) when the driver
 # allows, else cu126 (CUDA 12.6; drivers >= 525, still common on clusters).

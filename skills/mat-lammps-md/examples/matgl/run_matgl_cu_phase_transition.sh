@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Env: matgl-agent
-# Cu heat-and-hold scan using ASE + CHGNet (no LAMMPS bridge).
+# Cu heat-and-hold scan with ASE and a MatGL potential (CHGNet by default).
+# A reference run for the LAMMPS ML-IAP build: it writes the LAMMPS data file
+# and a LAMMPS-format trajectory, but drives the MD from ASE.
+# Run in the mlip environment:
+#   venv/run mlip bash skills/mat-lammps-md/examples/matgl/run_matgl_cu_phase_transition.sh
 
 OUT_DIR="${OUT_DIR:-./out-matgl-cu-phase-transition}"
-CHGNET_MODEL="${CHGNET_MODEL:-0.3.0}"
+CHGNET_MODEL="${CHGNET_MODEL:-CHGNet}"
 HEAT_STEPS="${HEAT_STEPS:-500}"
 HOLD_STEPS="${HOLD_STEPS:-500}"
 TRAJ_EVERY="${TRAJ_EVERY:-20}"
@@ -13,22 +16,6 @@ TIMESTEP_FS="${TIMESTEP_FS:-1.0}"
 FRICTION="${FRICTION:-0.02}"
 
 mkdir -p "${OUT_DIR}"
-
-if ! python - <<'PY'
-import torch
-import numpy as np
-from chgnet.model.model import CHGNet  # noqa: F401
-if int(np.__version__.split(".")[0]) >= 2:
-    raise SystemExit(1)
-PY
-then
-  echo "Repairing runtime (need numpy<2 and CHGNet importable)..."
-  python -m pip install "numpy<2" chgnet
-  python - <<'PY'
-import torch, numpy as np
-print("Runtime check passed:", torch.__version__, np.__version__)
-PY
-fi
 
 OUT_DIR="${OUT_DIR}" CHGNET_MODEL="${CHGNET_MODEL}" HEAT_STEPS="${HEAT_STEPS}" HOLD_STEPS="${HOLD_STEPS}" \
 TRAJ_EVERY="${TRAJ_EVERY}" TIMESTEP_FS="${TIMESTEP_FS}" FRICTION="${FRICTION}" \
@@ -45,8 +32,7 @@ from ase.io.lammpsdata import write_lammps_data
 from ase.md.langevin import Langevin
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution, Stationary, ZeroRotation
 
-from chgnet.model.dynamics import CHGNetCalculator
-from chgnet.model.model import CHGNet
+from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
 
 out_dir = Path(os.environ["OUT_DIR"])
 chgnet_model = os.environ["CHGNET_MODEL"]
@@ -59,9 +45,10 @@ friction = float(os.environ["FRICTION"])
 atoms = bulk("Cu", "fcc", a=3.615) * (8, 8, 8)
 write_lammps_data(out_dir / "cu_fcc.data", atoms, atom_style="atomic", masses=True)
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-chgnet = CHGNet.load(model_name=chgnet_model, use_device=device)
-atoms.calc = CHGNetCalculator(model=chgnet, use_device=device)
+wrapper = MatGLWrapper(model_name=chgnet_model)
+wrapper.load()
+device = str(wrapper.device)
+atoms.calc = wrapper.create_calculator()
 
 MaxwellBoltzmannDistribution(atoms, temperature_K=300.0)
 Stationary(atoms)
@@ -123,7 +110,7 @@ with (out_dir / "log.matgl").open("w", encoding="utf-8") as f:
 (out_dir / "run_summary.json").write_text(
     json.dumps(
         {
-            "model": f"CHGNet-{chgnet_model}",
+            "model": chgnet_model,
             "device": device,
             "natoms": len(atoms),
             "heat_steps": heat_steps,

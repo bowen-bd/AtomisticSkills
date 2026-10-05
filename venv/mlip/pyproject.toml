@@ -96,6 +96,11 @@ void = ["VOID"]
 # dependency compiles from source and clones GoogleTest with git at build time,
 # so it stays out of the base set; install it to run AMSET jobs locally.
 transport = ["amset"]
+# Building LAMMPS against this environment (mat-lammps-md): Cython for the
+# ML-IAP Python coupling (MatGL), and on x86_64 the MKL headers and libraries
+# PyTorch's CMake config requires (MACE's libtorch pair style). Host builds
+# only, so the images leave it out.
+lammps = ["cython", "mkl-devel ; platform_machine == 'x86_64'"]
 # Exactly one torch build per environment, chosen by venv/run from the NVIDIA
 # driver: cu130 (CUDA 13; driver >= 580; GB10's sm_121 needs it) when the driver
 # allows, else cu126 (CUDA 12.6; drivers >= 525, still common on clusters).

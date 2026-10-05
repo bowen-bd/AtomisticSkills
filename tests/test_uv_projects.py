@@ -100,24 +100,32 @@ def test_both_architectures_are_required(project):
 
     The shared projects cover both architectures. A research stack may be
     x86_64-only (its compiled dependencies have no aarch64 wheels); venv/run
-    then uses its container image on aarch64."""
-    uv = load(project)["tool"]["uv"]
-    assert set(uv["environments"]) == set(uv["required-environments"])
+    then uses its container image on aarch64. The generative stacks are also
+    locked for aarch64, where the image compiles those dependencies: that
+    architecture is not required (no wheels), and hosts must not try it."""
+    data = load(project)
+    uv = data["tool"]["uv"]
+    required = set(uv["required-environments"])
+    assert required <= set(uv["environments"])
     if project in PROJECTS:
-        assert set(uv["environments"]) == ARCHES
-    else:
-        assert (
-            "sys_platform == 'linux' and platform_machine == 'x86_64'"
-            in uv["environments"]
-        )
+        assert set(uv["environments"]) == required == ARCHES
+        return
+    assert "sys_platform == 'linux' and platform_machine == 'x86_64'" in required
+    unrequired = set(uv["environments"]) - required
+    if unrequired:
+        native = data["tool"]["atomisticskills"]["native-arches"]
+        assert not [a for a in native for e in unrequired if a in e], project
 
 
 @pytest.mark.parametrize("project", PROJECTS)
 def test_extras_are_the_same_everywhere(project):
     extras = dict(load(project)["project"]["optional-dependencies"])
-    # The GPU projects add their two torch builds; everything else matches cpu.
+    # The GPU projects add their two torch builds, and what mat-lammps-md needs
+    # from each (build support in mlip, the LAMMPS wheel in fairchem); everything
+    # else matches cpu.
     if project in ("mlip", "fairchem"):
         assert extras.pop("cu126") == extras.pop("cu130") == ["torch", "torchvision"]
+        assert extras.pop("lammps"), project
     assert extras == load("cpu")["project"]["optional-dependencies"]
     assert set(extras) == {"openmm", "pymol", "docking", "void", "transport"}
 

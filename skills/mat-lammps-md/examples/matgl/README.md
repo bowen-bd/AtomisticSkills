@@ -1,7 +1,8 @@
 # MatGL Example: Cu Phase-Transition Scan
 
 This example runs a simple heat-and-hold workflow for fcc Copper (Cu) with
-ASE + CHGNet. The script:
+ASE and a MatGL potential (CHGNet by default), as a reference for the LAMMPS
+ML-IAP build. The script:
 
 1. creates an fcc Cu supercell data file;
 2. loads a MatGL potential in ASE;
@@ -10,8 +11,7 @@ ASE + CHGNet. The script:
    (e.g., abrupt energy/volume slope change).
 
 ```bash
-# Env: matgl-agent
-bash skills/mat-lammps-md/examples/matgl/run_matgl_cu_phase_transition.sh
+venv/run mlip bash skills/mat-lammps-md/examples/matgl/run_matgl_cu_phase_transition.sh
 ```
 
 ## Output
@@ -22,5 +22,5 @@ bash skills/mat-lammps-md/examples/matgl/run_matgl_cu_phase_transition.sh
 
 Optional model override:
 ```bash
-CHGNET_MODEL=0.3.0 bash skills/mat-lammps-md/examples/matgl/run_matgl_cu_phase_transition.sh
+CHGNET_MODEL=TensorNet-MatPES-PBE venv/run mlip bash skills/mat-lammps-md/examples/matgl/run_matgl_cu_phase_transition.sh
 ```

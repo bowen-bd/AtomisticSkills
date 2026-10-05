@@ -2,13 +2,13 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
 
-# Env: mace-agent
-# Thermal quench example for Na2Si3O7.
+# Thermal quench example for Na2Si3O7, with the LAMMPS binary that
+# scripts/build_lammps_mace.sh builds. Run in the same environment:
+#   venv/run mlip+lammps bash skills/mat-lammps-md/examples/mace/run_mace_na2si3o7_quench.sh
 
 OUT_DIR="${OUT_DIR:-./out-mace-na2si3o7-quench}"
-LMP_BIN="${LMP_BIN:-${PROJECT_ROOT}/lammps/mace-agent/lmp}"
+LMP_BIN="${LMP_BIN:-${LAMMPS_ROOT:-${HOME}/.cache/atomisticskills/lammps}/mace/lmp}"
 INPUT_STRUCTURE="${INPUT_STRUCTURE:-}"
 MODEL_FILE="${MODEL_FILE:-}"
 MODEL_CHECKPOINT="${MODEL_CHECKPOINT:-}"

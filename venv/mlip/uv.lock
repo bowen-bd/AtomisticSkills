@@ -354,6 +354,10 @@ cu130 = [
 docking = [
     { name = "vina", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130')" },
 ]
+lammps = [
+    { name = "cython", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130')" },
+    { name = "mkl-devel", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130') or (sys_platform != 'linux' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130')" },
+]
 openmm = [
     { name = "openmm", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130')" },
     { name = "parmed", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130')" },
@@ -384,6 +388,7 @@ requires-dist = [
     { name = "beautifulsoup4" },
     { name = "biopython" },
     { name = "cvxpy" },
+    { name = "cython", marker = "extra == 'lammps'" },
     { name = "dara-xrd" },
     { name = "datasets" },
     { name = "dimorphite-dl" },
@@ -405,6 +410,7 @@ requires-dist = [
     { name = "mcp", specifier = "<2" },
     { name = "mdanalysis" },
     { name = "meeko" },
+    { name = "mkl-devel", marker = "platform_machine == 'x86_64' and extra == 'lammps'" },
     { name = "mp-api" },
     { name = "mpcontribs-client" },
     { name = "nmrglue" },
@@ -453,7 +459,7 @@ requires-dist = [
     { name = "wandb" },
     { name = "xarray" },
 ]
-provides-extras = ["openmm", "pymol", "docking", "void", "transport", "cu126", "cu130"]
+provides-extras = ["openmm", "pymol", "docking", "void", "transport", "lammps", "cu126", "cu130"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1919,6 +1925,30 @@ wheels = [
 ]
 
 [[package]]
+name = "intel-cmplr-lib-ur"
+version = "2026.1.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "umf", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130') or (sys_platform != 'linux' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/80/f0/b7e8305da2d2ea162599795886d03a809bf1554ec5079c59f147b506f277/intel_cmplr_lib_ur-2026.1.2-py2.py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:b27207f3b42d12ce88cd53ca8b3b7a7e79755aa07a84eccf1c209fcbefe468bf", size = 31636265, upload-time = "2026-09-05T10:34:45.121Z" },
+    { url = "https://files.pythonhosted.org/packages/83/52/bf0781e69da7f02141635b68c16daa7756e980f0ba29f78a7f4332ee3985/intel_cmplr_lib_ur-2026.1.2-py2.py3-none-win_amd64.whl", hash = "sha256:e2ef94d758948a5c52090f723bc113b8614a8a4187f017668d0375b72a8be653", size = 1321751, upload-time = "2026-09-05T10:34:55.501Z" },
+]
+
+[[package]]
+name = "intel-openmp"
+version = "2026.1.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "intel-cmplr-lib-ur", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130') or (sys_platform != 'linux' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8b/4d/27cb1284bee222fdd4f4280a651c264031bc1f8ebbdbd29cdfd0f906a466/intel_openmp-2026.1.2-py2.py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:4612231a3605db891265c1d8cc4af49ee66009dc55f24012770a9faf3d8ac35e", size = 52545398, upload-time = "2026-09-05T10:34:33.577Z" },
+    { url = "https://files.pythonhosted.org/packages/0c/a8/7b7c00ac0f74cedf36f8623c5eb57fe43d0e172b8ce939043f63beb1f16e/intel_openmp-2026.1.2-py2.py3-none-win_amd64.whl", hash = "sha256:c5fd1bfb8306f7a21abc7494c700ca117bf4abbde841e48b263904ac50b1d694", size = 26355279, upload-time = "2026-09-05T10:35:02.971Z" },
+]
+
+[[package]]
 name = "interpolation"
 version = "2.2.7"
 source = { registry = "https://pypi.org/simple" }
@@ -2647,6 +2677,46 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b2/88/e1907e1ca3488f2d9507ca8b0ae1add7b1cd5d3ca2bc8e5b329382ea2c7b/memory_profiler-0.61.0.tar.gz", hash = "sha256:4e5b73d7864a1d1292fb76a03e82a3e78ef934d06828a698d9dada76da2067b0", size = 35935, upload-time = "2022-11-15T17:57:28.994Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/49/26/aaca612a0634ceede20682e692a6c55e35a94c21ba36b807cc40fe910ae1/memory_profiler-0.61.0-py3-none-any.whl", hash = "sha256:400348e61031e3942ad4d4109d18753b2fb08c2f6fb8290671c5513a34182d84", size = 31803, upload-time = "2022-11-15T17:57:27.031Z" },
+]
+
+[[package]]
+name = "mkl"
+version = "2026.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "intel-openmp", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130') or (sys_platform != 'linux' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130')" },
+    { name = "onemkl-license", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130') or (sys_platform != 'linux' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130')" },
+    { name = "tbb", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130') or (sys_platform != 'linux' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/61/da/4921e17b1f455f7fed30d5cc0964f3289eee6a6cb03cdf7d5e20c14bd025/mkl-2026.1.0-py2.py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:4d5a26449818a8aebd4b2aaf6b291831e691f9cf74b152df49b99cf48bbd5360", size = 224034262, upload-time = "2026-07-01T15:11:10.038Z" },
+    { url = "https://files.pythonhosted.org/packages/d6/bd/e35bd5477278c91b0f5d4733b13009d183c284d636d68c649204858c207a/mkl-2026.1.0-py2.py3-none-win_amd64.whl", hash = "sha256:8194a8270d70622eff00eec84c793efc382b14848b98c3ace6bacdda42170a80", size = 180806880, upload-time = "2026-07-01T15:14:02.845Z" },
+]
+
+[[package]]
+name = "mkl-devel"
+version = "2026.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "mkl", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130') or (sys_platform != 'linux' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130')" },
+    { name = "mkl-include", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130') or (sys_platform != 'linux' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130')" },
+    { name = "tbb-devel", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130') or (sys_platform != 'linux' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/66/71/9355ce9df7b331e18dd4a59a90cdec4100704dda5018071c61da975bf442/mkl_devel-2026.1.0-py2.py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:0d79bce8bcf8fea2ad3537ed5eee8c24ed8937466add8ef9f9d706e13542d3fb", size = 32310, upload-time = "2026-07-01T15:11:57.54Z" },
+    { url = "https://files.pythonhosted.org/packages/ef/d4/6702825beac5860fa7785eaca941541968fd5ce8c49fed88c10bb15b1f69/mkl_devel-2026.1.0-py2.py3-none-win_amd64.whl", hash = "sha256:ead22e4683f121732ef9602de695496106ed01f452f1bea72bc8df71cc79a43c", size = 14416729, upload-time = "2026-07-01T15:13:53.472Z" },
+]
+
+[[package]]
+name = "mkl-include"
+version = "2026.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "onemkl-license", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130') or (sys_platform != 'linux' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5c/42/76a2c4964399376855ed3d4867ad2c2c01c9a7297dca307ce43c1ef76c71/mkl_include-2026.1.0-py2.py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:e64b260e67284b8a696343d58c339ad9d990cc985077dab1269d1c6d2a2e2b1b", size = 1259488, upload-time = "2026-07-01T15:11:29.684Z" },
+    { url = "https://files.pythonhosted.org/packages/48/2e/8c71366e2f35ba74704b68be65caec6674472e7913ead5196cc69a15001e/mkl_include-2026.1.0-py2.py3-none-win_amd64.whl", hash = "sha256:d933db23875da7d145a8897fa0cab1014228af3c387972f25b65472b49b23c94", size = 1266903, upload-time = "2026-07-01T15:13:50.95Z" },
 ]
 
 [[package]]
@@ -3455,6 +3525,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ce/3d/e4b57b8d9008c6ebe0d5eff901f91d5700cf7bdb8c8863df817463a7fd5e/omegaconf-2.3.1.tar.gz", hash = "sha256:e5e7de64aeebeddaf8e6d3f7a783b32ac2a01c0fbd9c878012caecb891a1f42a", size = 3298472, upload-time = "2026-06-11T05:05:12.885Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a4/0e/152509871bf30df6fc38569f52a2db9b55dd41aae957adae50a053ac7778/omegaconf-2.3.1-py3-none-any.whl", hash = "sha256:3d701d14e9a8828f1edd28bb70b725908b34277cdd72cf7d6a83f94dadc6b6a0", size = 79502, upload-time = "2026-06-11T05:05:09.954Z" },
+]
+
+[[package]]
+name = "onemkl-license"
+version = "2026.1.0"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e3/ef/8437c187319e779a76f4dbb468a1863d729297d79a1b5f44b10a58c96ec2/onemkl_license-2026.1.0-py2.py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:39fd829648af92c9e03c22ba228f07174d829aaa2fe3c5f6cd7073b8eb8a9805", size = 56161, upload-time = "2026-07-01T15:11:45.836Z" },
+    { url = "https://files.pythonhosted.org/packages/66/0d/82581d2048b5a01f3145fa48cc9c461f34443499420dcdaa6ecbb444ce4d/onemkl_license-2026.1.0-py2.py3-none-win_amd64.whl", hash = "sha256:425b599af279e6bc03e27319d75aa156ca7dd8645dbcd0c324ef894d3fae6be3", size = 56185, upload-time = "2026-07-01T15:13:49.098Z" },
 ]
 
 [[package]]
@@ -5409,6 +5488,39 @@ wheels = [
 ]
 
 [[package]]
+name = "tbb"
+version = "2023.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "tcmlib", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130') or (sys_platform != 'linux' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/25/0c/0266c71e3fa50a71db5ce8a1d0807863df3215c5f7b5fe7c98b257561138/tbb-2023.1.0-py2.py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:64ad35241c736a595498f5343abec8eaaa203e9fe0dbdbf4b86d37c5a3ab1d9c", size = 6840282, upload-time = "2026-07-01T15:10:33.348Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/ff/168d3498762069b0cd2dff20ab34d53fa48a0a35ffd1965cf456c603f292/tbb-2023.1.0-py3-none-win_amd64.whl", hash = "sha256:27df1315202defc67a73800c667ba4fbd03cf8924f73949373d4a34d1443fca2", size = 428501, upload-time = "2026-07-01T15:12:55.771Z" },
+]
+
+[[package]]
+name = "tbb-devel"
+version = "2023.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "tbb", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130') or (sys_platform != 'linux' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8b/6f/1f815d38473a9e912a2898e29742f9ac8a8e8ff64383f52c6dc7511263f5/tbb_devel-2023.1.0-py2.py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:627e3a3f5c7ff8a1bd85bc6159cfe98a295b4fd5dea399493aa50aeb2c08748b", size = 7045681, upload-time = "2026-07-01T15:10:41.966Z" },
+    { url = "https://files.pythonhosted.org/packages/ea/89/ccee98506ad917c47b063643d20960d56f744de5ea7b5a3f10f7747a1244/tbb_devel-2023.1.0-py3-none-win_amd64.whl", hash = "sha256:35715f7795d20dccedd5cb7ea5a0449fa34fc214add4690f14844e9dfdd2a00d", size = 7145720, upload-time = "2026-07-01T15:12:51.756Z" },
+]
+
+[[package]]
+name = "tcmlib"
+version = "1.5.0"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/60/24/aa409bb20703acc70cf4d3bc620a55c789639c2995b2667fb44ae7236ec9/tcmlib-1.5.0-py2.py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:9d7c01cff35aae9bf5390b620680ebdf10a7d211c22d6488a27a029502e7d0aa", size = 2812669, upload-time = "2026-04-24T14:14:18.557Z" },
+    { url = "https://files.pythonhosted.org/packages/67/6d/9095c93326d0f8a5469ab22480d02795f24c08f1e7f383c73316ff106347/tcmlib-1.5.0-py2.py3-none-win_amd64.whl", hash = "sha256:f7b62787214083d490b39d7650f1e477eeacc875e7f86799feb9aa1fd34460d4", size = 366719, upload-time = "2026-04-24T14:09:45.977Z" },
+]
+
+[[package]]
 name = "tensordict"
 version = "0.14.2"
 source = { registry = "https://pypi.org/simple" }
@@ -5857,6 +5969,18 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/eb/a9/7fcaed6aa33a50a9dfb2c2e3259a2fe9075b66bba44bef77bc597c05a263/ujson-6.0.0-graalpy312-graalpy250_312_native-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:15aa57f6d0dafccd20f282f46f6a8d721d46c73fd9474f5ba996e9adc48d3177", size = 54396, upload-time = "2026-09-04T03:55:22.274Z" },
     { url = "https://files.pythonhosted.org/packages/e5/59/7b0b75c19cc394436fe8143a3f88a39a9c2015469e540e236c6046773e42/ujson-6.0.0-graalpy312-graalpy250_312_native-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:868856ea75794d952c773c506bb638e2a692bc5a8095cefebdcd98f43c79e772", size = 55497, upload-time = "2026-09-04T03:55:24.238Z" },
     { url = "https://files.pythonhosted.org/packages/c7/07/1ddd75170364566389db80faf7845950f79bf71989bf9194e7a331d585ed/ujson-6.0.0-graalpy312-graalpy250_312_native-win_amd64.whl", hash = "sha256:0d6e29b91a0934ed9d22ee48aa91518523cd2ce1c6caee2810b439fb371b8439", size = 228249, upload-time = "2026-09-04T03:55:25.436Z" },
+]
+
+[[package]]
+name = "umf"
+version = "1.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "tcmlib", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130') or (sys_platform != 'linux' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c4/72/2e0182f4e6a727a15d0a8a99a82182a4f5bdec1a4f5767acfd2abdc72070/umf-1.1.0-py2.py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:567152c5ee6b8e16cc56b29a8a9a6b918de1febf89877f71ea2e8247ef39fc32", size = 424455, upload-time = "2026-04-24T14:13:51.436Z" },
+    { url = "https://files.pythonhosted.org/packages/2d/43/d89fee46bed22a461714a8786b833a89bff2f0a5e058b02eed3be842752e/umf-1.1.0-py2.py3-none-win_amd64.whl", hash = "sha256:a8c5ff84901fe6348715b6c1c85de4d195a6c69185d99ce4ebf7449b5d04011c", size = 289901, upload-time = "2026-04-24T14:08:31.647Z" },
 ]
 
 [[package]]
