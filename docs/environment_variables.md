@@ -47,7 +47,7 @@ ATOMISTIC_IMAGE_TAG: "2.0.0"
 | `MP_API_KEY` | API Key for Materials Project database access. | `base` server, pymatgen | `abc123def456` |
 | `HF_TOKEN` | Hugging Face user access token. Required for FairChem UMA, which is gated: request access at https://huggingface.co/facebook/UMA first. | `fairchem` server | `hf_...` |
 | `SSL_CERT_FILE` | CA bundle for Python's TLS. `venv/run` sets it to the system bundle when unset (needed on RHEL-family hosts); set it yourself behind a proxy with its own CA. | all | `/etc/pki/tls/certs/ca-bundle.crt` |
-| `ATOMISTIC_TORCH_CUDA` | Torch build for the `mlip` and `fairchem` environments: `cu130` (CUDA 13, driver ≥ 580) or `cu126` (CUDA 12.6, driver ≥ 525). Chosen from the NVIDIA driver when unset. | `venv/run` | `cu126` |
+| `ATOMISTIC_TORCH_CUDA` | Torch build for the GPU environments (`mlip`, `fairchem`, `adit`, `diffcsp`, `mattergen`, `scd`): `cu130` (CUDA 13, driver ≥ 580) or `cu126` (CUDA 12.6, driver ≥ 525). Chosen from the NVIDIA driver when unset. | `venv/run` | `cu126` |
 | `UV_PYTHON_PREFERENCE` | Which Python uv builds environments on. `venv/run` uses `only-managed` (a uv-managed CPython with headers) unless set. | `venv/run` | `only-managed` |
 | `ORCA_BINARY_PATH` | Full path to the external ORCA executable. | `chem-dft-orca-*` skills | `/opt/orca/orca` |
 | `ATOMATE2_REMOTE_PROJECT` | Jobflow-remote project name for remote cluster job submission. | `atomate2` server | `my_cluster` |
@@ -55,3 +55,18 @@ ATOMISTIC_IMAGE_TAG: "2.0.0"
 | `OPENALEX_EMAIL` | Contact email for polite OpenAlex API queries. | Literature skills | `user@institution.edu` |
 | `UNPAYWALL_EMAIL` | Contact email for Unpaywall open-access queries. | Literature skills | `user@institution.edu` |
 | `ELSEVIER_API_KEY` | API Key for Elsevier ScienceDirect access (optional). | Literature skills | `key_value` |
+
+## Source Checkouts
+
+Some research stacks import an upstream repository that is not a package. Each
+is looked up through a variable, with a default location:
+
+| Variable | Repository | Default | Used by |
+| :--- | :--- | :--- | :--- |
+| `ADIT_REPO` | ADiT (all-atom-diffusion-transformer) | `adit` next to this project | `adit` server, `ml-generative-adit` |
+| `DIFFCSP_REPO` | DiffCSP++ (DiffCSP-PP) | `DiffCSP-PP` next to this project | `diffcsp` server, `ml-generative-diffcsp` |
+| `REACT_OT_DIR` | React-OT | `~/.cache/atomisticskills/react-ot` | `chem-react-ot` |
+| `SCD_REPO_DIR` | SelfConditionedDenoisingAtoms | `~/.cache/atomisticskills/SelfConditionedDenoisingAtoms` | `ml-property-predict-scd` |
+
+When a server runs in a container, `venv/run` passes `ADIT_REPO` and
+`DIFFCSP_REPO` on and mounts those checkouts at the same path.

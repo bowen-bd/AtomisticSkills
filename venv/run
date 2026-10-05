@@ -438,6 +438,18 @@ run_container() {
         "MATGL_CACHE=/opt/model-cache/matgl"
     )
     for v in "${CREDENTIALS[@]}"; do [[ -n "${!v:-}" ]] && envs+=("${v}=${!v}"); done
+    # Source checkouts that servers import but no image carries (ADiT's and
+    # DiffCSP++'s repositories): the variable naming one, else its default
+    # next to this repository, is passed on and the checkout mounted in place.
+    local spec dir src_dirs=()
+    for spec in ADIT_REPO=adit DIFFCSP_REPO=DiffCSP-PP; do
+        v="${spec%%=*}"
+        dir="${!v:-$(dirname "$ROOT")/${spec#*=}}"
+        [[ -d "$dir" ]] || continue
+        dir="$(cd "$dir" && pwd -P)"
+        envs+=("${v}=${dir}")
+        src_dirs+=("$dir")
+    done
 
     case "$rt" in
         docker|podman)
@@ -449,6 +461,7 @@ run_container() {
             # HOME is /tmp inside, so the user config (API keys) goes there.
             [[ -f "$CONFIG_FILE" ]] && args+=(--volume "${CONFIG_FILE}:/tmp/.config/atomistic_skills.yaml:ro")
             [[ -n "$cwd_mount" ]] && args+=(--volume "${cwd_mount}:${cwd_mount}")
+            for v in ${src_dirs[@]+"${src_dirs[@]}"}; do args+=(--volume "${v}:${v}"); done
             for v in "${envs[@]}"; do args+=(--env "$v"); done
             [[ "$gpu_ok" == 1 ]] && args+=(--gpus all)
             args+=(--workdir "$here" "$(image_ref "$name")" "$@")
@@ -459,7 +472,7 @@ run_container() {
             sif="$(apptainer_sif "$rt" "$name")"
             # $HOME and the current directory are bound by default; bind the rest.
             local d
-            for d in "$ROOT" "$ws" "$cwd_mount"; do
+            for d in "$ROOT" "$ws" "$cwd_mount" ${src_dirs[@]+"${src_dirs[@]}"}; do
                 [[ -z "$d" || "$d" == "$HOME" || "$d" == "$HOME"/* ]] && continue
                 binds+=(--bind "${d}:${d}")
             done

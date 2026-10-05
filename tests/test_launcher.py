@@ -554,6 +554,21 @@ class TestDockerInvocation:
         )
         assert f"{host.repo}:{host.repo}:rw" in flag_value(argv, "--volume")
 
+    def test_source_checkouts_are_mounted(self, host):
+        """ADiT and DiffCSP++ import repositories that no image carries: the
+        default checkout next to the repository, or the one a variable names."""
+        adit = host.repo.parent / "adit"
+        adit.mkdir()
+        diffcsp = host.tmp / "elsewhere" / "DiffCSP-PP"
+        diffcsp.mkdir(parents=True)
+        argv, _ = self.run_in_docker(
+            host, "cpu", "python", "x.py", DIFFCSP_REPO=str(diffcsp)
+        )
+        volumes, envs = flag_value(argv, "--volume"), flag_value(argv, "--env")
+        assert f"{adit}:{adit}" in volumes and f"ADIT_REPO={adit}" in envs
+        assert f"{diffcsp}:{diffcsp}" in volumes
+        assert f"DIFFCSP_REPO={diffcsp}" in envs
+
     def test_a_cwd_outside_the_workspace_is_mounted_too(self, host):
         elsewhere = host.tmp / "elsewhere"
         elsewhere.mkdir()
