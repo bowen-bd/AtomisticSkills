@@ -98,6 +98,20 @@ def test_default_image_tag_matches_the_release():
     assert PLUGIN["userConfig"]["image_tag"]["default"] == VERSION
 
 
+def test_registry_packages_are_the_built_images():
+    """server.json must list the images CI builds, each with the servers it holds."""
+    server_json = json.loads((PROJECT_ROOT / "server.json").read_text())
+    packages = {}
+    for package in server_json["packages"]:
+        repo = package["identifier"].rsplit(":", 1)[0]
+        packages[repo.rsplit("atomisticskills-", 1)[1]] = sorted(
+            package["packageArguments"][0]["choices"]
+        )
+    assert packages == {
+        image["name"]: sorted(image["servers"]) for image in SPEC["images"]
+    }
+
+
 def test_manifest_versions_agree():
     result = subprocess.run(
         [sys.executable, str(PROJECT_ROOT / "tools" / "sync_version.py"), "--check"],

@@ -3,7 +3,7 @@
   "name": "atomistic-skills",
   "displayName": "Atomistic Skills",
   "description": "Agent skills for atomistic simulation: materials science, chemistry, drug discovery, and machine-learning interatomic potentials.",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "author": {
     "name": "Learning Matter Lab, MIT",
     "url": "https://github.com/learningmatter-mit"
@@ -171,7 +171,7 @@
       "type": "string",
       "title": "Image tag",
       "description": "Tag of the atomisticskills-* images, used only when running from containers. Defaults to the plugin version so the images match the skills.",
-      "default": "1.4.0",
+      "default": "1.5.0",
       "required": false
     }
   }
