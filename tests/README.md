@@ -106,26 +106,21 @@ Available in all tests via `conftest.py`:
 
 ### Test fails with import error
 
-**Problem**: Wrong conda environment activated
+**Problem**: The tests ran in another environment (for example a bare
+`pytest`, outside the launcher).
 
-**Solution**: Check you're in the correct environment:
-```bash
-conda info --envs
-conda activate <correct-env>
-```
+**Solution**: Run them through the launcher in the server's environment, e.g.
+`venv/run mlip python -m pytest tests/mace`. `venv/run --doctor` lists the
+environments and how this host runs them.
 
 ### Test skips unexpectedly
 
-**Problem**: Auto-skip triggered
+**Problem**: Auto-skip triggered: the marker needs another environment, or a
+package has no wheel for this architecture (SCINE on aarch64).
 
-**Solution**: This is expected behavior. Tests skip gracefully in wrong environments.
+**Solution**: The skip reason names the environment to use.
 
-## CI/CD Considerations
+## CI
 
-For automated testing, you'll need:
-
-1. **Multi-stage CI** with separate jobs per environment
-2. **Docker containers** with pre-built conda environments
-3. **GitHub Actions matrix** strategy
-
-Currently, tests are designed for **local manual execution** in the appropriate conda environment.
+`.github/workflows/uv-envs.yml` runs the launcher, skill, uv-project, image and
+tool-CLI suites, and each environment's MCP smoke test, on x86_64 and arm64.
