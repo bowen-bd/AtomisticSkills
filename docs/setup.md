@@ -41,6 +41,10 @@ claude plugin marketplace add learningmatter-mit/AtomisticSkills
 claude plugin install atomistic-skills@atomistic-skills
 ```
 
+To install from a local checkout instead, add a fresh clone as the marketplace:
+a local path is copied whole into the plugin cache, including any
+environments already built under `venv/*/.venv` (tens of GB).
+
 The plugin brings every skill and all MCP servers. Its options are optional:
 `runtime` (default `auto`; set `apptainer` on an HPC cluster that should use
 containers), and `image_registry` / `image_tag` for the container fallback.
