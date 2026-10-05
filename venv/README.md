@@ -1,95 +1,90 @@
-# Python environments
+# Python Environments
 
-Three uv projects replace the per-capability conda environments for everything
-except the generative stack. Each is a complete uv project with its own
-`pyproject.toml`, `uv.lock` and resolver boundary.
+AtomisticSkills runs all skill commands and MCP servers through the unified launcher `venv/run`. Three uv projects under `venv/` replace the ~20 legacy conda environments for everything except a few specialized stacks. Each project has its own `pyproject.toml`, committed `uv.lock`, and isolated resolver boundary.
 
-| uv project | Purpose | Accelerator |
-| :--- | :--- | :--- |
-| `venv/cpu` | Materials, chemistry, drug discovery and analysis | none |
-| `venv/mlip` | MACE and MatGL, on top of the CPU stack | torch 2.14, CUDA |
-| `venv/fairchem` | FairChem | torch 2.10, CUDA |
+| uv project | Contents | Accelerator | MCP Servers |
+| :--- | :--- | :--- | :--- |
+| `venv/cpu` | Materials, chemistry, drug discovery and analysis stack (no torch) | none | `base`, `atomate2`, `drugdisc`, `smol` |
+| `venv/mlip` | MACE and MatGL (PyG only) on top of the CPU stack | torch 2.14, CUDA | `mace`, `matgl` |
+| `venv/fairchem` | FairChem (UMA, eSEN) on top of the CPU stack | torch 2.13, CUDA | `fairchem` |
 
-Run a skill script by naming its project; no activation step is involved, and
-uv builds the environment from the lock on first use:
+## Running Commands and MCP Servers
+
+Run commands through the `venv/run` launcher without manual environment activation:
 
 ```bash
-uv run --project venv/cpu   python skills/<skill>/scripts/<script>.py ...
-uv run --project venv/mlip  python skills/<skill>/scripts/<script>.py ...
+# Run a skill script
+venv/run cpu python skills/<skill>/scripts/<script>.py ...
+venv/run mlip python skills/<skill>/scripts/<script>.py ...
+
+# Run with an optional extra
+venv/run cpu+openmm python ...
+
+# Start an MCP server over stdio
+venv/run --server mace
+
+# Setup and diagnostics
+venv/run --setup     # syncs all three projects ahead of time
+venv/run --doctor    # reports host compatibility and runtime readiness
 ```
 
-Use the project the skill declares in its frontmatter. Do not assume support
-because two projects happen to contain the same package.
+## Versions and Packages
 
-## Which project replaced which conda environment
+Floors (not strict pins) keep the scientific packages current while respecting fundamental conflicts:
 
-| Former conda env | uv project | Note |
+| Package | mlip | fairchem | cpu |
+| :--- | :--- | :--- | :--- |
+| torch | 2.14.1 (cu130 on aarch64) | 2.13.0 | — |
+| mace-torch / e3nn | 0.3.16 / 0.4.4 | — | — |
+| matgl | 4.1.0 (PyG only; DGL removed) | — | — |
+| fairchem-core / e3nn | — | 2.23.0 / 0.6.0 | — |
+| nvalchemi-toolkit | 0.2.0 | 0.2.0 | — |
+| numpy | 2.3.5 | 2.3.5 | 2.5.3 |
+| pandas | 3.0.6 | 3.0.6 | 3.0.6 |
+
+### Conflicts That Force Separate Environments
+
+1. **`mace-torch` vs `fairchem-core`**: `mace-torch` pins `e3nn==0.4.4`, whereas `fairchem-core` requires `e3nn>=0.5`. `mlip` and `fairchem` cannot merge into a single environment on any platform.
+2. **PyTorch versions**: `fairchem-core` 2.23 requires `torch~=2.13`, while `mlip` takes torch 2.14.1.
+3. **NumPy constraints**: `nvalchemi-toolkit` 0.2 requires `numpy<2.4`, so the GPU projects use numpy 2.3.5 while `cpu` uses numpy 2.5+.
+
+### Pins That Remain
+
+- `mcp<2`: All ten servers use the 1.x `FastMCP` API; porting to mcp 2.x is a planned follow-up.
+- `pymol-open-source==3.2.0a0`: The only release providing Python 3.12 wheels.
+
+## Optional Extras
+
+System-dependent or heavy dependencies are isolated in optional extras:
+
+- `openmm`: OpenMM and PDBFixer (requires glibc ≥ 2.34).
+- `pymol`: PyMOL open-source (x86_64 only).
+- `docking`: AutoDock Vina (builds against Boost and SWIG on aarch64).
+- `void`: VOID guest docking (installed from git).
+- `transport`: AMSET and BoltzTraP2 (requires git and cmake at build time).
+
+Use them as `venv/run cpu+openmm ...` or `venv/run cpu+docking ...`.
+
+## Environment Mapping (Former Conda vs uv Projects)
+
+| Former conda env | Current Runtime / venv | Note |
 | :--- | :--- | :--- |
 | `base-agent`, `drugdisc-agent`, `smol-agent`, `atomate2-agent` | `cpu` | |
 | `nmr-agent`, `phasefield-agent`, `calphad-agent`, `xrd-agent` | `cpu` | |
-| `drugmd-agent` | `cpu` | OpenMM; `pymol-open-source` is x86_64 only |
-| `orca-agent` | `cpu` | x86_64 only (SCINE wheels); needs a user-supplied ORCA binary |
-| `atomistic-agent` | `cpu` | VOID, from git |
+| `drugmd-agent` | `cpu+openmm` | `pymol` extra is x86_64 only |
+| `orca-agent` | `cpu` | x86_64 only (SCINE wheels); requires external ORCA binary |
+| `atomistic-agent` | `cpu+void` | VOID guest docking |
 | `mace-agent`, `matgl-agent` | `mlip` | |
 | `scd-agent` | `mlip` | |
-| `react-ot-agent` | `mlip` | React-OT, from git |
-| `ms-gen` | `mlip` | ICEBERG, from git |
-| `fairchem-agent` | `fairchem` | separate; see the override below |
-| `adit-agent`, `diffcsp-agent`, `mattergen-agent` | *(none)* | container path; see below |
+| `fairchem-agent` | `fairchem` | |
+| `adit-agent`, `diffcsp-agent`, `mattergen-agent` | `generative` image / conda | Generative models |
+| `ms-gen` | `ms-gen` conda env | ICEBERG (`chem-msms-predict`) |
+| `react-ot-agent` | `react-ot-agent` conda env | React-OT (`chem-react-ot`) |
+| `mace-agent`, `matgl-agent`, `fairchem-agent` | conda envs | `mat-lammps-md` with ML plugins |
 
-## Packages that are not on PyPI
+## Architectures and Container Fallback
 
-Three are pulled from git and pinned to a commit in the lock. Two of them have
-a same-named but **unrelated** package on PyPI, so the git source is not a
-convenience -- depending on the PyPI name would silently install the wrong
-software:
-
-| Package | Source | PyPI name collision |
-| :--- | :--- | :--- |
-| `VOID` | `learningmatter-mit/VOID` | `void` is "Void object in Python" |
-| `ms-pred` (ICEBERG) | `coleygroup/ms-pred` | not published |
-| `oa-reactdiff` (React-OT) | `deepprinciple/react-ot` | not published; note the import is `reactot` but the distribution is `oa-reactdiff` |
-
-(For the same reason, do not add `adit` from PyPI: that name belongs to an
-unrelated ML prototyping toolbox, not the All-atom Diffusion Transformer.)
-
-## Why three, and not one
-
-The boundaries are forced by the dependency graph, not chosen:
-
-- **`mlip` and `fairchem` cannot merge.** `mace-torch` pins `e3nn==0.4.4`;
-  `fairchem-core` requires `e3nn>=0.5`. There is no resolution, on any
-  architecture.
-- **`cpu` exists so the common case carries no torch.** It covers the great
-  majority of skill scripts and stays small.
-
-## Both architectures
-
-Every project resolves for `linux/x86_64` and `linux/aarch64`, and torch ships
-CUDA wheels for both, so GPU work runs on ordinary clusters and on GB10-class
-hardware from the same lock. Two packages genuinely have no aarch64 wheel and
-carry markers rather than being dropped for everyone:
-
-- `pymol-open-source` — x86_64 only, and only as a pre-release for 3.12
-- `scine-utilities` / `scine-readuct` — x86_64 only, so the ORCA skills are
-  x86_64 only (they need a user-supplied ORCA binary regardless)
-
-## The fairchem override
-
-`fairchem-core` declares a torch range the validated environment deliberately
-violates, because torch 2.8 has no sm_121 build. That is recorded as an
-`override-dependencies` entry with the reason beside it, rather than being
-hidden inside a frozen package list. Do not "fix" it by relaxing the pin.
-
-## The generative stack is not here
-
-`adit`, `diffcsp` and `mattergen` stay on their existing container path, for
-reasons that are not stylistic:
-
-- `mattergen` hard-pins `torch==2.2.1+cu118` and `torchvision==0.17.1+cu118` —
-  local-version wheels that never existed for aarch64
-- its PyTorch Geometric extensions have no wheel for that combination, so they
-  are compiled from source
-- ADiT and DiffCSP++ are not published packages at all
-
-See `docker/README.md` for that path.
+All three uv projects resolve for both `linux/x86_64` and `linux/aarch64`.
+- Host requirements: Linux, compatible glibc (≥ 2.28 for cpu, ≥ 2.34 for aarch64 GPU stacks per `venv/platforms.tsv`), and a C compiler (`gcc`).
+- For GPU acceleration: NVIDIA driver ≥ 580 on aarch64 (CUDA 13) or standard drivers on x86_64 (CUDA 12.8).
+- Hosts that lack these (older clusters, macOS, or machines without a compiler) automatically run via container images (`docker`, `podman`, or `apptainer`) when `ATOMISTIC_RUNTIME=auto` (the default). Host paths are mounted at identical locations so outputs land in the active workspace.
