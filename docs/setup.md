@@ -25,9 +25,11 @@ What a native (uv) install needs:
 - [uv](https://docs.astral.sh/uv/) and a C compiler (`gcc`), for the few packages
   that build from source. Python itself comes from uv (a managed CPython with its
   headers), so no system Python or `python3-devel` package is needed
-- For GPU work, NVIDIA driver 580 or newer: the mlip and fairchem environments use
-  CUDA 13 builds of torch on both architectures. On an older driver the GPU is not
-  used; `venv/run --doctor` warns about it
+- For GPU work, an NVIDIA driver 525 or newer. The mlip and fairchem environments
+  carry two torch builds and `venv/run` picks by driver: CUDA 13 (driver ≥ 580,
+  required for GB10/Blackwell) or CUDA 12.6 (drivers 525–579, common on clusters).
+  `venv/run --doctor` shows the choice; `ATOMISTIC_TORCH_CUDA=cu126|cu130`
+  overrides it. Container images carry the CUDA 13 build only
 
 Hosts that do not meet these -- older clusters, macOS, no compiler -- use the
 container fallback automatically once a container runtime is installed.
@@ -156,7 +158,7 @@ Then run a live test with the user:
 | An MCP server is not connected | Run `venv/run --doctor`. A first start creates the environment in the background; reconnect with `/mcp` when it finishes, or run `venv/run --setup` first. |
 | `needs glibc >= …` or `needs a C compiler` | Install a container runtime (Apptainer on HPC, Docker elsewhere); `auto` then uses it. |
 | `No module named ...` in a skill script | Run the command exactly as the skill writes it: `venv/run <env> ...` picks the environment the script needs. |
-| GPU not used | Check `nvidia-smi`: the driver must be 580 or newer (CUDA 13 builds). On a cluster, pick a GPU partition with a current driver. |
+| GPU not used | Run `venv/run --doctor`: drivers 525–579 get the CUDA 12.6 build, 580+ CUDA 13, older ones the CPU. In a container (images are CUDA 13) a driver older than 580 means CPU; use the uv backend there. |
 | FairChem `load_model` fails with `401` / gated repo | UMA checkpoints are gated: request access at https://huggingface.co/facebook/UMA, then set `HF_TOKEN` (in `~/.config/atomistic_skills.yaml` or the environment). |
 | Model download fails with `CERTIFICATE_VERIFY_FAILED` | The launcher points Python at the system CA bundle; behind a proxy or with a custom bundle, set `SSL_CERT_FILE` to it. |
 | `SyntaxError` running a `tools/` script | `python3` is too old (Python 3.6 on RHEL 8); run it as `venv/run cpu python tools/<script>.py`. |

@@ -92,12 +92,19 @@ void = ["VOID"]
 # dependency compiles from source and clones GoogleTest with git at build time,
 # so it stays out of the base set; install it to run AMSET jobs locally.
 transport = ["amset"]
+# Exactly one torch build per environment, chosen by venv/run from the NVIDIA
+# driver: cu130 (CUDA 13; driver >= 580; GB10's sm_121 needs it) when the driver
+# allows, else cu126 (CUDA 12.6; drivers >= 525, still common on clusters).
+# ATOMISTIC_TORCH_CUDA=cu126|cu130 overrides the choice.
+cu126 = ["torch"]
+cu130 = ["torch"]
 
 [dependency-groups]
 dev = ["pytest", "pytest-timeout"]
 
 [tool.uv]
 package = false
+conflicts = [[{ extra = "cu126" }, { extra = "cu130" }]]
 # Both architectures are supported: amd64 for ordinary clusters and
 # workstations, arm64 for GB10-class hardware. Anything that genuinely has no
 # wheel for one of them carries a platform_machine marker above, rather than
@@ -114,11 +121,17 @@ required-environments = [
 ]
 
 [[tool.uv.index]]
-# CUDA 13 builds of torch, which GB10 (sm_121) needs. PyPI's aarch64 torch
-# wheels are not always CUDA builds (2.10.0's was CPU-only), so aarch64 takes
-# torch from here; x86_64 uses PyPI's default build.
+# CUDA 13 builds of torch (the cu130 extra). PyTorch's own index rather than
+# PyPI: PyPI's aarch64 torch wheels are not always CUDA builds (2.10.0's was
+# CPU-only).
 name = "pytorch-cu130"
 url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
+[[tool.uv.index]]
+# CUDA 12.6 builds of torch (the cu126 extra), for drivers older than 580.
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
 explicit = true
 
 [tool.uv.extra-build-dependencies]
@@ -131,4 +144,7 @@ atomisticskills = { path = "../..", editable = true }
 # The Voronoi docking library used by chem-docking-void. Not on PyPI -- the
 # package published there under the name "void" is an unrelated utility.
 VOID = { git = "https://github.com/learningmatter-mit/VOID.git" }
-torch = [{ index = "pytorch-cu130", marker = "platform_machine == 'aarch64'" }]
+torch = [
+  { index = "pytorch-cu126", extra = "cu126" },
+  { index = "pytorch-cu130", extra = "cu130" },
+]

@@ -17,6 +17,10 @@ cpu	void	x86_64	2.28
 cpu	void	aarch64	2.28
 fairchem	-	x86_64	2.28
 fairchem	-	aarch64	2.34
+fairchem	cu126	x86_64	2.28
+fairchem	cu126	aarch64	2.34
+fairchem	cu130	x86_64	2.28
+fairchem	cu130	aarch64	2.34
 fairchem	docking	x86_64	2.28
 fairchem	docking	aarch64	2.34
 fairchem	openmm	x86_64	2.34
@@ -29,6 +33,10 @@ fairchem	void	x86_64	2.28
 fairchem	void	aarch64	2.34
 mlip	-	x86_64	2.28
 mlip	-	aarch64	2.34
+mlip	cu126	x86_64	2.28
+mlip	cu126	aarch64	2.34
+mlip	cu130	x86_64	2.28
+mlip	cu130	aarch64	2.34
 mlip	docking	x86_64	2.28
 mlip	docking	aarch64	2.34
 mlip	openmm	x86_64	2.34

@@ -52,6 +52,16 @@ jobs:
       matrix:
         runner: [ubuntu-24.04, ubuntu-24.04-arm]
         venv: [cpu, mlip, fairchem]
+        # The torch build of the GPU projects (no effect on cpu). Runners have no
+        # GPU, so venv/run would pick cu130; cu126 is forced for its own jobs.
+        torch: [cu130]
+        include:
+          - { runner: ubuntu-24.04, venv: mlip, torch: cu126 }
+          - { runner: ubuntu-24.04, venv: fairchem, torch: cu126 }
+          - { runner: ubuntu-24.04-arm, venv: mlip, torch: cu126 }
+          - { runner: ubuntu-24.04-arm, venv: fairchem, torch: cu126 }
+    env:
+      ATOMISTIC_TORCH_CUDA: ${{ matrix.torch }}
     steps:
       - name: Free disk space
         run: |

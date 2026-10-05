@@ -408,8 +408,9 @@ class TestUvBackend:
         assert result.returncode == 0, result.stderr
         assert "needs a C compiler" in result.stderr
         assert host.calls(docker)
-        # An environment that already exists needs no compiler.
-        host.mark_synced("mlip")
+        # An environment that already exists needs no compiler. (No GPU on this
+        # fake host, so the mlip environment's torch build is cu130.)
+        host.mark_synced("mlip", "cu130")
         uv_calls_before = len(host.calls(host.logs / "uv.calls"))
         assert host.run("mlip", "python", "x.py").returncode == 0
         assert len(host.calls(host.logs / "uv.calls")) > uv_calls_before
@@ -816,11 +817,14 @@ class TestHostQuirks:
         assert "ATOMISTIC_SQUASHFS_PROCS" not in result.stderr
 
     @pytest.mark.parametrize(
-        "driver, warned", [("550.54.14", True), ("580.173.02", False)]
+        "driver, expected",
+        [
+            ("470.256.02", "older than 525"),
+            ("550.54.14", "CUDA 12.6 builds (cu126)"),
+            ("580.173.02", None),
+        ],
     )
-    def test_doctor_warns_about_a_driver_too_old_for_cuda_13(
-        self, host, driver, warned
-    ):
+    def test_doctor_reports_what_the_driver_allows(self, host, driver, expected):
         host.stub(
             "nvidia-smi",
             f'if [[ "$*" == *name,driver_version* ]]; then echo "NVIDIA GeForce RTX 2080 Ti, {driver}";\n'
@@ -828,7 +832,10 @@ class TestHostQuirks:
             'else echo "GPU 0: NVIDIA GeForce RTX 2080 Ti"; fi\n',
         )
         result = host.run("--doctor")
-        assert ("older than 580" in result.stderr) is warned
+        if expected:
+            assert expected in result.stderr
+        else:
+            assert "older than" not in result.stderr and "cu126" not in result.stderr
 
     def test_old_glibc_is_reported_before_a_missing_compiler(self, host, tmp_path):
         """On glibc 2.17 the compiler is not the problem; saying so misleads."""
@@ -862,3 +869,69 @@ class TestHostQuirks:
             VIRTUAL_ENV=str(host.repo / "venv" / "cpu" / ".venv"),
         )
         assert "VIRTUAL_ENV" not in host.env_of("uv")
+
+
+class TestTorchCudaBuild:
+    """mlip and fairchem lock a CUDA 13 and a CUDA 12.6 torch; venv/run picks one."""
+
+    def stub_driver(self, host, version):
+        host.stub(
+            "nvidia-smi",
+            f'if [[ "$*" == *driver_version* ]]; then echo "{version}"; else echo "GPU 0: NVIDIA A100"; fi\n',
+        )
+
+    def sync_extras(self, host):
+        syncs = [c for c in host.calls(host.logs / "uv.calls") if c and c[0] == "sync"]
+        return [syncs[-1][i + 1] for i, a in enumerate(syncs[-1]) if a == "--extra"]
+
+    @pytest.mark.parametrize(
+        "driver, build",
+        [(None, "cu130"), ("550.107.02", "cu126"), ("580.65.06", "cu130")],
+    )
+    def test_the_driver_picks_the_build(self, host, driver, build):
+        host.stub_uv()
+        if driver:
+            self.stub_driver(host, driver)
+        result = host.run("mlip", "python", "x.py", cwd=host.workspace)
+        assert result.returncode == 0, result.stderr
+        assert self.sync_extras(host) == [build]
+        run = [c for c in host.calls(host.logs / "uv.calls") if c and c[0] == "run"][-1]
+        assert flag_value(run, "--extra") == [build]
+
+    def test_cpu_has_no_build_to_pick(self, host):
+        host.stub_uv()
+        self.stub_driver(host, "550.107.02")
+        host.run("cpu", "python", "x.py", cwd=host.workspace)
+        assert self.sync_extras(host) == []
+
+    def test_the_override_wins(self, host):
+        host.stub_uv()
+        self.stub_driver(host, "580.65.06")
+        host.run(
+            "fairchem",
+            "python",
+            "x.py",
+            cwd=host.workspace,
+            ATOMISTIC_TORCH_CUDA="cu126",
+        )
+        assert self.sync_extras(host) == ["cu126"]
+
+    def test_a_bad_override_is_refused(self, host):
+        result = host.run("mlip", "python", "x.py", ATOMISTIC_TORCH_CUDA="cu999")
+        assert result.returncode != 0 and "cu126 or cu130" in result.stderr
+
+    def test_switching_builds_drops_the_other_one(self, host):
+        """cu126 and cu130 conflict: carrying the old one over would fail the sync."""
+        host.stub_uv()
+        host.mark_synced("mlip", "cu130", "openmm")
+        self.stub_driver(host, "550.107.02")
+        host.run("mlip", "python", "x.py", cwd=host.workspace)
+        assert sorted(self.sync_extras(host)) == ["cu126", "openmm"]
+
+    def test_servers_use_the_build_too(self, host):
+        host.stub_uv()
+        self.stub_driver(host, "550.107.02")
+        host.mark_synced("mlip", "cu126")
+        host.run("--server", "mace")
+        run = [c for c in host.calls(host.logs / "uv.calls") if c and c[0] == "run"][-1]
+        assert flag_value(run, "--extra") == ["cu126"]

@@ -57,8 +57,13 @@ WORKDIR ${REPO_DIR}
 # The repository package itself (src/) is installed after the code is copied.
 COPY pyproject.toml VERSION ${REPO_DIR}/
 COPY venv/${VENV}/pyproject.toml venv/${VENV}/uv.lock ${REPO_DIR}/venv/${VENV}/
+# The GPU projects lock two torch builds that exclude each other (cu126, cu130);
+# images carry the CUDA 13 one, so a host with a driver older than 580 runs them
+# on the CPU (venv/run on the host picks cu126 there instead).
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --project venv/${VENV} --all-extras --no-dev \
+    extras="--all-extras"; \
+    if grep -q '^cu126 = ' venv/${VENV}/pyproject.toml; then extras="--all-extras --no-extra cu126"; fi; \
+    uv sync --frozen --project venv/${VENV} ${extras} --no-dev \
         --no-install-package atomisticskills
 
 COPY src/ ${REPO_DIR}/src/
@@ -66,7 +71,9 @@ COPY skills/ ${REPO_DIR}/skills/
 COPY venv/run venv/servers.tsv venv/platforms.tsv ${REPO_DIR}/venv/
 COPY docker/entrypoint.sh docker/images.json docker/render.py ${REPO_DIR}/docker/
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --project venv/${VENV} --all-extras --no-dev \
+    extras="--all-extras"; \
+    if grep -q '^cu126 = ' venv/${VENV}/pyproject.toml; then extras="--all-extras --no-extra cu126"; fi; \
+    uv sync --frozen --project venv/${VENV} ${extras} --no-dev \
     && venv/${VENV}/.venv/bin/python docker/render.py server-map "${IMAGE_NAME}" \
         > docker/server-map.txt \
     && cat docker/server-map.txt \

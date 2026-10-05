@@ -89,18 +89,27 @@ def test_both_architectures_are_required(project):
 
 @pytest.mark.parametrize("project", PROJECTS)
 def test_extras_are_the_same_everywhere(project):
-    extras = load(project)["project"]["optional-dependencies"]
+    extras = dict(load(project)["project"]["optional-dependencies"])
+    # The GPU projects add their two torch builds; everything else matches cpu.
+    if project in ("mlip", "fairchem"):
+        assert extras.pop("cu126") == ["torch"] and extras.pop("cu130") == ["torch"]
     assert extras == load("cpu")["project"]["optional-dependencies"]
     assert set(extras) == {"openmm", "pymol", "docking", "void", "transport"}
 
 
-def test_gpu_projects_take_cuda_torch_on_arm():
-    """aarch64 needs the CUDA 13 build; PyPI's aarch64 torch is not always one."""
+def test_gpu_projects_lock_both_torch_cuda_builds():
+    """cu130 for drivers >= 580 (and GB10's sm_121), cu126 for older drivers; the
+    builds exclude each other, and both come from PyTorch's index on both arches
+    (PyPI's aarch64 torch is not always a CUDA build)."""
     for project in ("mlip", "fairchem"):
-        sources = load(project)["tool"]["uv"]["sources"]["torch"]
-        assert sources == [
-            {"index": "pytorch-cu130", "marker": "platform_machine == 'aarch64'"}
+        uv = load(project)["tool"]["uv"]
+        assert uv["sources"]["torch"] == [
+            {"index": "pytorch-cu126", "extra": "cu126"},
+            {"index": "pytorch-cu130", "extra": "cu130"},
         ]
+        assert uv["conflicts"] == [[{"extra": "cu126"}, {"extra": "cu130"}]]
+        lock = (VENV_DIR / project / "uv.lock").read_text()
+        assert "+cu126" in lock and "+cu130" in lock
 
 
 def test_versions_are_floors_not_pins():

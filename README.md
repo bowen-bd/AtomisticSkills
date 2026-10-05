@@ -170,7 +170,7 @@ All skills and MCP servers run through the unified `venv/run` launcher across th
 - **OS**: Linux on x86_64 or aarch64.
 - **glibc**: ≥ 2.28 for `cpu`; aarch64 GPU stacks (`mlip`, `fairchem`) require glibc ≥ 2.34.
 - **Compiler**: A C compiler (`gcc`) and `uv` on `PATH` for source packages.
-- **GPU**: NVIDIA GPU with driver ≥ 580 on both architectures (the `mlip` and `fairchem` environments use CUDA 13 builds of torch).
+- **GPU**: NVIDIA driver ≥ 525. `venv/run` picks the torch build by driver: CUDA 13 for ≥ 580 (needed by GB10/Blackwell), CUDA 12.6 otherwise.
 - **FairChem UMA**: gated on Hugging Face; request access at https://huggingface.co/facebook/UMA and set `HF_TOKEN`.
 - **Container Fallback**: Systems that do not meet native requirements (older clusters, macOS, or missing compilers) automatically fall back to container images (`docker`, `podman`, or `apptainer`).
 
