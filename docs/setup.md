@@ -142,8 +142,9 @@ compiled extensions publish no aarch64 wheels; on aarch64 the generative servers
 run from the `generative` container image instead (`venv/run --setup generative`
 pulls it ahead of time). `venv/run --doctor` shows what a host can run.
 
-The one remaining conda build is LAMMPS with ML plugins (`mat-lammps-md`); its
-skill explains the build.
+LAMMPS with ML plugins (`mat-lammps-md`) is built against the `mlip`
+environment by the skill's build scripts; FairChem's `lmp_fc` comes with the
+`fairchem+lammps` extra. Nothing uses conda.
 
 ## Check the installation
 
