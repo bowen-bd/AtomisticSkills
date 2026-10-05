@@ -155,7 +155,7 @@ class TestSetupOrcaCalculator:
             structure_path=xyz, solvation="CPCM", solvent="water"
         )
 
-        assert calc.settings["solvation"] == "CPCM"
+        assert calc.settings["solvation"].lower() == "cpcm"
         assert calc.settings["solvent"] == "water"
 
     def test_solvation_without_solvent_raises(

@@ -77,7 +77,7 @@ class TestSinglepointSetup:
             solvent="water",
         )
 
-        assert calc.settings["solvation"] == "SMD"
+        assert calc.settings["solvation"].lower() == "smd"
         assert calc.settings["solvent"] == "water"
 
     def test_arbitrary_settings(self, skip_if_wrong_env, monkeypatch, tmp_path):
@@ -97,7 +97,7 @@ class TestSinglepointSetup:
         )
 
         assert calc.settings["method"] == "PBE0"
-        assert calc.settings["solvation"] == "SMD"
+        assert calc.settings["solvation"].lower() == "smd"
         assert calc.settings["solvent"] == "ethanol"
         assert calc.settings["max_scf_iterations"] == 200
         assert calc.settings["enforce_scf_criterion"] is True

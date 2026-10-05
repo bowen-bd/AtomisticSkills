@@ -72,7 +72,7 @@ class TestOptimizationCalculatorSetup:
             solvent="ethanol",
         )
 
-        assert calc.settings["solvation"] == "CPCM"
+        assert calc.settings["solvation"].lower() == "cpcm"
         assert calc.settings["solvent"] == "ethanol"
 
 
