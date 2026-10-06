@@ -539,6 +539,17 @@ class TestServerMode:
             == f"ghcr.io/learningmatter-mit/atomisticskills-generative:{VERSION}"
         )
 
+    def test_stack_without_an_image_names_the_native_override(self, host):
+        """msms on EL8: no image, but a newer libstdc++ module makes uv work."""
+        host.stub_uv()
+        host.set_platform("x86_64", "2.28")
+        apptainer = host.recorder("apptainer")
+        result = host.run("msms", "python", "-c", "pass")
+        assert result.returncode != 0
+        assert "no container image carries it" in result.stderr
+        assert "ATOMISTIC_RUNTIME=uv" in result.stderr
+        assert not host.calls(apptainer)
+
     def test_container_only_server_runs_its_image(self, host):
         docker = host.recorder("docker")
         host.stub("nvidia-smi", 'echo "GPU 0: NVIDIA GB10"\n')

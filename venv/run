@@ -606,7 +606,9 @@ run_command() {
         local gpu=0
         [[ "$venv" != cpu ]] && gpu=1
         local image; image="$(venv_image "$venv")"
-        [[ -n "$image" ]] || die "'${venv}' cannot run natively here and no container image carries it."
+        [[ -n "$image" ]] || die "'${venv}' cannot run natively here and no container image carries it.
+       If this host has a newer runtime after all (e.g. msms: 'module load gcc' for GCC 9+'s
+       libstdc++), ATOMISTIC_RUNTIME=uv runs it natively; see docs/setup.md, Research stacks."
         # The generative image carries several environments; name this one.
         CONTAINER_VENV="$venv"
         run_container "$backend" "$image" "$gpu" command "$@"
