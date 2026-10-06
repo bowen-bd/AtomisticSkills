@@ -46,7 +46,7 @@ ATOMISTIC_IMAGE_TAG: "2.0.0"
 | :--- | :--- | :--- | :--- |
 | `MP_API_KEY` | API Key for Materials Project database access. | `base` server, pymatgen | `abc123def456` |
 | `HF_TOKEN` | Hugging Face user access token. Required for FairChem UMA, which is gated: request access at https://huggingface.co/facebook/UMA first. | `fairchem` server | `hf_...` |
-| `SSL_CERT_FILE` | CA bundle for Python's TLS. `venv/run` sets it to the system bundle when unset (needed on RHEL-family hosts); set it yourself behind a proxy with its own CA. | all | `/etc/pki/tls/certs/ca-bundle.crt` |
+| `SSL_CERT_FILE` | CA bundle for Python's TLS. The uv backend sets it to the system bundle when unset (needed on RHEL-family hosts); set it yourself behind a proxy with its own CA. Apptainer/Singularity bind an inherited host bundle read-only into the image and adjust the path, preserving custom CAs. Docker/Podman use the image's certificates. | `venv/run`, Python clients | `/etc/pki/tls/certs/ca-bundle.crt` |
 | `ATOMISTIC_TORCH_CUDA` | Torch build for the GPU environments (`mlip`, `fairchem`, `adit`, `diffcsp`, `mattergen`, `scd`): `cu130` (CUDA 13, driver ≥ 580) or `cu126` (CUDA 12.6, driver ≥ 525). Chosen from the NVIDIA driver when unset. | `venv/run` | `cu126` |
 | `UV_PYTHON_PREFERENCE` | Which Python uv builds environments on. `venv/run` uses `only-managed` (a uv-managed CPython with headers) unless set. | `venv/run` | `only-managed` |
 | `ORCA_BINARY_PATH` | Full path to the external ORCA executable. | `chem-dft-orca-*` skills | `/opt/orca/orca` |

@@ -188,5 +188,7 @@ Then run a live test with the user:
 | GPU not used | Run `venv/run --doctor`: drivers 525–579 get the CUDA 12.6 build, 580+ CUDA 13, older ones the CPU. In a container (images are CUDA 13) a driver older than 580 means CPU; use the uv backend there. |
 | FairChem `load_model` fails with `401` / gated repo | UMA checkpoints are gated: request access at https://huggingface.co/facebook/UMA, then set `HF_TOKEN` (in `~/.config/atomistic_skills.yaml` or the environment). |
 | Model download fails with `CERTIFICATE_VERIFY_FAILED` | The launcher points Python at the system CA bundle; behind a proxy or with a custom bundle, set `SSL_CERT_FILE` to it. |
+| Apptainer model download fails with a missing host CA path (such as `/etc/pki/tls/certs/ca-bundle.crt`) | Update `venv/run`: it now binds the selected host bundle read-only into the image and sets the container's `SSL_CERT_FILE` to that mount. |
+| `mcp_smoke.py` cannot launch Docker servers from inside the CPU image | Run the client natively and select Docker for the servers: `ATOMISTIC_RUNTIME=uv venv/run cpu python tools/mcp_smoke.py mattergen --server-env ATOMISTIC_RUNTIME=docker`. Exporting Docker for the whole command also containerizes the client. |
 | `SyntaxError` running a `tools/` script | `python3` is too old (Python 3.6 on RHEL 8); run it as `venv/run cpu python tools/<script>.py`. |
 | Atomate2 remote worker issues | See [docs/atomate2_remote_workers.md](atomate2_remote_workers.md) |

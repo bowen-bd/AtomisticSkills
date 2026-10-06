@@ -844,7 +844,9 @@ class TestWorkspace:
         """src/utils/research_utils.workspace_root applies the same rule."""
         cwd = {
             "repo": PROJECT_ROOT / "skills",
-            "outside": tmp_path,
+            # --basetemp may be inside this checkout (.agents/test); the
+            # outside case must still exercise a directory outside it.
+            "outside": PROJECT_ROOT.parent,
             "override": tmp_path,
         }[where]
         env = dict(os.environ, PYTHONPATH=str(PROJECT_ROOT))
@@ -865,7 +867,7 @@ class TestWorkspace:
         ).stdout.strip()
         expected = {
             "repo": str(PROJECT_ROOT),
-            "outside": str(tmp_path.resolve()),
+            "outside": str(PROJECT_ROOT.parent),
             "override": "/srv/elsewhere",
         }
         assert out == expected[where]
@@ -935,6 +937,61 @@ class TestHostQuirks:
         result = host.run("cpu", "python", "x.py", ATOMISTIC_RUNTIME="docker")
         assert result.returncode == 0, result.stderr
         assert not any("SSL_CERT_FILE" in a for a in host.calls(log)[-1])
+
+    @pytest.mark.parametrize("runtime", ["apptainer", "singularity"])
+    @pytest.mark.parametrize(
+        "args", [("--server", "mattergen"), ("cpu", "python", "x.py")]
+    )
+    @pytest.mark.parametrize("path_kind", ["absolute", "relative", "symlink"])
+    def test_inherited_ca_bundle_is_available_in_the_container(
+        self, host, runtime, args, path_kind
+    ):
+        """A native MCP client can pass a CA path absent from the server image.
+
+        The same bundle must remain usable, including an institution's custom
+        CAs, without relying on Apptainer's default home or workspace mounts.
+        """
+        bundle = host.tmp / "host certificates" / "ca-bundle.crt"
+        bundle.parent.mkdir()
+        bundle.write_text("institution CA bundle")
+        cert_path = bundle
+        if path_kind == "relative":
+            cert_path = Path(os.path.relpath(bundle, host.workspace))
+        elif path_kind == "symlink":
+            cert_path = bundle.parent / "cert.pem"
+            cert_path.symlink_to(bundle)
+        log = host.recorder(runtime, extra='if [[ "$1" == build ]]; then : > "$3"; fi')
+        result = host.run(
+            *args, ATOMISTIC_RUNTIME=runtime, SSL_CERT_FILE=str(cert_path)
+        )
+        assert result.returncode == 0, result.stderr
+        argv = host.calls(log)[-1]
+        cert_env = [
+            v for v in flag_value(argv, "--env") if v.startswith("SSL_CERT_FILE=")
+        ]
+        assert (
+            len(cert_env) == 1
+        ), "the inherited host path needs an explicit container path"
+        destination = cert_env[0].split("=", 1)[1]
+        assert destination.startswith("/")
+        assert f"{bundle.resolve()}:{destination}:ro" in flag_value(argv, "--bind")
+
+    @pytest.mark.parametrize("runtime", ["apptainer", "singularity"])
+    @pytest.mark.parametrize("cert_path", [None, "/container-only/ca.pem"])
+    def test_ca_bundle_without_a_host_file_is_not_replaced(
+        self, host, runtime, cert_path
+    ):
+        """Keep image defaults and paths that the caller mounts independently."""
+        log = host.recorder(runtime, extra='if [[ "$1" == build ]]; then : > "$3"; fi')
+        result = host.run(
+            "cpu", "python", "x.py", ATOMISTIC_RUNTIME=runtime, SSL_CERT_FILE=cert_path
+        )
+        assert result.returncode == 0, result.stderr
+        argv = host.calls(log)[-1]
+        assert not any(
+            v.startswith("SSL_CERT_FILE=") for v in flag_value(argv, "--env")
+        )
+        assert host.env_of(runtime).get("SSL_CERT_FILE") == cert_path
 
     def test_possibly_empty_arrays_are_expanded_safely(self):
         """bash < 4.4 (CentOS 7 ships 4.2) treats "${a[@]}" of an empty array as

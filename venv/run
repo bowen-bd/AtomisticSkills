@@ -256,8 +256,8 @@ with_torch_cuda() {  # with_torch_cuda VENV EXTRAS... -> the extras, plus the to
 # A uv-managed CPython looks for CA certificates at /etc/ssl/cert.pem and in
 # /etc/ssl/certs, which RHEL-family hosts do not populate the way OpenSSL
 # expects, so model downloads through urllib fail certificate checks. Point it
-# at the system bundle unless the user chose one. uv backend only: an image has
-# its own bundle, and Apptainer would carry this host path into the container.
+# at the system bundle unless the user chose one. If this process later starts
+# an Apptainer server, run_container mounts the inherited bundle into its image.
 prepare_uv_process() {
     # Also drop an inherited VIRTUAL_ENV: a command running in one environment
     # that starts a server in another (mcp_smoke, an agent's shell) would make uv
@@ -520,6 +520,14 @@ run_container() {
                 binds+=(--bind "${d}:${d}")
             done
             args+=(${binds[@]+"${binds[@]}"} --bind "${MODEL_CACHE}:/opt/model-cache")
+            # A native client may pass prepare_uv_process's RHEL CA path to a
+            # server in an Ubuntu image, where that path does not exist. Bind
+            # the bundle itself: this also keeps user-selected institutional
+            # CAs. Resolve symlinks and relative paths on the host first.
+            if [[ -n "${SSL_CERT_FILE:-}" && -f "$SSL_CERT_FILE" ]]; then
+                args+=(--bind "$(readlink -f "$SSL_CERT_FILE"):/opt/atomisticskills-host-ca.pem:ro")
+                envs+=("SSL_CERT_FILE=/opt/atomisticskills-host-ca.pem")
+            fi
             for v in "${envs[@]}"; do args+=(--env "$v"); done
             [[ "$gpu_ok" == 1 ]] && args+=(--nv)
             # `exec` bypasses the image ENTRYPOINT, so name it: it starts the

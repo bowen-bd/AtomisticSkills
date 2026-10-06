@@ -13,6 +13,12 @@ Usage:
         --call load_model '{}' --call relax_structure '{"structure_data": "Si.cif"}'
     venv/run cpu python tools/mcp_smoke.py base --server-env ATOMISTIC_RUNTIME=docker
 
+To test a container server from a native client, set the runtime with
+``--server-env`` as above. Exporting ``ATOMISTIC_RUNTIME=docker`` for the whole
+command puts this client inside the CPU image too, which cannot launch Docker
+servers. If a container runtime is already configured globally, prefix the
+client command with ``ATOMISTIC_RUNTIME=uv``.
+
 Exit status is non-zero if any server fails to start, lists no tools, or a
 call errors.
 
