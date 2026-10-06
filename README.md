@@ -11,7 +11,7 @@ The framework integrates state-of-the-art Machine Learning Interatomic Potential
 
 <div align="center">
 
-🌐 **[Documentation Website](https://learningmatter-mit.github.io/AtomisticSkills/)** &nbsp;|&nbsp; 📄 **[Preprint](https://arxiv.org/abs/2605.24002)**
+🌐 **[Documentation Website](https://learningmatter-mit.github.io/AtomisticSkills/)** &nbsp;|&nbsp; 📊 **[Benchmark Leaderboard](https://learningmatter-mit.github.io/AtomisticSkillsBenchmark/)** &nbsp;|&nbsp; 💻 **[Benchmark GitHub](https://github.com/learningmatter-mit/AtomisticSkillsBenchmark)** &nbsp;|&nbsp; 📄 **[Preprint](https://arxiv.org/abs/2605.24002)**
 
 </div>
 
@@ -187,6 +187,15 @@ This project is optimized for use with coding AI copilots like **[Antigravity](h
 - **Rules (`.agents/rules/`)**: Contains project-specific standards, scientific constraints, and modeling guidelines. Coding agents automatically parse these to ensure all simulations and code follow best practices.
 - **Skills (`skills/`)**: Modular, reusable capabilities, typically at the scale of a single research task (e.g., calculate material's stability). Each skill is self-documented with instructions, scripts, and resources.
 - **Workflows (`.agents/workflows/`)**: Defines high-level research procedures (e.g., workflow to design a new material). Coding agents can execute these step-by-step, managing transitions between simulation stages and environments.
+
+---
+
+## Benchmark & Leaderboard
+
+We evaluate coding AI agents across atomistic research tasks with **[AtomisticSkillsBenchmark](https://github.com/learningmatter-mit/AtomisticSkillsBenchmark)**, comprising 31 computational science tasks spanning chemistry, drug discovery, machine-learned interatomic potentials, and materials science.
+
+- 📊 **[Interactive Benchmark Leaderboard](https://learningmatter-mit.github.io/AtomisticSkillsBenchmark/)**: View model pass rates (with and without AtomisticSkills), per-model dashboards, and task catalogs.
+- 💻 **[Benchmark GitHub Repository](https://github.com/learningmatter-mit/AtomisticSkillsBenchmark)**: Complete task environments, reference solutions, and grading rubrics.
 
 ---
 
