@@ -7,7 +7,9 @@ repos:
       - id: check-yaml
       - id: check-added-large-files
         # uv.lock files are generated text and must be committed whole.
-        exclude: '(^|/)uv\.lock$'
+        # The 542 KiB compressed Wannier overlap fixture supports offline tests;
+        # its pinned upstream source and hashes are recorded in provenance.json.
+        exclude: '(^|/)uv\.lock$|^skills/mat-wannier-tight-binding/examples/silicon-sp3/silicon\.mmn\.xz$'
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.

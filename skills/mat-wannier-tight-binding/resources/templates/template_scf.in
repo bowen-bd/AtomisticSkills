@@ -1,0 +1,33 @@
+! Silicon starting template; converge cutoffs and meshes for the target observable.
+! Supply the named pseudopotential under ./pseudo before running.
+&control
+  calculation = 'scf'
+  prefix = 'si'
+  pseudo_dir = './pseudo'
+  outdir = './out'
+/
+&system
+  ibrav = 0
+  nat = 2
+  ntyp = 1
+  ecutwfc = 40.0
+  ecutrho = 320.0
+  nbnd = 12
+  occupations = 'fixed'
+/
+&electrons
+  conv_thr = 1.0d-10
+  diagonalization = 'david'
+  diago_full_acc = .true.
+/
+ATOMIC_SPECIES
+Si 28.0855 Si.pbe-n-kjpaw_psl.1.0.0.UPF
+CELL_PARAMETERS angstrom
+-2.715000 0.000000 2.715000
+ 0.000000 2.715000 2.715000
+-2.715000 2.715000 0.000000
+ATOMIC_POSITIONS crystal
+Si 0.000000 0.000000 0.000000
+Si 0.250000 0.250000 0.250000
+K_POINTS automatic
+6 6 6 0 0 0

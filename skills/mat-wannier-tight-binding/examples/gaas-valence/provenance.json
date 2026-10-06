@@ -1,0 +1,28 @@
+{
+  "upstream": "wannier-developers/wannier90",
+  "version": "v4.0.3",
+  "commit": "971c8b64bfe703c747a52655e1d59936597fe8ea",
+  "input_origin": "tutorials/tutorial01",
+  "unmodified_upstream_inputs": {
+    "gaas.amn": {
+      "upstream_path": "tutorials/tutorial01/gaas.amn",
+      "sha256": "e7e5132c9b7f4e8479838260ba2ddf470bc1e80d883d300c331e1bc8e6a04b3d"
+    },
+    "gaas.mmn": {
+      "upstream_path": "tutorials/tutorial01/gaas.mmn",
+      "sha256": "450e0264cb52db76599f94ed253fc2e43b2039d5c3a3b954beffa13a3b33a9cc"
+    }
+  },
+  "adaptations": [
+    "Explicit localization convergence window 3 and tolerance 1e-10",
+    "Increased iteration limit; original DFT matrices retained"
+  ],
+  "validation": {
+    "wannier90_version": "4.0.3",
+    "normal_termination": true,
+    "localization_status": "converged",
+    "disentanglement_status": "not_applicable",
+    "omega_total_angstrom2": 4.466881009,
+    "dft_executed": false
+  }
+}
