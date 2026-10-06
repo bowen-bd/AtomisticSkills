@@ -370,7 +370,7 @@ requires-dist = [
     { name = "pymatgen-analysis-diffusion" },
     { name = "pymol-open-source", marker = "platform_machine == 'x86_64' and extra == 'pymol'", specifier = "==3.2.0a0" },
     { name = "pymupdf" },
-    { name = "python-constraint", marker = "extra == 'openmm'" },
+    { name = "python-constraint", marker = "extra == 'openmm'", git = "https://github.com/python-constraint/python-constraint?tag=1.4.0" },
     { name = "python-pptx" },
     { name = "pyyaml" },
     { name = "rdkit" },
@@ -3063,8 +3063,7 @@ wheels = [
 [[package]]
 name = "python-constraint"
 version = "1.4.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/37/8b/5f1bc2734ca611943e1d6733ee244238679f6410a10cd45ede55a61a8402/python-constraint-1.4.0.tar.bz2", hash = "sha256:501d6f17afe0032dfc6ea6c0f8acc12e44f992733f00e8538961031ef27ccb8e", size = 18416, upload-time = "2018-11-05T09:02:44.334Z" }
+source = { git = "https://github.com/python-constraint/python-constraint?tag=1.4.0#f1359ff0ff6d9a541923d071cf1c0b50f8e8925b" }
 
 [[package]]
 name = "python-dateutil"

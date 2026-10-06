@@ -152,13 +152,17 @@ def main() -> int:
 
     items = collect(args.skill, args.venv)
     # Create each environment once up front, so parallel first uses do not race.
+    # A failure here is reported (each command then names only its last line).
     for venv in sorted({spec for _, spec, _ in items}):
-        subprocess.run(
+        proc = subprocess.run(
             [str(LAUNCHER), venv, "python", "-c", "pass"],
             check=False,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
         )
+        if proc.returncode != 0:
+            tail = (proc.stderr + proc.stdout).strip().splitlines()[-25:]
+            print(f"could not create {venv}:\n  " + "\n  ".join(tail))
 
     current_arch = platform.machine()
     print(f"checking {len(items)} script/environment pairs on {current_arch}")

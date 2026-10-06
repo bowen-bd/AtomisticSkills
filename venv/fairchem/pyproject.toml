@@ -179,6 +179,8 @@ openff-interchange = { git = "https://github.com/openforcefield/openff-interchan
 openforcefields = { git = "https://github.com/openforcefield/openff-forcefields", tag = "2026.09.0" }
 openff-units = { git = "https://github.com/openforcefield/openff-units", tag = "0.4.0" }
 openff-utilities = { git = "https://github.com/openforcefield/openff-utilities", tag = "v0.1.18" }
+# Its only release is a bzip2 sdist, which uv >= 0.12 does not extract.
+python-constraint = { git = "https://github.com/python-constraint/python-constraint", tag = "1.4.0" }
 # The Voronoi docking library used by chem-docking-void. Not on PyPI -- the
 # package published there under the name "void" is an unrelated utility.
 VOID = { git = "https://github.com/learningmatter-mit/VOID.git" }

@@ -20,10 +20,10 @@ Pinned to the versions they were verified with, rather than tracking the latest 
 
 | Environment | Used by | Platforms |
 | :--- | :--- | :--- |
-| `adit`, `diffcsp`, `mattergen` | the generative MCP servers and skills | x86_64 natively (CUDA 12.6 or 13 by driver); aarch64 through the `generative` image |
-| `msms` | `chem-msms-predict` (ICEBERG 2.1, CPU) | x86_64 only |
+| `adit`, `diffcsp`, `mattergen` | the generative MCP servers and skills | x86_64 natively with glibc ≥ 2.32 (CUDA 12.6 or 13 by driver); elsewhere the `generative` image |
+| `msms` | `chem-msms-predict` (ICEBERG 2.1, CPU) | x86_64 only, glibc ≥ 2.31 and GCC 9's libstdc++ |
 | `reactot` | `chem-react-ot` | x86_64 and aarch64 |
-| `scd` | `ml-property-predict-scd` | x86_64 only |
+| `scd` | `ml-property-predict-scd` | x86_64 only, glibc ≥ 2.32 |
 
 ### Why Three Shared Environments?
 1. **Package conflicts**: `mace-torch` pins `e3nn==0.4.4`, whereas `fairchem-core` requires `e3nn>=0.5`.
