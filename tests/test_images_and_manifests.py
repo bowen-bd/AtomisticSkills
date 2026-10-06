@@ -26,6 +26,7 @@ VERSION = (PROJECT_ROOT / "VERSION").read_text().strip()
 
 sys.path.insert(0, str(PROJECT_ROOT / "docker"))
 import render  # noqa: E402
+import publish as image_publish  # noqa: E402
 
 
 @pytest.mark.parametrize("what", ["servers", "plugin-mcp"])
@@ -184,3 +185,128 @@ def test_research_dir_is_created_under_the_workspace(tmp_path, monkeypatch):
     research_utils = importlib.import_module("src.utils.research_utils")
     created = research_utils.create_new_research_dir("unit_test_topic")
     assert tmp_path in created.parents and created.is_dir()
+
+
+class TestImagePublication:
+    """Release tags must never combine fresh builds with stale architectures."""
+
+    REGISTRY = "ghcr.io/learningmatter-mit"
+    RUN_ID = "123456"
+
+    @pytest.fixture
+    def registry(self, monkeypatch):
+        images, calls = {}, []
+
+        def docker(args, **kwargs):
+            assert args[:3] == ["docker", "buildx", "imagetools"]
+            calls.append(args)
+            if args[3] == "inspect":
+                if args[4] not in images:
+                    raise subprocess.CalledProcessError(1, args)
+                return subprocess.CompletedProcess(
+                    args, 0, stdout=json.dumps({"digest": images[args[4]]})
+                )
+            assert args[3] == "create"
+            return subprocess.CompletedProcess(args, 0)
+
+        monkeypatch.setattr(image_publish.subprocess, "run", docker)
+        return images, calls
+
+    def stage(self, images, name="cpu", run_id=RUN_ID):
+        base = f"{self.REGISTRY}/atomisticskills-{name}"
+        for arch, digest in (("amd64", "a" * 64), ("arm64", "b" * 64)):
+            images[f"{base}:build-{run_id}-{arch}"] = f"sha256:{digest}"
+        return base
+
+    def matrix(self, *names):
+        return {
+            "include": [
+                {"image": name, "platform": f"linux/{arch}"}
+                for name in names
+                for arch in ("amd64", "arm64")
+            ]
+        }
+
+    def test_selected_image_publishes_only_current_digests(self, registry):
+        images, calls = registry
+        base = self.stage(images)
+        self.stage(images, "mlip")
+        image_publish.publish(self.matrix("cpu"), self.REGISTRY, self.RUN_ID, VERSION)
+        assert [c[3] for c in calls] == [
+            "inspect",
+            "inspect",
+            "create",
+            "create",
+            "create",
+        ]
+        creates = [c for c in calls if c[3] == "create"]
+        assert creates[0][-2:] == [f"{base}@sha256:{c * 64}" for c in ("a", "b")]
+        assert f"{base}:{VERSION}" in creates[0]
+        assert f"{base}:latest" in creates[0]
+        assert all("atomisticskills-mlip" not in arg for c in calls for arg in c)
+        assert all(":build-" not in arg for c in creates for arg in c)
+
+    @pytest.mark.parametrize("stale", ["release", "previous-run"])
+    def test_missing_current_architecture_never_uses_old_images(self, registry, stale):
+        images, calls = registry
+        base = self.stage(images)
+        del images[f"{base}:build-{self.RUN_ID}-arm64"]
+        if stale == "release":
+            for tag in (f"{VERSION}-arm64", "latest-arm64"):
+                images[f"{base}:{tag}"] = "sha256:" + "c" * 64
+        else:
+            self.stage(images, run_id="123455")
+        with pytest.raises(subprocess.CalledProcessError):
+            image_publish.publish(
+                self.matrix("cpu"), self.REGISTRY, self.RUN_ID, VERSION
+            )
+        assert all(c[3] == "inspect" for c in calls)
+
+    def test_resolves_all_selected_images_before_advancing_any_tags(self, registry):
+        images, calls = registry
+        self.stage(images)
+        with pytest.raises(subprocess.CalledProcessError):
+            image_publish.publish(
+                self.matrix("cpu", "mlip"), self.REGISTRY, self.RUN_ID, VERSION
+            )
+        assert all(c[3] == "inspect" for c in calls)
+
+    @pytest.mark.parametrize(
+        "matrix",
+        [
+            {"include": []},
+            {"include": [{"image": "cpu", "platform": "linux/amd64"}]},
+            {"include": [{"image": "unknown", "platform": "linux/amd64"}]},
+        ],
+    )
+    def test_invalid_selection_does_not_touch_registry(self, registry, matrix):
+        _, calls = registry
+        with pytest.raises(ValueError):
+            image_publish.publish(matrix, self.REGISTRY, self.RUN_ID, VERSION)
+        assert not calls
+
+    def test_invalid_digest_is_not_published(self, registry):
+        images, calls = registry
+        base = self.stage(images)
+        images[f"{base}:build-{self.RUN_ID}-arm64"] = ""
+        with pytest.raises(ValueError, match="Invalid digest"):
+            image_publish.publish(
+                self.matrix("cpu"), self.REGISTRY, self.RUN_ID, VERSION
+            )
+        assert all(c[3] == "inspect" for c in calls)
+
+    def test_publish_failure_fails_the_job(self, registry, monkeypatch):
+        images, calls = registry
+        self.stage(images)
+        inspect = image_publish.subprocess.run
+
+        def fail_create(args, **kwargs):
+            if args[3] == "create":
+                raise subprocess.CalledProcessError(1, args)
+            return inspect(args, **kwargs)
+
+        monkeypatch.setattr(image_publish.subprocess, "run", fail_create)
+        with pytest.raises(subprocess.CalledProcessError):
+            image_publish.publish(
+                self.matrix("cpu"), self.REGISTRY, self.RUN_ID, VERSION
+            )

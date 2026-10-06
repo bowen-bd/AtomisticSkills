@@ -1,9 +1,12 @@
 name: uv environments
 
 on:
+  # Branches are tested through pull_request; avoid duplicate push + PR runs.
   # docs/ holds no code, commands or SKILL.md files; everything else can
   # change what installs or runs.
   push:
+    branches: ["main"]
+    tags: ["v*"]
     paths-ignore: ["docs/**"]
   pull_request:
     paths-ignore: ["docs/**"]

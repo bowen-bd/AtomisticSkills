@@ -20,10 +20,13 @@ Requirements:
 
 from __future__ import annotations
 
+import fcntl
 import os
 import re
 import shutil
 import subprocess
+import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
@@ -402,6 +405,95 @@ class TestUvBackend:
         assert host.run("cpu+pymol", "python", "x.py").returncode == 0
         sync = host.calls(uv)[0]
         assert flag_value(sync, "--extra") == ["openmm", "pymol"]
+
+    def test_concurrent_syncs_preserve_both_extras(self, host):
+        """Model uv's exact sync, including its internal serialization."""
+        host.mark_synced("cpu")
+        gate = host.tmp / "release-sync"
+        attempts = host.logs / "sync-lock-attempts"
+        real_flock = shutil.which("flock")
+        host.stub(
+            "flock",
+            f'[[ "$1" != -w ]] || echo waiting >> "{attempts}"\n'
+            f'exec "{real_flock}" "$@"\n',
+        )
+        uv = host.recorder(
+            "uv",
+            extra=(
+                'if [[ "$1" == sync ]]; then\n'
+                "  extras=()\n"
+                "  while [[ $# -gt 0 ]]; do\n"
+                '    case "$1" in\n'
+                '      --project) p="$2"; shift;;\n'
+                '      --extra) extras+=("$2"); shift;;\n'
+                "    esac\n"
+                "    shift\n"
+                "  done\n"
+                '  exec 8>"$p/uv-internal.lock"\n'
+                "  flock 8\n"
+                f'  while [[ ! -f "{gate}" ]]; do sleep 0.01; done\n'
+                '  printf "%s\\n" "${extras[@]}" > "$p/installed-extras"\n'
+                "fi\n"
+            ),
+        )
+
+        def wait_for(predicate):
+            deadline = time.monotonic() + 10
+            while not predicate():
+                assert time.monotonic() < deadline, "launcher did not reach sync"
+                time.sleep(0.01)
+
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            first = pool.submit(host.run, "cpu+openmm", "python", "probe.py")
+            try:
+                wait_for(lambda: len(host.calls(uv)) == 1)
+                second = pool.submit(host.run, "cpu+void", "python", "probe.py")
+                # On the fixed launcher, the second caller is waiting for the
+                # outer lock. On the old launcher it already passed stale extras
+                # to uv and is waiting for uv's internal lock. Release only once
+                # that overlap has happened, without relying on sleep timing.
+                wait_for(
+                    lambda: (
+                        attempts.exists()
+                        and len(attempts.read_text().splitlines()) == 2
+                    )
+                    or len(host.calls(uv)) == 2
+                )
+            finally:
+                gate.touch()
+            for future in (first, second):
+                result = future.result(timeout=15)
+                assert result.returncode == 0, result.stderr
+
+        project = host.repo / "venv" / "cpu"
+        assert (project / "installed-extras").read_text().splitlines() == [
+            "openmm",
+            "void",
+        ]
+        marker = project / ".venv" / ".atomisticskills-synced"
+        assert marker.read_text().splitlines()[1:] == ["openmm", "void"]
+
+    def test_sync_lock_timeout_does_not_mutate_environment(self, host):
+        uv = host.stub_uv()
+        project = host.repo / "venv" / "cpu"
+        with (project / ".atomisticskills-sync.lock").open("w") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            result = host.run("--setup", "cpu", UV_LOCK_TIMEOUT="0.05")
+            assert result.returncode != 0
+            assert "timed out waiting to sync cpu" in result.stderr
+            assert not host.calls(uv)
+        assert host.run("--setup", "cpu", UV_LOCK_TIMEOUT="0.05").returncode == 0
+
+    def test_failed_sync_releases_lock_without_recording_success(self, host):
+        host.recorder("uv", exit_code=42)
+        result = host.run("cpu+openmm", "python", "probe.py")
+        assert result.returncode != 0
+        marker = host.repo / "venv" / "cpu" / ".venv" / ".atomisticskills-synced"
+        assert not marker.exists()
+        host.stub_uv()
+        result = host.run("cpu+void", "python", "probe.py", UV_LOCK_TIMEOUT="0.05")
+        assert result.returncode == 0, result.stderr
+        assert marker.read_text().splitlines()[1:] == ["void"]
 
     def test_no_compiler_means_a_container_for_a_new_environment(self, host):
         host.stub_uv()

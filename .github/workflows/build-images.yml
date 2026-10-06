@@ -5,9 +5,8 @@ name: Build MCP server images
 # their venv/<venv>/uv.lock, the locks a host install uses.
 #
 # The matrix comes from docker/images.json via docker/render.py, so adding a
-# server means editing that one file. The generative image is arm64-only: on
-# x86_64 its stacks install natively, and on arm64 it compiles their PyG
-# extensions with CUDA (sm_121 by default).
+# server means editing that one file. The generative image supports both
+# architectures; on arm64 it compiles PyG extensions with CUDA (sm_121).
 
 on:
   push:
@@ -97,9 +96,10 @@ jobs:
 
       - name: Render build matrix
         id: matrix
+        env:
+          FILTER: ${{ inputs.images }}
         run: |
           MATRIX="$(python docker/render.py matrix)"
-          FILTER="${{ github.event.inputs.images }}"
           if [ -n "$FILTER" ]; then
             MATRIX="$(FILTER="$FILTER" python - <<'PY'
           import json, os, subprocess
@@ -107,6 +107,9 @@ jobs:
               ["python", "docker/render.py", "matrix"],
               capture_output=True, text=True, check=True).stdout)
           wanted = set(os.environ["FILTER"].split())
+          unknown = wanted - {e["image"] for e in m["include"]}
+          if unknown:
+              raise SystemExit(f"Unknown images: {', '.join(sorted(unknown))}")
           m["include"] = [e for e in m["include"] if e["image"] in wanted]
           print(json.dumps(m))
           PY
@@ -156,29 +159,24 @@ jobs:
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
 
-      # Per-platform tags on multi-arch images; the manifest job stitches them
-      # into a single reference afterwards.
-      - name: Compute tags
+      # Build-specific tags never advance VERSION or latest. Only the manifest
+      # job promotes these images after every selected build and smoke test passes.
+      - name: Compute staging tag
         id: tags
         run: |
           BASE="${{ env.REGISTRY }}/${{ github.repository_owner }}/atomisticskills-${{ matrix.image }}"
           BASE="$(echo "$BASE" | tr '[:upper:]' '[:lower:]')"
-          VERSION="$(cat VERSION)"
-          if [ "${{ matrix.multiarch }}" = "true" ]; then
-            SUFFIX="-${{ matrix.arch }}"
-          else
-            SUFFIX=""
-          fi
           echo "base=$BASE" >> "$GITHUB_OUTPUT"
-          echo "tags=${BASE}:${VERSION}${SUFFIX},${BASE}:latest${SUFFIX}" >> "$GITHUB_OUTPUT"
+          echo "staging=${BASE}:build-${GITHUB_RUN_ID}-${{ matrix.arch }}" >> "$GITHUB_OUTPUT"
 
       - uses: docker/build-push-action@v6
+        id: build
         with:
           context: .
           file: ${{ matrix.dockerfile }}
           platforms: ${{ matrix.platform }}
           build-args: ${{ steps.args.outputs.value }}
-          tags: ${{ steps.tags.outputs.tags }}
+          tags: ${{ steps.tags.outputs.staging }}
           push: ${{ github.event_name != 'pull_request' }}
           cache-from: type=gha,scope=${{ matrix.image }}-${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image }}-${{ matrix.arch }}
@@ -193,7 +191,7 @@ jobs:
       - name: Smoke test the entrypoint
         if: github.event_name != 'pull_request' && matrix.image == 'cpu'
         run: |
-          IMAGE="${{ steps.tags.outputs.base }}:$(cat VERSION)${{ matrix.multiarch == true && format('-{0}', matrix.arch) || '' }}"
+          IMAGE="${{ steps.tags.outputs.base }}@${{ steps.build.outputs.digest }}"
           SERVERS="$(python -c "
           import json
           spec = json.load(open('docker/images.json'))
@@ -208,17 +206,18 @@ jobs:
           fi
 
   manifest:
-    needs: build
-    # Runs even when some builds failed. The images are independent, and a
-    # multi-arch image whose variants all succeeded should still get its
-    # manifest list -- otherwise one failing GPU build leaves the working
-    # cpu image reachable only by its per-arch tags.
-    if: always() && github.event_name != 'pull_request'
+    needs: [preflight, build]
+    # A failed or cancelled build (including its smoke tests) leaves all release
+    # tags untouched. Never fill a missing architecture from an older run.
+    if: github.event_name != 'pull_request' && needs.build.result == 'success'
     runs-on: ubuntu-24.04
     permissions:
+      contents: read
       packages: write
     steps:
       - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
 
       - uses: docker/login-action@v3
         with:
@@ -226,36 +225,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Stitch multi-arch manifest lists
+      - name: Publish validated images by digest
+        env:
+          BUILD_MATRIX: ${{ needs.preflight.outputs.matrix }}
+          IMAGE_REGISTRY: ${{ env.REGISTRY }}/${{ github.repository_owner }}
         run: |
-          VERSION="$(cat VERSION)"
-          OWNER="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
-          python - "$VERSION" "$OWNER" <<'PY' > /tmp/cmds.sh
-          import json, pathlib, sys
-          version, owner = sys.argv[1], sys.argv[2]
-          spec = json.loads(pathlib.Path("docker/images.json").read_text())
-          for image in spec["images"]:
-              if len(image["platforms"]) < 2:
-                  continue
-              base = f"ghcr.io/{owner}/atomisticskills-{image['name']}"
-              arches = [p.split("/")[1] for p in image["platforms"]]
-              for tag in (version, "latest"):
-                  srcs = " ".join(f"{base}:{tag}-{a}" for a in arches)
-                  print(f"{base}:{tag}|{srcs}")
-          PY
-          # Skip any image whose per-arch tags are not all present, so a partial
-          # run stitches what it can instead of failing the job outright.
-          status=0
-          while IFS='|' read -r target srcs; do
-            missing=""
-            for s in $srcs; do
-              docker buildx imagetools inspect "$s" >/dev/null 2>&1 || missing="$missing $s"
-            done
-            if [ -n "$missing" ]; then
-              echo "skipping $target -- missing:$missing"
-              continue
-            fi
-            echo "creating $target from $srcs"
-            docker buildx imagetools create -t "$target" $srcs || status=1
-          done < /tmp/cmds.sh
-          exit $status
+          python docker/publish.py --matrix "$BUILD_MATRIX" \
+            --registry "$IMAGE_REGISTRY" --run-id "$GITHUB_RUN_ID"

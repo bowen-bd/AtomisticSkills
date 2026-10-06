@@ -83,6 +83,17 @@ python docker/render.py servers --check
 python docker/render.py plugin-mcp --check
 ```
 
+## CI Publication
+
+Build jobs push staging tags named `build-<run-id>-<arch>`. The publication job
+runs only after every selected architecture builds successfully and the CPU
+smoke tests pass. `docker/publish.py` checks that each selected image has all its
+platforms, resolves this run's staging tags to digests, and only then updates
+`VERSION`, `latest` and their architecture tags. A missing staging image stops
+publication; older release tags are never used as substitute inputs. Manual
+image filters apply to publication as well as builds. Retrying failed jobs can
+reuse successful builds from the same workflow run.
+
 ## Running Servers and Commands Through Containers
 
 The unified launcher `venv/run` mounts the repository, the workspace and the current directory at their own paths inside the container, runs as the calling user, and passes the GPU through:

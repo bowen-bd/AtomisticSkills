@@ -47,6 +47,7 @@ wheels/
 # venv/ holds the uv projects (pyproject.toml + uv.lock), which ARE tracked;
 # only the environments uv materialises inside them are ignored.
 venv/*/.venv/
+venv/*/.atomisticskills-sync.lock
 .venv/
 env/
 .env

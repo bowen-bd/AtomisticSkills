@@ -124,3 +124,15 @@ package has no wheel for this architecture (SCINE on aarch64).
 
 `.github/workflows/uv-envs.yml` runs the launcher, skill, uv-project, image and
 tool-CLI suites, and each environment's MCP smoke test, on x86_64 and arm64.
+
+Environment CI runs on pull requests, pushes to `main`, version tags, and manual
+requests. Branch pushes do not duplicate the pull request jobs. Changes only
+under `docs/` are excluded, but GitHub evaluates PR path filters against the
+whole PR diff, so a docs-only follow-up on a code PR can still rerun CI.
+
+Container builds run when the image workflow's path filters match (container
+files, dependency definitions, and the image workflow itself; MCP server changes
+also trigger publication on `main`). CUDA image builds can take much longer
+than the environment checks, especially when native extensions need compiling
+or large cache layers need uploading. These builds remain required for changes
+that affect the container setup.

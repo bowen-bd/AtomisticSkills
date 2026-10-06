@@ -64,6 +64,7 @@ build/
 dist/
 .venv/
 **/.venv/
+venv/*/.atomisticskills-sync.lock
 
 # --- model weights and trajectories that must not be baked into layers
 *.model

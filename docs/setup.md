@@ -22,6 +22,7 @@ the same paths, so nothing else changes. Environments are created on first use;
 What a native (uv) install needs:
 
 - Linux on x86_64 or aarch64, glibc 2.28 or newer (aarch64 GPU stacks: 2.34)
+- `flock` (from `util-linux`), to serialize environment setup
 - [uv](https://docs.astral.sh/uv/) and a C compiler (`gcc`), for the few packages
   that build from source. Python itself comes from uv (a managed CPython with its
   headers), so no system Python or `python3-devel` package is needed

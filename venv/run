@@ -305,9 +305,17 @@ record_sync() {  # record_sync VENV EXTRAS... -- after a successful sync
 # exact, because the lock is the contract: a package dropped from the lock
 # leaves the environment too. Extras installed earlier are carried over, so
 # asking for one extra never uninstalls another.
-uv_sync() {
+uv_sync() (
     local venv="$1"; shift
-    local marker extras=("$@") previous=() args
+    local marker extras=("$@") previous=() args sync_fd
+    # uv locks its own mutation, but the remembered extras must be read under
+    # the same lock as the sync and marker update. Otherwise concurrent callers
+    # each pass a stale extra list and the second sync removes the first extra.
+    # Keep the lock outside .venv, which uv may recreate; the subshell releases
+    # it on success or failure, before the requested command is executed.
+    command -v flock >/dev/null 2>&1 || die "syncing $venv needs flock (util-linux)"
+    exec {sync_fd}>"${VENV_DIR}/${venv}/.atomisticskills-sync.lock"
+    flock -w "${UV_LOCK_TIMEOUT:-3600}" "$sync_fd" || die "timed out waiting to sync $venv"
     marker="$(sync_marker "$venv")"
     [[ -f "$marker" ]] && mapfile -t previous < <(tail -n +2 "$marker")
     # cu126 and cu130 exclude each other: asking for one drops the other.
@@ -325,7 +333,7 @@ uv_sync() {
     UV_PYTHON_PREFERENCE="${UV_PYTHON_PREFERENCE:-only-managed}" UV_LOCK_TIMEOUT="${UV_LOCK_TIMEOUT:-3600}" \
         uv sync "${args[@]}" >&2
     record_sync "$venv" ${extras[@]+"${extras[@]}"}
-}
+)
 
 # A first sync downloads several GB, far longer than an MCP client waits for a
 # server to start. Run it detached, so it survives this process being killed on
