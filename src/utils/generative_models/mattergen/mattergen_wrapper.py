@@ -1,33 +1,58 @@
 """
 MatterGen wrapper for material generation.
+
+MatterGen's distributions omit its data files (the sampling configs, the GemNet
+scale factors, the training configs), so it runs from a source checkout, which
+is how upstream installs it (editable). Its dependencies come from the
+``mattergen`` environment.
+
+Requirements:
+    - Environment: mattergen (venv/run mattergen ...; aarch64 uses the generative image)
+    - MatterGen checkout next to this project as ``mattergen``, or at $MATTERGEN_REPO
 """
 
 import logging
 import os
+import sys
 from typing import Dict, Any, Optional
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-# Check if MatterGen is available
-MATTERGEN_AVAILABLE = False
+# MatterGen checkout: $MATTERGEN_REPO, else a `mattergen` checkout next to this project
+MATTERGEN_REPO = Path(
+    os.environ.get(
+        "MATTERGEN_REPO", Path(__file__).resolve().parents[4].parent / "mattergen"
+    )
+).expanduser()
 
-try:
-    import mattergen  # noqa: F401
-    from mattergen.generator import CrystalGenerator
 
-    MATTERGEN_AVAILABLE = True
-except ImportError as e:
-    current_env = os.environ.get("CONDA_DEFAULT_ENV", "unknown")
-    if not current_env.startswith("mattergen"):
-        raise ImportError(
-            f"MatterGen is not available in the current conda environment '{current_env}'. "
-            f"MatterGen requires the 'mattergen-agent' conda environment. "
-            f"Please run this code in the matter gen-agent environment:\n"
-            f"  conda activate mattergen-agent\n"
-            f"Original error: {e}"
-        ) from e
-    raise
+def use_mattergen_checkout() -> Path:
+    """Import MatterGen from its checkout rather than the installed distribution.
+
+    Returns:
+        The checkout's path.
+
+    Raises:
+        FileNotFoundError: If MATTERGEN_REPO is not a MatterGen checkout.
+        RuntimeError: If MatterGen was already imported from elsewhere.
+    """
+    if not (MATTERGEN_REPO / "sampling_conf").is_dir():
+        raise FileNotFoundError(
+            f"MatterGen checkout not found at {MATTERGEN_REPO}. Fetch it with "
+            "skills/ml-generative-mattergen/scripts/setup_mattergen.py (it pins "
+            "and patches the source), or set MATTERGEN_REPO to such a checkout."
+        )
+    loaded = sys.modules.get("mattergen")
+    if loaded is not None and not Path(loaded.__file__).resolve().is_relative_to(
+        MATTERGEN_REPO.resolve()
+    ):
+        raise RuntimeError(
+            f"mattergen was already imported from {loaded.__file__}, not {MATTERGEN_REPO}"
+        )
+    if str(MATTERGEN_REPO) not in sys.path:
+        sys.path.insert(0, str(MATTERGEN_REPO))
+    return MATTERGEN_REPO
 
 
 # Available pretrained models
@@ -61,7 +86,10 @@ class MatterGenWrapper:
             guidance_scale: Diffusion guidance factor (gamma)
         """
         import torch
+
+        use_mattergen_checkout()
         from mattergen.common.utils.data_classes import MatterGenCheckpointInfo
+        from mattergen.generator import CrystalGenerator
 
         self.model_name = model_name
         self.device = device

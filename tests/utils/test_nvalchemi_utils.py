@@ -5,7 +5,7 @@ result extraction.  These tests mock nvalchemi data types so they can run
 in any environment without nvalchemi installed.
 
 Run with:
-    conda run -n mace-agent pytest tests/utils/test_nvalchemi_utils.py -v
+    venv/run mlip python -m pytest tests/utils/test_nvalchemi_utils.py -v
 """
 
 from __future__ import annotations

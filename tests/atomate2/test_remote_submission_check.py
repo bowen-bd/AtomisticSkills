@@ -21,34 +21,35 @@ class TestRemoteSubmissionCheck(unittest.TestCase):
         if os.path.exists(self.output_dir):
             shutil.rmtree(self.output_dir)
 
-    def test_check_sshproxy_not_perlmutter(self):
-        """Test that check passes if worker is not perlmutter."""
-        is_ok, msg = self.handler._check_sshproxy("other_worker")
+    def test_check_sshproxy_standard_worker(self):
+        """Test that check passes if worker does not require special sshproxy."""
+        is_ok, msg = self.handler._check_sshproxy("standard_worker")
         self.assertTrue(is_ok)
         self.assertEqual(msg, "")
 
     @patch("src.utils.dft.atomate2_utils.Path.exists")
     def test_check_sshproxy_missing_key(self, mock_exists):
-        """Test failure when key is missing for perlmutter worker."""
-
-        # Mock .ssh/nersc does not exist
-        # We need to make sure we only affect the nersc key check
-        def side_effect(self):
-            return False
+        """Test failure when key is missing for configured remote worker."""
+        worker = os.environ.get("ATOMATE2_WORKER")
+        if not worker:
+            self.skipTest("ATOMATE2_WORKER not set; skipping remote worker key check")
 
         mock_exists.return_value = False
 
-        is_ok, msg = self.handler._check_sshproxy("perlmutter_worker")
+        is_ok, msg = self.handler._check_sshproxy(worker)
         self.assertFalse(is_ok)
-        self.assertIn("NERSC SSH key not found", msg)
+        self.assertIn("SSH key not found", msg)
 
     @patch("src.utils.dft.atomate2_utils.Path.exists")
     def test_check_sshproxy_success(self, mock_exists):
-        """Test success when key exists."""
-        # Force exists to return True
+        """Test success when key exists for configured remote worker."""
+        worker = os.environ.get("ATOMATE2_WORKER")
+        if not worker:
+            self.skipTest("ATOMATE2_WORKER not set; skipping remote worker key check")
+
         mock_exists.return_value = True
 
-        is_ok, msg = self.handler._check_sshproxy("perlmutter_worker")
+        is_ok, msg = self.handler._check_sshproxy(worker)
         self.assertTrue(is_ok)
         self.assertEqual(msg, "SSHProxy appears configured.")
 

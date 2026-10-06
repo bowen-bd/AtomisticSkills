@@ -24,11 +24,23 @@ MATGL_AVAILABLE = False
 
 try:
     import matgl
+    import numpy as np
+    from matgl.data.transformer import Normalizer
     from matgl.ext.ase import PESCalculator, Atoms2Graph
     from matgl.layers import AtomRef
 
-    if hasattr(torch.serialization, "add_safe_globals"):
-        torch.serialization.add_safe_globals([AtomRef])
+    # torch >= 2.6 loads checkpoints weights-only. MatGL's pretrained models
+    # also pickle these (the QET and TensorNet "-m" models numpy arrays, the
+    # Eform models a Normalizer), named as numpy 1 wrote them.
+    torch.serialization.add_safe_globals(
+        [
+            AtomRef,
+            Normalizer,
+            np.ndarray,
+            np.dtype,
+            (np._core.multiarray._reconstruct, "numpy.core.multiarray._reconstruct"),
+        ]
+    )
 
     MATGL_AVAILABLE = True
 except ImportError as e:
@@ -48,12 +60,15 @@ AVAILABLE_MATGL_MODELS = {
     "M3GNet-MatPES-r2SCAN-v2025.1-PES": "M3GNet-PES-MatPES-r2SCAN-2025.2",
     "M3GNet-PES-MatPES-r2SCAN-2025.2": "M3GNet-PES-MatPES-r2SCAN-2025.2",
     "M3GNet-PES-ANI-1x-Subset": "M3GNet-PES-ANI-1x-Subset",
-    # CHGNet PES models
-    "CHGNet": "CHGNet-PES-MatPES-PBE-2025.2.10",
-    "CHGNet-MatPES-PBE": "CHGNet-PES-MatPES-PBE-2025.2.10",
+    # CHGNet PES models. The 1M-2026.9 checkpoints (matgl 4.1) are the default
+    # CHGNet; versioned 2025 names still load exactly the weights they name.
+    "CHGNet": "CHGNet-PES-MatPES-PBE-1M-2026.9",
+    "CHGNet-MatPES-PBE": "CHGNet-PES-MatPES-PBE-1M-2026.9",
+    "CHGNet-PES-MatPES-PBE-1M-2026.9": "CHGNet-PES-MatPES-PBE-1M-2026.9",
     "CHGNet-MatPES-PBE-2025.2.10-2.7M-PES": "CHGNet-PES-MatPES-PBE-2025.2.10",
     "CHGNet-PES-MatPES-PBE-2025.2.10": "CHGNet-PES-MatPES-PBE-2025.2.10",
-    "CHGNet-MatPES-r2SCAN": "CHGNet-PES-MatPES-r2SCAN-2025.2.10",
+    "CHGNet-MatPES-r2SCAN": "CHGNet-PES-MatPES-r2SCAN-1M-2026.9",
+    "CHGNet-PES-MatPES-r2SCAN-1M-2026.9": "CHGNet-PES-MatPES-r2SCAN-1M-2026.9",
     "CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES": "CHGNet-PES-MatPES-r2SCAN-2025.2.10",
     "CHGNet-PES-MatPES-r2SCAN-2025.2.10": "CHGNet-PES-MatPES-r2SCAN-2025.2.10",
     # TensorNet PES models
@@ -129,7 +144,9 @@ class MatGLWrapper(MLIPModel):
             potential=self.model, device=self.device, stress_unit="eV/A3"
         )
 
-    def static_calculation(self, structure_data: Any) -> Dict[str, Any]:
+    def static_calculation(
+        self, structure_data: Any, use_nvalchemi: bool = False
+    ) -> Dict[str, Any]:
         """Run a static single-point calculation.
 
         For MEGNet-BandGap models the DFT functional is selected via ``task_name``
@@ -145,7 +162,9 @@ class MatGLWrapper(MLIPModel):
             isinstance(structure_data, str) and os.path.isdir(structure_data)
         )
         if is_batch and "Potential" in type(self.model).__name__:
-            return super().static_calculation(structure_data)
+            return super().static_calculation(
+                structure_data, use_nvalchemi=use_nvalchemi
+            )
 
         atoms = self.check_structure_data(structure_data)
         if isinstance(atoms, dict) and "error" in atoms:
@@ -165,10 +184,8 @@ class MatGLWrapper(MLIPModel):
             state_attr = None
             if "BandGap" in self.model_name:
                 functional = self.BANDGAP_FUNCTIONALS.get(self.task_name or "PBE", 0)
-                state_attr = torch.tensor(
-                    [functional], dtype=torch.float32, device=self.device
-                )
-            prediction = self.model.predict_structure(structure, state_attr=state_attr)
+                state_attr = torch.tensor([functional], dtype=torch.float32)
+            prediction = self._predict_structure(structure, state_attr)
             val = float(
                 prediction.item() if hasattr(prediction, "item") else prediction
             )
@@ -185,6 +202,32 @@ class MatGLWrapper(MLIPModel):
 
             logger.error(f"Property prediction failed: {e}\n{traceback.format_exc()}")
             return {"error": f"Property prediction failed: {str(e)}"}
+
+    def _predict_structure(self, structure, state_attr: Optional[torch.Tensor]):
+        """A property model's prediction, as ``model.predict_structure`` makes it.
+
+        MatGL builds the graph where its neighbor-list backend runs (the default
+        CUDA device whenever one is visible) and the default state on the CPU,
+        then calls the model wherever it is: with the model on the CPU or on
+        another GPU that fails ("Expected all tensors to be on the same device").
+        Here graph, lattice and state go to the model's device.
+        """
+        from matgl.ext.pymatgen import Structure2Graph
+
+        device = next(self.model.parameters()).device
+        # The Eform models wrap the network in a TransformedTargetModel, whose
+        # forward un-normalizes the output; the graph settings are the network's.
+        network = getattr(self.model, "model", self.model)
+        converter = Structure2Graph(
+            element_types=network.element_types, cutoff=network.cutoff
+        )
+        g, lat, state_default = converter.get_graph(structure)
+        g, lat = g.to(device), lat.to(device)
+        g.pbc_offshift = torch.matmul(g.pbc_offset, lat[0])
+        g.pos = g.frac_coords @ lat[0]
+        if state_attr is None:
+            state_attr = torch.tensor(state_default, dtype=matgl.float_th)
+        return self.model(g=g, state_attr=state_attr.to(device)).detach()
 
     def predict_atomic_features(self, structure_data: Any) -> Dict[str, Any]:
         """Predict per-atom latent features for a structure."""

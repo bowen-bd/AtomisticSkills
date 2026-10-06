@@ -1,0 +1,57 @@
+[project]
+name = "atomisticskills-venv-msms"
+version = "0.1.0"
+description = "ICEBERG LC-MS/MS spectrum prediction (chem-msms-predict)"
+requires-python = "==3.12.*"
+dependencies = [
+  # The repository itself, so `src` is importable from any directory.
+  "atomisticskills",
+  # ICEBERG 2.1. ms-pred is not on PyPI; it is pinned to a commit below.
+  "ms-pred",
+  # The torch stack of ms-pred's `cpu` extra. Its uv sources do not carry over
+  # to a project that depends on it, so they are repeated below.
+  "torch==2.6.0",
+  "torchvision==0.21.0",
+  "dgl",
+  "torch-scatter",
+  "torch-sparse",
+  "torch-geometric",
+  # Used by the skill's scripts.
+  "matplotlib",
+  "pyyaml",
+]
+
+[tool.uv]
+package = false
+# x86_64 only: DGL publishes no aarch64 wheels. CPU only, as ms-pred's `cpu`
+# extra: DGL's CUDA builds for torch 2.6 stop at CUDA 12.4, which has no
+# kernels for current GPUs.
+environments = ["sys_platform == 'linux' and platform_machine == 'x86_64'"]
+required-environments = ["sys_platform == 'linux' and platform_machine == 'x86_64'"]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+# DGL's and PyG's builds for torch 2.6 (CPU).
+name = "dgl-cpu"
+url = "https://data.dgl.ai/wheels/torch-2.6/repo.html"
+format = "flat"
+explicit = true
+
+[[tool.uv.index]]
+name = "pyg-cpu"
+url = "https://data.pyg.org/whl/torch-2.6.0+cpu.html"
+format = "flat"
+explicit = true
+
+[tool.uv.sources]
+atomisticskills = { path = "../..", editable = true }
+ms-pred = { git = "https://github.com/coleygroup/ms-pred", rev = "708148c2a8eb0c32120644436fefd2fe90cd2214" }
+torch = { index = "pytorch-cpu" }
+torchvision = { index = "pytorch-cpu" }
+dgl = { index = "dgl-cpu" }
+torch-scatter = { index = "pyg-cpu" }
+torch-sparse = { index = "pyg-cpu" }

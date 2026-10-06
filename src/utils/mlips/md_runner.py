@@ -20,37 +20,38 @@ from matcalc._base import PropCalc
 from matcalc._relaxation import RelaxCalc
 from matcalc.utils import to_ase_atoms, to_pmg_structure
 
-try:
-    from matgl.ext.ase import TrajectoryObserver as _BaseTrajectoryObserver
-except (ImportError, ModuleNotFoundError):
 
-    class _BaseTrajectoryObserver:  # type: ignore[no-redef]
-        """Fallback TrajectoryObserver for environments without matgl.ext."""
+class _BaseTrajectoryObserver:
+    """Record energies, forces, stresses, positions and cells along a trajectory.
 
-        def __init__(self, atoms: Atoms) -> None:
-            self.atoms = atoms
-            self.energies: list[float] = []
-            self.forces: list = []
-            self.stresses: list = []
-            self.atom_positions: list = []
-            self.cells: list = []
+    Defined here rather than borrowed from ``matgl.ext.ase``: matgl's observer
+    assumes a MatGL calculator (it reads ``calc.compute_stress``), and this one
+    serves every backend -- MACE, MatGL and FairChem alike.
+    """
 
-        def __call__(self) -> None:
-            self.energies.append(float(self.atoms.get_potential_energy()))
-            self.forces.append(self.atoms.get_forces().tolist())
-            try:
-                self.stresses.append(self.atoms.get_stress().tolist())
-            except Exception:
-                self.stresses.append([])
-            self.atom_positions.append(self.atoms.get_positions().tolist())
-            self.cells.append(np.array(self.atoms.get_cell()).tolist())
+    def __init__(self, atoms: Atoms) -> None:
+        self.atoms = atoms
+        self.energies: list[float] = []
+        self.forces: list = []
+        self.stresses: list = []
+        self.atom_positions: list = []
+        self.cells: list = []
 
-        def __len__(self) -> int:
-            return len(self.energies)
+    def __call__(self) -> None:
+        self.energies.append(float(self.atoms.get_potential_energy()))
+        self.forces.append(self.atoms.get_forces())
+        calc = self.atoms.calc
+        if calc is not None and "stress" in getattr(calc, "implemented_properties", ()):
+            self.stresses.append(self.atoms.get_stress())
+        self.atom_positions.append(self.atoms.get_positions())
+        self.cells.append(np.array(self.atoms.get_cell()))
+
+    def __len__(self) -> int:
+        return len(self.energies)
 
 
 class TrajectoryObserver(_BaseTrajectoryObserver):
-    """Extends matgl TrajectoryObserver to also record kinetic energies."""
+    """Trajectory observer that also records kinetic energies."""
 
     def __init__(self, atoms):
         super().__init__(atoms)

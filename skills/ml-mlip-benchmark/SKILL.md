@@ -1,0 +1,130 @@
+---
+name: ml-mlip-benchmark
+description: Benchmark MLIP accuracy against a labeled dataset — compute MAE/RMSE for energy/atom and forces, and generate parity plots.
+metadata:
+  category: [machine-learning, materials, chemistry]
+  venv: [cpu, fairchem, mlip]
+---
+
+# Benchmark Machine Learning Interatomic Potentials (MLIP)
+
+<!-- mcp-tools-note -->
+> [!NOTE]
+> Steps written `server.tool` are MCP tool calls: `mace.load_model` is the `load_model`
+> tool of the `mace` server (`mcp__mace__load_model`, or
+> `mcp__plugin_atomistic-skills_mace__load_model` when installed as a plugin).
+> Without a connected server, run the same tools from the shell. Tools named in
+> one command share a process, so a model loaded by `load_model` stays loaded:
+>
+> ```bash
+> ${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli mace load_model key=value
+> ${CLAUDE_SKILL_DIR}/../../venv/run fairchem python -m src.mcp_server.cli fairchem load_model key=value
+> ${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli matgl load_model key=value
+> ```
+
+This skill evaluates the accuracy of a given MLIP against an existing ground-truth dataset (e.g., DFT calculations or a higher-fidelity foundation potential). It computes the Mean Absolute Error (MAE) and Root Mean Square Error (RMSE) for both energy (per atom) and atomic forces, and optionally stress. It also generates parity plots for visual inspection of the model's correlation.
+
+## Prerequisites
+1. **Model Loaded**: An MLIP must be currently active via a `load_model` MCP tool call (e.g., `mace.load_model`, `fairchem.load_model`, `matgl.load_model`).
+2. **Labeled Data**: A JSON dataset where each entry contains a structural dictionary under `"structure"`, along with scalar/vector ground truth values for `"energy"`, `"forces"`, and optionally `"stress"`. This is identical to the format used in `ml-mlip-training`. (Data can be generated using Atomate2 MongoDB queries or MD sampling + labeling).
+
+## Instructions
+
+### 1. Run Benchmark metrics
+Use the `${CLAUDE_SKILL_DIR}/scripts/run_benchmark.py` script to perform inference across the dataset and compute global error metrics.
+
+**Environment requirement**: This script instantiates the MLIP models directly, so it must run in the uv project that provides the backend: `venv/mlip` for MACE and MatGL, `venv/fairchem` for FairChem.
+
+```bash
+# (or venv/fairchem when --backend fairchem)
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/run_benchmark.py \
+    --data_path <path_to_labeled_data.json> \
+    --model <model_name_or_path> \
+    --backend <mace|fairchem|matgl> \
+    --output <path_to_save_benchmark_results.json>
+```
+*Note: The script utilizes `src.utils.mlips.loader.load_wrapper` to abstract backend details.*
+
+### 2. Generate Parity Plots
+Once `run_benchmark.py` finishes, it writes a comprehensive JSON file containing original targets alongside the model's predictions and numerical metrics. Visualize these using the plotting script.
+
+**Environment requirement**: `venv/cpu` is enough for the plotting script.
+
+```bash
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/plot_benchmark.py \
+    --results <path_to_benchmark_results.json> \
+    --output_dir <path_to_save_plots>
+```
+
+This generates `energy_parity.png`, `forces_parity.png`, and (if stress was present) `stress_parity.png`.
+
+### 3. Reconcile units before comparing anything
+
+A benchmark subtracts two numbers that came from different software, so a unit or
+sign mismatch shows up as a large "model error" that is not a model error at all.
+Energy (eV) and forces (eV/Å) agree across every backend here; **stress does not.**
+Settle it before computing a single metric -- see
+[general-property-units](../general-property-units/SKILL.md) for the full tables.
+
+The three traps, in order of how often they bite:
+
+1. **MatGL returns GPa, not eV/Å³.** `matgl.ext.ase.PESCalculator` defaults to
+   `stress_unit="GPa"`, and `Potential.forward` returns GPa as well, so MatGL is not
+   a drop-in ASE calculator. Pass `PESCalculator(potential=model, stress_unit="eV/A3")`.
+   Getting this wrong is a factor of `160.21766208`.
+2. **Raw model output != ASE calculator output.** `CHGNetCalculator` converts GPa to
+   eV/Å³ on the way out (`stress_weight`, default `1/160.21766208`); MACE and
+   FAIRChem convert nothing because their models already emit eV/Å³. Know which
+   layer you are reading.
+3. **DFT labels usually carry the opposite sign.** VASP reports stress
+   compressive-positive in kB; ASE and every MLIP here are tensile-positive in
+   eV/Å³. Converting VASP labels to ASE convention is
+   `eV/A3 = -kB / 1602.1766208`.
+
+Sanity check that costs nothing: take a structure you have compressed, and confirm
+the diagonal stress is **negative** in ASE convention. If it is positive, you have a
+sign convention crossed somewhere.
+
+### 4. Interpret Results
+When presenting the plotted benchmarks to the user, consult the following rough heuristics for MLIP performance:
+- **Energy MAE**: Excellent (< 5 meV/atom), Good (5-20 meV/atom), Poor (> 50 meV/atom)
+- **Forces MAE**: Excellent (< 20 meV/Å), Good (20-50 meV/Å), Poor (> 100 meV/Å)
+
+If the model is performing poorly on the labeled data, suggest fine-tuning it utilizing the `ml-mlip-training` skill.
+
+## Examples
+
+Evaluating state-of-the-art MatPES-r2SCAN Foundation Models directly against f-block filtered analytical DFT data from the Materials Project:
+
+```bash
+# Fetch 100 random r2SCAN structures from MP API (excluding Lanthanides/Actinides) into ./r2scan_data.json
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/examples/fetch_r2scan.py
+
+# Benchmark MACE foundation potential
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/run_benchmark.py \
+    --data_path r2scan_data.json \
+    --model MACE-MATPES-R2SCAN-0 \
+    --backend mace \
+    --output research/2026-03-03_r2SCAN_benchmark/mace_results.json
+
+# Plot the evaluation statistics
+${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/plot_benchmark.py \
+    --results research/2026-03-03_r2SCAN_benchmark/mace_results.json \
+    --output_dir research/2026-03-03_r2SCAN_benchmark/plots_mace
+```
+
+### Resulting Parity Plots (Filtered R2SCAN Data)
+![MACE-MATPES-R2SCAN-0 Parity Plot](examples/mace_parity.png)
+![CHGNet-MatPES-r2SCAN-2025.2.10-2.7M Parity Plot](examples/chgnet_parity.png)
+![M3GNet-MatPES-r2SCAN-v2025.1 Parity Plot](examples/m3gnet_parity.png)
+![TensorNet-MatPES-r2SCAN-v2025.1 Parity Plot](examples/tensornet_parity.png)
+
+## Typical Combinations
+- Use `mat-sample-pes-by-md` to generate un-labeled configurations.
+- Use `atomate2` MCP tools or VASP to evaluate configurations and produce a labeled dataset JSON.
+- Use `ml-mlip-training` if the benchmark metric thresholds are unsatisfactory.
+
+---
+
+**Author:** Bowen Deng
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

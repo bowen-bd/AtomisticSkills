@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from datetime import datetime
 from typing import Dict
@@ -5,6 +6,34 @@ from src.utils.config_utils import inject_config_into_env
 
 # Inject configuration from ~/.mlip_agent.yaml into environment
 inject_config_into_env()
+
+
+def workspace_root() -> Path:
+    """Return the directory that holds ``research/`` and ``.env``.
+
+    In order of precedence:
+
+    1. ``ATOMISTIC_WORKSPACE``, when set. MCP servers started by the plugin get
+       the Claude Code project directory here, and containers started by
+       ``venv/run`` get the host workspace, mounted at the same path.
+    2. The repository, when the current directory is inside a checkout of it:
+       the development layout, where ``research/`` sits next to the code.
+    3. Otherwise the current directory. A plugin install keeps this code in
+       Claude Code's plugin cache, which is replaced on every update and must
+       never receive results, while the agent runs scripts from the user's
+       project -- so the project is where results belong.
+
+    ``venv/run`` applies the same rule, so a skill script and an MCP server
+    started from the same project always agree on the research directory.
+    """
+    override = os.environ.get("ATOMISTIC_WORKSPACE")
+    if override:
+        return Path(override).expanduser().absolute()
+    repo = Path(__file__).resolve().parents[2]
+    cwd = Path.cwd().resolve()
+    if cwd == repo or repo in cwd.parents:
+        return repo
+    return cwd
 
 
 def load_env(project_root: Path) -> Dict[str, str]:
@@ -59,7 +88,7 @@ def get_current_research_dir() -> Path:
     5. Saves the choice to .env for persistence.
     """
     # Define project root relative to this file (src/utils/research_utils.py)
-    project_root = Path(__file__).parent.parent.parent.absolute()
+    project_root = workspace_root()
 
     # Try to load from .env first
     env_vars = load_env(project_root)
@@ -105,7 +134,7 @@ def create_new_research_dir(topic: str) -> Path:
     Returns:
         Path to the newly created directory.
     """
-    project_root = Path(__file__).parent.parent.parent.absolute()
+    project_root = workspace_root()
     research_root = project_root / "research"
 
     if not research_root.exists():

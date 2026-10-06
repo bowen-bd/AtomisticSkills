@@ -12,7 +12,7 @@ You are an atomistic research agent with access to literature, Skills, and MCP t
 **Read these rules files at the start of every conversation** (imported below via @):
 - `.agents/rules/research-standards.md` — research protocol, intent classification, plan workflow
 - `.agents/rules/coding-standards.md` — coding rules, environment management, MCP stability
-- `.agents/rules/mcp-environments.md` — conda environment to MCP server mapping
+- `.agents/rules/mcp-environments.md` — uv environment and MCP server runtime mapping
 
 @.agents/rules/coding-standards.md
 @.agents/rules/mcp-environments.md
@@ -29,14 +29,14 @@ You are an atomistic research agent with access to literature, Skills, and MCP t
 This project decomposes complex research tasks into three levels:
 
 - **Tools** (`src/mcp_server/`): Low-level operations exposed via MCP (relax structure, run MD, query databases). Strict typed I/O.
-- **Skills** (`.agents/skills/`): Mid-level tutorials combining tools and scripts to solve focused tasks. Each has a `SKILL.md` with step-by-step instructions.
+- **Skills** (`skills/`): Mid-level tutorials combining tools and scripts to solve focused tasks. Each has a `SKILL.md` with step-by-step instructions.
 - **Workflows** (`.agents/workflows/`): High-level research campaigns that chain multiple skills.
 
 When a user asks a research question, check workflows first for end-to-end protocols, then find the relevant skill(s).
 
 ## Skill Discovery
 
-Skills are at `.agents/skills/`. In Claude Code they are registered as native
+Skills are at `skills/`. In Claude Code they are registered as native
 project skills, so each one is listed by name and description and can be invoked
 directly with the Skill tool — no searching needed.
 
@@ -44,16 +44,16 @@ directly with the Skill tool — no searching needed.
 ```bash
 python configure_mcp.py --agent claude
 ```
-This symlinks every `.agents/skills/<name>` into `.claude/skills/<name>`, which
+This symlinks every `skills/<name>` into `.claude/skills/<name>`, which
 Claude Code discovers automatically. `.claude/` is gitignored, so this is a
 per-checkout setup step; re-run it after cloning or after a skill is added or
-removed. `.agents/skills/` stays the single source of truth — the symlinks are
+removed. `skills/` stays the single source of truth — the symlinks are
 never copies.
 
 Fallback for any agent without native skill registration — scan the frontmatter
 descriptions directly:
 ```bash
-grep -r "^description:" .agents/skills/*/SKILL.md
+grep -r "^description:" skills/*/SKILL.md
 ```
 
 Then read the full `SKILL.md` for any matching skill and follow its numbered instructions.
@@ -62,20 +62,28 @@ Use the `/skill-search` command for interactive discovery: `/skill-search [searc
 
 ## Executing Skills
 
-### Scripts with `# Env:` annotations
+Skill commands run through the launcher `venv/run`:
 ```bash
-# Env: mace-agent
-python .agents/skills/mat-melting-point/scripts/create_interface.py ...
+${CLAUDE_SKILL_DIR}/../../venv/run <venv>[+<extra>] python ${CLAUDE_SKILL_DIR}/scripts/<script>.py ...
 ```
-Run with:
+Or from the repository root:
 ```bash
-mamba activate <env-name>
-# or
-conda run -n <env-name> python <path-to-script> [args]
+venv/run <venv>[+<extra>] python skills/<skill-name>/scripts/<script>.py ...
 ```
+Where `<venv>` is a shared project (`cpu`, `mlip`, `fairchem`) or a research stack
+(`adit`, `diffcsp`, `mattergen`, `msms`, `reactot`, `scd`), matching `metadata.venv`
+in the skill's `SKILL.md`, with optional extras if needed (e.g. `cpu+openmm`, `mlip+lammps`).
 
 ### MCP tool calls
-Skills that reference `mcp_*` functions require MCP servers to be configured. If unavailable, check the skill's `scripts/` directory or `src/utils/`.
+
+MCP steps in skills are written `server.tool` (e.g. `matgl.relax_structure`).
+- When connected directly, the tool is named `mcp__<server>__<tool>`.
+- When installed as a plugin, it is named `mcp__plugin_atomistic-skills_<server>__<tool>`.
+- Without a connected server, the same tool runs from the shell via the CLI fallback:
+  ```bash
+  venv/run <venv> python -m src.mcp_server.cli <server> <tool> key=value ...
+  ```
+  Run with `--list` to see available tools. Several tools named in one command share a process, so state from `load_model` persists.
 
 ## MCP Server Setup
 
@@ -87,3 +95,25 @@ python configure_mcp.py --scope global    # write to global user config
 ```
 
 See `README.md` for full installation instructions.
+
+### Containerised servers and images
+
+Every container image is built from committed `venv/<name>/uv.lock` files, so a container
+runs the same environment as a native install: `cpu`, `mlip` and `fairchem` (linux/amd64 and
+linux/arm64) via `docker/Dockerfile`, and `generative` (both platforms) via `docker/Dockerfile.cuda`,
+which installs `adit`, `diffcsp` and `mattergen` side by side (compiling their PyG extensions
+with CUDA on arm64). On x86_64 hosts with glibc ≥ 2.32 the generative servers run natively.
+
+`docker/images.json` is the single source of truth mapping each server to its runtime image.
+The server table `venv/servers.tsv`, the `mcpServers` block of `.claude-plugin/plugin.json`,
+the CI build matrix, and the in-image server maps are all rendered from it.
+
+**When you change anything about a server's packaging or images**, re-render rather than
+hand-editing derived files:
+```bash
+python docker/render.py servers --check        # or without --check to rewrite venv/servers.tsv
+python docker/render.py plugin-mcp --check     # plugin wiring in .claude-plugin/plugin.json
+python docker/render.py matrix                 # CI build matrix for build-images.yml
+venv/run cpu python tools/sync_version.py --check           # manifest versions match VERSION
+```
+CI validates that rendered files and version manifests are current.

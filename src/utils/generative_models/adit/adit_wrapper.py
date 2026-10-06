@@ -7,8 +7,8 @@ via latent diffusion with a VAE autoencoder and DiT denoiser.
 Pretrained weights from: https://huggingface.co/chaitjo/all-atom-diffusion-transformer
 
 Requirements:
-    - Conda environment: adit-agent
-    - AADT repo cloned and accessible (see conda-envs/adit-agent/README.md)
+    - Environment: adit (venv/run adit ...; aarch64 uses the generative image)
+    - AADT repo cloned next to this project as ``adit``, or at $ADIT_REPO
 """
 
 import logging
@@ -41,6 +41,11 @@ HF_REPO_ID = "chaitjo/all-atom-diffusion-transformer"
 HF_DIFFUSION_CKPT = "ldm.ckpt"
 HF_VAE_CKPT = "vae.ckpt"
 
+# AADT repo location: $ADIT_REPO, else an `adit` checkout next to this project
+ADIT_REPO = Path(
+    os.environ.get("ADIT_REPO", Path(__file__).resolve().parents[4].parent / "adit")
+).expanduser()
+
 
 class ADiTWrapper:
     """
@@ -64,8 +69,8 @@ class ADiTWrapper:
 
         Args:
             device: Device to use ('auto', 'cpu', 'cuda').
-            adit_repo_path: Path to the cloned AADT repository.
-                           Auto-discovered from project siblings or PYTHONPATH.
+            adit_repo_path: Path to the cloned AADT repository; defaults to
+                           $ADIT_REPO, else an ``adit`` checkout next to this project.
         """
         import sys
         import importlib
@@ -76,27 +81,14 @@ class ADiTWrapper:
         else:
             self.device = device
 
-        # Find the AADT repo path
         if adit_repo_path is None:
-            # Try common locations
-            project_root = os.environ.get("PYTHONPATH", "").split(":")[0]
-            # Look for the AADT repo as a sibling of the project root,
-            # or in common locations relative to the project.
-            project_dir = os.path.dirname(project_root) if project_root else ""
-            candidates = [
-                os.path.join(project_dir, "adit"),
-                os.path.join(project_root, "adit"),
-                os.path.join(os.path.expanduser("~"), "projects", "adit"),
-            ]
-            for c in candidates:
-                if os.path.isdir(c):
-                    adit_repo_path = os.path.abspath(c)
-                    break
-            if adit_repo_path is None:
+            if not ADIT_REPO.is_dir():
                 raise RuntimeError(
-                    "AADT repository not found. Please clone it with: "
-                    "git clone https://github.com/facebookresearch/all-atom-diffusion-transformer <path>/adit "
+                    f"AADT repository not found at {ADIT_REPO}. Clone it with "
+                    "git clone https://github.com/facebookresearch/all-atom-diffusion-transformer "
+                    f"{ADIT_REPO}, or set ADIT_REPO to an existing checkout."
                 )
+            adit_repo_path = str(ADIT_REPO)
 
         self.adit_repo_path = adit_repo_path
         logger.info(f"Using AADT repository at: {self.adit_repo_path}")

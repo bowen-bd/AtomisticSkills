@@ -1,10 +1,9 @@
 import importlib.util
 from pathlib import Path
 
-# Load check_publisher from hyphenated directory .agents/skills/general-publisher-access-guard
+# Load check_publisher from hyphenated directory skills/general-publisher-access-guard
 script_path = (
     Path(__file__).resolve().parent.parent
-    / ".agents"
     / "skills"
     / "general-publisher-access-guard"
     / "scripts"

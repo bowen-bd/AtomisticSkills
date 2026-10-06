@@ -17,9 +17,8 @@ This workflow guides you through a two-stage computational screening pipeline to
 Use the `chem-db-mof` skill to download a candidate set from ARC-MOF or QMOF.
 
 ```bash
-# Env: base-agent
 # Example: download all MOFs from ARC-MOF DB7 (Majumdar et al.)
-python .agents/skills/chem-db-mof/scripts/query_mof_db.py \
+venv/run cpu python skills/chem-db-mof/scripts/query_mof_db.py \
     --database arc-mof \
     --output-dir research/<date>_MOF_CO2_DAC_screening/structures/
 ```
@@ -30,11 +29,10 @@ python .agents/skills/chem-db-mof/scripts/query_mof_db.py \
 
 For every framework, check the minimum interplanar distance and build a supercell if needed (≥12 Å threshold to prevent periodic self-interaction of CO2).
 
-- See: [`chem-sorption-relax`](../skills/chem-sorption-relax/SKILL.md)
+- See: [`chem-sorption-relax`](../../skills/chem-sorption-relax/SKILL.md)
 
 ```bash
-# Env: fairchem-agent
-python .agents/skills/chem-sorption-relax/scripts/relax_structure.py \
+venv/run fairchem python skills/chem-sorption-relax/scripts/relax_structure.py \
     --structure path/to/framework.cif \
     --calculator fairchem \
     --model-name uma-s-1p2 \
@@ -50,11 +48,10 @@ python .agents/skills/chem-sorption-relax/scripts/relax_structure.py \
 
 Run Widom insertion on every prepared supercell to estimate the Henry coefficient $K_H$ (mol/kg/Pa) and isosteric heat of adsorption $Q_{st}$ (kJ/mol) at infinite dilution.
 
-- See: [`chem-sorption-widom`](../skills/chem-sorption-widom/SKILL.md)
+- See: [`chem-sorption-widom`](../../skills/chem-sorption-widom/SKILL.md)
 
 ```bash
-# Env: fairchem-agent
-python .agents/skills/chem-sorption-widom/scripts/run_widom.py \
+venv/run fairchem python skills/chem-sorption-widom/scripts/run_widom.py \
     --structure path/to/supercell.cif \
     --name FRAMEWORK_NAME \
     --calculator fairchem \
@@ -113,20 +110,19 @@ df.to_csv("widom_ranking.csv", index=False)
 
 For each top candidate, run Grand Canonical Monte Carlo across a pressure grid spanning DAC-relevant conditions to obtain the full adsorption isotherm.
 
-- See: [`chem-sorption-gcmc`](../skills/chem-sorption-gcmc/SKILL.md)
+- See: [`chem-sorption-gcmc`](../../skills/chem-sorption-gcmc/SKILL.md)
 
 Run pressures **sequentially** (not in parallel) to prevent GPU OOM:
 
 ```bash
 #!/bin/bash
-# Env: fairchem-agent
 PRESSURES=(0.01 0.05 0.1 0.2 0.5 1.0)
 CIF_PATH="research/.../supercells/FRAMEWORK_supercell.cif"
 BASE_OUT="research/.../gcmc/FRAMEWORK_isotherm"
 
 for p in "${PRESSURES[@]}"; do
-    conda run --no-capture-output -n fairchem-agent \
-        python .agents/skills/chem-sorption-gcmc/scripts/run_gcmc.py \
+    venv/run fairchem \
+        python skills/chem-sorption-gcmc/scripts/run_gcmc.py \
             --cif "$CIF_PATH" \
             --output-dir "${BASE_OUT}/${p}_bar" \
             --calculator fairchem \
@@ -188,8 +184,7 @@ For DAC evaluation, the relevant metric is the **working capacity**: loading at 
 For multi-component selectivity (CO2/N2), use `run_gcmc_multi.py` with a realistic DAC gas composition (0.04% CO2 / 99.96% N2 or 15% CO2 / 85% N2 for post-combustion):
 
 ```bash
-# Env: fairchem-agent
-python .agents/skills/chem-sorption-gcmc/scripts/run_gcmc_multi.py \
+venv/run fairchem python skills/chem-sorption-gcmc/scripts/run_gcmc_multi.py \
     --cif path/to/supercell.cif \
     --output-dir research/.../gcmc/FRAMEWORK_mixture \
     --calculator fairchem \

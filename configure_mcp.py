@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """Configure AtomisticSkills MCP servers for any supported AI agent.
 
-Writes MCP server configs to the correct location for each agent, adapting
-paths to the local conda installation.
+Writes MCP server configs to the correct location for each agent. Every server
+starts through ``venv/run --server <name>``, which runs it from its uv project
+on this host or, where the host cannot, from its container image -- the same
+launcher the Claude Code plugin uses. The server list comes from
+``venv/servers.tsv`` (rendered from ``docker/images.json``).
 
 Supported agents:
   claude   - Claude Code (.mcp.json or ~/.claude/settings.json)
@@ -11,7 +14,7 @@ Supported agents:
   cursor   - Cursor (.cursor/mcp.json)
   windsurf - Windsurf (~/.codeium/windsurf/mcp_config.json, global only)
 
-Skills (.agents/skills/) and workflows (.agents/workflows/) are the universal
+Skills (skills/) and workflows (.agents/workflows/) are the universal
 cross-platform paths — no changes needed for different agents.
 Instruction files (CLAUDE.md / AGENTS.md / GEMINI.md) are auto-generated
 for agents that don't already have one.
@@ -20,7 +23,6 @@ Usage:
     python configure_mcp.py                        # auto-detect installed agents
     python configure_mcp.py --agent claude         # specific agent only
     python configure_mcp.py --agent claude codex   # multiple agents
-    python configure_mcp.py --conda /path/to/miniforge3
     python configure_mcp.py --scope global         # write to global config only
     python configure_mcp.py --scope project        # write to project config only
     python configure_mcp.py --list-agents          # show detected agents
@@ -32,14 +34,13 @@ import argparse
 import json
 import re
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
-ENV_PATTERN = re.compile(r".*/envs/([^/]+)/bin/python$")
 PROJECT_ROOT = Path(__file__).resolve().parent
-MCP_SOURCE = PROJECT_ROOT / "mcp_config.json"
+SERVERS_TABLE = PROJECT_ROOT / "venv" / "servers.tsv"
+LAUNCHER = PROJECT_ROOT / "venv" / "run"
 
 # Instruction file stub used when a target agent has no instruction file yet.
 INSTRUCTION_STUB = """\
@@ -49,7 +50,7 @@ This project uses AtomisticSkills — a framework for atomistic simulation
 workflows combining literature, MLIP tools, and MCP servers.
 
 See CLAUDE.md for the full instructions (Claude Code format, also applicable
-to other agents). Skills are in .agents/skills/, workflows in .agents/workflows/.
+to other agents). Skills are in skills/, workflows in .agents/workflows/.
 """
 
 ATOMISTICSKILLS_GLOBAL_MARKER = "# AtomisticSkills Global Reference"
@@ -63,14 +64,14 @@ def _global_reference_block() -> str:
 If your current workspace is NOT {PROJECT_ROOT} (or any of its subdirectories), and the task involves atomistic research, materials simulation, drug discovery, spectroscopy, ML interatomic potentials, or related scientific workflows:
 - The AtomisticSkills repository is installed at {PROJECT_ROOT}.
 - Rules live at {PROJECT_ROOT}/.agents/rules/.
-- Skills live at {PROJECT_ROOT}/.agents/skills/.
+- Skills live at {PROJECT_ROOT}/skills/.
 - Workflows live at {PROJECT_ROOT}/.agents/workflows/.
 - First read these rules:
   - {PROJECT_ROOT}/.agents/rules/research-standards.md
   - {PROJECT_ROOT}/.agents/rules/coding-standards.md
   - {PROJECT_ROOT}/.agents/rules/mcp-environments.md
 - For skill discovery, scan descriptions with:
-  grep -r "^description:" {PROJECT_ROOT}/.agents/skills/*/SKILL.md
+  grep -r "^description:" {PROJECT_ROOT}/skills/*/SKILL.md
 - For end-to-end protocols, inspect:
   find {PROJECT_ROOT}/.agents/workflows -maxdepth 2 -type f
 - Read the full SKILL.md or workflow file before following it.
@@ -155,7 +156,7 @@ def _link_claude_project_skills() -> None:
     """Expose project skills to Claude Code as native project-scope skills.
 
     Claude Code discovers skills as `.claude/skills/<name>/SKILL.md`. Every
-    skill in `.agents/skills/` is symlinked into `.claude/skills/` so the
+    skill in `skills/` is symlinked into `.claude/skills/` so the
     repository stays the single source of truth — no copies to keep in sync.
     Only the `name` and `description` frontmatter of each SKILL.md is loaded
     into the system prompt; bodies are read on demand when a skill is invoked.
@@ -167,7 +168,7 @@ def _link_claude_project_skills() -> None:
     """
     claude_skills_dir = PROJECT_ROOT / ".claude" / "skills"
     claude_skills_dir.mkdir(parents=True, exist_ok=True)
-    project_skills_dir = PROJECT_ROOT / ".agents" / "skills"
+    project_skills_dir = PROJECT_ROOT / "skills"
     removed = _remove_stale_project_skill_symlinks(
         claude_skills_dir,
         project_skills_dir,
@@ -209,7 +210,7 @@ def _write_codex_global_skills() -> None:
     """Expose project skills globally for Codex."""
     codex_skills_dir = Path.home() / ".codex" / "skills"
     codex_skills_dir.mkdir(parents=True, exist_ok=True)
-    project_skills_dir = PROJECT_ROOT / ".agents" / "skills"
+    project_skills_dir = PROJECT_ROOT / "skills"
     removed = _remove_stale_project_skill_symlinks(
         codex_skills_dir,
         project_skills_dir,
@@ -238,7 +239,7 @@ Before acting, read the applicable project instructions directly from that repos
    - `{PROJECT_ROOT}/.agents/rules/coding-standards.md`
    - `{PROJECT_ROOT}/.agents/rules/mcp-environments.md`
 2. For skill discovery, inspect:
-   - `{PROJECT_ROOT}/.agents/skills/*/SKILL.md`
+   - `{PROJECT_ROOT}/skills/*/SKILL.md`
 3. For end-to-end protocols, inspect:
    - `{PROJECT_ROOT}/.agents/workflows/`
 4. Read the full selected `SKILL.md` or workflow file before following it.
@@ -279,82 +280,28 @@ If the current workspace is already `{PROJECT_ROOT}` or a subdirectory, prefer t
 
 
 # ---------------------------------------------------------------------------
-# Conda detection
-# ---------------------------------------------------------------------------
-
-
-def detect_conda_base() -> str | None:
-    for cmd in ("conda", "mamba", "micromamba"):
-        try:
-            result = subprocess.run(
-                [cmd, "info", "--base"],
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
-            if result.returncode == 0:
-                base = result.stdout.strip()
-                if base and Path(base).is_dir():
-                    return base
-        except (FileNotFoundError, subprocess.TimeoutExpired):
-            continue
-
-    for name in ("miniforge3", "mambaforge", "miniconda3", "anaconda3"):
-        candidate = Path.home() / name
-        if candidate.is_dir():
-            return str(candidate)
-
-    return None
-
-
-# ---------------------------------------------------------------------------
 # MCP config loading and path patching
 # ---------------------------------------------------------------------------
 
 
-def load_mcp_servers(conda_base: str) -> dict[str, Any]:
-    """Load mcp_config.json and rewrite conda env paths for this machine."""
-    with open(MCP_SOURCE) as fh:
-        config = json.load(fh)
+def load_mcp_servers() -> dict[str, Any]:
+    """Return an MCP server config for every server in venv/servers.tsv.
 
-    project_root = str(PROJECT_ROOT)
-
-    for server in config.get("mcpServers", {}).values():
-        match = ENV_PATTERN.match(server.get("command", ""))
-        if match:
-            env_name = match.group(1)
-            server["command"] = f"{conda_base}/envs/{env_name}/bin/python"
-        env = server.get("env", {})
-        if "PYTHONPATH" in env:
-            env["PYTHONPATH"] = project_root
-        # Rewrite CONDA_PREFIX so Triton's ptxas-blackwell fallback resolves
-        # correctly on Blackwell+ GPUs even when the MCP server is launched
-        # without full conda activation (no PATH / CONDA_PREFIX from conda init).
-        if "CONDA_PREFIX" in env and match:
-            env["CONDA_PREFIX"] = f"{conda_base}/envs/{env_name}"
-        # Explicit Triton ptxas-blackwell path: more direct than CONDA_PREFIX
-        # fallback. Required on Blackwell GPUs (sm_100+, compute capability ≥ 12.0)
-        # where torch.compile triggers Triton JIT compilation via nvalchemi hooks.
-        if "TRITON_PTXAS_BLACKWELL_PATH" in env and match:
-            env["TRITON_PTXAS_BLACKWELL_PATH"] = (
-                f"{conda_base}/envs/{env_name}/bin/ptxas"
-            )
-        # Rewrite PATH: replace the placeholder conda env bin dir so that
-        # shutil.which('ptxas-blackwell') resolves correctly in MCP server
-        # processes that do not have full conda activation.
-        if "PATH" in env and match:
-            env_bin = f"{conda_base}/envs/{env_name}/bin"
-            # Replace any existing envs/<name>/bin prefix in PATH
-            import re as _re
-
-            env["PATH"] = _re.sub(
-                r"[^ ]*?/envs/[^/]+/bin",
-                env_bin,
-                env["PATH"],
-                count=1,
-            )
-
-    return config.get("mcpServers", {})
+    Returns:
+        ``{server: {"command", "args", "env"}}``, the shape every agent writer
+        below expects.
+    """
+    servers: dict[str, Any] = {}
+    for line in SERVERS_TABLE.read_text().splitlines():
+        if not line or line.startswith("#"):
+            continue
+        name = line.split("\t")[0]
+        servers[name] = {
+            "command": str(LAUNCHER),
+            "args": ["--server", name],
+            "env": {},
+        }
+    return servers
 
 
 # ---------------------------------------------------------------------------
@@ -450,7 +397,7 @@ def configure_claude(servers: dict, scope: str) -> None:
         _write_json(path, servers, merge_key="mcpServers")
         print(f"  Global MCP  → {path}")
 
-    # Register .agents/skills as native Claude Code project skills.
+    # Register skills as native Claude Code project skills.
     _link_claude_project_skills()
 
     # CLAUDE.md already exists — nothing to do for instruction file.
@@ -603,7 +550,7 @@ def configure_gemini(servers: dict, scope: str) -> None:
         print(f"  Created plugin config → {plugin_json}")
 
         skills_symlink = plugin_dir / "skills"
-        target_skills = PROJECT_ROOT / ".agents" / "skills"
+        target_skills = PROJECT_ROOT / "skills"
         symlink_action = _reset_directory_symlink(skills_symlink, target_skills)
         print(
             f"  {symlink_action} skills symlink → {skills_symlink} to {target_skills}"
@@ -617,8 +564,8 @@ def configure_gemini(servers: dict, scope: str) -> None:
 
 If your current workspace is NOT {PROJECT_ROOT} (or any of its subdirectories), and you need to perform atomistic research, materials discovery, molecular simulation, or related tasks:
 - The AtomisticSkills repository is installed at {PROJECT_ROOT}.
-- You can access its Skills at {PROJECT_ROOT}/.agents/skills/ and workflows at {PROJECT_ROOT}/.agents/workflows/.
-- Discover skills by running: grep -r "^description:" {PROJECT_ROOT}/.agents/skills/*/SKILL.md
+- You can access its Skills at {PROJECT_ROOT}/skills/ and workflows at {PROJECT_ROOT}/.agents/workflows/.
+- Discover skills by running: grep -r "^description:" {PROJECT_ROOT}/skills/*/SKILL.md
 - Read and follow these rules from the AtomisticSkills repo:
   - [research-standards.md](file://{PROJECT_ROOT}/.agents/rules/research-standards.md)
   - [coding-standards.md](file://{PROJECT_ROOT}/.agents/rules/coding-standards.md)
@@ -726,12 +673,6 @@ def main() -> None:
         "(default: auto-detect installed agents)",
     )
     parser.add_argument(
-        "--conda",
-        default=None,
-        metavar="PATH",
-        help="Path to conda/mamba base directory (auto-detected if omitted).",
-    )
-    parser.add_argument(
         "--scope",
         choices=["project", "global", "both"],
         default="project",
@@ -753,27 +694,7 @@ def main() -> None:
             print("No supported agents detected.")
         return
 
-    # Resolve conda base
-    conda_base: str | None = args.conda
-    if conda_base is not None:
-        if not Path(conda_base).is_dir():
-            print(f"Error: {conda_base} is not a valid directory.", file=sys.stderr)
-            sys.exit(1)
-    else:
-        conda_base = detect_conda_base()
-        if conda_base is None:
-            print(
-                "Error: Could not auto-detect a conda/mamba installation.\n"
-                "Provide the base path explicitly: --conda /path/to/miniforge3",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-
-    if not MCP_SOURCE.exists():
-        print(f"Error: {MCP_SOURCE} not found.", file=sys.stderr)
-        sys.exit(1)
-
-    servers = load_mcp_servers(conda_base)
+    servers = load_mcp_servers()
 
     # Resolve agent list
     if args.agent is None:
@@ -792,7 +713,7 @@ def main() -> None:
         agents = args.agent
 
     print(f"Project root : {PROJECT_ROOT}")
-    print(f"Conda base   : {conda_base}")
+    print(f"Launcher     : {LAUNCHER}")
     print(f"Scope        : {args.scope}")
     print()
 
@@ -801,7 +722,7 @@ def main() -> None:
         AGENT_WRITERS[agent](servers, args.scope)
         print()
 
-    print("Done. Skills (.agents/skills/) and workflows (.agents/workflows/)")
+    print("Done. Skills (skills/) and workflows (.agents/workflows/)")
     print("are the cross-platform standard path — no changes needed there.")
 
 

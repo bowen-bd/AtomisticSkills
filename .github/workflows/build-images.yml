@@ -1,0 +1,234 @@
+name: Build MCP server images
+
+# Publishes the container images that back the MCP servers, for hosts that
+# cannot run an environment natively. Every image installs uv projects from
+# their venv/<venv>/uv.lock, the locks a host install uses.
+#
+# The matrix comes from docker/images.json via docker/render.py, so adding a
+# server means editing that one file. The generative image supports both
+# architectures; on arm64 it compiles PyG extensions with CUDA (sm_121).
+
+on:
+  push:
+    branches: ["main"]
+    tags: ["v*"]
+    paths:
+      - "docker/**"
+      - "venv/*/pyproject.toml"
+      - "venv/*/uv.lock"
+      - "src/mcp_server/**"
+      - ".github/workflows/build-images.yml"
+  pull_request:
+    paths:
+      - "docker/**"
+      - "venv/*/pyproject.toml"
+      - "venv/*/uv.lock"
+      - ".github/workflows/build-images.yml"
+  workflow_dispatch:
+    inputs:
+      images:
+        description: "Space-separated image names to build (default: all)"
+        required: false
+        default: ""
+
+env:
+  REGISTRY: ghcr.io
+
+concurrency:
+  group: build-images-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Fail fast and cheaply: a version mismatch or an unrenderable images.json
+  # should not cost a multi-hour image build to discover.
+  preflight:
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Manifest versions agree with VERSION
+        run: python tools/sync_version.py --check
+
+      - name: Plugin mcpServers block is up to date with images.json
+        run: |
+          python docker/render.py plugin-mcp --stdout > /tmp/rendered.json
+          python - <<'PY'
+          import json, sys
+          rendered = json.load(open("/tmp/rendered.json"))["mcpServers"]
+          committed = json.load(open(".claude-plugin/plugin.json")).get("mcpServers", {})
+          if rendered != committed:
+              missing = sorted(set(rendered) - set(committed))
+              extra = sorted(set(committed) - set(rendered))
+              print("plugin.json mcpServers is stale relative to docker/images.json")
+              if missing: print("  missing:", ", ".join(missing))
+              if extra:   print("  unexpected:", ", ".join(extra))
+              print("\nRun: python docker/render.py plugin-mcp")
+              sys.exit(1)
+          print(f"plugin.json mcpServers matches images.json ({len(rendered)} servers)")
+          PY
+
+      - name: Every referenced lockfile exists
+        run: |
+          python - <<'PY'
+          import json, pathlib, sys
+          spec = json.loads(pathlib.Path("docker/images.json").read_text())
+          problems, checked = [], 0
+          for image in spec["images"]:
+              # An image installs one uv project (venv) or several (venvs).
+              for venv in image.get("venvs", [image.get("venv")]):
+                  checked += 1
+                  lock = pathlib.Path(f"venv/{venv}/uv.lock")
+                  if not lock.exists():
+                      problems.append(f"{lock} (missing)")
+          if problems:
+              print("lockfile problems:")
+              for m in problems: print("  -", m)
+              print("\nrun `uv lock` in venv/<name>/")
+              sys.exit(1)
+          print(f"all lockfiles present ({checked} projects)")
+          PY
+
+      - name: Render build matrix
+        id: matrix
+        env:
+          FILTER: ${{ inputs.images }}
+        run: |
+          MATRIX="$(python docker/render.py matrix)"
+          if [ -n "$FILTER" ]; then
+            MATRIX="$(FILTER="$FILTER" python - <<'PY'
+          import json, os, subprocess
+          m = json.loads(subprocess.run(
+              ["python", "docker/render.py", "matrix"],
+              capture_output=True, text=True, check=True).stdout)
+          wanted = set(os.environ["FILTER"].split())
+          unknown = wanted - {e["image"] for e in m["include"]}
+          if unknown:
+              raise SystemExit(f"Unknown images: {', '.join(sorted(unknown))}")
+          m["include"] = [e for e in m["include"] if e["image"] in wanted]
+          print(json.dumps(m))
+          PY
+          )"
+          fi
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+          echo "$MATRIX"
+
+  build:
+    needs: preflight
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.preflight.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # The CUDA images carry torch and, for the generative image, compiled PyG
+      # extensions. Runners ship with only a few GB free, so reclaim what we can.
+      - name: Free disk space
+        if: matrix.gpu
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /usr/local/share/boost "$AGENT_TOOLSDIRECTORY" || true
+          df -h /
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        if: github.event_name != 'pull_request'
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Assemble build args
+        id: args
+        run: |
+          {
+            echo 'value<<EOF'
+            echo '${{ toJSON(matrix.build_args) }}' \
+              | python -c 'import json,sys; [print(f"{k}={v}") for k,v in json.load(sys.stdin).items()]'
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      # Build-specific tags never advance VERSION or latest. Only the manifest
+      # job promotes these images after every selected build and smoke test passes.
+      - name: Compute staging tag
+        id: tags
+        run: |
+          BASE="${{ env.REGISTRY }}/${{ github.repository_owner }}/atomisticskills-${{ matrix.image }}"
+          BASE="$(echo "$BASE" | tr '[:upper:]' '[:lower:]')"
+          echo "base=$BASE" >> "$GITHUB_OUTPUT"
+          echo "staging=${BASE}:build-${GITHUB_RUN_ID}-${{ matrix.arch }}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/build-push-action@v6
+        id: build
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: ${{ matrix.platform }}
+          build-args: ${{ steps.args.outputs.value }}
+          tags: ${{ steps.tags.outputs.staging }}
+          push: ${{ github.event_name != 'pull_request' }}
+          cache-from: type=gha,scope=${{ matrix.image }}-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}-${{ matrix.arch }}
+          provenance: false
+
+      # Proves the image can actually start a server and speak MCP, rather than
+      # only that it built. A green build with a broken entrypoint is exactly
+      # the silent breakage the images exist to prevent.
+      # Restricted to the cpu image: the GPU images are tens of GB and would not
+      # fit alongside themselves on a runner, and their servers import CUDA
+      # builds of torch that a GPU-less runner cannot exercise meaningfully.
+      - name: Smoke test the entrypoint
+        if: github.event_name != 'pull_request' && matrix.image == 'cpu'
+        run: |
+          IMAGE="${{ steps.tags.outputs.base }}@${{ steps.build.outputs.digest }}"
+          SERVERS="$(python -c "
+          import json
+          spec = json.load(open('docker/images.json'))
+          img = next(i for i in spec['images'] if i['name'] == '${{ matrix.image }}')
+          print(' '.join(sorted(img['servers'])))
+          ")"
+          echo "smoke testing: $SERVERS"
+          bash docker/smoke_test.sh "$IMAGE" $SERVERS
+          # The pymol extra (x86_64 only) needs a system libGL the wheel does not bundle.
+          if [ "${{ matrix.arch }}" = "amd64" ]; then
+            docker run --rm "$IMAGE" python -c "import pymol; print('pymol imports')"
+          fi
+
+  manifest:
+    needs: [preflight, build]
+    # A failed or cancelled build (including its smoke tests) leaves all release
+    # tags untouched. Never fill a missing architecture from an older run.
+    if: github.event_name != 'pull_request' && needs.build.result == 'success'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish validated images by digest
+        env:
+          BUILD_MATRIX: ${{ needs.preflight.outputs.matrix }}
+          IMAGE_REGISTRY: ${{ env.REGISTRY }}/${{ github.repository_owner }}
+        run: |
+          python docker/publish.py --matrix "$BUILD_MATRIX" \
+            --registry "$IMAGE_REGISTRY" --run-id "$GITHUB_RUN_ID"

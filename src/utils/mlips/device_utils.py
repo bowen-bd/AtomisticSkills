@@ -6,9 +6,27 @@ heavy dependencies like lightning/pytorch-lightning.
 """
 
 import logging
+import os
+
 import torch
 
 logger = logging.getLogger(__name__)
+
+
+def _visible_physical_indices() -> list[int] | None:
+    """Physical GPU indices, in torch-ordinal order, from CUDA_VISIBLE_DEVICES.
+
+    Returns None when the variable is unset (torch ordinal == nvidia-smi index),
+    and an empty list when it names devices by UUID or MIG slice, which cannot
+    be matched to nvidia-smi indices.
+    """
+    value = os.environ.get("CUDA_VISIBLE_DEVICES")
+    if value is None:
+        return None
+    entries = [e.strip() for e in value.split(",") if e.strip()]
+    if all(e.isdigit() for e in entries):
+        return [int(e) for e in entries]
+    return []
 
 
 def get_best_device(device_preference: str = "auto") -> str:
@@ -22,7 +40,7 @@ def get_best_device(device_preference: str = "auto") -> str:
         Best available device string
     """
     if device_preference != "auto":
-        if device_preference == "cuda" and not torch.cuda.is_available():
+        if device_preference.startswith("cuda") and not torch.cuda.is_available():
             logger.warning("CUDA requested but not available, falling back to CPU")
             return "cpu"
         elif device_preference == "mps" and not torch.backends.mps.is_available():
@@ -31,6 +49,22 @@ def get_best_device(device_preference: str = "auto") -> str:
         return device_preference
 
     # Auto device selection based on available hardware
+
+    # nvidia-smi sees a GPU even when this torch build cannot use it -- most
+    # often a driver older than the torch build's CUDA needs (CUDA 13 builds
+    # need driver >= 580). Choosing it then fails at model load, so ask torch.
+    if not torch.cuda.is_available():
+        if torch.backends.mps.is_available():
+            return "mps"
+        import shutil
+
+        if shutil.which("nvidia-smi"):
+            logger.warning(
+                "An NVIDIA GPU is present but torch cannot use it (is the driver "
+                "older than this torch build's CUDA %s needs?); using CPU.",
+                torch.version.cuda,
+            )
+        return "cpu"
 
     # 1. Try nvidia-smi first (most reliable for physical GPU detection)
     try:
@@ -74,6 +108,18 @@ def get_best_device(device_preference: str = "auto") -> str:
                     except ValueError:
                         continue
 
+            # nvidia-smi numbers every physical GPU; torch numbers only the
+            # visible ones. Translate, or leave the choice to torch below when
+            # the mapping is unknown (UUIDs or MIG slices in CUDA_VISIBLE_DEVICES).
+            visible = _visible_physical_indices()
+            if visible is not None:
+                gpu_memory = [
+                    (visible.index(idx), free)
+                    for idx, free in gpu_memory
+                    if idx in visible
+                ]
+            gpu_memory = [g for g in gpu_memory if g[0] < torch.cuda.device_count()]
+
             if gpu_memory:
                 # Sort by free memory (descending) and select the GPU with most free VRAM
                 gpu_memory.sort(key=lambda x: x[1], reverse=True)
@@ -96,7 +142,6 @@ def get_best_device(device_preference: str = "auto") -> str:
         # Fallback: Get GPU with most free VRAM using PyTorch (less accurate but works)
         gpu_memory = []
         for i in range(torch.cuda.device_count()):
-            memory_allocated = torch.cuda.memory_allocated(i)
             memory_reserved = torch.cuda.memory_reserved(i)
             memory_total = torch.cuda.get_device_properties(i).total_memory
             memory_free = memory_total - memory_reserved

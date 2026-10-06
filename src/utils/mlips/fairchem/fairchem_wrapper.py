@@ -84,24 +84,13 @@ try:
 
     FAIRCHEM_AVAILABLE = True
 except ImportError as e:
-    import os
-
-    current_env = os.environ.get("CONDA_DEFAULT_ENV", "unknown")
-    # Only raise the environment error if we're clearly NOT in fairchem environment
-    # If we're in fairchem but import fails, it's a dependency issue, not environment issue
-    if "fairchem" not in current_env.lower() and "fairchem" not in str(e).lower():
-        raise ImportError(
-            f"FAIRCHEM is not available in the current conda environment '{current_env}'. "
-            f"FAIRCHEM models (UMA, ESEN) require the 'fairchem-agent' conda environment. "
-            f"Please run this code in the fairchem-agent environment:\n"
-            f"  conda activate fairchem-agent\n"
-            f"Or use subprocess execution via MLIPModelTool which handles this automatically.\n"
-            f"Original error: {e}"
-        ) from e
-    # If we're in fairchem environment but import fails, it's a dependency issue
-    # Allow the error to propagate so subprocess executor can handle it
-    FAIRCHEM_AVAILABLE = False
-    raise
+    raise ImportError(
+        "FairChem is not installed in this Python environment. FairChem models (UMA, "
+        "eSEN) run in the 'fairchem' environment; start the command through the "
+        "launcher, e.g.\n"
+        "  venv/run fairchem python <script>.py ...\n"
+        f"Original error: {e}"
+    ) from e
 
 
 class FAIRCHEMWrapper(MLIPModel):

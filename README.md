@@ -60,7 +60,7 @@ Tools are **strictly structured, fundamental operations** exposed as Python func
 ---
 
 ### ⚙️ Skills (Mid-Level Research Tutorials)
-[**Browse Skills →**](.agents/skills)
+[**Browse Skills →**](skills)
 
 Skills are **flexible tutorials** that combine multiple tool calls to solve focused research problems. Unlike tools, skills have **no fixed input/output type constraints**—the agent handles all data conversion and orchestration between steps.
 
@@ -70,11 +70,11 @@ Skills are **flexible tutorials** that combine multiple tool calls to solve focu
 - **Self-Documented**: Each skill includes instructions (`SKILL.md`), helper scripts, and examples
 
 **Examples:**
-- [**MLIP Benchmark**](.agents/skills/ml-mlip-benchmark/SKILL.md): Benchmark MLIP accuracy against a labeled dataset — compute MAE/RMSE and generate parity plots
-- [**Diffusion Analysis**](.agents/skills/mat-diffusion-analysis/SKILL.md): Compute diffusion coefficients and activation energies
-- [**Material Stability**](.agents/skills/mat-stability/SKILL.md): Calculate 0K thermodynamic stability and $E_{hull}$
-- [**Molecular Docking**](.agents/skills/drug-docking-vina/SKILL.md): Dock small-molecule ligands into a protein receptor using AutoDock Vina
-- [**Gas Sorption**](.agents/skills/chem-sorption-gcmc/SKILL.md): Calculate gas adsorption isotherms via Grand Canonical Monte Carlo (GCMC) simulations
+- [**MLIP Benchmark**](skills/ml-mlip-benchmark/SKILL.md): Benchmark MLIP accuracy against a labeled dataset — compute MAE/RMSE and generate parity plots
+- [**Diffusion Analysis**](skills/mat-diffusion-analysis/SKILL.md): Compute diffusion coefficients and activation energies
+- [**Material Stability**](skills/mat-stability/SKILL.md): Calculate 0K thermodynamic stability and $E_{hull}$
+- [**Molecular Docking**](skills/drug-docking-vina/SKILL.md): Dock small-molecule ligands into a protein receptor using AutoDock Vina
+- [**Gas Sorption**](skills/chem-sorption-gcmc/SKILL.md): Calculate gas adsorption isotherms via Grand Canonical Monte Carlo (GCMC) simulations
 
 
 ---
@@ -114,7 +114,7 @@ Workflow: "Find stable Li-ion conductors"
 ---
 
 ## Key Features
-[**Browse all skills →**](.agents/skills)
+[**Browse all skills →**](skills)
 
 ### 1. Simulation Infrastructure
 Multi-framework MLIP support (MACE, MatGL, FAIRCHEM) with unified relaxation, MD, and fine-tuning APIs. DFT integration for VASP input/output and electronic structure for periodic systems and ORCA input/output for molecular systems. HPC job management via Atomate2. Lattice-level cluster expansion and Monte Carlo via SMOL.
@@ -135,24 +135,48 @@ MatterGen (generative crystal design), MEGNet bandgap prediction, MLIP fine-tuni
 
 ## Quick Start & Setup
 
-AtomisticSkills is designed to be installed and operated by AI agents. For the fastest onboarding, follow these steps:
+### Option A — Install as a Claude Code Plugin (fastest)
 
-1. **Clone the repository**:
-   *(Optional: Fork the repository on GitHub first if you plan to contribute, then clone your fork instead)*
-   ```bash
-   git clone git@github.com:learningmatter-mit/AtomisticSkills.git
-   cd AtomisticSkills
-   ```
-2. **Open the repository** as a workspace in your preferred agentic IDE (e.g., [Cursor](https://www.cursor.com/), [Claude Code](https://code.claude.com/docs/en/overview), [Roo](https://roocode.com/), [Antigravity](https://antigravity.google), [OpenAI Codex](https://openai.com/codex/), [VS Code](https://code.visualstudio.com/)).
-3. **Ask the agent to install AtomisticSkills for you**:
-   ```text
-   Install AtomisticSkills according to its `docs/setup.md` guide.
-   ```
+Install AtomisticSkills directly as a Claude Code plugin with all skills and MCP servers pre-configured:
 
-The agent will read the [**Setup Guide**](docs/setup.md) and interactively guide you through creating environments, configuring API keys, and registering MCP servers.
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh        # skip if uv is installed
+claude plugin marketplace add learningmatter-mit/AtomisticSkills
+claude plugin install atomistic-skills@atomistic-skills
+```
 
-> [!TIP]
-> **Prefer manual installation?** If you want to configure everything yourself without an agent, read the [**Setup Guide**](docs/setup.md) for full manual instructions.
+The plugin automatically uses native `uv` execution when your system meets requirements, and falls back to pre-built container images when needed.
+
+### Option B — Clone the Repository (all agents & development)
+
+For Claude Code, OpenAI Codex, Cursor, Google Antigravity, Gemini, Windsurf, or skill development:
+
+```bash
+git clone git@github.com:learningmatter-mit/AtomisticSkills.git
+cd AtomisticSkills
+curl -LsSf https://astral.sh/uv/install.sh | sh        # skip if uv is installed
+venv/run --setup                                         # prepares cpu, mlip, fairchem
+python configure_mcp.py                                 # auto-detects and registers agents
+```
+
+To configure for a specific assistant and enable global access across all workspaces:
+```bash
+python configure_mcp.py --agent claude --scope global   # or codex, gemini, cursor, windsurf
+```
+
+### System Requirements & Runtime
+
+All skills and MCP servers run through the unified `venv/run` launcher across three `uv` environments (`cpu`, `mlip`, `fairchem`):
+- **OS**: Linux on x86_64 or aarch64.
+- **glibc**: ≥ 2.28 for `cpu`; aarch64 GPU stacks (`mlip`, `fairchem`) require glibc ≥ 2.34.
+- **Compiler**: A C compiler (`gcc`) and `uv` on `PATH` for source packages.
+- **GPU**: NVIDIA driver ≥ 525. `venv/run` picks the torch build by driver: CUDA 13 for ≥ 580 (needed by GB10/Blackwell), CUDA 12.6 otherwise.
+- **FairChem UMA**: gated on Hugging Face; request access at https://huggingface.co/facebook/UMA and set `HF_TOKEN`.
+- **Container Fallback**: Systems that do not meet native requirements (older clusters, macOS, or missing compilers) automatically fall back to container images (`docker`, `podman`, or `apptainer`).
+
+For full configuration options, HPC instructions, and API key setup, see the [**Setup Guide**](docs/setup.md).
+
+**Upgrading from 1.x?** 2.0.0 is not backward compatible (uv environments replace conda, skills moved to `skills/`, MatGL 4 drops DGL). See [**Upgrading to 2.0.0**](docs/changes/2.0.0-migration.md).
 
 ---
 
@@ -161,8 +185,8 @@ This project is optimized for use with coding AI copilots like **[Antigravity](h
 
 ### The `.agents/` Directory
 - **Rules (`.agents/rules/`)**: Contains project-specific standards, scientific constraints, and modeling guidelines. Coding agents automatically parse these to ensure all simulations and code follow best practices.
-- **Skills (`.agents/skills/`)**: Modular, reusable capabilities, typically at the scale of a single research task (e.g., calculate material's stability). Each skill is self-documented with instructions, scripts, and resources.
-- **Workflows (`.agents/workflows/`)**: Defines high level research procedures (e.g., workflow to design a new material). Coding agents can execute these step-by-step, managing the complex transitions between different conda environments and simulation stages.
+- **Skills (`skills/`)**: Modular, reusable capabilities, typically at the scale of a single research task (e.g., calculate material's stability). Each skill is self-documented with instructions, scripts, and resources.
+- **Workflows (`.agents/workflows/`)**: Defines high-level research procedures (e.g., workflow to design a new material). Coding agents can execute these step-by-step, managing transitions between simulation stages and environments.
 
 ---
 

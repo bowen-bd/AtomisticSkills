@@ -1022,7 +1022,7 @@
       <div class="stat-label">MCP Tools</div>
     </div>
     <div class="stat">
-      <div class="stat-num" id="stat-servers">17</div>
+      <div class="stat-num" id="stat-servers">10</div>
       <div class="stat-label">Tool Servers</div>
     </div>
     <div class="stat-arrow">
@@ -1249,7 +1249,7 @@
                   Ran background command</div>
                 <div
                   style="padding: 6px 12px; font-size: 0.70rem; font-family: 'JetBrains Mono', monospace; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                  ~/.../AtomisticSkills $ <span style="color: #000;">conda run -n matgl-agent python ...</span>
+                  ~/.../AtomisticSkills $ <span style="color: #000;">venv/run mlip python ...</span>
                 </div>
               </div>
               <div
@@ -1331,8 +1331,10 @@
     <div class="section-header">
       <div class="section-tag">Environments</div>
       <h2>Isolated Tool Environments</h2>
-      <p class="section-desc">Each environment is fully isolated to prevent dependency conflicts. Environments marked
-        <span class="env-tag">MCP</span> expose tools directly to your AI agent; others are used via skills scripts.
+      <p class="section-desc">Each environment is a uv project under <code>venv/</code>, created on first use by
+        <code>venv/run</code> (or run from a container image where the host cannot), so dependency conflicts stay
+        apart. Servers marked <span class="env-tag">MCP</span> expose tools directly to your AI agent; the others are
+        used through skill scripts.
       </p>
     </div>
     <div class="env-wrap">
@@ -1345,7 +1347,7 @@
             <tr>
               <th>MCP Server</th>
               <th style="text-align:center">Tools</th>
-              <th>Conda Env</th>
+              <th>Environment</th>
               <th>Core Libraries</th>
               <th>Purpose</th>
             </tr>
@@ -1354,75 +1356,70 @@
             <tr>
               <td><a href="servers/base.html" style="text-decoration:none"><span class="env-tag">base</span></a></td>
               <td style="text-align:center"></td>
-              <td>base-agent</td>
+              <td>cpu</td>
               <td>pymatgen, ase, rdkit, packmol</td>
               <td>MP queries, VASP I/O, structure tools</td>
             </tr>
             <tr>
+              <td><a href="servers/atomate2.html" style="text-decoration:none"><span class="env-tag">atomate2</span></a></td>
+              <td style="text-align:center"></td>
+              <td>cpu</td>
+              <td>atomate2, jobflow-remote</td>
+              <td>Remote DFT workflows via NERSC/HPC</td>
+            </tr>
+            <tr>
+              <td><a href="servers/drugdisc.html" style="text-decoration:none"><span class="env-tag">drugdisc</span></a></td>
+              <td style="text-align:center"></td>
+              <td>cpu</td>
+              <td>rdkit, autodock-vina, meeko</td>
+              <td>Docking, ADMET, fingerprints</td>
+            </tr>
+            <tr>
+              <td><a href="servers/smol.html" style="text-decoration:none"><span class="env-tag">smol</span></a></td>
+              <td style="text-align:center"></td>
+              <td>cpu</td>
+              <td>smol</td>
+              <td>Cluster expansion + Monte Carlo</td>
+            </tr>
+            <tr>
               <td><a href="servers/mace.html" style="text-decoration:none"><span class="env-tag">mace</span></a></td>
               <td style="text-align:center"></td>
-              <td>mace-agent</td>
+              <td>mlip</td>
               <td>mace-torch</td>
               <td>MACE models (MP, OMAT, MATPES, MH)</td>
             </tr>
             <tr>
               <td><a href="servers/matgl.html" style="text-decoration:none"><span class="env-tag">matgl</span></a></td>
               <td style="text-align:center"></td>
-              <td>matgl-agent</td>
-              <td>matgl, dgl</td>
+              <td>mlip</td>
+              <td>matgl (PyTorch Geometric)</td>
               <td>CHGNet, M3GNet, TensorNet</td>
             </tr>
             <tr>
-              <td><a href="servers/fairchem.html" style="text-decoration:none"><span class="env-tag">fairchem</span></a>
-              </td>
+              <td><a href="servers/fairchem.html" style="text-decoration:none"><span class="env-tag">fairchem</span></a></td>
               <td style="text-align:center"></td>
-              <td>fairchem-agent</td>
+              <td>fairchem</td>
               <td>fairchem-core</td>
-              <td>UMA, ESEN models (OMAT, OMol, OC20)</td>
+              <td>UMA, eSEN models (OMAT, OMol, OC20)</td>
             </tr>
             <tr>
-              <td><a href="servers/atomate2.html" style="text-decoration:none"><span class="env-tag">atomate2</span></a>
-              </td>
+              <td><a href="servers/mattergen.html" style="text-decoration:none"><span class="env-tag">mattergen</span></a></td>
               <td style="text-align:center"></td>
-              <td>atomate2-agent</td>
-              <td>atomate2, jobflow-remote</td>
-              <td>Remote DFT workflows via NERSC/HPC</td>
-            </tr>
-            <tr>
-              <td><a href="servers/smol.html" style="text-decoration:none"><span class="env-tag">smol</span></a></td>
-              <td style="text-align:center"></td>
-              <td>smol-agent</td>
-              <td>smol</td>
-              <td>Cluster expansion + Monte Carlo</td>
-            </tr>
-            <tr>
-              <td><a href="servers/drugdisc.html" style="text-decoration:none"><span class="env-tag">drugdisc</span></a>
-              </td>
-              <td style="text-align:center"></td>
-              <td>drugdisc-agent</td>
-              <td>rdkit, autodock-vina, meeko</td>
-              <td>Docking, ADMET, fingerprints</td>
-            </tr>
-            <tr>
-              <td><a href="servers/mattergen.html" style="text-decoration:none"><span
-                    class="env-tag">mattergen</span></a></td>
-              <td style="text-align:center"></td>
-              <td>mattergen-agent</td>
+              <td>mattergen</td>
               <td>MatterGen, PyG, lightning</td>
               <td>Generative crystal design</td>
             </tr>
             <tr>
               <td><a href="servers/adit.html" style="text-decoration:none"><span class="env-tag">adit</span></a></td>
               <td style="text-align:center"></td>
-              <td>adit-agent</td>
+              <td>adit</td>
               <td>ADiT, lightning, hydra, PyG</td>
               <td>All-atom diffusion generation</td>
             </tr>
             <tr>
-              <td><a href="servers/diffcsp.html" style="text-decoration:none"><span class="env-tag">diffcsp</span></a>
-              </td>
+              <td><a href="servers/diffcsp.html" style="text-decoration:none"><span class="env-tag">diffcsp</span></a></td>
               <td style="text-align:center"></td>
-              <td>diffcsp-agent</td>
+              <td>diffcsp</td>
               <td>DiffCSP++, hydra, PyG, pyxtal</td>
               <td>Symmetry-constrained crystal generation</td>
             </tr>
@@ -1431,47 +1428,37 @@
       </div>
       <p
         style="font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:.25rem 0 .2rem">
-        Script-Only Environments <span style="font-weight:400;text-transform:none;letter-spacing:0">(no MCP server —
-          invoked via conda run)</span></p>
+        Script Environments <span style="font-weight:400;text-transform:none;letter-spacing:0">(no MCP server —
+          invoked via <code>venv/run &lt;env&gt;</code>)</span></p>
       <div class="env-table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Conda Env</th>
+              <th>Environment</th>
               <th>Core Libraries</th>
               <th>Purpose</th>
             </tr>
           </thead>
           <tbody>
             <tr class="env-scripts">
-              <td>xrd-agent</td>
-              <td>DARA, pymatgen</td>
-              <td>XRD phase analysis &amp; Rietveld refinement</td>
+              <td>cpu</td>
+              <td>pycalphad, DARA, fipy, nmrsim, scine (x86_64)</td>
+              <td>CALPHAD, XRD refinement, phase field, NMR, ORCA drivers</td>
             </tr>
             <tr class="env-scripts">
-              <td>orca-agent</td>
-              <td>scine_utilities, scine_readuct, ase</td>
-              <td>DFT/CC single-points, TS optimization (ORCA)</td>
+              <td>msms</td>
+              <td>ms-pred (ICEBERG 2.1), DGL</td>
+              <td>LC-MS/MS spectrum prediction (x86_64)</td>
             </tr>
             <tr class="env-scripts">
-              <td>calphad-agent</td>
-              <td>pycalphad, pymatgen</td>
-              <td>CALPHAD phase &amp; property diagrams</td>
+              <td>reactot</td>
+              <td>React-OT, PyTorch</td>
+              <td>Transition state generation</td>
             </tr>
             <tr class="env-scripts">
-              <td>phasefield-agent</td>
-              <td>fipy, scipy, imageio</td>
-              <td>Phase-field simulations (Allen-Cahn, Cahn-Hilliard)</td>
-            </tr>
-            <tr class="env-scripts">
-              <td>nmr-agent</td>
-              <td>nmrsim, nmrglue</td>
-              <td>NMR prediction &amp; Wasserstein deconvolution</td>
-            </tr>
-            <tr class="env-scripts">
-              <td>react-ot-agent</td>
-              <td>PyTorch</td>
-              <td>Transition state generation via React-OT</td>
+              <td>scd</td>
+              <td>SelfConditionedDenoisingAtoms, PyG</td>
+              <td>Property prediction with SCD foundation models (x86_64)</td>
             </tr>
           </tbody>
         </table>

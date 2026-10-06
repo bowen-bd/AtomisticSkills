@@ -1,0 +1,102 @@
+{
+  "$comment": [
+    "Single source of truth for the container images and the MCP servers they",
+    "carry. Consumed by docker/render.py, which renders venv/servers.tsv (read by",
+    "venv/run), the mcpServers block of .claude-plugin/plugin.json, the in-image",
+    "server map and the build matrix of .github/workflows/build-images.yml.",
+    "Adding a server means editing this file and re-rendering.",
+    "",
+    "Every image installs uv projects from their venv/<venv>/uv.lock, the same",
+    "locks a host install uses, so a container is the same environment with a",
+    "newer glibc and the build tools already present:",
+    "",
+    "  venv   - one project (docker/Dockerfile).",
+    "  venvs  - several projects side by side, one per server, on a CUDA",
+    "           toolkit image that compiles what has no wheel for the platform",
+    "           (docker/Dockerfile.cuda): the generative stacks' PyG extensions",
+    "           on arm64."
+  ],
+  "registry": "ghcr.io/learningmatter-mit",
+  "repo_path": "/opt/atomisticskills",
+  "images": [
+    {
+      "name": "cpu",
+      "build": "uv",
+      "venv": "cpu",
+      "gpu": false,
+      "platforms": [
+        "linux/amd64",
+        "linux/arm64"
+      ],
+      "servers": {
+        "atomate2": "src.mcp_server.atomate2_server",
+        "base": "src.mcp_server.base_server",
+        "drugdisc": "src.mcp_server.drugdisc_server",
+        "smol": "src.mcp_server.smol_server"
+      },
+      "notes": "No torch. Carries every optional extra the architecture allows (openmm, docking; pymol on amd64 only)."
+    },
+    {
+      "name": "mlip",
+      "build": "uv",
+      "venv": "mlip",
+      "gpu": true,
+      "platforms": [
+        "linux/amd64",
+        "linux/arm64"
+      ],
+      "servers": {
+        "mace": "src.mcp_server.mace_server",
+        "matgl": "src.mcp_server.matgl_server"
+      },
+      "notes": "torch 2.14 with the CUDA 13 build (the host picks CUDA 12.6 on older drivers). Cannot host fairchem: mace-torch pins e3nn==0.4.4, fairchem-core needs e3nn>=0.5."
+    },
+    {
+      "name": "fairchem",
+      "build": "uv",
+      "venv": "fairchem",
+      "gpu": true,
+      "platforms": [
+        "linux/amd64",
+        "linux/arm64"
+      ],
+      "servers": {
+        "fairchem": "src.mcp_server.fairchem_server"
+      },
+      "notes": "torch 2.13 (fairchem-core requires torch~=2.13) with the CUDA 13 build."
+    },
+    {
+      "name": "generative",
+      "build": "uv",
+      "venvs": [
+        "adit",
+        "diffcsp",
+        "mattergen"
+      ],
+      "gpu": true,
+      "platforms": [
+        "linux/amd64",
+        "linux/arm64"
+      ],
+      "torch_cuda_arch_list": {
+        "linux/amd64": "7.5;8.0;8.6;8.9;9.0;10.0;12.0+PTX",
+        "linux/arm64": "12.1"
+      },
+      "servers": {
+        "adit": {
+          "venv": "adit",
+          "module": "src.mcp_server.adit_server"
+        },
+        "diffcsp": {
+          "venv": "diffcsp",
+          "module": "src.mcp_server.diffcsp_server"
+        },
+        "mattergen": {
+          "venv": "mattergen",
+          "module": "src.mcp_server.mattergen_server"
+        }
+      },
+      "notes": "Both platforms. On arm64 the image compiles torch-scatter/sparse/cluster with CUDA for TORCH_CUDA_ARCH_LIST (GB10: sm_121), since PyG publishes no aarch64 wheels; on amd64 it installs PyG's wheels, which need glibc 2.32, so hosts older than that (EL8) run these servers from the image."
+    }
+  ]
+}

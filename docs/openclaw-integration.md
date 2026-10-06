@@ -6,7 +6,7 @@
 
 ## Prerequisites
 
-- AtomisticSkills cloned and at least one conda environment installed (see `docs/setup.md`)
+- AtomisticSkills cloned, with `uv` available (see `docs/setup.md`; environments are created on first use)
 - OpenClaw installed (`npm install -g openclaw` or equivalent — see the OpenClaw docs)
 - `mcporter` CLI installed (used by OpenClaw to manage MCP servers)
 
@@ -47,7 +47,7 @@ absorb all of /home/<you>/Documents/AtomisticSkills into context. most crucially
 ```
 
 The agent will read and internalize:
-- `.agents/skills/` — all ~60 domain skills (melting point, docking, sorption, fine-tuning, etc.)
+- `skills/` — all ~60 domain skills (melting point, docking, sorption, fine-tuning, etc.)
 - `.agents/workflows/` — high-level research playbooks
 - `.agents/rules/` — coding, research, and plotting standards
 
@@ -130,8 +130,8 @@ Calculate the melting point of Ag using the solid-liquid coexistence method.
 ```
 
 The agent will:
-1. Discover the relevant skill by reading `.agents/skills/*/SKILL.md`
-2. Run scripts via the appropriate conda env (e.g., `micromamba run -n mace-agent python ...`)
+1. Discover the relevant skill by reading `skills/*/SKILL.md`
+2. Run scripts through the launcher in the skill's environment (e.g., `venv/run mlip python ...`)
 3. Call MCP tools via `mcporter call <server> <tool> <args>`
 4. Save outputs to `research/<date>_<description>/`
 

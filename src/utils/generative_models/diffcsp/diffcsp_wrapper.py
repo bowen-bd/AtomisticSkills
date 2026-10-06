@@ -19,8 +19,12 @@ from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
-# DiffCSP++ repo location
-DIFFCSP_REPO = Path("/home/bdeng/projects/DiffCSP-PP")
+# DiffCSP++ repo location: $DIFFCSP_REPO, else a DiffCSP-PP checkout next to this project
+DIFFCSP_REPO = Path(
+    os.environ.get(
+        "DIFFCSP_REPO", Path(__file__).resolve().parents[4].parent / "DiffCSP-PP"
+    )
+).expanduser()
 DIFFCSP_CHECKPOINTS = DIFFCSP_REPO / "checkpoints"
 
 # Available pre-trained models
@@ -160,7 +164,17 @@ REV_CHEMICAL_SYMBOLS = {ch: i for i, ch in enumerate(CHEMICAL_SYMBOLS)}
 
 
 def _ensure_diffcsp_importable() -> None:
-    """Ensure DiffCSP++ repo is on the Python path."""
+    """Ensure DiffCSP++ repo is on the Python path.
+
+    Raises:
+        FileNotFoundError: If the DiffCSP++ repository is not at DIFFCSP_REPO.
+    """
+    if not DIFFCSP_REPO.is_dir():
+        raise FileNotFoundError(
+            f"DiffCSP++ repository not found at {DIFFCSP_REPO}. Clone it with "
+            "'git clone https://github.com/jiaor17/DiffCSP-PP' next to this "
+            "project, or set the DIFFCSP_REPO environment variable to its path."
+        )
     repo_str = str(DIFFCSP_REPO)
     scripts_str = str(DIFFCSP_REPO / "scripts")
     if repo_str not in sys.path:

@@ -171,6 +171,25 @@ class MLIPModel(ABC):
         """
         return None
 
+    def _get_enabled_nvalchemi_model(self, use_nvalchemi: bool) -> Optional[Any]:
+        """Select the experimental batch backend only after explicit opt-in."""
+        if not use_nvalchemi:
+            return None
+
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import check_nvalchemi_available
+
+        model = self._get_nvalchemi_model() if check_nvalchemi_available() else None
+        if model is None:
+            logger.warning(
+                "NValchemi unavailable for this model; using sequential execution."
+            )
+        else:
+            logger.warning(
+                "Using experimental NValchemi batching. Toolkit 0.2.0 dynamics has "
+                "known correctness limitations; read skills/ml-mlip-nvalchemi/SKILL.md."
+            )
+        return model
+
     def validate_structure(self, structure: Any) -> bool:
         """
         Validate that a structure is compatible with the model.
@@ -284,6 +303,7 @@ class MLIPModel(ABC):
         fixed_atoms: Optional[List[int]] = None,
         extract_batch_results: bool = True,
         max_batch_atoms: Optional[int] = None,
+        use_nvalchemi: bool = False,
     ) -> Dict[str, Any]:
         """
         Relax one or multiple structures using the loaded model.
@@ -302,6 +322,7 @@ class MLIPModel(ABC):
             relax_cell: Whether to relax the unit cell (True) or just atomic positions (False).
             output_dir: Directory to save results. For batch mode, each structure gets a subdirectory.
             fixed_atoms: List of indices of atoms to keep fixed during relaxation (single mode only).
+            use_nvalchemi: Opt in to experimental NValchemi batching (default False).
             extract_batch_results: Whether to extract full trajectory / logs for all structures in batch mode.
             max_batch_atoms: Override the auto-detected atom budget for the NValchemi inflight live
                 batch.  When None (default) the budget is estimated from free VRAM.  Set a smaller
@@ -330,6 +351,7 @@ class MLIPModel(ABC):
                 output_dir,
                 extract_batch_results=extract_batch_results,
                 max_batch_atoms=max_batch_atoms,
+                use_nvalchemi=use_nvalchemi,
             )
         else:
             # SINGLE STRUCTURE MODE
@@ -411,7 +433,7 @@ class MLIPModel(ABC):
 
             OptClass = getattr(ase.optimize, optimizer)
             opt = OptClass(opt_atoms, logfile=log_file, trajectory=traj_file)
-            opt.run(fmax=fmax, steps=steps)
+            converged = bool(opt.run(fmax=fmax, steps=steps))
 
             # Clear constraints before returning/saving
             final_struct = atoms
@@ -434,6 +456,9 @@ class MLIPModel(ABC):
                     f.write(str(energy_val))
 
             return {
+                "status": "success" if converged else "not_converged",
+                "converged": converged,
+                "steps": opt.nsteps,
                 "energy": energy_val,
                 "trajectory_path": traj_file,
                 "log_path": log_file,
@@ -497,31 +522,29 @@ class MLIPModel(ABC):
         output_dir: Optional[str],
         extract_batch_results: bool = True,
         max_batch_atoms: Optional[int] = None,
+        use_nvalchemi: bool = False,
     ) -> Dict[str, Any]:
-        """Dispatch batch relaxation to NValchemi GPU path or sequential fallback."""
-        from src.utils.mlips.nvalchemi.nvalchemi_utils import check_nvalchemi_available
-
-        if check_nvalchemi_available():
-            nv_model = self._get_nvalchemi_model()
-            if nv_model is not None:
-                try:
-                    return self._batch_relax_nvalchemi(
-                        nv_model=nv_model,
-                        structure_data=structure_data,
-                        fmax=fmax,
-                        steps=steps,
-                        relax_cell=relax_cell,
-                        output_dir=output_dir,
-                        extract_batch_results=extract_batch_results,
-                        max_batch_atoms=max_batch_atoms,
-                    )
-                except ValueError as exc:
-                    if "Per-system shift count" not in str(exc):
-                        raise
-                    logger.warning(
-                        "NValchemi neighbor-list overflow during batch relaxation; "
-                        "falling back to sequential relaxation."
-                    )
+        """Use sequential relaxation unless NValchemi is explicitly requested."""
+        nv_model = self._get_enabled_nvalchemi_model(use_nvalchemi)
+        if nv_model is not None:
+            try:
+                return self._batch_relax_nvalchemi(
+                    nv_model=nv_model,
+                    structure_data=structure_data,
+                    fmax=fmax,
+                    steps=steps,
+                    relax_cell=relax_cell,
+                    output_dir=output_dir,
+                    extract_batch_results=extract_batch_results,
+                    max_batch_atoms=max_batch_atoms,
+                )
+            except ValueError as exc:
+                if "Per-system shift count" not in str(exc):
+                    raise
+                logger.warning(
+                    "NValchemi neighbor-list overflow during batch relaxation; "
+                    "falling back to sequential relaxation."
+                )
         return self._batch_relax_sequential(
             structure_data, fmax, steps, optimizer, relax_cell, output_dir
         )
@@ -543,19 +566,19 @@ class MLIPModel(ABC):
         from src.utils.mlips.nvalchemi.nvalchemi_utils import (
             ForceStressClippingHook,
             PositionWrappingHook,
+            RelaxStepCountHook,
             atoms_to_atomic_data,
             extract_batch_results as extract_batch_results_fn,
+            relax_convergence_hook,
+            warp_on_torch_stream,
         )
 
-        os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
         try:
             from nvalchemi.data import Batch
-            from nvalchemi.dynamics.base import DynamicsStage, ConvergenceHook
+            from nvalchemi.dynamics.base import DynamicsStage
             from nvalchemi.dynamics.optimizers.fire import FIRE
-            from src.utils.mlips.nvalchemi.nvalchemi_utils import (
-                ScaledFIRE2VariableCell,
-            )
-            from nvalchemi.hooks.neighbor_list import NeighborListHook
+            from nvalchemi.dynamics.optimizers.fire2 import FIRE2VariableCell
+            from src.utils.mlips.nvalchemi.neighbor_list import make_neighbor_list_hook
         except ImportError as e:
             logger.warning(f"NValchemi import failed: {e}; falling back to sequential.")
             return self._batch_relax_sequential(
@@ -600,9 +623,7 @@ class MLIPModel(ABC):
             atoms_list.append(atoms)
 
         # Switch to inflight mode when all structures would exceed GPU memory.
-        # Models that set _nvalchemi_supports_inflight=False (e.g. CHGNet, M3GNet)
-        # skip inflight: their COO-format NeighborListHook triggers a CUDA OOB
-        # during graduation, a known limitation of the custom wrappers.
+        # A model wrapper can opt out with _nvalchemi_supports_inflight=False.
         total_atoms = sum(len(a) for a in atoms_list)
         if max_batch_atoms is None:
             max_batch_atoms = self._estimate_max_batch_atoms(device, model=nv_model)
@@ -633,17 +654,22 @@ class MLIPModel(ABC):
             atoms_to_atomic_data(a, device=device, dtype=torch.float32)
             for a in atoms_list
         ]
+        for data in data_list:
+            data.add_system_property(
+                "relax_steps", torch.zeros(1, 1, dtype=torch.long, device=device)
+            )
         batch = Batch.from_data_list(data_list)
         batch.status = torch.zeros(batch.num_graphs, dtype=torch.int32, device=device)
 
         if relax_cell:
-            optimizer_obj = ScaledFIRE2VariableCell(
+            optimizer_obj = FIRE2VariableCell(
                 model=nv_model,
                 dt=0.05,
+                tmax=0.5,
+                delaystep=5,
+                maxstep=0.2,
                 n_steps=steps,
-                convergence_hook=ConvergenceHook.from_fmax(
-                    threshold=fmax, source_status=0, target_status=1
-                ),
+                convergence_hook=relax_convergence_hook(fmax, relax_cell=True),
             )
             optimizer_obj._mutable_fields = ("positions", "velocities", "cell")
         else:
@@ -651,18 +677,17 @@ class MLIPModel(ABC):
                 model=nv_model,
                 dt=0.5,
                 n_steps=steps,
-                convergence_hook=ConvergenceHook.from_fmax(
-                    threshold=fmax, source_status=0, target_status=1
-                ),
+                convergence_hook=relax_convergence_hook(fmax, relax_cell=False),
             )
 
         if optimizer_obj.convergence_hook is not None:
             optimizer_obj.register_hook(optimizer_obj.convergence_hook)
+        optimizer_obj.register_hook(RelaxStepCountHook(DynamicsStage.BEFORE_STEP))
         optimizer_obj.register_hook(
             PositionWrappingHook(stage=DynamicsStage.BEFORE_COMPUTE)
         )
         if getattr(nv_model.model_config, "neighbor_config", None) is not None:
-            nl_hook = NeighborListHook(
+            nl_hook = make_neighbor_list_hook(
                 nv_model.model_config.neighbor_config,
                 stage=DynamicsStage.BEFORE_COMPUTE,
             )
@@ -719,7 +744,9 @@ class MLIPModel(ABC):
         if memory_sink is not None:
             memory_sink.write(batch)
 
-        with optimizer_obj:
+        # Entering the optimizer switches PyTorch to a dedicated CUDA stream;
+        # bind Warp to it second so the neighbor-list kernels follow.
+        with optimizer_obj, warp_on_torch_stream(device):
             final_batch = optimizer_obj.run(batch)
 
         # Reconstruct trajectory and log for each structure using unified extraction helper
@@ -732,14 +759,19 @@ class MLIPModel(ABC):
         )
 
         n_success = sum(1 for r in results if r["status"] == "success")
-        n_failed = len(results) - n_success
-        logger.info(f"NValchemi batch relaxation: {n_success} OK, {n_failed} failed")
+        n_not_converged = sum(r["status"] == "not_converged" for r in results)
+        n_failed = sum(r["status"] == "failed" for r in results)
+        logger.info(
+            f"NValchemi batch relaxation: {n_success} converged, "
+            f"{n_not_converged} not converged, {n_failed} failed"
+        )
 
         return {
             "mode": "batch",
             "backend": "nvalchemi",
             "total_structures": len(results),
             "successful": n_success,
+            "not_converged": n_not_converged,
             "failed": n_failed,
             "output_dir": output_dir,
             "results": results,
@@ -804,12 +836,15 @@ class MLIPModel(ABC):
         import os
         import torch
 
-        os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
         from nvalchemi.dynamics import SizeAwareSampler
-        from nvalchemi.dynamics.base import ConvergenceHook, DynamicsStage, FusedStage
+        from nvalchemi.dynamics.base import DynamicsStage, FusedStage
         from nvalchemi.dynamics.optimizers.fire import FIRE
-        from src.utils.mlips.nvalchemi.nvalchemi_utils import ScaledFIRE2VariableCell
-        from nvalchemi.hooks.neighbor_list import NeighborListHook
+        from nvalchemi.dynamics.optimizers.fire2 import FIRE2VariableCell
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import (
+            relax_convergence_hook,
+            warp_on_torch_stream,
+        )
+        from src.utils.mlips.nvalchemi.neighbor_list import make_neighbor_list_hook
         from pymatgen.io.ase import AseAtomsAdaptor
         from src.utils.mlips.nvalchemi.nvalchemi_utils import (
             AtomsDataset,
@@ -817,6 +852,7 @@ class MLIPModel(ABC):
             HostMemoryWithSystemId,
             PositionWrappingHook,
             RelaxLogHook,
+            RelaxStepCountHook,
             atomic_data_to_atoms,
         )
 
@@ -847,10 +883,17 @@ class MLIPModel(ABC):
                 final_energy = atoms.get_potential_energy()
                 with open(os.path.join(out_dir, "relaxed_energy.txt"), "w") as f:
                     f.write(f"{final_energy}\n")
-                # Determine converged status from actual forces rather than relying
-                # on graduation reason (could be converged or step-budget exhausted).
                 fmax_actual = float(data_cpu["forces"].norm(dim=-1).max().item())
-                converged = fmax_actual < fmax
+                # FusedStage uses status=1 for both convergence and budget
+                # exhaustion. Re-evaluate the same force AND cell criteria.
+                from nvalchemi.data import Batch
+
+                converged = (
+                    relax_convergence_hook(fmax, relax_cell).evaluate(
+                        Batch.from_data_list([data_cpu])
+                    )
+                    is not None
+                )
                 saved_to_disk[orig_idx] = {
                     "structure_name": struct_name,
                     "status": "success" if converged else "not_converged",
@@ -858,6 +901,7 @@ class MLIPModel(ABC):
                     "cif_path": cif_path,
                     "output_dir": out_dir,
                     "converged": converged,
+                    "steps": int(data_cpu.relax_steps.item()),
                 }
                 logger.debug(
                     f"Graduated [{orig_idx}] {struct_name}: "
@@ -887,15 +931,16 @@ class MLIPModel(ABC):
         )
 
         if relax_cell:
-            fire_stage = ScaledFIRE2VariableCell(
+            fire_stage = FIRE2VariableCell(
                 model=nv_model,
                 dt=0.05,
+                tmax=0.5,
+                delaystep=5,
+                maxstep=0.2,
                 # Per-system step budget: structures graduate after `steps` FIRE
                 # steps even if fmax never drops below threshold.
                 n_steps=steps,
-                convergence_hook=ConvergenceHook.from_fmax(
-                    threshold=fmax, source_status=0, target_status=1
-                ),
+                convergence_hook=relax_convergence_hook(fmax, relax_cell=True),
             )
         else:
             fire_stage = FIRE(
@@ -904,9 +949,7 @@ class MLIPModel(ABC):
                 # Per-system step budget: structures graduate after `steps` FIRE
                 # steps even if fmax never drops below threshold.
                 n_steps=steps,
-                convergence_hook=ConvergenceHook.from_fmax(
-                    threshold=fmax, source_status=0, target_status=1
-                ),
+                convergence_hook=relax_convergence_hook(fmax, relax_cell=False),
             )
 
         neighbor_config = getattr(nv_model.model_config, "neighbor_config", None)
@@ -929,9 +972,12 @@ class MLIPModel(ABC):
         # This also covers the initial "prime forces" call in FusedStage.run().
 
         fused.register_hook(PositionWrappingHook(stage=DynamicsStage.BEFORE_COMPUTE))
+        fused.register_hook(RelaxStepCountHook(DynamicsStage.BEFORE_STEP))
         if neighbor_config is not None:
             fused.register_hook(
-                NeighborListHook(neighbor_config, stage=DynamicsStage.BEFORE_COMPUTE)
+                make_neighbor_list_hook(
+                    neighbor_config, stage=DynamicsStage.BEFORE_COMPUTE
+                )
             )
         fused.register_hook(
             ForceStressClippingHook(
@@ -956,7 +1002,7 @@ class MLIPModel(ABC):
         )
 
         nv_model.eval()
-        with fused:
+        with fused, warp_on_torch_stream(device):
             remaining_batch = fused.run(batch=None, n_steps=total_step_budget)
 
         if remaining_batch is None:
@@ -1021,6 +1067,7 @@ class MLIPModel(ABC):
                         "cif_path": cif_path,
                         "output_dir": out_dir,
                         "converged": False,
+                        "steps": int(remaining_by_id[i].relax_steps.item()),
                     }
                 )
             except Exception as e:
@@ -1153,7 +1200,7 @@ class MLIPModel(ABC):
                         results.append(
                             {
                                 "structure_name": struct_name,
-                                "status": "success",
+                                "status": relax_result["status"],
                                 "energy": relax_result.get("energy"),
                                 "output_dir": struct_output,
                                 **{
@@ -1164,7 +1211,8 @@ class MLIPModel(ABC):
                             }
                         )
                         logger.info(
-                            f"Successfully relaxed {struct_name} ({idx+1}/{len(structure_list)})"
+                            f"Relaxed {struct_name}: {relax_result['status']} "
+                            f"({idx + 1}/{len(structure_list)})"
                         )
 
                 except Exception as e:
@@ -1182,10 +1230,12 @@ class MLIPModel(ABC):
 
             # Summary
             n_success = sum(1 for r in results if r["status"] == "success")
-            n_failed = len(results) - n_success
+            n_not_converged = sum(r["status"] == "not_converged" for r in results)
+            n_failed = sum(r["status"] == "failed" for r in results)
 
             logger.info(
-                f"Batch relaxation complete: {n_success} successful, {n_failed} failed"
+                f"Batch relaxation complete: {n_success} converged, "
+                f"{n_not_converged} not converged, {n_failed} failed"
             )
 
             return {
@@ -1193,6 +1243,7 @@ class MLIPModel(ABC):
                 "backend": "sequential",
                 "total_structures": len(results),
                 "successful": n_success,
+                "not_converged": n_not_converged,
                 "failed": n_failed,
                 "output_dir": output_dir,
                 "results": results,
@@ -1205,10 +1256,13 @@ class MLIPModel(ABC):
             return {"error": f"Batch relaxation failed: {str(e)}"}
 
     def static_calculation(
-        self, structure_data: Any
+        self, structure_data: Any, use_nvalchemi: bool = False
     ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         """
         Run static calculation (predict energy, forces, stress) for a structure.
+
+        Batches use the native calculator sequentially by default. Set
+        use_nvalchemi=True to opt in to experimental NValchemi batching.
         """
         if not self.is_loaded:
             return {"error": "Model not loaded. Please call load_model first."}
@@ -1220,17 +1274,12 @@ class MLIPModel(ABC):
         )
 
         if is_batch:
-            # Try NValchemi GPU-parallel static batch first
-            from src.utils.mlips.nvalchemi.nvalchemi_utils import (
-                check_nvalchemi_available,
-            )
-
-            if check_nvalchemi_available():
-                nv_model = self._get_nvalchemi_model()
-                if nv_model is not None:
-                    result = self._batch_static_nvalchemi(nv_model, structure_data)
-                    if "error" not in result:
-                        return result
+            # NValchemi is an experimental, explicitly selected batch backend.
+            nv_model = self._get_enabled_nvalchemi_model(use_nvalchemi)
+            if nv_model is not None:
+                result = self._batch_static_nvalchemi(nv_model, structure_data)
+                if "error" not in result:
+                    return result
 
             # Sequential fallback
             structure_list = []
@@ -1374,12 +1423,12 @@ class MLIPModel(ABC):
         from src.utils.mlips.nvalchemi.nvalchemi_utils import (
             atoms_to_atomic_data,
             extract_batch_results as extract_batch_results_fn,
+            warp_on_torch_stream,
         )
 
-        # Models that set _nvalchemi_supports_batch_md=False (e.g. TensorNet)
-        # opt out of batched MD: their light forward pass races the asynchronous
-        # Warp neighbor-list kernel inside the per-step NeighborListHook, raising
-        # NeighborOverflowError. Fall back to sequential MD.
+        # Models that set _nvalchemi_supports_batch_md=False (e.g. FairChem,
+        # where a batched step is slower than sequential) fall back to
+        # sequential MD.
         if not getattr(nv_model, "_nvalchemi_supports_batch_md", True):
             return {
                 "error": (
@@ -1402,7 +1451,7 @@ class MLIPModel(ABC):
         try:
             from nvalchemi.data import Batch
             from nvalchemi.dynamics.base import DynamicsStage
-            from nvalchemi.hooks.neighbor_list import NeighborListHook
+            from src.utils.mlips.nvalchemi.neighbor_list import make_neighbor_list_hook
             from nvalchemi.dynamics._ops.thermostat_utils import initialize_velocities
             from nvalchemi.dynamics.integrators.nve import NVE
             from nvalchemi.dynamics.integrators.nvt_nose_hoover import NVTNoseHoover
@@ -1506,7 +1555,7 @@ class MLIPModel(ABC):
                 return {"error": f"Unknown ensemble '{ensemble}'."}
 
             if getattr(nv_model.model_config, "neighbor_config", None) is not None:
-                nl_hook = NeighborListHook(
+                nl_hook = make_neighbor_list_hook(
                     nv_model.model_config.neighbor_config,
                     stage=DynamicsStage.BEFORE_COMPUTE,
                 )
@@ -1523,7 +1572,7 @@ class MLIPModel(ABC):
                 # Write initial step 0 state
                 memory_sink.write(batch)
 
-            with integrator:
+            with integrator, warp_on_torch_stream(device):
                 final_batch = integrator.run(batch)
 
             # Reconstruct trajectory and log for each structure using unified extraction helper
@@ -1786,6 +1835,7 @@ class MLIPModel(ABC):
         monitor_params: Optional[Dict[str, Any]] = None,
         supercell_min_length: Optional[float] = None,
         extract_batch_results: bool = True,
+        use_nvalchemi: bool = False,
     ) -> Dict[str, Any]:
         """
         Run molecular dynamics simulation using MatCalc.
@@ -1805,6 +1855,7 @@ class MLIPModel(ABC):
             monitor_type: Type of monitoring ("melting", "explosion", "overshoot", "volume") or list of types.
             monitor_params: Optional dictionary of parameters for the monitors (e.g., upper_limit_ratio).
             supercell_min_length: Minimum length (Å) for each lattice vector. Automatically expands supercell. Set None to disable.
+            use_nvalchemi: Opt in to experimental NValchemi batching (default False).
             extract_batch_results: Whether to extract full trajectory / logs for all structures in batch mode.
 
         Returns:
@@ -1869,29 +1920,26 @@ class MLIPModel(ABC):
             except Exception:
                 output_dir = f"batch_md_{temperature}K"
 
-        # Try NValchemi GPU-parallel MD
-        from src.utils.mlips.nvalchemi.nvalchemi_utils import check_nvalchemi_available
-
-        if check_nvalchemi_available():
-            nv_model = self._get_nvalchemi_model()
-            if nv_model is not None:
-                nv_result = self._batch_md_nvalchemi(
-                    nv_model=nv_model,
-                    structure_list=structure_list,
-                    structure_names=structure_names,
-                    temperature=temperature,
-                    steps=steps,
-                    timestep=timestep,
-                    ensemble=ensemble,
-                    output_dir=output_dir,
-                    log_interval=log_interval,
-                    extract_batch_results=extract_batch_results,
-                )
-                if "error" not in nv_result:
-                    return nv_result
-                logger.warning(
-                    f"NValchemi MD failed ({nv_result.get('error')}); falling back to sequential."
-                )
+        # Opt in to experimental NValchemi GPU-parallel MD.
+        nv_model = self._get_enabled_nvalchemi_model(use_nvalchemi)
+        if nv_model is not None:
+            nv_result = self._batch_md_nvalchemi(
+                nv_model=nv_model,
+                structure_list=structure_list,
+                structure_names=structure_names,
+                temperature=temperature,
+                steps=steps,
+                timestep=timestep,
+                ensemble=ensemble,
+                output_dir=output_dir,
+                log_interval=log_interval,
+                extract_batch_results=extract_batch_results,
+            )
+            if "error" not in nv_result:
+                return nv_result
+            logger.warning(
+                f"NValchemi MD failed ({nv_result.get('error')}); falling back to sequential."
+            )
 
         os.makedirs(output_dir, exist_ok=True)
         results = []
@@ -1955,6 +2003,7 @@ class MLIPModel(ABC):
 
         return {
             "mode": "batch",
+            "backend": "sequential",
             "total_jobs": len(results),
             "successful": n_success,
             "failed": n_failed,

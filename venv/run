@@ -1,0 +1,744 @@
+#!/usr/bin/env bash
+# Run AtomisticSkills code -- a skill script or an MCP server -- in the right
+# Python environment, on whichever backend this machine supports.
+#
+# Usage:
+#   venv/run <venv>[+<extra>...] <command> [args...]
+#       Run a command in one of the uv projects under venv/, e.g.
+#         venv/run mlip python skills/mat-phonon/scripts/calculate_phonon.py --help
+#         venv/run cpu+openmm python skills/drug-protein-prep/scripts/prepare_protein.py ...
+#   venv/run --server <name>
+#       Start an MCP server over stdio. plugin.json and configure_mcp.py call this.
+#   venv/run --setup [venv|image...]
+#       Create the environments (or fetch their images) now instead of on first
+#       use -- several GB for mlip and fairchem. Without arguments: cpu, mlip
+#       and fairchem; name a research stack (adit, diffcsp, mattergen, ...) to
+#       add it. Naming an image, e.g. `--setup generative`, fetches it too. Apptainer users should run
+#       this once before starting Claude Code: converting an image to a SIF
+#       takes minutes, longer than an MCP client waits for a server.
+#   venv/run --doctor
+#       Report what this machine supports and which backend each venv uses.
+#
+# Backend: ATOMISTIC_RUNTIME, else the config file below, else "auto".
+#   uv         the uv project under venv/ on this host
+#   docker | podman | apptainer | singularity
+#              the published image built from the same uv.lock, run with the
+#              same paths mounted, so a command needs no changes
+#   auto       uv when this host can run the environment (uv installed, Linux,
+#              glibc new enough per venv/platforms.tsv), otherwise the first
+#              container runtime found
+#
+# Settings come from the environment, else from ~/.config/atomistic_skills.yaml
+# -- the same file that holds API keys such as MP_API_KEY -- as plain
+# "KEY: value" lines: ATOMISTIC_RUNTIME, ATOMISTIC_IMAGE_REGISTRY, ATOMISTIC_IMAGE_TAG.
+#
+# stdout belongs to the command, and is the MCP transport in --server mode, so
+# every diagnostic here goes to stderr.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd -P)"
+VENV_DIR="${ROOT}/venv"
+SERVERS_TABLE="${VENV_DIR}/servers.tsv"
+PLATFORMS_TABLE="${VENV_DIR}/platforms.tsv"
+# The user config src/utils/config_utils.py reads (with its legacy location).
+CONFIG_FILE="$HOME/.config/atomistic_skills.yaml"
+[[ -f "$CONFIG_FILE" || ! -f "$HOME/.atomistic_skills.yaml" ]] || CONFIG_FILE="$HOME/.atomistic_skills.yaml"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/atomisticskills"
+
+log() { printf 'atomisticskills: %s\n' "$*" >&2; }
+die() { log "$*"; exit 1; }
+
+# --- configuration ------------------------------------------------------------
+
+# Read the launcher's keys from the config without sourcing it, and never
+# override the environment.
+if [[ -f "$CONFIG_FILE" ]]; then
+    while IFS= read -r line; do
+        key="${line%%:*}"
+        value="$(sed -E 's/^[^:]+:[[:space:]]*//; s/[[:space:]]+#.*$//; s/^["'\'']//; s/["'\'']$//' <<<"$line")"
+        [[ -z "${!key:-}" && -n "$value" ]] && export "$key=$value"
+    done < <(grep -E '^(ATOMISTIC_RUNTIME|ATOMISTIC_IMAGE_REGISTRY|ATOMISTIC_IMAGE_TAG)[[:space:]]*:' "$CONFIG_FILE" || true)
+fi
+
+RUNTIME="${ATOMISTIC_RUNTIME:-auto}"
+case "${ATOMISTIC_TORCH_CUDA:-}" in ""|cu126|cu130) ;; *) echo "atomisticskills: ATOMISTIC_TORCH_CUDA must be cu126 or cu130, not '${ATOMISTIC_TORCH_CUDA}'" >&2; exit 1 ;; esac
+# An unset plugin option arrives as an empty string; treat it as the default.
+[[ -n "$RUNTIME" ]] || RUNTIME=auto
+REGISTRY="${ATOMISTIC_IMAGE_REGISTRY:-ghcr.io/learningmatter-mit}"
+TAG="${ATOMISTIC_IMAGE_TAG:-$(tr -d '[:space:]' < "${ROOT}/VERSION")}"
+MODEL_CACHE="${ATOMISTIC_MODEL_CACHE:-$HOME/.cache/atomisticskills}"
+CONTAINER_RUNTIMES=(apptainer singularity docker podman)
+
+case "$(uname -m)" in
+    x86_64|amd64)  ARCH=x86_64;  OCI_ARCH=amd64 ;;
+    aarch64|arm64) ARCH=aarch64; OCI_ARCH=arm64 ;;
+    *)             ARCH="$(uname -m)"; OCI_ARCH="$ARCH" ;;
+esac
+
+# Credentials the code reads from the environment. Forwarded into containers
+# only when set, so an unset variable does not arrive as an empty one.
+CREDENTIALS=(MP_API_KEY HF_TOKEN OPENALEX_EMAIL ELSEVIER_API_KEY ELSEVIER_INST_TOKEN
+             SPRINGER_API_KEY UNPAYWALL_EMAIL RXN_API_KEY ORCA_BINARY_PATH VASP_COMMAND)
+
+# --- host capability ------------------------------------------------------------
+
+glibc_version() {
+    local v
+    v="$(getconf GNU_LIBC_VERSION 2>/dev/null | awk '{print $2}')" || true
+    [[ -n "$v" ]] || v="$(ldd --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+$')" || true
+    printf '%s' "${v:-0}"
+}
+
+version_ge() {  # version_ge A B: true when A >= B
+    [[ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | head -1)" == "$2" ]]
+}
+
+# min_glibc VENV EXTRA -> the floor recorded for this architecture, or "unavailable..."
+min_glibc() {
+    awk -F'\t' -v v="$1" -v e="$2" -v a="$ARCH" \
+        '$1 == v && $2 == e && $3 == a { print $4; found = 1 } END { if (!found) print "unknown" }' \
+        "$PLATFORMS_TABLE"
+}
+
+# host_supports_uv VENV EXTRAS... -> 0 when uv can install the set here, else
+# prints the reason and returns 1.
+host_supports_uv() {
+    local venv="$1"; shift
+    if [[ "$(uname -s)" != "Linux" ]]; then
+        echo "the uv environments are built for Linux; this host is $(uname -s)"; return 1
+    fi
+    if [[ "$ARCH" != x86_64 && "$ARCH" != aarch64 ]]; then
+        echo "the uv environments are built for x86_64 and aarch64; this host is $ARCH"; return 1
+    fi
+    if ! command -v uv >/dev/null 2>&1; then
+        echo "uv is not installed (install: curl -LsSf https://astral.sh/uv/install.sh | sh)"; return 1
+    fi
+    local glibc need extra
+    glibc="$(glibc_version)"
+    for extra in - "$@"; do
+        need="$(min_glibc "$venv" "$extra")"
+        case "$need" in
+            unknown) continue ;;
+            unavailable*)
+                local what="$venv"; [[ "$extra" != - ]] && what="${venv}+${extra}"
+                echo "'${what}' is not available natively on ${ARCH} (${need#unavailable:})"; return 1 ;;
+        esac
+        if ! version_ge "$glibc" "$need"; then
+            local what="$venv"; [[ "$extra" != - ]] && what="${venv}+${extra}"
+            echo "'${what}' needs glibc >= ${need}; this host has ${glibc}"; return 1
+        fi
+    done
+    # A few packages ship no wheel and compile on install (smol everywhere;
+    # MDAnalysis, pycalphad and others on aarch64), so building an environment
+    # needs a C compiler. Running one that already exists does not.
+    if ! uv_is_synced "$venv" "$@" && ! command -v cc >/dev/null 2>&1 && ! command -v gcc >/dev/null 2>&1; then
+        echo "creating the '${venv}' environment needs a C compiler (gcc), and none is on PATH"; return 1
+    fi
+    return 0
+}
+
+first_container_runtime() {
+    local c
+    for c in "${CONTAINER_RUNTIMES[@]}"; do
+        command -v "$c" >/dev/null 2>&1 && { echo "$c"; return 0; }
+    done
+    return 1
+}
+
+# choose_backend VENV EXTRAS... -> uv or a container runtime name
+choose_backend() {
+    local venv="$1"; shift
+    case "$RUNTIME" in
+        uv)
+            local why
+            if ! why="$(host_supports_uv "$venv" "$@")"; then
+                log "warning: ATOMISTIC_RUNTIME=uv, but ${why}"
+            fi
+            echo uv ;;
+        docker|podman|apptainer|singularity)
+            if ! command -v "$RUNTIME" >/dev/null 2>&1; then
+                # Name what the host does have: Claude Code reports a missing
+                # binary as the baffling 'Executable not found in $PATH: "stdio"'.
+                local found=""
+                for rt in "${CONTAINER_RUNTIMES[@]}"; do command -v "$rt" >/dev/null 2>&1 && found="$found $rt"; done
+                command -v uv >/dev/null 2>&1 && found="$found uv"
+                die "runtime '${RUNTIME}' is not on PATH. Available on this host:${found:- nothing}.
+       Change the plugin's 'runtime' option (or ATOMISTIC_RUNTIME in the environment or ${CONFIG_FILE});
+       'auto' picks uv when the host can run it and a container runtime otherwise."
+            fi
+            echo "$RUNTIME" ;;
+        auto)
+            local why rt
+            if why="$(host_supports_uv "$venv" "$@")"; then echo uv; return 0; fi
+            if rt="$(first_container_runtime)"; then
+                log "using ${rt}: ${why}"
+                echo "$rt"; return 0
+            fi
+            if command -v uv >/dev/null 2>&1; then
+                die "cannot run this environment natively: ${why}.
+       Install a container runtime (apptainer on HPC clusters, docker elsewhere)
+       and this falls back to it automatically, with no other change."
+            fi
+            die "cannot run this environment: ${why}.
+       Install uv (curl -LsSf https://astral.sh/uv/install.sh | sh),
+       or a container runtime (apptainer on HPC clusters, docker elsewhere)." ;;
+        *)
+            die "unknown ATOMISTIC_RUNTIME '${RUNTIME}' (expected auto, uv, docker, podman, apptainer or singularity)" ;;
+    esac
+}
+
+# --- workspace ------------------------------------------------------------------
+
+# The directory that holds research/ -- the same rule as
+# src/utils/research_utils.workspace_root(), so scripts, servers and containers
+# agree: an explicit ATOMISTIC_WORKSPACE, else the repository when working
+# inside the checkout, else the current directory (the user's project).
+workspace() {
+    if [[ -n "${ATOMISTIC_WORKSPACE:-}" ]]; then
+        printf '%s' "$ATOMISTIC_WORKSPACE"
+    elif [[ -n "${ATOMISTIC_WORK_DIR:-}" ]]; then  # the 1.4 plugin option
+        printf '%s' "$ATOMISTIC_WORK_DIR"
+    else
+        local here; here="$(pwd -P)"
+        if [[ "$here" == "$ROOT" || "$here" == "$ROOT"/* ]]; then printf '%s' "$ROOT"; else printf '%s' "$here"; fi
+    fi
+}
+
+# --- torch CUDA build -------------------------------------------------------------
+
+# The GPU projects (mlip, fairchem) lock two torch builds as mutually exclusive
+# extras: cu130 (CUDA 13, NVIDIA driver >= 580, needed by GB10's sm_121) and
+# cu126 (CUDA 12.6, drivers >= 525, still common on clusters and workstations).
+# Pick the newest the driver can run; ATOMISTIC_TORCH_CUDA overrides.
+nvidia_driver_major() {
+    command -v nvidia-smi >/dev/null 2>&1 || return 0
+    local d
+    d="$(nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null | sed -n 1p || true)"
+    d="${d%%.*}"
+    [[ "$d" =~ ^[0-9]+$ ]] && printf '%s' "$d"
+    return 0
+}
+
+torch_cuda_extra() {  # torch_cuda_extra VENV -> cu126|cu130, or nothing
+    local venv="$1" major
+    grep -q '^cu130 = ' "${VENV_DIR}/${venv}/pyproject.toml" 2>/dev/null || return 0
+    if [[ -n "${ATOMISTIC_TORCH_CUDA:-}" ]]; then printf '%s' "$ATOMISTIC_TORCH_CUDA"; return 0; fi
+    major="$(nvidia_driver_major)"
+    if [[ -n "$major" ]] && (( major < 580 )); then printf cu126; else printf cu130; fi
+}
+
+# with_torch_cuda VENV EXTRAS... -> the extras, plus the torch build the
+# project needs here unless one was named explicitly (mlip+cu126).
+one_torch_build() {  # one_torch_build EXTRAS... : refuse two different torch builds
+    local e cuda=""
+    for e in "$@"; do
+        [[ "$e" =~ ^cu1[0-9]+$ ]] || continue
+        [[ -n "$cuda" && "$cuda" != "$e" ]] && die "two torch builds requested ('${cuda}' and '${e}'); name one"
+        cuda="$e"
+    done
+    return 0
+}
+with_torch_cuda() {  # with_torch_cuda VENV EXTRAS... -> the extras, plus the torch build if none is named
+    local venv="$1" e cuda="" ; shift
+    for e in "$@"; do
+        [[ "$e" =~ ^cu1[0-9]+$ ]] && cuda="$e"
+        printf '%s\n' "$e"
+    done
+    [[ -n "$cuda" ]] && return 0
+    cuda="$(torch_cuda_extra "$venv")"
+    [[ -n "$cuda" ]] && printf '%s\n' "$cuda"
+    return 0
+}
+
+# --- uv backend -----------------------------------------------------------------
+
+# prepare_uv_process -- just before exec'ing `uv run`.
+# A uv-managed CPython looks for CA certificates at /etc/ssl/cert.pem and in
+# /etc/ssl/certs, which RHEL-family hosts do not populate the way OpenSSL
+# expects, so model downloads through urllib fail certificate checks. Point it
+# at the system bundle unless the user chose one. If this process later starts
+# an Apptainer server, run_container mounts the inherited bundle into its image.
+prepare_uv_process() {
+    # Also drop an inherited VIRTUAL_ENV: a command running in one environment
+    # that starts a server in another (mcp_smoke, an agent's shell) would make uv
+    # warn that the active environment does not match the project. The project
+    # is always named explicitly here.
+    unset VIRTUAL_ENV
+    [[ -n "${SSL_CERT_FILE:-}" || -f /etc/ssl/cert.pem ]] && return 0
+    local f
+    for f in /etc/pki/tls/certs/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt /etc/ssl/ca-bundle.pem; do
+        if [[ -f "$f" ]]; then export SSL_CERT_FILE="$f"; return 0; fi
+    done
+}
+
+uv_project_args() {  # uv_project_args VENV EXTRAS... -> prints one argument per line
+    printf '%s\n' --frozen --project "${VENV_DIR}/$1"
+    shift
+    local extra
+    for extra in "$@"; do printf '%s\n' --extra "$extra"; done
+}
+
+# Whether an environment is ready is recorded in a marker written after each
+# successful sync: the lock's hash, then the extras installed. `uv sync --check`
+# cannot serve, because uv reinstalls nvidia-cusparselt-cu13 on every sync and
+# so never reports the CUDA environments as current.
+sync_marker() { printf '%s' "${VENV_DIR}/$1/.venv/.atomisticskills-synced"; }
+lock_hash() { sha256sum "${VENV_DIR}/$1/uv.lock" | cut -c1-16; }
+
+uv_is_synced() {  # uv_is_synced VENV EXTRAS...
+    local venv="$1"; shift
+    local marker extra
+    marker="$(sync_marker "$venv")"
+    [[ -x "${VENV_DIR}/${venv}/.venv/bin/python" && -f "$marker" ]] || return 1
+    [[ "$(head -1 "$marker")" == "$(lock_hash "$venv")" ]] || return 1
+    for extra in "$@"; do
+        tail -n +2 "$marker" | grep -qx -- "$extra" || return 1
+    done
+}
+
+record_sync() {  # record_sync VENV EXTRAS... -- after a successful sync
+    local venv="$1"; shift
+    { lock_hash "$venv"; printf '%s\n' "$@" | awk 'NF' | sort -u; } > "$(sync_marker "$venv")"
+}
+
+# uv_sync VENV EXTRAS... -- in the foreground, progress on stderr. The sync is
+# exact, because the lock is the contract: a package dropped from the lock
+# leaves the environment too. Extras installed earlier are carried over, so
+# asking for one extra never uninstalls another.
+uv_sync() (
+    local venv="$1"; shift
+    local marker extras=("$@") previous=() args sync_fd
+    # uv locks its own mutation, but the remembered extras must be read under
+    # the same lock as the sync and marker update. Otherwise concurrent callers
+    # each pass a stale extra list and the second sync removes the first extra.
+    # Keep the lock outside .venv, which uv may recreate; the subshell releases
+    # it on success or failure, before the requested command is executed.
+    command -v flock >/dev/null 2>&1 || die "syncing $venv needs flock (util-linux)"
+    exec {sync_fd}>"${VENV_DIR}/${venv}/.atomisticskills-sync.lock"
+    flock -w "${UV_LOCK_TIMEOUT:-3600}" "$sync_fd" || die "timed out waiting to sync $venv"
+    marker="$(sync_marker "$venv")"
+    [[ -f "$marker" ]] && mapfile -t previous < <(tail -n +2 "$marker")
+    # cu126 and cu130 exclude each other: asking for one drops the other.
+    if printf '%s\n' ${extras[@]+"${extras[@]}"} | grep -qE '^cu1[0-9]+$'; then
+        mapfile -t previous < <(printf '%s\n' ${previous[@]+"${previous[@]}"} | grep -vE '^cu1[0-9]+$' || true)
+    fi
+    mapfile -t extras < <(printf '%s\n' ${extras[@]+"${extras[@]}"} ${previous[@]+"${previous[@]}"} | awk 'NF' | sort -u)
+    mapfile -t args < <(uv_project_args "$venv" ${extras[@]+"${extras[@]}"})
+    # A uv-managed CPython ships its own headers. uv would otherwise pick any
+    # system python3.12, and on RHEL-family hosts that often lacks Python.h,
+    # so packages built from source (smol) fail to compile.
+    # Environments share uv's cache: a second sync waits for the first one's
+    # lock on a shared wheel. uv gives up after 300 s, shorter than a cold
+    # download of a CUDA stack on a slow link.
+    UV_PYTHON_PREFERENCE="${UV_PYTHON_PREFERENCE:-only-managed}" UV_LOCK_TIMEOUT="${UV_LOCK_TIMEOUT:-3600}" \
+        uv sync "${args[@]}" >&2
+    record_sync "$venv" ${extras[@]+"${extras[@]}"}
+)
+
+# A first sync downloads several GB, far longer than an MCP client waits for a
+# server to start. Run it detached, so it survives this process being killed on
+# timeout, and serialised, so parallel server starts do not race.
+uv_sync_in_background() {  # uv_sync_in_background VENV
+    local venv="$1" logf lockf
+    mkdir -p "$STATE_DIR"
+    logf="${STATE_DIR}/setup-${venv}.log"
+    lockf="${STATE_DIR}/setup-${venv}.lock"
+    if command -v flock >/dev/null 2>&1 && command -v setsid >/dev/null 2>&1; then
+        setsid nohup flock -n "$lockf" "${BASH_SOURCE[0]}" --setup "$venv" \
+            >"$logf" 2>&1 </dev/null &
+    else
+        nohup "${BASH_SOURCE[0]}" --setup "$venv" >"$logf" 2>&1 </dev/null &
+    fi
+    printf '%s' "$logf"
+}
+
+# --- container backend ------------------------------------------------------------
+
+image_ref() { printf '%s/atomisticskills-%s:%s' "$REGISTRY" "$1" "$TAG"; }
+
+# Apptainer runs a SIF built once and cached, never a docker:// URI per launch:
+# MCP clients start every server in parallel with ~30 s each, and an on-the-fly
+# conversion of a multi-GB image takes minutes and runs once per server.
+apptainer_sif() {  # apptainer_sif RUNTIME IMAGE_NAME -> path of a ready SIF
+    local rt="$1" name="$2" ref sif sif_name alt lock tmp build_log procs nproc_count proc_limit headroom
+    ref="$(image_ref "$name")"
+    export APPTAINER_CACHEDIR="${APPTAINER_CACHEDIR:-${MODEL_CACHE}/apptainer-cache}"
+    export SINGULARITY_CACHEDIR="${SINGULARITY_CACHEDIR:-$APPTAINER_CACHEDIR}"
+    # Clusters often mount /tmp nodev, which can break the build.
+    export APPTAINER_TMPDIR="${APPTAINER_TMPDIR:-${MODEL_CACHE}/apptainer-tmp}"
+    export SINGULARITY_TMPDIR="${SINGULARITY_TMPDIR:-$APPTAINER_TMPDIR}"
+    mkdir -p "$APPTAINER_CACHEDIR" "$APPTAINER_TMPDIR" "${MODEL_CACHE}/sif"
+
+    # The whole image identity: a registry or platform switch must not reuse
+    # another image's SIF (a shared cache may serve several architectures).
+    local registry_slug="${REGISTRY//\//_}"; registry_slug="${registry_slug//:/_}"
+    sif_name="atomisticskills-${name}-${TAG}-${OCI_ARCH}-${registry_slug}.sif"
+    sif="${MODEL_CACHE}/sif/${sif_name}"
+    if [[ ! -f "$sif" ]]; then
+        for alt in "${ATOMISTIC_SIF_DIR:-}" "$HOME/.cache/atomisticskills"; do
+            [[ -n "$alt" && -f "${alt}/sif/${sif_name}" ]] || continue
+            sif="${alt}/sif/${sif_name}"; break
+        done
+    fi
+    [[ -f "$sif" ]] && { printf '%s' "$sif"; return 0; }
+
+    # mksquashfs defaults to one thread per core, which exhausts `ulimit -u` on
+    # a many-core login node ("Failed to create thread"). Bound it, and fall
+    # back to a single thread if even that fails.
+    if [[ -z "${ATOMISTIC_SQUASHFS_PROCS:-}" ]]; then
+        nproc_count="$(nproc 2>/dev/null || echo 4)"
+        proc_limit="$(ulimit -u 2>/dev/null || echo 4096)"
+        [[ "$proc_limit" == unlimited ]] && proc_limit=4096
+        headroom=$(( (proc_limit - 256) / 8 )); (( headroom < 1 )) && headroom=1
+        ATOMISTIC_SQUASHFS_PROCS=$(( nproc_count < headroom ? nproc_count : headroom ))
+        (( ATOMISTIC_SQUASHFS_PROCS > 4 )) && ATOMISTIC_SQUASHFS_PROCS=4
+    fi
+    procs="$ATOMISTIC_SQUASHFS_PROCS"
+
+    lock="${MODEL_CACHE}/sif/.${sif_name}.lock"
+    log "building ${sif_name} from ${ref} (minutes; 'venv/run --setup' does this ahead of time)"
+    if command -v flock >/dev/null 2>&1; then
+        exec {lockfd}>"$lock"
+        flock -w "${ATOMISTIC_BUILD_TIMEOUT:-1800}" "$lockfd" \
+            || die "timed out waiting for another process to build ${sif_name}"
+    fi
+    if [[ ! -f "$sif" ]]; then
+        tmp="${sif}.$$.partial"; build_log="${tmp}.log"
+        if ! APPTAINER_MKSQUASHFS_ARGS="-processors ${procs}" SINGULARITY_MKSQUASHFS_ARGS="-processors ${procs}" \
+                "$rt" build --force "$tmp" "docker://${ref}" >"$build_log" 2>&1; then
+            cat "$build_log" >&2
+            if grep -qi "Failed to create thread" "$build_log" && [[ "$procs" != 1 ]]; then
+                log "mksquashfs hit the thread limit; retrying single-threaded"
+                rm -f "$tmp"
+                APPTAINER_MKSQUASHFS_ARGS="-processors 1" SINGULARITY_MKSQUASHFS_ARGS="-processors 1" \
+                    "$rt" build --force "$tmp" "docker://${ref}" >"$build_log" 2>&1 \
+                    || { cat "$build_log" >&2; rm -f "$tmp" "$build_log"; die "failed to build ${sif_name}"; }
+            elif grep -qiE "denied|unauthorized|manifest unknown|not found|404" "$build_log"; then
+                rm -f "$tmp" "$build_log"
+                die "cannot pull ${ref}: the image is not published at this registry and tag, or is private.
+       Set ATOMISTIC_IMAGE_REGISTRY / ATOMISTIC_IMAGE_TAG (the plugin's image_registry /
+       image_tag options) to a published image, or ATOMISTIC_RUNTIME=uv on a host that can run uv."
+            else
+                rm -f "$tmp" "$build_log"
+                die "failed to build ${sif_name} from ${ref}; see the output above.
+       To force a specific mksquashfs worker count, set ATOMISTIC_SQUASHFS_PROCS."
+            fi
+        fi
+        rm -f "$build_log"
+        mv -f "$tmp" "$sif"
+    fi
+    [[ -n "${lockfd:-}" ]] && exec {lockfd}>&-
+    printf '%s' "$sif"
+}
+
+platform_allowed() {  # platform_allowed "linux/amd64,linux/arm64"
+    [[ -z "$1" || ",$1," == *",linux/${OCI_ARCH},"* ]]
+}
+
+# container_gpu_args RUNTIME -> the arguments that expose GPUs to a docker or
+#   podman container: all of them, unless the caller narrowed them with
+#   CUDA_VISIBLE_DEVICES (indices, UUIDs or MIG IDs). The runtime then exposes
+#   only those, numbered from 0 inside, so the variable itself is not passed
+#   on; an empty value exposes none. Apptainer inherits the variable instead.
+container_gpu_args() {
+    local rt="$1" id ids=()
+    if [[ -z "${CUDA_VISIBLE_DEVICES+set}" ]]; then
+        printf '%s\n' --gpus all
+        return 0
+    fi
+    [[ -n "$CUDA_VISIBLE_DEVICES" ]] || return 0
+    if [[ "$rt" == docker ]]; then
+        # Quoted: docker parses the value as CSV, and a device list has commas.
+        printf '%s\n' --gpus "\"device=${CUDA_VISIBLE_DEVICES}\""
+    else
+        IFS=',' read -r -a ids <<<"$CUDA_VISIBLE_DEVICES"
+        for id in "${ids[@]}"; do printf '%s\n' --device "nvidia.com/gpu=${id}"; done
+    fi
+}
+
+# run_container RUNTIME IMAGE_NAME GPU MODE COMMAND...
+#   MODE "server" passes COMMAND (a server name) to the image entrypoint; MODE
+#   "command" runs COMMAND inside the image's environment.
+run_container() {
+    local rt="$1" name="$2" gpu="$3" mode="$4"; shift 4
+    local ws here cwd_mount="" root_mode=ro gpu_ok=0 v
+    ws="$(workspace)"; here="$(pwd -P)"
+    mkdir -p "$ws" "$MODEL_CACHE" 2>/dev/null || true
+    # The repository is mounted read-only unless it is itself the workspace.
+    [[ "$ws" == "$ROOT" ]] && root_mode=rw
+    # Paths are mounted at the same location inside the container, so a path a
+    # container writes is a path the host (and the agent) can read, and the
+    # skill's script paths resolve unchanged.
+    if [[ "$here" != "$ws" && "$here" != "$ws"/* && "$here" != "$ROOT" && "$here" != "$ROOT"/* ]]; then
+        cwd_mount="$here"
+    fi
+    if [[ "$gpu" == 1 ]] && command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -L >/dev/null 2>&1; then
+        gpu_ok=1
+    fi
+
+    local envs=(
+        "ATOMISTIC_WORKSPACE=${ws}"
+        # Import the mounted repository's code, so a container runs exactly
+        # what the host has; the image's own copy is only a fallback.
+        "PYTHONPATH=${ROOT}"
+        "PYTHONUNBUFFERED=1"
+        "HF_HOME=/opt/model-cache/huggingface"
+        "TORCH_HOME=/opt/model-cache/torch"
+        "MATGL_CACHE=/opt/model-cache/matgl"
+    )
+    for v in "${CREDENTIALS[@]}"; do [[ -n "${!v:-}" ]] && envs+=("${v}=${!v}"); done
+    [[ -n "${CONTAINER_VENV:-}" ]] && envs+=("ATOMISTIC_VENV=${CONTAINER_VENV}")
+    # Source checkouts that servers import but no image carries (ADiT's,
+    # DiffCSP++'s and MatterGen's repositories): the variable naming one, else
+    # its default next to this repository, is passed on and the checkout
+    # mounted in place.
+    local spec dir src_dirs=()
+    for spec in ADIT_REPO=adit DIFFCSP_REPO=DiffCSP-PP MATTERGEN_REPO=mattergen; do
+        v="${spec%%=*}"
+        dir="${!v:-$(dirname "$ROOT")/${spec#*=}}"
+        [[ -d "$dir" ]] || continue
+        dir="$(cd "$dir" && pwd -P)"
+        envs+=("${v}=${dir}")
+        src_dirs+=("$dir")
+    done
+
+    case "$rt" in
+        docker|podman)
+            local args=(run --rm --interactive
+                        --user "$(id -u):$(id -g)" --env HOME=/tmp
+                        --volume "${ROOT}:${ROOT}:${root_mode}"
+                        --volume "${MODEL_CACHE}:/opt/model-cache")
+            [[ "$root_mode" == ro ]] && args+=(--volume "${ws}:${ws}")
+            # HOME is /tmp inside, so the user config (API keys) goes there.
+            [[ -f "$CONFIG_FILE" ]] && args+=(--volume "${CONFIG_FILE}:/tmp/.config/atomistic_skills.yaml:ro")
+            [[ -n "$cwd_mount" ]] && args+=(--volume "${cwd_mount}:${cwd_mount}")
+            for v in ${src_dirs[@]+"${src_dirs[@]}"}; do args+=(--volume "${v}:${v}"); done
+            for v in "${envs[@]}"; do args+=(--env "$v"); done
+            [[ "$gpu_ok" == 1 ]] && mapfile -t -O "${#args[@]}" args < <(container_gpu_args "$rt")
+            args+=(--workdir "$here" "$(image_ref "$name")" "$@")
+            exec "$rt" "${args[@]}"
+            ;;
+        apptainer|singularity)
+            local sif binds=() args=(exec --pwd "$here")
+            sif="$(apptainer_sif "$rt" "$name")"
+            # $HOME and the current directory are bound by default; bind the rest.
+            local d
+            for d in "$ROOT" "$ws" "$cwd_mount" ${src_dirs[@]+"${src_dirs[@]}"}; do
+                [[ -z "$d" || "$d" == "$HOME" || "$d" == "$HOME"/* ]] && continue
+                binds+=(--bind "${d}:${d}")
+            done
+            args+=(${binds[@]+"${binds[@]}"} --bind "${MODEL_CACHE}:/opt/model-cache")
+            # A native client may pass prepare_uv_process's RHEL CA path to a
+            # server in an Ubuntu image, where that path does not exist. Bind
+            # the bundle itself: this also keeps user-selected institutional
+            # CAs. Resolve symlinks and relative paths on the host first.
+            if [[ -n "${SSL_CERT_FILE:-}" && -f "$SSL_CERT_FILE" ]]; then
+                args+=(--bind "$(readlink -f "$SSL_CERT_FILE"):/opt/atomisticskills-host-ca.pem:ro")
+                envs+=("SSL_CERT_FILE=/opt/atomisticskills-host-ca.pem")
+            fi
+            for v in "${envs[@]}"; do args+=(--env "$v"); done
+            [[ "$gpu_ok" == 1 ]] && args+=(--nv)
+            # `exec` bypasses the image ENTRYPOINT, so name it: it starts the
+            # server, or puts the command's environment on PATH.
+            args+=("$sif" /opt/atomisticskills/docker/entrypoint.sh "$@")
+            exec "$rt" "${args[@]}"
+            ;;
+    esac
+}
+
+# --- modes ------------------------------------------------------------------------
+
+# venv_image VENV -> the container image that carries a uv project's servers:
+# the project's own image for cpu/mlip/fairchem, the shared `generative` image
+# for adit/diffcsp/mattergen (from venv/servers.tsv). Nothing if none does.
+venv_image() {
+    awk -F'\t' -v v="$1" '!/^#/ && $2 == v { print $4; exit }' "$SERVERS_TABLE"
+}
+
+server_row() {  # server_row NAME -> "venv module image gpu platforms"
+    awk -F'\t' -v s="$1" '!/^#/ && $1 == s { print $2, $3, $4, $5, $6; found = 1 }
+                          END { exit !found }' "$SERVERS_TABLE"
+}
+
+start_server() {
+    local name="$1" row venv module image gpu platforms backend extras=()
+    row="$(server_row "$name")" || die "unknown MCP server '${name}'; servers: $(awk -F'\t' '!/^#/ {print $1}' "$SERVERS_TABLE" | paste -sd' ' -)"
+    read -r venv module image gpu platforms <<<"$row"
+
+    if [[ "$venv" == - ]]; then
+        # No uv project: this server exists only as a container image.
+        if [[ "$RUNTIME" == auto || "$RUNTIME" == uv ]]; then
+            backend="$(first_container_runtime)" || die "server '${name}' runs only from the '${image}' container image (${platforms//,/ }), and no container runtime (apptainer, docker, podman) is installed."
+        else
+            backend="$(choose_backend cpu)"
+        fi
+    else
+        mapfile -t extras < <(with_torch_cuda "$venv")
+        backend="$(choose_backend "$venv" ${extras[@]+"${extras[@]}"})"
+    fi
+
+    if [[ "$backend" != uv ]]; then
+        platform_allowed "$platforms" || die "server '${name}' is unavailable on this machine: its image (${image}) is built for ${platforms//,/ } and this host is linux/${OCI_ARCH}. Nothing was downloaded; the other servers still work."
+        log "starting ${name} from image ${image} via ${backend}"
+        run_container "$backend" "$image" "$gpu" server "$name"
+    fi
+
+    export ATOMISTIC_WORKSPACE="${ATOMISTIC_WORKSPACE:-$(workspace)}"
+    export PYTHONUNBUFFERED=1 UV_NO_PROGRESS=1
+    if ! uv_is_synced "$venv" ${extras[@]+"${extras[@]}"}; then
+        local logf waited=0
+        logf="$(uv_sync_in_background "$venv")"
+        # A warm uv cache often finishes in seconds; give it a short window,
+        # well inside the ~30 s an MCP client allows a server to start.
+        while (( waited < ${ATOMISTIC_SERVER_SETUP_WAIT:-15} )); do
+            sleep 1; waited=$((waited + 1))
+            uv_is_synced "$venv" ${extras[@]+"${extras[@]}"} && break
+        done
+        uv_is_synced "$venv" ${extras[@]+"${extras[@]}"} || die "the '${venv}' environment for server '${name}' is being created in the background (first run only; several GB for mlip and fairchem).
+       Progress: ${logf}
+       When it finishes, reconnect the server (/mcp in Claude Code) or restart the session.
+       To do this ahead of time: ${ROOT}/venv/run --setup"
+    fi
+    cd "$ATOMISTIC_WORKSPACE" 2>/dev/null || true
+    log "starting ${name} (venv ${venv})"
+    prepare_uv_process
+    local args; mapfile -t args < <(uv_project_args "$venv" ${extras[@]+"${extras[@]}"})
+    exec uv run "${args[@]}" --no-sync python -m "$module"
+}
+
+run_command() {
+    local spec="$1"; shift
+    [[ $# -gt 0 ]] || die "usage: venv/run <venv>[+extra...] <command> [args...]"
+    local venv rest="" extras=() backend
+    IFS='+' read -r venv rest <<<"$spec"
+    [[ -n "${rest:-}" ]] && IFS='+' read -r -a extras <<<"$rest"
+    [[ -f "${VENV_DIR}/${venv}/pyproject.toml" ]] \
+        || die "unknown venv '${venv}'; available: $(cd "$VENV_DIR" && ls -d */ | tr -d / | paste -sd' ' -)"
+    one_torch_build ${extras[@]+"${extras[@]}"}
+    mapfile -t extras < <(with_torch_cuda "$venv" ${extras[@]+"${extras[@]}"})
+
+    backend="$(choose_backend "$venv" ${extras[@]+"${extras[@]}"})"
+    if [[ "$backend" != uv ]]; then
+        local gpu=0
+        [[ "$venv" != cpu ]] && gpu=1
+        local image; image="$(venv_image "$venv")"
+        [[ -n "$image" ]] || die "'${venv}' cannot run natively here and no container image carries it.
+       If this host has a newer runtime after all (e.g. msms: 'module load gcc' for GCC 9+'s
+       libstdc++), ATOMISTIC_RUNTIME=uv runs it natively; see docs/setup.md, Research stacks."
+        # The generative image carries several environments; name this one.
+        CONTAINER_VENV="$venv"
+        run_container "$backend" "$image" "$gpu" command "$@"
+    fi
+
+    if [[ " ${extras[*]} " == *" docking "* && "$ARCH" == aarch64 && ! -d /usr/include/boost ]] \
+       && ! uv_is_synced "$venv" ${extras[@]+"${extras[@]}"}; then
+        log "note: AutoDock Vina has no aarch64 wheel and is compiled here; that needs the Boost headers (e.g. sudo apt install libboost-all-dev). Without them, set ATOMISTIC_RUNTIME=docker or apptainer."
+    fi
+    if ! uv_is_synced "$venv" ${extras[@]+"${extras[@]}"}; then
+        log "preparing the '${spec}' environment (first use downloads several GB for mlip and fairchem)..."
+        uv_sync "$venv" ${extras[@]+"${extras[@]}"}
+    fi
+    local args; mapfile -t args < <(uv_project_args "$venv" ${extras[@]+"${extras[@]}"})
+    prepare_uv_process
+    exec uv run "${args[@]}" --no-sync "$@"
+}
+
+# fetch_image BACKEND IMAGE_NAME PLATFORMS -- pull, or build the cached SIF
+fetch_image() {
+    local backend="$1" name="$2" platforms="$3"
+    if ! platform_allowed "$platforms"; then
+        log "== ${name}: skipped, built for ${platforms//,/ } and this host is linux/${OCI_ARCH}"
+        return 0
+    fi
+    if [[ "$backend" == apptainer || "$backend" == singularity ]]; then
+        log "== ${name}: $(apptainer_sif "$backend" "$name")"
+    else
+        log "== ${name}: pulling $(image_ref "$name")"
+        "$backend" pull "$(image_ref "$name")" >&2
+    fi
+}
+
+# setup [target...] -- a target is a venv (cpu, mlip, fairchem) or the name of
+# a container-only image (generative). The default is every venv.
+setup() {
+    local targets=("$@") target backend platforms
+    # By default the shared projects only. The research stacks (adit, diffcsp,
+    # mattergen, ...) are several GB each and serve a few skills; they are set
+    # up on first use, or by name: venv/run --setup mattergen.
+    [[ ${#targets[@]} -gt 0 ]] || targets=(cpu mlip fairchem)
+    for target in "${targets[@]}"; do
+        if [[ -f "${VENV_DIR}/${target}/pyproject.toml" ]]; then
+            local extras=()
+            mapfile -t extras < <(with_torch_cuda "$target")
+            backend="$(choose_backend "$target" ${extras[@]+"${extras[@]}"})"
+            if [[ "$backend" == uv ]]; then
+                log "== ${target}: uv sync ${extras[*]:-}"
+                uv_sync "$target" ${extras[@]+"${extras[@]}"}
+            else
+                fetch_image "$backend" "$(venv_image "$target")" ""
+            fi
+            continue
+        fi
+        platforms="$(awk -F'\t' -v i="$target" '!/^#/ && $4 == i { print $6; exit }' "$SERVERS_TABLE")"
+        [[ -n "$platforms" ]] || die "unknown setup target '${target}'; expected a venv ($(cd "$VENV_DIR" && ls -d */ | tr -d / | paste -sd' ' -)) or an image name from venv/servers.tsv"
+        if [[ "$RUNTIME" == auto || "$RUNTIME" == uv ]]; then
+            backend="$(first_container_runtime)" || die "'${target}' is a container image and no container runtime is installed"
+        else
+            backend="$(choose_backend cpu)"
+        fi
+        fetch_image "$backend" "$target" "$platforms"
+    done
+    log "ready"
+}
+
+doctor() {
+    local venv why rt
+    {
+        echo "AtomisticSkills runtime report"
+        echo "  repository : ${ROOT}"
+        echo "  host       : $(uname -s) ${ARCH}, glibc $(glibc_version)"
+        echo "  uv         : $(command -v uv >/dev/null 2>&1 && uv --version || echo 'not installed')"
+        echo "  containers : $(for rt in "${CONTAINER_RUNTIMES[@]}"; do command -v "$rt" >/dev/null 2>&1 && printf '%s ' "$rt"; done; echo)"
+        # sed reads all of nvidia-smi's output; head -1 would close the pipe on a
+        # multi-GPU host, and under pipefail the SIGPIPE also printed "none".
+        local gpu=""
+        command -v nvidia-smi >/dev/null 2>&1 && gpu="$(nvidia-smi --query-gpu=name,driver_version --format=csv,noheader 2>/dev/null | sed -n 1p || true)"
+        echo "  GPU        : ${gpu:-none}"
+        local driver
+        driver="$(command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null | sed -n 1p || true)"
+        if [[ -n "$driver" && "${driver%%.*}" =~ ^[0-9]+$ ]]; then
+            if (( ${driver%%.*} < 525 )); then
+                echo "  WARNING    : NVIDIA driver ${driver} is older than 525, too old for the CUDA 12.6"
+                echo "               and CUDA 13 builds of torch; GPU code will run on the CPU here."
+            elif (( ${driver%%.*} < 580 )); then
+                echo "  torch      : CUDA 12.6 builds (cu126): driver ${driver} is older than 580,"
+                echo "               which the default CUDA 13 builds need"
+            fi
+        fi
+        echo "  runtime    : ${RUNTIME} (from ATOMISTIC_RUNTIME or ${CONFIG_FILE})"
+        echo "  workspace  : $(workspace)"
+        for venv in $(cd "$VENV_DIR" && ls -d */ | tr -d /); do
+            local cuda note=""
+            cuda="$(torch_cuda_extra "$venv")"
+            [[ -n "$cuda" ]] && note=" [torch ${cuda}]"
+            if why="$(host_supports_uv "$venv" $cuda)"; then
+                if uv_is_synced "$venv" $cuda; then echo "  ${venv}: uv, ready${note}"; else echo "  ${venv}: uv, not created yet (venv/run --setup ${venv})${note}"; fi
+            elif rt="$(first_container_runtime)"; then
+                local image; image="$(venv_image "$venv")"
+                if [[ -n "$image" ]]; then echo "  ${venv}: ${rt} image $(image_ref "$image") -- ${why}"
+                else echo "  ${venv}: UNAVAILABLE (no container image) -- ${why}"; fi
+            else
+                echo "  ${venv}: UNAVAILABLE -- ${why}"
+            fi
+        done
+    } >&2
+}
+
+case "${1:-}" in
+    --server) [[ -n "${2:-}" ]] || die "usage: venv/run --server <name>"; start_server "$2" ;;
+    --setup)  shift; setup "$@" ;;
+    --doctor) doctor ;;
+    -h|--help|"") sed -n '2,32p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' >&2; [[ -n "${1:-}" ]] ;;
+    -*)       die "unknown option '$1' (see venv/run --help)" ;;
+    *)        run_command "$@" ;;
+esac

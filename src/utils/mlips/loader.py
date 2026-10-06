@@ -30,18 +30,22 @@ def load_wrapper(
         or kwargs.get("head")
     )
 
+    # Without a model name each wrapper uses its own default; passing None on
+    # would override it (and crash the MACE wrapper).
+    named = {"model_name": model_name} if model_name else {}
+
     if model_type == "mace":
         from src.utils.mlips.mace.mace_wrapper import MACEWrapper
 
-        wrapper = MACEWrapper(model_name=model_name, device=device, head=task)
+        wrapper = MACEWrapper(device=device, head=task, **named)
     elif model_type == "fairchem":
         from src.utils.mlips.fairchem.fairchem_wrapper import FAIRCHEMWrapper
 
-        wrapper = FAIRCHEMWrapper(model_name=model_name, device=device, task_name=task)
+        wrapper = FAIRCHEMWrapper(device=device, task_name=task, **named)
     elif model_type == "matgl":
         from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
 
-        wrapper = MatGLWrapper(model_name=model_name, device=device)
+        wrapper = MatGLWrapper(device=device, **named)
     else:
         raise ValueError(
             f"Unknown model type: {model_type}. Supported: mace, fairchem, matgl"

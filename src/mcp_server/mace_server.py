@@ -97,11 +97,14 @@ def load_model(
 @mcp.tool()
 def predict_structure(
     structure_data: Union[Dict[str, Any], str, List[Union[Dict[str, Any], str]]],
+    use_nvalchemi: bool = False,
 ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
     """
     Predict energy, forces, and stress for a structure or a batch of structures.
 
     Args:
+        use_nvalchemi: Opt in to experimental NValchemi batching (default False).
+            Toolkit 0.2.0 dynamics has known correctness limits; see the NValchemi skill.
         structure_data: Single structure or batch (directory path, list of dicts/paths).
 
     Returns:
@@ -111,7 +114,9 @@ def predict_structure(
     if wrapper is None or not wrapper.is_loaded:
         return {"error": "Model not loaded. Please call load_model first."}
 
-    return recursive_tolist(wrapper.static_calculation(structure_data))
+    return recursive_tolist(
+        wrapper.static_calculation(structure_data, use_nvalchemi=use_nvalchemi)
+    )
 
 
 @mcp.tool()
@@ -195,11 +200,14 @@ def relax_structure(
     fixed_atoms: Optional[List[int]] = None,
     extract_batch_results: bool = True,
     max_batch_atoms: Optional[int] = None,
+    use_nvalchemi: bool = False,
 ) -> Dict[str, Any]:
     """
     Relax one or multiple structures using the loaded MACE model.
 
     Args:
+        use_nvalchemi: Opt in to experimental NValchemi batching (default False).
+            Toolkit 0.2.0 dynamics has known correctness limits; see the NValchemi skill.
         structure_data: Single structure or batch (directory path, list of dicts/paths).
         fmax: Force convergence criterion (eV/Ang).
         steps: Maximum number of optimization steps.
@@ -233,6 +241,7 @@ def relax_structure(
                 fixed_atoms=fixed_atoms,
                 extract_batch_results=extract_batch_results,
                 max_batch_atoms=max_batch_atoms,
+                use_nvalchemi=use_nvalchemi,
             )
         )
     finally:
@@ -260,11 +269,14 @@ def run_md(
     monitor_params: Optional[Dict[str, Any]] = None,
     supercell_min_length: Optional[float] = None,
     extract_batch_results: bool = True,
+    use_nvalchemi: bool = False,
 ) -> Dict[str, Any]:
     """
     Run molecular dynamics simulation using MatCalc.
 
     Args:
+        use_nvalchemi: Opt in to experimental NValchemi batching (default False).
+            Toolkit 0.2.0 dynamics has known correctness limits; see the NValchemi skill.
         structure_data: Single structure or batch (directory path, list of dicts/paths).
         temperature: Temperature in Kelvin.
         steps: Number of steps.
@@ -314,6 +326,7 @@ def run_md(
             monitor_params=monitor_params,
             supercell_min_length=supercell_min_length,
             extract_batch_results=extract_batch_results,
+            use_nvalchemi=use_nvalchemi,
         )
 
         if "error" in result:

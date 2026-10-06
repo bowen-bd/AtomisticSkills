@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "atomistic-skills",
+  "displayName": "Atomistic Skills",
+  "description": "Agent skills for atomistic simulation: materials science, chemistry, drug discovery, and machine-learning interatomic potentials.",
+  "version": "2.0.0",
+  "author": {
+    "name": "Learning Matter Lab, MIT",
+    "url": "https://github.com/learningmatter-mit"
+  },
+  "homepage": "https://github.com/learningmatter-mit/AtomisticSkills",
+  "repository": "https://github.com/learningmatter-mit/AtomisticSkills",
+  "license": "MIT",
+  "keywords": [
+    "materials-science",
+    "chemistry",
+    "drug-discovery",
+    "machine-learning",
+    "atomistic-simulation",
+    "mlip",
+    "dft"
+  ],
+  "mcpServers": {
+    "adit": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/venv/run",
+      "args": [
+        "--server",
+        "adit"
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.runtime}",
+        "ATOMISTIC_IMAGE_REGISTRY": "${user_config.image_registry}",
+        "ATOMISTIC_IMAGE_TAG": "${user_config.image_tag}",
+        "ATOMISTIC_WORKSPACE": "${CLAUDE_PROJECT_DIR}"
+      }
+    },
+    "atomate2": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/venv/run",
+      "args": [
+        "--server",
+        "atomate2"
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.runtime}",
+        "ATOMISTIC_IMAGE_REGISTRY": "${user_config.image_registry}",
+        "ATOMISTIC_IMAGE_TAG": "${user_config.image_tag}",
+        "ATOMISTIC_WORKSPACE": "${CLAUDE_PROJECT_DIR}"
+      }
+    },
+    "base": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/venv/run",
+      "args": [
+        "--server",
+        "base"
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.runtime}",
+        "ATOMISTIC_IMAGE_REGISTRY": "${user_config.image_registry}",
+        "ATOMISTIC_IMAGE_TAG": "${user_config.image_tag}",
+        "ATOMISTIC_WORKSPACE": "${CLAUDE_PROJECT_DIR}"
+      }
+    },
+    "diffcsp": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/venv/run",
+      "args": [
+        "--server",
+        "diffcsp"
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.runtime}",
+        "ATOMISTIC_IMAGE_REGISTRY": "${user_config.image_registry}",
+        "ATOMISTIC_IMAGE_TAG": "${user_config.image_tag}",
+        "ATOMISTIC_WORKSPACE": "${CLAUDE_PROJECT_DIR}"
+      }
+    },
+    "drugdisc": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/venv/run",
+      "args": [
+        "--server",
+        "drugdisc"
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.runtime}",
+        "ATOMISTIC_IMAGE_REGISTRY": "${user_config.image_registry}",
+        "ATOMISTIC_IMAGE_TAG": "${user_config.image_tag}",
+        "ATOMISTIC_WORKSPACE": "${CLAUDE_PROJECT_DIR}"
+      }
+    },
+    "fairchem": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/venv/run",
+      "args": [
+        "--server",
+        "fairchem"
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.runtime}",
+        "ATOMISTIC_IMAGE_REGISTRY": "${user_config.image_registry}",
+        "ATOMISTIC_IMAGE_TAG": "${user_config.image_tag}",
+        "ATOMISTIC_WORKSPACE": "${CLAUDE_PROJECT_DIR}"
+      }
+    },
+    "mace": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/venv/run",
+      "args": [
+        "--server",
+        "mace"
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.runtime}",
+        "ATOMISTIC_IMAGE_REGISTRY": "${user_config.image_registry}",
+        "ATOMISTIC_IMAGE_TAG": "${user_config.image_tag}",
+        "ATOMISTIC_WORKSPACE": "${CLAUDE_PROJECT_DIR}"
+      }
+    },
+    "matgl": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/venv/run",
+      "args": [
+        "--server",
+        "matgl"
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.runtime}",
+        "ATOMISTIC_IMAGE_REGISTRY": "${user_config.image_registry}",
+        "ATOMISTIC_IMAGE_TAG": "${user_config.image_tag}",
+        "ATOMISTIC_WORKSPACE": "${CLAUDE_PROJECT_DIR}"
+      }
+    },
+    "mattergen": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/venv/run",
+      "args": [
+        "--server",
+        "mattergen"
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.runtime}",
+        "ATOMISTIC_IMAGE_REGISTRY": "${user_config.image_registry}",
+        "ATOMISTIC_IMAGE_TAG": "${user_config.image_tag}",
+        "ATOMISTIC_WORKSPACE": "${CLAUDE_PROJECT_DIR}"
+      }
+    },
+    "smol": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/venv/run",
+      "args": [
+        "--server",
+        "smol"
+      ],
+      "env": {
+        "ATOMISTIC_RUNTIME": "${user_config.runtime}",
+        "ATOMISTIC_IMAGE_REGISTRY": "${user_config.image_registry}",
+        "ATOMISTIC_IMAGE_TAG": "${user_config.image_tag}",
+        "ATOMISTIC_WORKSPACE": "${CLAUDE_PROJECT_DIR}"
+      }
+    }
+  },
+  "userConfig": {
+    "runtime": {
+      "type": "string",
+      "title": "Runtime",
+      "description": "How skill scripts and MCP servers run. 'auto' (recommended) uses uv when this machine can install the environments and otherwise falls back to a container runtime. Force one with uv, docker, podman, apptainer or singularity -- e.g. apptainer on an HPC cluster whose glibc is too old for the uv environments.",
+      "default": "auto",
+      "required": false
+    },
+    "image_registry": {
+      "type": "string",
+      "title": "Image registry",
+      "description": "Registry namespace of the atomisticskills-* images, used only when running from containers. Change it only to test images published from a fork, e.g. ghcr.io/<your-github-user>.",
+      "default": "ghcr.io/learningmatter-mit",
+      "required": false
+    },
+    "image_tag": {
+      "type": "string",
+      "title": "Image tag",
+      "description": "Tag of the atomisticskills-* images, used only when running from containers. Defaults to the plugin version so the images match the skills.",
+      "default": "2.0.0",
+      "required": false
+    }
+  }
+}

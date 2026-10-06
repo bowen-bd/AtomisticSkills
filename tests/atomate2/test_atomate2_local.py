@@ -1,4 +1,6 @@
 import sys
+
+import pytest
 import shutil
 from pathlib import Path
 from pymatgen.core import Structure, Lattice
@@ -10,14 +12,13 @@ sys.path.append(str(project_root))
 from src.utils.dft.atomate2_utils import Atomate2Handler
 
 
-def test_atomate2_local_si_scf():
+def test_atomate2_local_si_scf(tmp_path):
     """
     Test a local Atomate2 VASP calculation for Silicon with 3 SCF steps.
+    Runs VASP, so it needs a VASP binary and POTCARs on this machine.
     """
     # 1. Setup test directory
-    test_dir = Path("tests/tmp_atomate2_si")
-    if test_dir.exists():
-        shutil.rmtree(test_dir)
+    test_dir = tmp_path / "atomate2_si"
     test_dir.mkdir(parents=True)
 
     try:
@@ -30,11 +31,11 @@ def test_atomate2_local_si_scf():
         # 3. Initialize handler
         handler = Atomate2Handler(str(test_dir))
 
-        # 4. Check environment (skip if VASP not available to avoid hard fail in CI, but here we expect it)
+        # 4. Check environment: skip where VASP is not installed (CI)
         env = handler.check_environment()
         assert env["atomate2"] is True
-        assert env["vasp"] is True
-        assert env["potcar"] is True
+        if not (env["vasp"] and env["potcar"]):
+            pytest.skip("needs a VASP binary and POTCARs")
 
         # 5. Define custom config for 3 SCF steps
         config = {

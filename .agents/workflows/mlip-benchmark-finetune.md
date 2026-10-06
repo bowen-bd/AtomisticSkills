@@ -8,11 +8,11 @@ This workflow guides you through the process of selecting, evaluating, and impro
 
 1. **Choose a relevant foundation potential**
    - Review the requirements of your target simulation (e.g., elements involved, accuracy versus speed constraints).
-   - Refer to the `ml-foundation-potentials` skill (`.agents/skills/ml-foundation-potentials/SKILL.md`) to select an appropriate foundation potential.
+   - Refer to the `ml-foundation-potentials` skill (`skills/ml-foundation-potentials/SKILL.md`) to select an appropriate foundation potential.
 
 2. **Sample the Potential Energy Surface (PES)**
    - Carefully sample the PES based on the problem of interest to capture relevant configurations, including off-equilibrium and transition states.
-   - For solid-state materials, refer to the `mat-sample-pes-by-md` skill (`.agents/skills/mat-sample-pes-by-md/SKILL.md`).
+   - For solid-state materials, refer to the `mat-sample-pes-by-md` skill (`skills/mat-sample-pes-by-md/SKILL.md`).
    - Alternative sampling methods exist depending on the system (e.g., `chem-conformer-search`, `mat-amorphization`, `mat-random-structure-search`).
 
 3. **Acquire labels for the sampled structures**
@@ -22,7 +22,7 @@ This workflow guides you through the process of selecting, evaluating, and impro
 
 4. **Benchmark the foundation potential's accuracy**
    - Evaluate the baseline accuracy of the chosen foundation potential against the newly acquired labels.
-   - Refer to the `ml-mlip-benchmark` skill (`.agents/skills/ml-mlip-benchmark/SKILL.md`) for benchmarking procedures to determine if fine-tuning is necessary.
+   - Refer to the `ml-mlip-benchmark` skill (`skills/ml-mlip-benchmark/SKILL.md`) for benchmarking procedures to determine if fine-tuning is necessary.
 
 5. **Perform fine-tuning (or distillation)**
    - If the baseline potential's accuracy is insufficient on your sampled PES, fine-tune the model using the labeled dataset.

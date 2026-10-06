@@ -76,17 +76,28 @@ def load_model(
         wrapper.load()
         return f"Successfully loaded FAIRCHEM model: {model_name}"
     except Exception as e:
-        return f"Error loading model: {str(e)}"
+        message = f"Error loading model: {str(e)}"
+        if "401" in str(e) or "gated repo" in str(e):
+            message += (
+                "\nUMA checkpoints are gated on Hugging Face: request access at "
+                "https://huggingface.co/facebook/UMA, then set HF_TOKEN (in "
+                "~/.config/atomistic_skills.yaml or the environment) and reconnect "
+                "the server."
+            )
+        return message
 
 
 @mcp.tool()
 def predict_structure(
     structure_data: Union[Dict[str, Any], str, List[Union[Dict[str, Any], str]]],
+    use_nvalchemi: bool = False,
 ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
     """
     Predict energy, forces, and stress for a structure or a batch of structures.
 
     Args:
+        use_nvalchemi: Opt in to experimental NValchemi batching (default False).
+            Toolkit 0.2.0 dynamics has known correctness limits; see the NValchemi skill.
         structure_data: Single structure or batch (directory path, list of dicts/paths).
 
     Returns:
@@ -96,7 +107,7 @@ def predict_structure(
     if wrapper is None:
         return {"error": "Model not loaded. Please call load_model first."}
 
-    return wrapper.static_calculation(structure_data)
+    return wrapper.static_calculation(structure_data, use_nvalchemi=use_nvalchemi)
 
 
 @mcp.tool()
@@ -120,11 +131,14 @@ def relax_structure(
     output_dir: Optional[str] = None,
     extract_batch_results: bool = True,
     max_batch_atoms: Optional[int] = None,
+    use_nvalchemi: bool = False,
 ) -> Dict[str, Any]:
     """
     Relax one or multiple structures using the loaded FAIRCHEM model.
 
     Args:
+        use_nvalchemi: Opt in to experimental NValchemi batching (default False).
+            Toolkit 0.2.0 dynamics has known correctness limits; see the NValchemi skill.
         structure_data: Single structure or batch (directory path, list of dicts/paths).
         fmax: Force convergence criterion (eV/Ang).
         steps: Maximum number of optimization steps.
@@ -157,6 +171,7 @@ def relax_structure(
                 output_dir=output_dir,
                 extract_batch_results=extract_batch_results,
                 max_batch_atoms=max_batch_atoms,
+                use_nvalchemi=use_nvalchemi,
             )
         )
     finally:
@@ -184,11 +199,14 @@ def run_md(
     monitor_params: Optional[Dict[str, Any]] = None,
     supercell_min_length: Optional[float] = None,
     extract_batch_results: bool = True,
+    use_nvalchemi: bool = False,
 ) -> Dict[str, Any]:
     """
     Run molecular dynamics simulation using MatCalc.
 
     Args:
+        use_nvalchemi: Opt in to experimental NValchemi batching (default False).
+            Toolkit 0.2.0 dynamics has known correctness limits; see the NValchemi skill.
         structure_data: Single structure or batch (directory path, list of dicts/paths).
         temperature: Temperature in Kelvin.
         steps: Number of steps.
@@ -234,6 +252,7 @@ def run_md(
             monitor_params=monitor_params,
             supercell_min_length=supercell_min_length,
             extract_batch_results=extract_batch_results,
+            use_nvalchemi=use_nvalchemi,
         )
 
         return recursive_tolist(result)

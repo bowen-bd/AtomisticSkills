@@ -1,81 +1,79 @@
 # AtomisticSkills Setup Guide
 
-Guide the user step-by-step through setting up AtomisticSkills.
+Guide the user step-by-step through setting up AtomisticSkills. Ask before running
+anything that installs software, and wait for each step to finish.
 
-## Step 1: Clone the Repository
-Ask the user to run this in their terminal *(Optional: Ask them to fork the repository first if they plan to contribute, and clone their fork instead)*:
+## How AtomisticSkills runs
+
+Every skill command and every MCP server starts through one launcher, `venv/run`.
+It runs the code in one of three Python environments -- uv projects under `venv/`:
+
+| Environment | Contents |
+| :--- | :--- |
+| `cpu` | materials, chemistry, drug discovery and analysis (no torch) |
+| `mlip` | MACE and MatGL on top of the CPU stack (GPU) |
+| `fairchem` | FairChem (UMA, eSEN) on top of the CPU stack (GPU) |
+
+The launcher uses **uv** on this machine when it can, and otherwise falls back to
+a **container image** built from the same lock (Docker, Podman or Apptainer), with
+the same paths, so nothing else changes. Environments are created on first use;
+`venv/run --setup` creates them ahead of time.
+
+What a native (uv) install needs:
+
+- Linux on x86_64 or aarch64, glibc 2.28 or newer (aarch64 GPU stacks: 2.34)
+- `flock` (from `util-linux`), to serialize environment setup
+- [uv](https://docs.astral.sh/uv/) and a C compiler (`gcc`), for the few packages
+  that build from source. Python itself comes from uv (a managed CPython with its
+  headers), so no system Python or `python3-devel` package is needed
+- For GPU work, an NVIDIA driver 525 or newer. The mlip and fairchem environments
+  carry two torch builds and `venv/run` picks by driver: CUDA 13 (driver ≥ 580,
+  required for GB10/Blackwell) or CUDA 12.6 (drivers 525–579, common on clusters).
+  `venv/run --doctor` shows the choice; `ATOMISTIC_TORCH_CUDA=cu126|cu130`
+  overrides it. Container images carry the CUDA 13 build only
+
+Hosts that do not meet these -- older clusters, macOS, no compiler -- use the
+container fallback automatically once a container runtime is installed.
+
+## Option A: Claude Code plugin
+
+Ask the user to run:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh        # skip if uv is installed
+claude plugin marketplace add learningmatter-mit/AtomisticSkills
+claude plugin install atomistic-skills@atomistic-skills
+```
+
+To install from a local checkout instead, add a fresh clone as the marketplace:
+a local path is copied whole into the plugin cache, including any
+environments already built under `venv/*/.venv` (tens of GB).
+
+The plugin brings every skill and all MCP servers. Its options are optional:
+`runtime` (default `auto`; set `apptainer` on an HPC cluster that should use
+containers), and `image_registry` / `image_tag` for the container fallback.
+
+The first use of the GPU environments downloads several GB. To do it up front, have
+Claude run the `general-atomisticskills-setup` skill (it runs `venv/run --setup` and
+`venv/run --doctor` from the plugin's install directory). An MCP server whose
+environment is still being created reports that it is preparing it; reconnect it
+with `/mcp` once the setup finishes.
+
+## Option B: Clone the repository (any agent)
+
+For Claude Code, Codex, Cursor, Gemini or Windsurf, and for developing skills:
 
 ```bash
 git clone git@github.com:learningmatter-mit/AtomisticSkills.git
 cd AtomisticSkills
+curl -LsSf https://astral.sh/uv/install.sh | sh        # skip if uv is installed
+venv/run --setup                                         # cpu, mlip, fairchem (several GB)
+python3 configure_mcp.py                                 # register MCP servers and skills
 ```
 
-## Step 2: Choose Environments
-AtomisticSkills uses separate MCP servers running in different conda environments to manage conflicting MLIP and DFT dependencies.
-
-Present using a list:
-
-**MCP Server Environments (Interactive Tools):**
-- [ ] **Base** (`base-agent`): Materials Project queries, VASP I/O, base tools (Highly Recommended)
-- [ ] **MACE** (`mace-agent`): MACE models (MP, OMAT, MatPES)
-- [ ] **MatGL** (`matgl-agent`): MatGL models (CHGNet, M3GNet) and bandgap prediction
-- [ ] **FairChem** (`fairchem-agent`): FairChem models (UMA, ESEN)
-- [ ] **Atomate2** (`atomate2-agent`): Remote DFT job management via Jobflow/Jobflow-remote
-- [ ] **Smol** (`smol-agent`): Cluster expansion and Monte Carlo
-- [ ] **DrugDisc** (`drugdisc-agent`): Drug discovery tools (Fingerprints, Docking, ADMET)
-- [ ] **MatterGen** (`mattergen-agent`): Generative crystal design from MatterGen
-- [ ] **ADiT** (`adit-agent`): All-atom diffusion generation
-- [ ] **DiffCSP** (`diffcsp-agent`): Symmetry-constrained crystal generation
-
-**Script-Only Environments (No MCP Server):**
-- [ ] **XRD** (`xrd-agent`): XRD spectrum phase analysis and refinement tools
-- [ ] **ORCA** (`orca-agent`): DFT structural optimization and single-points via SCINE wrapper
-- [ ] **Phase Field** (`phasefield-agent`): Simulation of grain growth and spinodal decomposition
-- [ ] **CALPHAD** (`calphad-agent`): Thermodynamics and phase diagram modeling
-- [ ] **NMR** (`nmr-agent`): NMR mixture deconvolution and kinetics prediction
-- [ ] **React-OT** (`react-ot-agent`): Transition state structural generation
-- [ ] **SCD** (`scd-agent`): Pretrained Self-Conditioned Denoising for property prediction
-
-Options: Keep it simple! Ask exactly which frameworks they want to use. "I only need MACE and basic tools" $\rightarrow$ `base-agent` and `mace-agent`.
-
-## Step 3: Install Conda Environments
-Depending on their choices in Step 2, provide the commands to set them up:
-
-```bash
-bash conda-envs/base-agent/install.sh
-bash conda-envs/mace-agent/install.sh
-# ... other selected environments
-```
-*(Remind the user this might take a few minutes. Wait for them to finish before proceeding).*
-
-## Step 4: Configuration & API Keys
-Many tools require API keys (like the Materials Project API) or binary paths.
-Have the user create a global configuration file in their home directory.
-
-**Provide this template (`~/.atomistic_skills.yaml`):**
-```yaml
-# Materials Project API Key (Required for base-server)
-MP_API_KEY: "your_mp_api_key_here"
-
-# Atomate2 Remote Project (Required for remote job monitoring)
-ATOMATE2_REMOTE_PROJECT: "remote_perlmutter"
-
-# Required for running molecular DFT calculations with ORCA
-ORCA_BINARY_PATH: /path/to/orca_directory/orca
-```
-*(Tell them they can also set these as environment variables like `export MP_API_KEY="key"`, but the file is persistent).*
-
-## Step 5: Configure MCP Servers
-The project provides an `mcp_config.json` that defines all tools. The placeholder paths need to be updated to match the user's specific conda path.
-
-Run together:
-```bash
-python configure_mcp.py
-```
-*(This auto-detects `miniforge3` or `miniconda3`. If it fails, they can pass the base path manually: `python configure_mcp.py /path/to/miniforge3`)*
-
-## Step 6: Add to AI Assistant
-Finally, copy the patched MCP settings into their AI copilot's configuration file.
+`configure_mcp.py` auto-detects installed agents; pass `--agent claude` (or codex,
+gemini, cursor, windsurf) to choose, and `--scope global` to make the tools
+available outside this repository:
 
 | Client | Project scope | Global scope (all projects) |
 |--------|--------------|----------------------------|
@@ -85,71 +83,119 @@ Finally, copy the patched MCP settings into their AI copilot's configuration fil
 | **Windsurf** | — | `~/.codeium/windsurf/mcp_config.json` |
 | **Gemini CLI** | `.gemini/settings.json` | `~/.gemini/settings.json` |
 
-The `configure_mcp.py` script handles path substitution automatically:
+For Claude Code it also links every skill into `.claude/skills/`, so the skills are
+registered natively. With `--scope global`, Codex and Gemini also get the skills and
+a pointer to the rules and workflows in their global configuration. Restart the
+assistant after changing its configuration.
+
+## API keys and settings
+
+Settings live in `~/.config/atomistic_skills.yaml` (environment variables of the
+same name take precedence). Offer this template and fill in what the user has:
+
+```yaml
+# Materials Project (mat-db-mp, phase diagrams, many workflows)
+MP_API_KEY: "your_mp_api_key_here"
+
+# Hugging Face token: required for FairChem UMA, a gated model (request access at
+# https://huggingface.co/facebook/UMA first)
+HF_TOKEN: "your_hf_token_here"
+
+# Atomate2 remote project for DFT jobs (jobflow-remote)
+ATOMATE2_REMOTE_PROJECT: "your_project_name"
+
+# ORCA binary for the chem-dft-orca-* skills (x86_64 only)
+ORCA_BINARY_PATH: /path/to/orca_directory/orca
+
+# How skills and MCP servers run: auto (default), uv, docker, podman, apptainer
+ATOMISTIC_RUNTIME: auto
+```
+
+## HPC clusters
+
+- Run `venv/run --setup` once on a login node with network access; the
+  environments live in the checkout (or the plugin directory) and are shared with
+  compute nodes over the shared filesystem.
+- If the cluster's glibc is too old or there is no compiler, set
+  `ATOMISTIC_RUNTIME: apptainer`. `venv/run --setup` then converts the images to
+  SIF files once (minutes per image), so MCP servers start without timing out.
+- Even with `auto`, extras that need a newer glibc than the host's (`cpu+openmm`
+  and `cpu+pymol` on RHEL 8) run from the Apptainer image. The first such command
+  converts the image to a SIF, which took 15–30 minutes on an NFS home directory.
+  `--setup cpu` does not do this when `cpu` itself runs natively, so trigger it
+  once ahead of time with `venv/run cpu+openmm python -c 1`.
+- After an upgrade, delete superseded `atomisticskills-*.sif` files (about 1.4 GB
+  each) from `~/.cache/atomisticskills/sif/` or `$ATOMISTIC_MODEL_CACHE/sif/`.
+- GPU nodes can differ from login nodes. A node with glibc older than 2.28 (for
+  example CentOS 7) needs a container runtime installed there, and the images
+  carry the CUDA 13 build. Driver ≥ 580 is the baseline for CUDA 13 minor-version
+  compatibility; older drivers require a compatible forward-compatibility setup
+  on supported hardware. Verify actual CUDA execution in the image rather than
+  inferring it from GPU visibility. On a native uv node, a driver of 525–579 gets
+  the CUDA 12.6 build automatically. See NVIDIA's
+  [minor-version compatibility](https://docs.nvidia.com/deploy/cuda-compatibility/minor-version-compatibility.html)
+  and [forward compatibility](https://docs.nvidia.com/deploy/cuda-compatibility/forward-compatibility.html)
+  requirements.
+- Keep large caches off a small home quota with `UV_CACHE_DIR` (uv's download cache)
+  and `ATOMISTIC_MODEL_CACHE` (container checkpoints and SIF files).
+
+## Research stacks
+
+MatterGen, ADiT and DiffCSP++ (`ml-generative-*`), ICEBERG (`chem-msms-predict`),
+React-OT (`chem-react-ot`) and SelfConditionedDenoisingAtoms
+(`ml-property-predict-scd`) each have their own pinned uv project under `venv/`,
+created on first use like the shared ones. Their compiled dependencies set what
+a host needs, and `venv/run --doctor` shows what this one can run:
+
+- MatterGen, ADiT, DiffCSP++: natively on x86_64 with glibc ≥ 2.32 (PyG's
+  wheels need it); elsewhere (aarch64, or EL8-era clusters with glibc 2.28) from
+  the `generative` container image (`venv/run --setup generative` pulls it).
+- SelfConditionedDenoisingAtoms (`scd`): x86_64 with glibc ≥ 2.32; no image.
+- ICEBERG (`msms`): x86_64 with GCC 9's libstdc++ (DGL needs `GLIBCXX_3.4.26`:
+  glibc ≥ 2.31 distributions ship it). On EL8, put a newer GCC runtime first
+  (e.g. `module load gcc` or `LD_LIBRARY_PATH=<gcc>/lib64:$LD_LIBRARY_PATH`) and
+  run it natively with `ATOMISTIC_RUNTIME=uv`.
+- React-OT (`reactot`): x86_64 and aarch64.
+
+These stacks download several GB of CUDA libraries on first use; on a cluster,
+create them ahead of time (`venv/run --setup mattergen adit ...`) rather than on
+an MCP server's first start.
+
+LAMMPS with ML plugins (`mat-lammps-md`) is built against the `mlip`
+environment by the skill's build scripts; FairChem's `lmp_fc` comes with the
+`fairchem+lammps` extra. Nothing uses conda.
+
+## Check the installation
 
 ```bash
-# Project scope only (default) — tools available when inside this repo
-python configure_mcp.py
-
-# Global scope — tools available in every project/session
-python configure_mcp.py --scope global
-
-# Both scopes
-python configure_mcp.py --scope both
+venv/run --doctor
 ```
 
-**Claude Code users: optional global skill awareness**
+reports the host, which backend each environment uses, and whether it is ready.
+Then run a live test with the user:
 
-With `--scope global`, MCP tools become available everywhere. To also make Claude aware of the 129+ skills and workflows when working outside this repo, create `~/.claude/CLAUDE.md`:
-
-```markdown
-# AtomisticSkills
-
-When a task involves materials simulation, drug discovery, or atomistic modeling,
-the full toolkit lives at /path/to/AtomisticSkills.
-Skills: /path/to/AtomisticSkills/.agents/skills/
-Workflows: /path/to/AtomisticSkills/.agents/workflows/
-Discover skills: grep -r "^description:" /path/to/AtomisticSkills/.agents/skills/*/SKILL.md
-```
-
-**Codex CLI users: global MCP, rules, skills, and workflows**
-
-With `--scope global` or `--scope both`, `configure_mcp.py --agent codex` will:
-1. Register MCP tools globally in `~/.codex/config.toml`.
-2. Append/update the `AtomisticSkills Global Reference` block in `~/.codex/AGENTS.md` for rules and workflows.
-3. Create a compact pointer skill at `~/.codex/skills/atomisticskills/SKILL.md`.
-4. Symlink every project skill from `.agents/skills/` into `~/.codex/skills/`, making the full skill library available when Codex starts outside this repository.
-
-The symlink step preserves unrelated existing global skills. If a non-project skill with the same name already exists in `~/.codex/skills/`, `configure_mcp.py` skips that entry and reports it. On each run, stale Codex symlinks pointing to removed AtomisticSkills project skills are cleaned up, and new project skills are linked globally. When Codex is started inside the AtomisticSkills repository, the global reference tells it to prefer the project-local `AGENTS.md` and project-local skills, avoiding duplicate rule/skill context.
-
-**Gemini (CLI & IDE/Antigravity) users: global MCP, rules, skills, and workflows**
-
-With `--scope global` or `--scope both`, running `configure_mcp.py --agent gemini` will:
-1. Register MCP tools globally in `~/.gemini/config/mcp_config.json` and `~/.gemini/settings.json`.
-2. Register a global IDE plugin in `~/.gemini/config/plugins/Google.atomisticskills.atomisticskills` and symlink the skills directory directly, making all 129+ skills natively accessible in any session.
-3. Append/update the `AtomisticSkills Global Reference` block in your global rules file (`~/.gemini/GEMINI.md`) for workflows and rules.
-
-This makes Gemini automatically aware of all rules, skills, and workflows when working in any folder outside this repository, while preventing duplicate context/rule loading when working inside the repository. Gemini uses a directory symlink to `.agents/skills/`, so added and removed project skills are reflected globally through that link; rerunning `configure_mcp.py` refreshes the plugin symlink if it becomes stale or points elsewhere.
-
-Restart the assistant after any config changes.
-
-## What's Next? (Guided First Use)
-**Run a live test WITH the user.**
-
-**Demo Query (Base agent):** "Search the Materials Project for the stable structure of LiFePO4."
-*(Use the `search_materials_project_by_formula` tool)*
-
-If they set up a MLIP (e.g., MACE): "Predict the forces and energy for this LiFePO4 structure using the MACE model."
+- **Materials Project**: "Search the Materials Project for the stable structure of
+  LiFePO4." (`base.search_materials_project_by_formula`)
+- **MLIP**: "Relax this LiFePO4 structure with MACE and report the energy."
+  (`mace.load_model`, then `mace.relax_structure`)
 
 ## Best Practices for Users
-- **Leverage Local GPUs**: We highly recommend running the framework on a machine with local GPU resources so MLIP tasks can evaluate quickly without external compute costs.
-- **Customize**: Add your own specialized SKILLs, MCP tools, and Workflows directly to the project structure to tailor it to your research needs.
-- **Contribute Back**: If you develop a robust, generalized tool or SKILL, please submit a PR to the main branch! We actively acknowledge all open-source contributors.
+
+- **Leverage local GPUs**: MLIP tasks are far faster on a machine with a GPU.
+- **Customize**: Add your own skills, MCP tools and workflows to the project.
+- **Contribute back**: If you develop a robust, general skill, please open a PR.
 
 ## Common Issues
+
 | Issue | Fix |
 |-------|-----|
-| MCP Tools not showing up | Verify JSON syntax in the copilot's config file and restart the IDE/copilot. |
-| Tool execution failed / Python not found | Ensure `configure_mcp.py` successfully updated the `command` paths to the correct conda envs. |
-| Atomate2 remote worker issues | See `conda-envs/atomate2-agent/atomate2_remote_worker_setup.md` |
-| MLIP environment conflicts | Each MCP server handles its own environment isolation automatically via the copied `mcp_config.json`. |
+| An MCP server is not connected | Run `venv/run --doctor`. A first start creates the environment in the background; reconnect with `/mcp` when it finishes, or run `venv/run --setup` first. |
+| `needs glibc >= …` or `needs a C compiler` | Install a container runtime (Apptainer on HPC, Docker elsewhere); `auto` then uses it. |
+| `No module named ...` in a skill script | Run the command exactly as the skill writes it: `venv/run <env> ...` picks the environment the script needs. |
+| GPU not used | Run `venv/run --doctor`: native uv selects CUDA 12.6 for drivers 525–579 and CUDA 13 for 580+. Containers retain their image's CUDA build; test an actual CUDA tensor operation and check model GPU activity. Older-driver container execution depends on the compatibility setup; it does not imply CPU-only execution. See the HPC guidance above and the [validated desta result](changes/2.0.0-verification.md). |
+| FairChem `load_model` fails with `401` / gated repo | UMA checkpoints are gated: request access at https://huggingface.co/facebook/UMA, then set `HF_TOKEN` (in `~/.config/atomistic_skills.yaml` or the environment). |
+| Model download fails with `CERTIFICATE_VERIFY_FAILED` | The launcher points Python at the system CA bundle; behind a proxy or with a custom bundle, set `SSL_CERT_FILE` to it. |
+| Apptainer model download fails with a missing host CA path (such as `/etc/pki/tls/certs/ca-bundle.crt`) | Update `venv/run`: it now binds the selected host bundle read-only into the image and sets the container's `SSL_CERT_FILE` to that mount. |
+| `mcp_smoke.py` cannot launch Docker servers from inside the CPU image | Run the client natively and select Docker for the servers: `ATOMISTIC_RUNTIME=uv venv/run cpu python tools/mcp_smoke.py mattergen --server-env ATOMISTIC_RUNTIME=docker`. Exporting Docker for the whole command also containerizes the client. |
+| `SyntaxError` running a `tools/` script | `python3` is too old (Python 3.6 on RHEL 8); run it as `venv/run cpu python tools/<script>.py`. |
+| Atomate2 remote worker issues | See [docs/atomate2_remote_workers.md](atomate2_remote_workers.md) |

@@ -1,0 +1,24 @@
+{
+  "doi": "10.1103/PhysRevLett.120.145301",
+  "publisher": "American Physical Society (APS)",
+  "publisher_policy": "blocked",
+  "title": "Crystal Graph Convolutional Neural Networks for an Accurate and Interpretable Prediction of Material Properties",
+  "authors": [
+    "Tian Xie",
+    "Jeffrey C. Grossman"
+  ],
+  "year": 2018,
+  "journal": "Physical Review Letters",
+  "citations": 2865,
+  "is_open_access": true,
+  "abstract": "The use of machine learning methods for accelerating the design of crystalline materials usually requires manually constructed feature vectors or complex transformation of atom coordinates to input the crystal structure, which either constrains the model to certain crystal types or makes it difficult to provide chemical insights. Here, we develop a crystal graph convolutional neural networks framework to directly learn material properties from the connection of atoms in the crystal, providing a universal and interpretable representation of crystalline materials. Our method provides a highly accurate prediction of density functional theory calculated properties for eight different properties of crystals with various structure types and compositions after being trained with 10^{4} data points. Further, our framework is interpretable because one can extract the contributions from local chemical environments to global properties. Using an example of perovskites, we show how this information can be utilized to discover empirical rules for materials design.",
+  "fulltext_retrieved": true,
+  "pdf_path": "skills/general-publisher-access-guard/examples/oa-repository-bypass/10.1103_PhysRevLett.120.145301.pdf",
+  "text_path": "skills/general-publisher-access-guard/examples/oa-repository-bypass/10.1103_PhysRevLett.120.145301_text.txt",
+  "retrieval_method": "Safe Repository (repository)",
+  "notes": [
+    "Publisher 'American Physical Society (APS)' actively bans automated bot scrapers (Cloudflare Turnstile). Direct web scraping was prevented.",
+    "Filtered out blocked publisher URL: http://link.aps.org/pdf/10.1103/PhysRevLett.120.145301",
+    "Filtered out blocked publisher URL: https://arxiv.org/pdf/1710.10324"
+  ]
+}

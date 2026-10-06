@@ -44,17 +44,21 @@ class TestBatchRetrieval:
             fmax=0.1,
             steps=5,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
 
         assert result["status"] == "success" if "status" in result else True
         assert result["mode"] == "batch"
-        assert result["successful"] == 2
+        assert result["successful"] == 0
+        assert result["not_converged"] == 2
+        assert result["failed"] == 0
 
         for r in result["results"]:
             name = r["structure_name"]
             out_dir = r["output_dir"]
             assert name in structure_names
-            assert r["status"] == "success"
+            assert r["status"] == "not_converged"
+            assert r["converged"] is False
 
             # Check files existence
             assert os.path.exists(r["trajectory_path"])
@@ -111,6 +115,7 @@ class TestBatchRetrieval:
             ensemble="nvt_nose_hoover",
             output_dir=str(tmp_path),
             log_interval=2,
+            use_nvalchemi=True,
         )
 
         assert result["mode"] == "batch"
@@ -183,17 +188,21 @@ class TestBatchRetrieval:
             steps=5,
             output_dir=str(tmp_path),
             extract_batch_results=False,
+            use_nvalchemi=True,
         )
 
         assert result["status"] == "success" if "status" in result else True
         assert result["mode"] == "batch"
-        assert result["successful"] == 2
+        assert result["successful"] == 0
+        assert result["not_converged"] == 2
+        assert result["failed"] == 0
 
         for r in result["results"]:
             name = r["structure_name"]
             out_dir = r["output_dir"]
             assert name in structure_names
-            assert r["status"] == "success"
+            assert r["status"] == "not_converged"
+            assert r["converged"] is False
 
             # Check that traj and log paths are not in the result, and files do not exist
             assert "trajectory_path" not in r
@@ -231,6 +240,7 @@ class TestBatchRetrieval:
             output_dir=str(tmp_path),
             log_interval=2,
             extract_batch_results=False,
+            use_nvalchemi=True,
         )
 
         assert result["mode"] == "batch"

@@ -8,7 +8,7 @@ Usage:
     from src.utils.dft.orca_utils import setup_orca_calculator, check_orca_binary
 
 Requirements:
-    - Conda environment: orca-agent
+    - Environment: cpu (run with: venv/run cpu python ...)
     - Required packages: scine_utilities, ase
     - Environment variable: ORCA_BINARY_PATH
 """
