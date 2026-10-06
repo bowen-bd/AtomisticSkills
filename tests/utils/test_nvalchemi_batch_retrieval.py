@@ -44,6 +44,7 @@ class TestBatchRetrieval:
             fmax=0.1,
             steps=5,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
 
         assert result["status"] == "success" if "status" in result else True
@@ -114,6 +115,7 @@ class TestBatchRetrieval:
             ensemble="nvt_nose_hoover",
             output_dir=str(tmp_path),
             log_interval=2,
+            use_nvalchemi=True,
         )
 
         assert result["mode"] == "batch"
@@ -186,6 +188,7 @@ class TestBatchRetrieval:
             steps=5,
             output_dir=str(tmp_path),
             extract_batch_results=False,
+            use_nvalchemi=True,
         )
 
         assert result["status"] == "success" if "status" in result else True
@@ -237,6 +240,7 @@ class TestBatchRetrieval:
             output_dir=str(tmp_path),
             log_interval=2,
             extract_batch_results=False,
+            use_nvalchemi=True,
         )
 
         assert result["mode"] == "batch"

@@ -1,6 +1,6 @@
 ---
 name: ml-mlip-nvalchemi
-description: GPU-accelerated batched inference for MACE, MatGL (TensorNet/M3GNet/CHGNet), and FairChem MLIPs using NValchemi, enabling parallel static, relax, and MD workflows across multiple structures simultaneously.
+description: Optional experimental GPU-accelerated batched inference for MACE, MatGL (TensorNet/M3GNet/CHGNet), and FairChem MLIPs using NValchemi, enabling parallel static, relax, and MD workflows across multiple structures simultaneously.
 metadata:
   category: [machine-learning]
   venv: [fairchem, mlip]
@@ -10,7 +10,34 @@ metadata:
 
 ## Goal
 
-Exploit NVIDIA's NValchemi toolkit to run energy/force/stress predictions, geometry relaxations, and molecular dynamics for a **batch of structures** in a single GPU-parallel forward pass, instead of N sequential CPU loops. This is automatically activated when `nvalchemi-toolkit` is installed in the environment — the existing MCP tool surface (`static_calculation`, `relax_structure`, `run_md`) passes a list of structures and dispatches to the NValchemi backend transparently.
+Run optional GPU-parallel static predictions, relaxation and MD across multiple
+structures with NValchemi. **This backend is experimental and disabled by
+default in AtomisticSkills 2.0.0.** List and directory inputs normally run each
+structure through the model's native calculator and ASE/MatCalc. Installing
+`nvalchemi-toolkit` or selecting a GPU does not enable the batch engine.
+
+> [!WARNING]
+> The locked toolkit 0.2.0 has confirmed batch-dynamics correctness defects.
+> Same-size refills and variable-cell changes can omit periodic neighbors;
+> AtomisticSkills guards this cache defect for 0.2.x, with measurable overhead.
+> A separate defect can leave live energies inconsistent with frozen geometry
+> after convergence; preserving the first converged snapshot reduces exposure
+> but does not repair the upstream live batch. MatGL inflight remains disabled.
+> Native NPT currently falls back to ASE because initial stress is missing.
+> Static predictions do not reuse the defective dynamics cache, but this does
+> not establish correctness for every model or structure. Historical speedups
+> are workload-specific and do not certify the release's dynamics paths.
+
+**Explicit selection:** pass `use_nvalchemi=True` on each batch call to
+`static_calculation`, `relax_structure` or `run_md`. MCP tools expose the same
+flag on `predict_structure`, `relax_structure` and `run_md`. The default is
+`False`; the choice does not persist into later calls. Runtime logs identify
+experimental use, and batch results report the actual `backend`.
+
+When offering this option, explain these limitations. Do not enable it merely
+because batching could be faster. Validate a small representative case against
+the default path before a larger run, and check `backend` for any fallback.
+Single-structure calls continue using their normal calculator.
 
 ## Background
 
@@ -25,18 +52,19 @@ NValchemi provides batched dynamics integrators (FIRE, NVT Nose-Hoover, NPT, etc
 | MatGL QET | `QETWrapper` | matgl package |
 | FairChem UMA | `FairChemWrapper` | `src/utils/mlips/nvalchemi/fairchem_nv.py` |
 
-The dispatch lives in `src/utils/mlips/base.py`:
-- `static_calculation(list)` → `_batch_static_nvalchemi()` → single batched forward
-- `relax_structure(list)` → `_batch_relax_nvalchemi()` → batched FIRE
-- `run_md(list)` → `_batch_md_nvalchemi()` → batched NVT/NVE/NPT integrator
+With `use_nvalchemi=True`, `src/utils/mlips/base.py` dispatches as follows:
+
+- `static_calculation(list, use_nvalchemi=True)` → `_batch_static_nvalchemi()` → single batched forward
+- `relax_structure(list, use_nvalchemi=True)` → `_batch_relax_nvalchemi()` → batched FIRE
+- `run_md(list, use_nvalchemi=True)` → `_batch_md_nvalchemi()` → batched NVT/NVE/NPT integrator
 
 ### Inflight batching (relaxation)
 
-For `relax_structure`, there are three execution backends selected automatically:
+After explicit opt-in, relaxation can choose fixed-batch or inflight execution:
 
 ```
 _batch_relax()
- ├─ nvalchemi available AND model loads?
+ ├─ use_nvalchemi=True AND nvalchemi available AND model loads?
  │    YES → _batch_relax_nvalchemi()
  │              └─ sum(atoms) > max_batch_atoms AND model._nvalchemi_supports_inflight?
  │                   YES → _batch_relax_nvalchemi_inflight()   ← rolling GPU window
@@ -44,7 +72,7 @@ _batch_relax()
  │    NO  → _batch_relax_sequential()                          ← plain ASE FIRE, one by one
 ```
 
-> **Note**: All MatGL wrappers (`TensorNetWrapper`, `M3GNetWrapper`, `CHGNetWrapper`) set `_nvalchemi_supports_inflight=False` and use fixed-batch NValchemi regardless of structure count, because after graduation, energies are wrong (TensorNet Cu −83.70 vs −86.57 eV fixed-batch; CHGNet 0.26 eV; M3GNet 28 meV), while MACE inflight agrees to meV.
+> **Note**: All MatGL wrappers (`TensorNetWrapper`, `M3GNetWrapper`, `CHGNetWrapper`) set `_nvalchemi_supports_inflight=False` and use fixed-batch NValchemi regardless of structure count, because after graduation, energies are wrong (TensorNet Cu −83.70 vs −86.57 eV fixed-batch; CHGNet 0.26 eV; M3GNet 28 meV), MACE inflight is available after opt-in with the cache guard.
 
 **Inflight batching** keeps only `max_batch_atoms` atoms on the GPU at once.  As each structure converges or exhausts its step budget it is evicted and a new one is loaded.  This is necessary when the full set of structures would exceed GPU memory.
 
@@ -67,7 +95,7 @@ Every batch result dict carries a `"backend"` key:
 | `"sequential"` | Plain ASE FIRE, one structure at a time |
 
 ```python
-result = wrapper.relax_structure(structures, fmax=0.05, steps=500)
+result = wrapper.relax_structure(structures, fmax=0.05, steps=500, use_nvalchemi=True)
 print(result["backend"])   # "nvalchemi_inflight" / "nvalchemi" / "sequential"
 ```
 
@@ -94,7 +122,7 @@ same-size refills or gradual cell changes. AtomisticSkills uses a version-gated
 guard for every neighbor hook in fixed relaxation, inflight relaxation and
 batch MD. Changes to cell, PBC or atom partition trigger a complete allocation
 refresh; ordinary fixed-cell steps retain their buffers. Installed packages
-are unchanged. MACE inflight stays enabled, and FairChem builds its own graph
+are unchanged. MACE inflight stays available after opt-in, and FairChem builds its own graph
 without this hook. See the [exposure and timing report](../../docs/verification/nvalchemi-neighbor-cache.md).
 
 The separate upstream inactive-output defect can still return live energies
@@ -158,7 +186,7 @@ from ase.build import bulk
 import numpy as np
 
 structures = [bulk("Cu", "fcc", a=3.6 * s) for s in np.linspace(0.96, 1.04, 10)]
-result = wrapper.static_calculation(structures)
+result = wrapper.static_calculation(structures, use_nvalchemi=True)
 # result["backend"] == "nvalchemi"
 # result["total_structures"] == 10
 # result["results"][i] == {"energy": ..., "forces": ..., "stress": ...}
@@ -170,14 +198,14 @@ Identical API for MatGL and FairChem wrappers:
 from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
 wrapper = MatGLWrapper(model_name="TensorNet-PES-MatPES-PBE-2025.2", device="cuda")
 wrapper.load()
-result = wrapper.static_calculation(structures)
+result = wrapper.static_calculation(structures, use_nvalchemi=True)
 ```
 
 ```python
 from src.utils.mlips.fairchem.fairchem_wrapper import FAIRCHEMWrapper
 wrapper = FAIRCHEMWrapper(model_name="uma-s-1p2", device="cuda")
 wrapper.load()
-result = wrapper.static_calculation(structures)
+result = wrapper.static_calculation(structures, use_nvalchemi=True)
 ```
 
 ### Step 3 — Batch Geometry Relaxation
@@ -185,6 +213,7 @@ result = wrapper.static_calculation(structures)
 ```python
 result = wrapper.relax_structure(
     structure_data=structures,   # list of ASE Atoms
+    use_nvalchemi=True,          # explicit experimental-backend selection
     fmax=0.05,                   # eV/Å convergence
     steps=500,
     output_dir="/path/to/output",
@@ -202,6 +231,7 @@ Variable-cell batch relaxation (`relax_cell=True`) converges only when the per-a
 ```python
 result = wrapper.run_md(
     structure_data=structures,
+    use_nvalchemi=True,
     temperature=1000,
     steps=1000,
     timestep=2.0,                # fs
@@ -210,18 +240,27 @@ result = wrapper.run_md(
 )
 ```
 
-Supported batch ensembles: `nve`, `nvt_nose_hoover`, `nvt_langevin`, `npt`, `npt_nose_hoover`, `npt_mtk`.
+Validated fixed-cell batch families: `nve`, `nvt_nose_hoover`, `nvt_langevin`.
+NPT aliases select a NValchemi integrator but currently fall back to ASE because
+the integration does not publish initial stress; native NPT is not validated.
 Unsupported (Berendsen, Andersen, inhomogeneous NPT) fall back to sequential automatically.
 
-### Step 5 — Disable NValchemi (Sequential Fallback)
+### Step 5 — Use the Default Backend
 
-To force sequential processing (e.g., debugging):
+Omit the flag, or set it to `False`; no module patching is needed:
 
 ```python
-import src.utils.mlips.nvalchemi.nvalchemi_utils as _nv
-_nv.check_nvalchemi_available = lambda: False   # temporary
-result = wrapper.static_calculation(structures)  # sequential
-_nv.check_nvalchemi_available = lambda: True    # restore
+result = wrapper.static_calculation(structures)
+assert result["backend"] == "sequential"
+result = wrapper.relax_structure(structures, use_nvalchemi=False)
+```
+
+MCP/CLI example of an explicit experimental request (two structure files):
+
+```bash
+${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli mace \
+    load_model model_name=MACE-OMAT-0-small device=cuda \
+    predict_structure 'structure_data=["first.cif","second.cif"]' use_nvalchemi=true
 ```
 
 ### Step 6 — Run the Benchmark Script
@@ -279,6 +318,7 @@ See [resources/benchmark_results.md](resources/benchmark_results.md) for the ful
 
 ## Constraints
 
+- **Explicit opt-in required**: Set `use_nvalchemi=True` for each batch request.
 - **NValchemi required**: `nvalchemi-toolkit` must be installed. Check `NVALCHEMI_AVAILABLE` flag. Falls back to sequential if unavailable.
 - **Environment isolation**: Must use the correct uv environment per MLIP:
   - `mlip` — MACE models and MatGL (TensorNet, M3GNet, CHGNet)
@@ -288,7 +328,7 @@ See [resources/benchmark_results.md](resources/benchmark_results.md) for the ful
 - **CHGNet batch speedup**: CHGNet directed line graph construction parallelizes well on GPU (12–13× at N=20). CPU performance is marginal (<3×); always use `device="cuda"` for batch workloads.
 - **SO3Net not supported**: `SO3Net-PES-ANI-1x-Subset` falls back to sequential automatically (`_get_nvalchemi_model()` returns `None`).
 - **ANI-1x models with transition metals**: TensorNet-PES-ANI-1x and M3GNet-PES-ANI-1x training sets cover only H/C/N/O. Using them with Cu or other transition metals causes a CUDA index OOB error that corrupts the CUDA context for the session. Run ANI-1x models in a separate process from other models.
-- **MatGL models (TensorNet, CHGNet, M3GNet) inflight batching not supported**: Inflight batching stays off for the MatGL wrappers (TensorNet, M3GNet, CHGNet), for a measured reason: after graduation, energies are wrong (TensorNet Cu −83.70 vs −86.57 eV fixed-batch; CHGNet 0.26 eV; M3GNet 28 meV), while MACE inflight agrees to meV. All MatGL wrappers set `_nvalchemi_supports_inflight=False`; when the total atom count exceeds the batch budget, they fall through to fixed-batch NValchemi (all structures in one GPU pass) rather than inflight. For very large structure sets, reduce `max_batch_atoms` to a value that fits in VRAM, or use a model with validated inflight support (MACE, FairChem).
+- **MatGL models (TensorNet, CHGNet, M3GNet) inflight batching not supported**: Inflight batching stays off for the MatGL wrappers (TensorNet, M3GNet, CHGNet), for a measured reason: after graduation, energies are wrong (TensorNet Cu −83.70 vs −86.57 eV fixed-batch; CHGNet 0.26 eV; M3GNet 28 meV), while MACE inflight agrees to meV. All MatGL wrappers set `_nvalchemi_supports_inflight=False`; when the total atom count exceeds the batch budget, they fall through to fixed-batch NValchemi (all structures in one GPU pass) rather than inflight. For large MatGL sets, split inputs into smaller calls or retain default sequential execution. `max_batch_atoms` does not cap the fixed-batch allocation when inflight is disabled.
 - **Unsupported ensembles for batch MD**: `nvt_berendsen`, `nvt_andersen`, `nvt_bussi`, `npt_berendsen`, and `npt_inhomogeneous` have no NValchemi equivalent and always run sequentially.
 
 ## References

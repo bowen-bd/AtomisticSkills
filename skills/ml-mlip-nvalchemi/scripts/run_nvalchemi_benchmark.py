@@ -20,7 +20,6 @@ import argparse
 import json
 import sys
 import time
-from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -195,18 +194,6 @@ def _make_cu_structures(n: int):
     return [bulk("Cu", "fcc", a=3.6 * s) for s in scales]
 
 
-@contextmanager
-def _nvalchemi_disabled():
-    import src.utils.mlips.nvalchemi.nvalchemi_utils as _m
-
-    orig = _m.check_nvalchemi_available
-    _m.check_nvalchemi_available = lambda: False
-    try:
-        yield
-    finally:
-        _m.check_nvalchemi_available = orig
-
-
 def _extract_static(r: dict) -> tuple[float, np.ndarray, np.ndarray]:
     energy = float(r["energy"])
     forces = np.array(r["forces"], dtype=float)
@@ -260,17 +247,18 @@ def _benchmark_model(wrapper: Any, label: str, n_repeat: int) -> dict:
         structures = _make_cu_structures(n)
 
         result_nv, t_nv = _time_call(
-            lambda: wrapper.static_calculation(structures), n_repeat
+            lambda: wrapper.static_calculation(structures, use_nvalchemi=True), n_repeat
         )
+        if result_nv.get("backend") != "nvalchemi" and "error" not in result_nv:
+            result_nv = {"error": "Requested NValchemi backend fell back to sequential"}
         if "error" in result_nv:
             print(f"    N={n}: NValchemi ERROR: {result_nv['error']}", flush=True)
             rows.append({"n": n, "error": str(result_nv["error"])})
             continue
 
-        with _nvalchemi_disabled():
-            result_seq, t_seq = _time_call(
-                lambda: wrapper.static_calculation(structures), n_repeat
-            )
+        result_seq, t_seq = _time_call(
+            lambda: wrapper.static_calculation(structures), n_repeat
+        )
         if "error" in result_seq:
             print(f"    N={n}: Sequential ERROR: {result_seq['error']}", flush=True)
             rows.append({"n": n, "error": str(result_seq["error"])})
@@ -295,7 +283,7 @@ def _benchmark_model(wrapper: Any, label: str, n_repeat: int) -> dict:
             "ds_max": float(max(s_diffs)),
         }
         print(
-            f"    N={n:2d}: NV={t_nv*1000:.0f}ms  Seq={t_seq*1000:.0f}ms"
+            f"    N={n:2d}: NV={t_nv * 1000:.0f}ms  Seq={t_seq * 1000:.0f}ms"
             f"  Speedup={speedup:.2f}x  ΔE={max(e_diffs):.1e}  ΔF={max(f_diffs):.1e}",
             flush=True,
         )
@@ -352,11 +340,11 @@ def main():
     if args.models:
         entries = [e for e in entries if any(m in e[3] for m in args.models)]
 
-    print(f"\n{'='*62}")
+    print(f"\n{'=' * 62}")
     print(f"NValchemi Benchmark: {args.env.upper()} | device={args.device}")
     print(f"Models: {[e[3] for e in entries]}")
     print(f"Batch sizes: {BATCH_SIZES}")
-    print(f"{'='*62}")
+    print(f"{'=' * 62}")
 
     results = []
     loaded_cache: dict[
@@ -378,14 +366,14 @@ def main():
         results.append(r)
 
     # Summary table
-    print(f"\n{'='*95}")
+    print(f"\n{'=' * 95}")
     print(
         f"{'Label':<45} {'N':>4} {'NV ms':>8} {'Seq ms':>8} {'Speedup':>9}  {'ΔE max':>10}  {'ΔF max':>10}"
     )
-    print(f"{'-'*95}")
+    print(f"{'-' * 95}")
     for r in results:
         if r.get("skipped"):
-            print(f"  {r['label']:<43}  SKIPPED: {r.get('reason','')}")
+            print(f"  {r['label']:<43}  SKIPPED: {r.get('reason', '')}")
             continue
         for row in r.get("rows", []):
             if "error" in row:
@@ -396,7 +384,7 @@ def main():
                 f"  {row['t_nv_ms']:>7.0f}  {row['t_seq_ms']:>7.0f}"
                 f"  {row['speedup']:>8.2f}x  {row['de_max']:>10.2e}  {row['df_max']:>10.2e}"
             )
-    print(f"{'='*95}")
+    print(f"{'=' * 95}")
 
     if args.output:
         out = {"env": args.env, "device": args.device, "models": results}

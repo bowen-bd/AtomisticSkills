@@ -7,6 +7,11 @@ also affect gradual fixed-batch variable-cell relaxation.
 
 ## Release decision
 
+The batch engine is now **experimental and opt-in**. Public Python and MCP
+batch calls use sequential native calculators by default. The caller must set
+`use_nvalchemi=True` on each request; package installation alone does not enable
+it. The guard and measurements below apply when that optional backend is selected.
+
 AtomisticSkills constructs every dynamics neighbor hook through
 `make_neighbor_list_hook()`. For toolkit 0.2.x only, a small explicit guard
 compares cell, PBC and `batch_ptr` values with the previous staging values.
@@ -30,7 +35,7 @@ repair still needs integration validation. No new relaxation speedup is claimed.
 
 | Path | Cache use and 2.0.0 handling |
 | --- | --- |
-| MACE inflight relaxation | Refills can keep N/B constant; guarded and enabled. |
+| MACE inflight relaxation | Refills can keep N/B constant; guarded after explicit opt-in. |
 | Fixed-batch variable-cell relaxation, MACE/MatGL | In-place cell changes are guarded. |
 | Fixed-cell relaxation | Guard compares metadata; unchanged allocations are reused. |
 | Batch NVE, Nose–Hoover NVT and Langevin NVT | Fixed cell, no refills; use the same guarded constructor. |
@@ -42,7 +47,7 @@ repair still needs integration validation. No new relaxation speedup is claimed.
 
 The permanent MACE regression loads `MACE-OMAT-0-small`, supplies four two-atom
 Si structures (hcp, displaced hcp, diamond primitive and bcc conventional),
-and calls `relax_structure(..., relax_cell=False, max_batch_atoms=4, steps=3)`.
+and calls `relax_structure(..., relax_cell=False, max_batch_atoms=4, steps=3, use_nvalchemi=True)`.
 It audits the actual graph presented to MACE against a fresh hook, including
 periodic shifts. On the unguarded branch, the live IDs change from `(0, 1)` to
 `(1, 2)` and the comparison fails. With the guard, all refill comparisons pass.

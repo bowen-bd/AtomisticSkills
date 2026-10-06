@@ -1,5 +1,10 @@
 # NValchemi integration
 
+NValchemi is an optional experimental batch engine. Public wrapper and MCP
+calls default to native sequential execution; `use_nvalchemi=True` selects it
+for that request only. See the [skill](../../../../skills/ml-mlip-nvalchemi/SKILL.md)
+for confirmed 0.2.0 dynamics limitations before enabling it.
+
 The model factories adapt MACE, MatGL and FairChem to the batched execution
 paths in `MLIPModel`. `nvalchemi_utils.py` provides conversion, convergence,
 trajectory and stream-management helpers.

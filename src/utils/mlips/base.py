@@ -171,6 +171,25 @@ class MLIPModel(ABC):
         """
         return None
 
+    def _get_enabled_nvalchemi_model(self, use_nvalchemi: bool) -> Optional[Any]:
+        """Select the experimental batch backend only after explicit opt-in."""
+        if not use_nvalchemi:
+            return None
+
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import check_nvalchemi_available
+
+        model = self._get_nvalchemi_model() if check_nvalchemi_available() else None
+        if model is None:
+            logger.warning(
+                "NValchemi unavailable for this model; using sequential execution."
+            )
+        else:
+            logger.warning(
+                "Using experimental NValchemi batching. Toolkit 0.2.0 dynamics has "
+                "known correctness limitations; read skills/ml-mlip-nvalchemi/SKILL.md."
+            )
+        return model
+
     def validate_structure(self, structure: Any) -> bool:
         """
         Validate that a structure is compatible with the model.
@@ -284,6 +303,7 @@ class MLIPModel(ABC):
         fixed_atoms: Optional[List[int]] = None,
         extract_batch_results: bool = True,
         max_batch_atoms: Optional[int] = None,
+        use_nvalchemi: bool = False,
     ) -> Dict[str, Any]:
         """
         Relax one or multiple structures using the loaded model.
@@ -302,6 +322,7 @@ class MLIPModel(ABC):
             relax_cell: Whether to relax the unit cell (True) or just atomic positions (False).
             output_dir: Directory to save results. For batch mode, each structure gets a subdirectory.
             fixed_atoms: List of indices of atoms to keep fixed during relaxation (single mode only).
+            use_nvalchemi: Opt in to experimental NValchemi batching (default False).
             extract_batch_results: Whether to extract full trajectory / logs for all structures in batch mode.
             max_batch_atoms: Override the auto-detected atom budget for the NValchemi inflight live
                 batch.  When None (default) the budget is estimated from free VRAM.  Set a smaller
@@ -330,6 +351,7 @@ class MLIPModel(ABC):
                 output_dir,
                 extract_batch_results=extract_batch_results,
                 max_batch_atoms=max_batch_atoms,
+                use_nvalchemi=use_nvalchemi,
             )
         else:
             # SINGLE STRUCTURE MODE
@@ -500,31 +522,29 @@ class MLIPModel(ABC):
         output_dir: Optional[str],
         extract_batch_results: bool = True,
         max_batch_atoms: Optional[int] = None,
+        use_nvalchemi: bool = False,
     ) -> Dict[str, Any]:
-        """Dispatch batch relaxation to NValchemi GPU path or sequential fallback."""
-        from src.utils.mlips.nvalchemi.nvalchemi_utils import check_nvalchemi_available
-
-        if check_nvalchemi_available():
-            nv_model = self._get_nvalchemi_model()
-            if nv_model is not None:
-                try:
-                    return self._batch_relax_nvalchemi(
-                        nv_model=nv_model,
-                        structure_data=structure_data,
-                        fmax=fmax,
-                        steps=steps,
-                        relax_cell=relax_cell,
-                        output_dir=output_dir,
-                        extract_batch_results=extract_batch_results,
-                        max_batch_atoms=max_batch_atoms,
-                    )
-                except ValueError as exc:
-                    if "Per-system shift count" not in str(exc):
-                        raise
-                    logger.warning(
-                        "NValchemi neighbor-list overflow during batch relaxation; "
-                        "falling back to sequential relaxation."
-                    )
+        """Use sequential relaxation unless NValchemi is explicitly requested."""
+        nv_model = self._get_enabled_nvalchemi_model(use_nvalchemi)
+        if nv_model is not None:
+            try:
+                return self._batch_relax_nvalchemi(
+                    nv_model=nv_model,
+                    structure_data=structure_data,
+                    fmax=fmax,
+                    steps=steps,
+                    relax_cell=relax_cell,
+                    output_dir=output_dir,
+                    extract_batch_results=extract_batch_results,
+                    max_batch_atoms=max_batch_atoms,
+                )
+            except ValueError as exc:
+                if "Per-system shift count" not in str(exc):
+                    raise
+                logger.warning(
+                    "NValchemi neighbor-list overflow during batch relaxation; "
+                    "falling back to sequential relaxation."
+                )
         return self._batch_relax_sequential(
             structure_data, fmax, steps, optimizer, relax_cell, output_dir
         )
@@ -1236,10 +1256,13 @@ class MLIPModel(ABC):
             return {"error": f"Batch relaxation failed: {str(e)}"}
 
     def static_calculation(
-        self, structure_data: Any
+        self, structure_data: Any, use_nvalchemi: bool = False
     ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         """
         Run static calculation (predict energy, forces, stress) for a structure.
+
+        Batches use the native calculator sequentially by default. Set
+        use_nvalchemi=True to opt in to experimental NValchemi batching.
         """
         if not self.is_loaded:
             return {"error": "Model not loaded. Please call load_model first."}
@@ -1251,17 +1274,12 @@ class MLIPModel(ABC):
         )
 
         if is_batch:
-            # Try NValchemi GPU-parallel static batch first
-            from src.utils.mlips.nvalchemi.nvalchemi_utils import (
-                check_nvalchemi_available,
-            )
-
-            if check_nvalchemi_available():
-                nv_model = self._get_nvalchemi_model()
-                if nv_model is not None:
-                    result = self._batch_static_nvalchemi(nv_model, structure_data)
-                    if "error" not in result:
-                        return result
+            # NValchemi is an experimental, explicitly selected batch backend.
+            nv_model = self._get_enabled_nvalchemi_model(use_nvalchemi)
+            if nv_model is not None:
+                result = self._batch_static_nvalchemi(nv_model, structure_data)
+                if "error" not in result:
+                    return result
 
             # Sequential fallback
             structure_list = []
@@ -1817,6 +1835,7 @@ class MLIPModel(ABC):
         monitor_params: Optional[Dict[str, Any]] = None,
         supercell_min_length: Optional[float] = None,
         extract_batch_results: bool = True,
+        use_nvalchemi: bool = False,
     ) -> Dict[str, Any]:
         """
         Run molecular dynamics simulation using MatCalc.
@@ -1836,6 +1855,7 @@ class MLIPModel(ABC):
             monitor_type: Type of monitoring ("melting", "explosion", "overshoot", "volume") or list of types.
             monitor_params: Optional dictionary of parameters for the monitors (e.g., upper_limit_ratio).
             supercell_min_length: Minimum length (Å) for each lattice vector. Automatically expands supercell. Set None to disable.
+            use_nvalchemi: Opt in to experimental NValchemi batching (default False).
             extract_batch_results: Whether to extract full trajectory / logs for all structures in batch mode.
 
         Returns:
@@ -1900,29 +1920,26 @@ class MLIPModel(ABC):
             except Exception:
                 output_dir = f"batch_md_{temperature}K"
 
-        # Try NValchemi GPU-parallel MD
-        from src.utils.mlips.nvalchemi.nvalchemi_utils import check_nvalchemi_available
-
-        if check_nvalchemi_available():
-            nv_model = self._get_nvalchemi_model()
-            if nv_model is not None:
-                nv_result = self._batch_md_nvalchemi(
-                    nv_model=nv_model,
-                    structure_list=structure_list,
-                    structure_names=structure_names,
-                    temperature=temperature,
-                    steps=steps,
-                    timestep=timestep,
-                    ensemble=ensemble,
-                    output_dir=output_dir,
-                    log_interval=log_interval,
-                    extract_batch_results=extract_batch_results,
-                )
-                if "error" not in nv_result:
-                    return nv_result
-                logger.warning(
-                    f"NValchemi MD failed ({nv_result.get('error')}); falling back to sequential."
-                )
+        # Opt in to experimental NValchemi GPU-parallel MD.
+        nv_model = self._get_enabled_nvalchemi_model(use_nvalchemi)
+        if nv_model is not None:
+            nv_result = self._batch_md_nvalchemi(
+                nv_model=nv_model,
+                structure_list=structure_list,
+                structure_names=structure_names,
+                temperature=temperature,
+                steps=steps,
+                timestep=timestep,
+                ensemble=ensemble,
+                output_dir=output_dir,
+                log_interval=log_interval,
+                extract_batch_results=extract_batch_results,
+            )
+            if "error" not in nv_result:
+                return nv_result
+            logger.warning(
+                f"NValchemi MD failed ({nv_result.get('error')}); falling back to sequential."
+            )
 
         os.makedirs(output_dir, exist_ok=True)
         results = []
@@ -1986,6 +2003,7 @@ class MLIPModel(ABC):
 
         return {
             "mode": "batch",
+            "backend": "sequential",
             "total_jobs": len(results),
             "successful": n_success,
             "failed": n_failed,

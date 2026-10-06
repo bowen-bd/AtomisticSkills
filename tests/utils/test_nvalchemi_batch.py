@@ -79,6 +79,7 @@ class TestFallback:
             fmax=0.5,
             steps=5,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
         # Should complete without error (via sequential path)
         assert result is not None
@@ -99,7 +100,7 @@ class TestFallback:
             pytest.skip("MACE model unavailable in this environment")
 
         atoms = _make_cu_bulk()
-        result = wrapper.static_calculation(atoms)
+        result = wrapper.static_calculation(atoms, use_nvalchemi=True)
         assert "energy" in result
         assert isinstance(result["energy"], float)
 
@@ -131,6 +132,7 @@ class TestBatchRelaxMACE:
             fmax=0.2,
             steps=20,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
         assert result is not None
 
@@ -158,6 +160,7 @@ class TestBatchRelaxMACE:
             fmax=0.2,
             steps=5,
             output_dir=str(tmp_path / "nv"),
+            use_nvalchemi=True,
         )
 
         # Force sequential
@@ -168,6 +171,7 @@ class TestBatchRelaxMACE:
             fmax=0.2,
             steps=5,
             output_dir=str(tmp_path / "seq"),
+            use_nvalchemi=True,
         )
         _nv.NVALCHEMI_AVAILABLE = original
 
@@ -204,6 +208,7 @@ class TestBatchRelaxM3GNet:
             fmax=0.2,
             steps=20,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
         assert result is not None
 
@@ -265,6 +270,7 @@ class TestBatchRelaxCHGNet:
             fmax=0.2,
             steps=20,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
         assert result is not None
 
@@ -322,7 +328,9 @@ class TestBatchStaticFairChem:
             pytest.skip("FairChem uma-s-1p2 unavailable in this environment")
 
         structures = _make_structures(3)
-        result = wrapper.static_calculation(structure_data=structures)
+        result = wrapper.static_calculation(
+            structure_data=structures, use_nvalchemi=True
+        )
         assert result is not None
 
     def test_fairchem_wrapper_neighbor_config_none(self):
@@ -379,6 +387,7 @@ class TestBatchMDNVT:
             timestep=1.0,
             ensemble="nvt_nose_hoover",
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
         assert result is not None
 
@@ -404,6 +413,7 @@ class TestBatchMDNVT:
             timestep=1.0,
             ensemble="nve",
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
         assert result is not None
 
@@ -463,6 +473,7 @@ class TestInflightRelaxMACE:
             fmax=100.0,  # loose: structures graduate via 2-step budget, not fmax
             steps=2,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
 
         assert result is not None
@@ -493,6 +504,7 @@ class TestInflightRelaxMACE:
             fmax=100.0,
             steps=2,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
 
         assert result.get("total_structures") == n
@@ -528,6 +540,7 @@ class TestInflightRelaxMACE:
             fmax=100.0,
             steps=2,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
 
         for r in result.get("results", []):
@@ -543,9 +556,9 @@ class TestInflightRelaxMACE:
             with open(log_path) as lf:
                 lines = lf.readlines()
             assert lines[0].startswith("           Step"), "Bad relax.log header"
-            assert any(
-                ln.startswith("FIRE:") for ln in lines[1:]
-            ), "No FIRE steps logged"
+            assert any(ln.startswith("FIRE:") for ln in lines[1:]), (
+                "No FIRE steps logged"
+            )
             assert isinstance(r["energy"], float)
 
     def test_inflight_fixed_batch_still_works_below_threshold(
@@ -575,6 +588,7 @@ class TestInflightRelaxMACE:
             fmax=100.0,
             steps=2,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
 
         assert result is not None
@@ -626,6 +640,7 @@ class TestInflightRelaxFairChem:
             fmax=100.0,
             steps=2,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
 
         assert result is not None
@@ -661,6 +676,7 @@ class TestInflightRelaxFairChem:
             fmax=100.0,
             steps=2,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
 
         assert result.get("total_structures") == n
@@ -698,6 +714,7 @@ class TestInflightRelaxFairChem:
             fmax=100.0,
             steps=2,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
 
         for r in result.get("results", []):
@@ -713,9 +730,9 @@ class TestInflightRelaxFairChem:
             with open(log_path) as lf:
                 lines = lf.readlines()
             assert lines[0].startswith("           Step"), "Bad relax.log header"
-            assert any(
-                ln.startswith("FIRE:") for ln in lines[1:]
-            ), "No FIRE steps logged"
+            assert any(ln.startswith("FIRE:") for ln in lines[1:]), (
+                "No FIRE steps logged"
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -755,10 +772,11 @@ class TestBackendKeyAllPaths:
             fmax=0.5,
             steps=3,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
-        assert (
-            result.get("backend") == "sequential"
-        ), f"Expected 'sequential', got {result.get('backend')!r}"
+        assert result.get("backend") == "sequential", (
+            f"Expected 'sequential', got {result.get('backend')!r}"
+        )
 
     def test_fixed_batch_nvalchemi_backend_key(self, tmp_path, monkeypatch):
         """Fixed-batch NValchemi (all structures fit in one pass) must return backend='nvalchemi'."""
@@ -785,10 +803,11 @@ class TestBackendKeyAllPaths:
             fmax=0.5,
             steps=3,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
-        assert (
-            result.get("backend") == "nvalchemi"
-        ), f"Expected 'nvalchemi', got {result.get('backend')!r}"
+        assert result.get("backend") == "nvalchemi", (
+            f"Expected 'nvalchemi', got {result.get('backend')!r}"
+        )
 
     def test_inflight_backend_key(self, tmp_path, monkeypatch):
         """Inflight mode (total atoms > threshold) must return backend='nvalchemi_inflight'."""
@@ -815,10 +834,11 @@ class TestBackendKeyAllPaths:
             fmax=100.0,
             steps=2,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
-        assert (
-            result.get("backend") == "nvalchemi_inflight"
-        ), f"Expected 'nvalchemi_inflight', got {result.get('backend')!r}"
+        assert result.get("backend") == "nvalchemi_inflight", (
+            f"Expected 'nvalchemi_inflight', got {result.get('backend')!r}"
+        )
 
     def test_static_sequential_backend_key(self, tmp_path, monkeypatch):
         """Sequential static_calculation fallback must return backend='sequential'."""
@@ -832,10 +852,12 @@ class TestBackendKeyAllPaths:
         monkeypatch.setattr(_nv, "NVALCHEMI_AVAILABLE", False)
         monkeypatch.setattr(_nv, "check_nvalchemi_available", lambda: False)
 
-        result = wrapper.static_calculation(structure_data=_make_structures(2))
-        assert (
-            result.get("backend") == "sequential"
-        ), f"Expected 'sequential', got {result.get('backend')!r}"
+        result = wrapper.static_calculation(
+            structure_data=_make_structures(2), use_nvalchemi=True
+        )
+        assert result.get("backend") == "sequential", (
+            f"Expected 'sequential', got {result.get('backend')!r}"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -874,6 +896,7 @@ class TestRelaxLogFixedBatch:
             fmax=100.0,
             steps=3,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
         assert result.get("backend") == "nvalchemi"
         for r in result.get("results", []):
@@ -992,6 +1015,7 @@ class TestInflightRelaxM3GNet:
             fmax=100.0,
             steps=2,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
         assert result.get("backend") == "nvalchemi"
 
@@ -1017,6 +1041,7 @@ class TestInflightRelaxM3GNet:
             fmax=100.0,
             steps=2,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
         assert result.get("total_structures") == n
         assert len(result.get("results", [])) == n
@@ -1043,6 +1068,7 @@ class TestInflightRelaxM3GNet:
             fmax=100.0,
             steps=2,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
         for r in result.get("results", []):
             assert r["status"] in (
@@ -1056,9 +1082,9 @@ class TestInflightRelaxM3GNet:
             with open(log_path) as f:
                 lines = f.readlines()
             assert lines[0].startswith("           Step"), "Bad relax.log header"
-            assert any(
-                ln.startswith("FIRE:") for ln in lines[1:]
-            ), "No FIRE steps logged"
+            assert any(ln.startswith("FIRE:") for ln in lines[1:]), (
+                "No FIRE steps logged"
+            )
 
     def test_inflight_fixed_batch_still_works_below_threshold(
         self, tmp_path, monkeypatch
@@ -1083,6 +1109,7 @@ class TestInflightRelaxM3GNet:
             fmax=100.0,
             steps=2,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
         assert result.get("backend") == "nvalchemi"
 
@@ -1121,6 +1148,7 @@ class TestInflightRelaxTensorNet:
             fmax=100.0,
             steps=2,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
         assert wrapper._get_nvalchemi_model()._nvalchemi_supports_inflight is False
         assert result.get("backend") == "nvalchemi"
@@ -1147,6 +1175,7 @@ class TestInflightRelaxTensorNet:
             fmax=100.0,
             steps=2,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
         for r in result.get("results", []):
             assert r["status"] in ("success", "not_converged")
@@ -1193,6 +1222,7 @@ class TestInflightRelaxCHGNet:
             fmax=100.0,
             steps=2,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
         assert result.get("backend") == "nvalchemi"
 
@@ -1218,6 +1248,7 @@ class TestInflightRelaxCHGNet:
             fmax=100.0,
             steps=2,
             output_dir=str(tmp_path),
+            use_nvalchemi=True,
         )
         for r in result.get("results", []):
             assert r["status"] in ("success", "not_converged")

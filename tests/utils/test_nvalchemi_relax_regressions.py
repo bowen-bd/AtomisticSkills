@@ -104,6 +104,7 @@ def test_step_limit_is_not_success(tmp_path, mode):
             relax_cell=True,
             output_dir=str(tmp_path),
             max_batch_atoms=8 if mode == "inflight" else 100,
+            use_nvalchemi=True,
         )
         assert result["backend"] == (
             "nvalchemi_inflight" if mode == "inflight" else "nvalchemi"
@@ -134,6 +135,7 @@ def test_variable_cell_relax_recovers_strained_supercell(tmp_path):
         steps=600,
         relax_cell=True,
         output_dir=str(tmp_path / "batch"),
+        use_nvalchemi=True,
     )
     baseline = wrapper._single_relax(
         atoms.copy(), 0.005, 600, "FIRE", True, str(tmp_path / "ase"), None

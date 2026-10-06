@@ -70,6 +70,7 @@ def test_mace_inflight_refill_matches_fresh_neighbors(tmp_path, monkeypatch):
         relax_cell=False,
         max_batch_atoms=4,
         output_dir=str(tmp_path),
+        use_nvalchemi=True,
     )
     assert result.get("backend") == "nvalchemi_inflight", result
     assert result["failed"] == 0, result
@@ -240,6 +241,7 @@ def test_batch_md_uses_guarded_neighbors(tmp_path, monkeypatch, caplog, ensemble
         ensemble=ensemble,
         log_interval=1,
         output_dir=str(tmp_path),
+        use_nvalchemi=True,
     )
     assert hooks and all(type(h) is not NeighborListHook for h in hooks)
     assert result["failed"] == 0, result

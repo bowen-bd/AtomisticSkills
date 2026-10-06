@@ -26,7 +26,6 @@ import argparse
 import sys
 import time
 import tempfile
-from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -103,18 +102,6 @@ def _make_cu_supercells(n: int, min_length: float = SUPERCELL_MIN_LENGTH):
     return structures
 
 
-@contextmanager
-def _nvalchemi_disabled():
-    import src.utils.mlips.nvalchemi.nvalchemi_utils as _m
-
-    orig = _m.check_nvalchemi_available
-    _m.check_nvalchemi_available = lambda: False
-    try:
-        yield
-    finally:
-        _m.check_nvalchemi_available = orig
-
-
 def _load_wrapper(
     cls_path: str, model_name: str, task_name: str | None, device: str
 ) -> Any | None:
@@ -173,20 +160,19 @@ def _benchmark_md(
     best_seq = float("inf")
     for rep in range(n_repeat):
         t0 = time.perf_counter()
-        with _nvalchemi_disabled():
-            for struct in structures:
-                wrapper.run_md(
-                    structure_data=struct,
-                    temperature=MD_TEMPERATURE,
-                    steps=MD_STEPS,
-                    timestep=MD_TIMESTEP,
-                    ensemble=MD_ENSEMBLE,
-                    log_interval=MD_STEPS + 1,  # suppress per-step I/O
-                    output_dir=output_dir,
-                )
+        for struct in structures:
+            wrapper.run_md(
+                structure_data=struct,
+                temperature=MD_TEMPERATURE,
+                steps=MD_STEPS,
+                timestep=MD_TIMESTEP,
+                ensemble=MD_ENSEMBLE,
+                log_interval=MD_STEPS + 1,  # suppress per-step I/O
+                output_dir=output_dir,
+            )
         elapsed = time.perf_counter() - t0
         best_seq = min(best_seq, elapsed)
-        print(f"    Sequential repeat {rep+1} wall time: {elapsed:.2f} s", flush=True)
+        print(f"    Sequential repeat {rep + 1} wall time: {elapsed:.2f} s", flush=True)
     print(f"  Best sequential time: {best_seq:.2f} s", flush=True)
 
     # --- Batched timing: NValchemi active, all structures at once ---
@@ -200,6 +186,7 @@ def _benchmark_md(
         try:
             r = wrapper.run_md(
                 structure_data=structures,
+                use_nvalchemi=True,
                 temperature=MD_TEMPERATURE,
                 steps=MD_STEPS,
                 timestep=MD_TIMESTEP,
@@ -209,12 +196,12 @@ def _benchmark_md(
                 extract_batch_results=False,
             )
         except Exception as exc:
-            print(f"    Batched repeat {rep+1} EXCEPTION: {exc}", flush=True)
+            print(f"    Batched repeat {rep + 1} EXCEPTION: {exc}", flush=True)
             break  # CUDA context likely corrupted; stop repeating
         elapsed = time.perf_counter() - t0
         backend = r.get("backend", "unknown")
         print(
-            f"    Batched repeat {rep+1} wall time: {elapsed:.2f} s (backend={backend})",
+            f"    Batched repeat {rep + 1} wall time: {elapsed:.2f} s (backend={backend})",
             flush=True,
         )
         if backend == "nvalchemi":
@@ -273,7 +260,7 @@ def main():
     structures = _make_cu_supercells(N_STRUCTURES)
     atoms_count = len(structures[0])
 
-    print(f"\n{'='*65}")
+    print(f"\n{'=' * 65}")
     print(f"MD Benchmark: {args.env.upper()} | device={args.device}")
     print(
         f"N={N_STRUCTURES} Cu FCC supercells ({atoms_count} atoms each, ≥{SUPERCELL_MIN_LENGTH} Å sides)"
@@ -282,7 +269,7 @@ def main():
         f"Steps={MD_STEPS}, Ensemble={MD_ENSEMBLE}, T={MD_TEMPERATURE} K, dt={MD_TIMESTEP} fs"
     )
     print(f"Best-of-{args.n_repeat} timing")
-    print(f"{'='*65}")
+    print(f"{'=' * 65}")
 
     results = []
     for model_name, cls_path, task_name, label in ENV_MODELS[args.env]:
@@ -297,17 +284,17 @@ def main():
         results.append(r)
 
     # Summary
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"{'Model':<35} {'Seq (s)':>8} {'Batch (s)':>10} {'Speedup':>9}")
-    print(f"{'-'*70}")
+    print(f"{'-' * 70}")
     for r in results:
         if r.get("skipped"):
-            print(f"  {r['label']:<33}  SKIPPED: {r.get('reason','')}")
+            print(f"  {r['label']:<33}  SKIPPED: {r.get('reason', '')}")
             continue
         print(
             f"  {r['label']:<33}  {r['t_seq_s']:>7.2f}  {r['t_batch_s']:>9.2f}  {r['speedup']:>8.2f}x"
         )
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
 
 
 if __name__ == "__main__":

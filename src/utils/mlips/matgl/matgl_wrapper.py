@@ -144,7 +144,9 @@ class MatGLWrapper(MLIPModel):
             potential=self.model, device=self.device, stress_unit="eV/A3"
         )
 
-    def static_calculation(self, structure_data: Any) -> Dict[str, Any]:
+    def static_calculation(
+        self, structure_data: Any, use_nvalchemi: bool = False
+    ) -> Dict[str, Any]:
         """Run a static single-point calculation.
 
         For MEGNet-BandGap models the DFT functional is selected via ``task_name``
@@ -160,7 +162,9 @@ class MatGLWrapper(MLIPModel):
             isinstance(structure_data, str) and os.path.isdir(structure_data)
         )
         if is_batch and "Potential" in type(self.model).__name__:
-            return super().static_calculation(structure_data)
+            return super().static_calculation(
+                structure_data, use_nvalchemi=use_nvalchemi
+            )
 
         atoms = self.check_structure_data(structure_data)
         if isinstance(atoms, dict) and "error" in atoms:

@@ -5,9 +5,9 @@ Calls the *actual* MCP-exposed wrapper methods (``static_calculation``,
 
 For each MLIP:
   1. Runs ``wrapper.static_calculation(list_of_structures)`` with NValchemi
-     enabled (GPU-parallel batch path).
+     enabled explicitly with use_nvalchemi=True (GPU-parallel batch path).
   2. Runs ``wrapper.static_calculation(list_of_structures)`` with NValchemi
-     *disabled* via monkeypatch (sequential fallback path).
+     disabled by default (sequential native-calculator path).
   3. Asserts energy and forces match within tolerance; reports speedup.
 
 Note on stress
@@ -28,7 +28,6 @@ Run commands
 from __future__ import annotations
 
 import time
-from contextlib import contextmanager
 from typing import Any
 
 import numpy as np
@@ -55,25 +54,6 @@ def _cu_structures(n: int = 5):
 
     scales = np.linspace(0.96, 1.04, n)
     return [bulk("Cu", "fcc", a=3.6 * s) for s in scales]
-
-
-# ---------------------------------------------------------------------------
-# Helpers to disable NValchemi for sequential baseline
-# ---------------------------------------------------------------------------
-
-
-@contextmanager
-def _nvalchemi_disabled():
-    """Context manager that patches check_nvalchemi_available() → False."""
-    import src.utils.mlips.nvalchemi.nvalchemi_utils as _m
-
-    orig = _m.check_nvalchemi_available
-
-    _m.check_nvalchemi_available = lambda: False
-    try:
-        yield
-    finally:
-        _m.check_nvalchemi_available = orig
 
 
 # ---------------------------------------------------------------------------
@@ -129,7 +109,9 @@ def _time_call(fn, n_repeat: int = N_REPEAT):
 def _compare_static(label: str, wrapper: Any, structures: list) -> dict:
     """Run batch static_calculation with and without NValchemi; assert & report."""
     # NValchemi batch
-    result_nv, t_nv = _time_call(lambda: wrapper.static_calculation(structures))
+    result_nv, t_nv = _time_call(
+        lambda: wrapper.static_calculation(structures, use_nvalchemi=True)
+    )
     assert "error" not in result_nv, f"NValchemi batch failed: {result_nv.get('error')}"
     assert result_nv.get("backend") == "nvalchemi", (
         f"Expected NValchemi backend, got: {result_nv.get('backend', 'sequential')}. "
@@ -137,11 +119,10 @@ def _compare_static(label: str, wrapper: Any, structures: list) -> dict:
     )
 
     # Sequential fallback (same code path, NValchemi disabled)
-    with _nvalchemi_disabled():
-        result_seq, t_seq = _time_call(lambda: wrapper.static_calculation(structures))
-    assert (
-        "error" not in result_seq
-    ), f"Sequential batch failed: {result_seq.get('error')}"
+    result_seq, t_seq = _time_call(lambda: wrapper.static_calculation(structures))
+    assert "error" not in result_seq, (
+        f"Sequential batch failed: {result_seq.get('error')}"
+    )
 
     # Per-structure comparison
     n = len(structures)
@@ -159,25 +140,25 @@ def _compare_static(label: str, wrapper: Any, structures: list) -> dict:
     speedup = t_seq / t_nv if t_nv > 0 else float("inf")
 
     print(
-        f"\n{'='*62}\n{label}\n{'='*62}\n"
+        f"\n{'=' * 62}\n{label}\n{'=' * 62}\n"
         f"  Structures  : {n}\n"
-        f"  Sequential  : {t_seq*1000:.1f} ms   (NValchemi disabled)\n"
-        f"  NValchemi   : {t_nv*1000:.1f} ms   (batch, single forward)\n"
+        f"  Sequential  : {t_seq * 1000:.1f} ms   (NValchemi disabled)\n"
+        f"  NValchemi   : {t_nv * 1000:.1f} ms   (batch, single forward)\n"
         f"  Speedup     : {speedup:.2f}x\n"
         f"  ΔE max      : {max(e_diffs):.2e} eV  (tol {ENERGY_TOL:.0e})\n"
         f"  ΔF max      : {max(f_diffs):.2e} eV/Å  (tol {FORCE_TOL:.0e})\n"
         f"  ΔS max      : {max(s_diffs):.2e} eV/Å³  (tol {STRESS_TOL:.0e})\n"
     )
 
-    assert (
-        max(e_diffs) < ENERGY_TOL
-    ), f"[{label}] max ΔE={max(e_diffs):.3e} eV > {ENERGY_TOL}"
-    assert (
-        max(f_diffs) < FORCE_TOL
-    ), f"[{label}] max ΔF={max(f_diffs):.3e} eV/Å > {FORCE_TOL}"
-    assert (
-        max(s_diffs) < STRESS_TOL
-    ), f"[{label}] max ΔS={max(s_diffs):.3e} eV/Å³ > {STRESS_TOL}"
+    assert max(e_diffs) < ENERGY_TOL, (
+        f"[{label}] max ΔE={max(e_diffs):.3e} eV > {ENERGY_TOL}"
+    )
+    assert max(f_diffs) < FORCE_TOL, (
+        f"[{label}] max ΔF={max(f_diffs):.3e} eV/Å > {FORCE_TOL}"
+    )
+    assert max(s_diffs) < STRESS_TOL, (
+        f"[{label}] max ΔS={max(s_diffs):.3e} eV/Å³ > {STRESS_TOL}"
+    )
 
     return {
         "label": label,
@@ -248,14 +229,13 @@ class TestStaticMACE:
         """Single-structure static_calculation must equal first element of batch."""
         structs = _cu_structures(2)
         single = wrapper.static_calculation(structs[0])
-        with _nvalchemi_disabled():
-            batch = wrapper.static_calculation(structs)
+        batch = wrapper.static_calculation(structs)
 
         e_single = single["energy"]
         e_batch = batch["results"][0]["energy"]
-        assert (
-            abs(e_single - e_batch) < ENERGY_TOL
-        ), f"Single result {e_single:.4f} != batch[0] result {e_batch:.4f}"
+        assert abs(e_single - e_batch) < ENERGY_TOL, (
+            f"Single result {e_single:.4f} != batch[0] result {e_batch:.4f}"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -397,14 +377,14 @@ if __name__ == "__main__":
 
     if rows:
         W = 44
-        print(f"\n{'='*(W+46)}")
+        print(f"\n{'=' * (W + 46)}")
         print(
             f"{'Model':<{W}} {'Speedup':>8}  {'ΔE max':>10}  {'ΔF max':>10}  {'ΔS max':>10}"
         )
-        print(f"{'-'*(W+46)}")
+        print(f"{'-' * (W + 46)}")
         for r in rows:
             print(
                 f"{r['label']:<{W}} {r['speedup']:>7.2f}x"
                 f"  {r['de_max']:>9.2e}  {r['df_max']:>9.2e}  {r['ds_max']:>9.2e}"
             )
-        print(f"{'='*(W+46)}")
+        print(f"{'=' * (W + 46)}")
