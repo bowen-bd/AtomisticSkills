@@ -1,0 +1,46 @@
+{
+  "upstream": "wannier-developers/wannier90",
+  "version": "v4.0.3",
+  "commit": "971c8b64bfe703c747a52655e1d59936597fe8ea",
+  "input_origin": "tutorials/tutorial03",
+  "unmodified_upstream_inputs": {
+    "silicon.amn": {
+      "upstream_path": "tutorials/tutorial03/silicon.amn",
+      "sha256": "9f566a6645d92c45a48dd25d1b50ed2d1bc2d2700cae57b842392ddb8741b85d"
+    },
+    "silicon.mmn": {
+      "upstream_path": "tutorials/tutorial03/silicon.mmn",
+      "sha256": "c019b7821d9333e39f0e7352a9d43a28d03d98033e8c912001297f99ec233927",
+      "bundled_file": "silicon.mmn.xz",
+      "compression": "xz",
+      "bundled_sha256": "d1314f7ca950b92ea6217a0c7d2a7719d0ebad7526a173cb054dc7f62ef116db"
+    },
+    "silicon.eig": {
+      "upstream_path": "tutorials/tutorial03/silicon.eig",
+      "sha256": "30dd8a320f4563a6e80e0b9ab063edef979dd3fee198cb6489756fc6014f61c4"
+    }
+  },
+  "adaptations": [
+    "Explicit localization convergence window 3 and tolerance 1e-10",
+    "Increased iteration limit; original DFT matrices retained",
+    "use_ws_distance=true, write_hr=true, bands_plot=true"
+  ],
+  "validation": {
+    "wannier90_version": "4.0.3",
+    "normal_termination": true,
+    "localization_status": "converged",
+    "disentanglement_status": "converged",
+    "omega_total_angstrom2": 14.499574503,
+    "dft_executed": false,
+    "interpolation": {
+      "use_ws_distance": true,
+      "num_kpoints": 380,
+      "num_bands": 8,
+      "mae_eV": 3.588161421262402e-06,
+      "rmse_eV": 4.71644711533573e-06,
+      "max_error_eV": 2.4817103913221672e-05,
+      "validation_scope": "same-model numerical regression",
+      "status": "PASSED"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+&inputpp
+  prefix      = 'si'
+  outdir      = './out'
+  seedname    = 'silicon'
+  write_mmn   = .true.       ! Compute overlap matrix M_mn(k, b)
+  write_amn   = .true.       ! Compute projection matrix A_mn(k)
+  ! The interface writes Kohn-Sham eigenvalues (.eig) automatically.
+  write_unk   = .false.      ! Real-space periodic wavefunctions (set .true. only if plotting WFs)
+  write_spn   = .false.      ! Spin matrix elements (for spin-orbit calculations)
+/
