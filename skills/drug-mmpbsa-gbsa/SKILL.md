@@ -51,6 +51,7 @@ Key parameters:
 - `--topology`: solvated complex PDB from [drug-complex-system-builder](../drug-complex-system-builder/SKILL.md)
 - `--trajectory`: production DCD from [drug-protein-ligand-md](../drug-protein-ligand-md/SKILL.md)
 - `--ligand_sdf`: ligand SDF with correct bond orders (for OpenFF parameterization and AM1-BCC charges)
+- `--charge_method` (`compute_mmgbsa.py`): ligand partial charges, `am1bcc` (default; needs AmberTools' `sqm` on `PATH`, not in any uv environment) or `mmff94` / `gasteiger` (RDKit; cruder, for screening and tests). Use the same method the complex was built with.
 - `--ligand_resname`: residue name of the ligand in the PDB topology (default: UNL)
 - `--skip_ns`: skip the first N nanoseconds of trajectory as equilibration (default: 0.5). For longer production runs, increase proportionally: roughly 10% of production length is a reasonable rule of thumb, capped at ~5 ns for 50+ ns runs.
 - `--stride`: evaluate every Nth frame after skipping (default: 5)

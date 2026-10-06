@@ -36,6 +36,34 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 VENV_DIR = PROJECT_ROOT / "venv"
 TABLE = VENV_DIR / "platforms.tsv"
 ARCHES = ("x86_64", "aarch64")
+# Wheels whose platform tag states no glibc floor (PyG's plain linux_<arch>)
+# or the wrong one, with the floor their shared libraries need, measured by
+# tools/scan_wheel_floors.py (the newest GLIBC_ symbol version they import). A
+# plain linux_<arch> wheel matching none of these fails the table: measure it.
+MEASURED_FLOORS = [
+    # PyG's extensions built for torch 2.9 and 2.10 import GLIBC_2.32.
+    (
+        r"^torch_(scatter|sparse|cluster|spline_conv)-[\d.]+\+pt2(9|10)\w*-.*-linux_x86_64\.whl$",
+        (2, 32),
+    ),
+    # Those for torch 2.2 (cu121) and 2.6 (cpu) import GLIBC_2.14 at most.
+    (
+        r"^torch_(scatter|sparse|cluster|spline_conv)-[\d.]+\+pt2(2|6)\w*-.*-linux_x86_64\.whl$",
+        (2, 14),
+    ),
+    # PyTorch's own older builds on its index (2.2.1+cu121, 2.6.0+cpu, and
+    # their torchvision) carry the plain tag too; they import GLIBC_2.17.
+    (
+        r"^(torch-2\.(2|6)\.\d+|torchvision-0\.(17|21)\.\d+)\+(cu121|cpu)-.*-linux_x86_64\.whl$",
+        (2, 17),
+    ),
+    # DGL 2.5 is tagged manylinux1 but imports GLIBCXX_3.4.26, GCC 9's
+    # libstdc++: EL8 (glibc 2.28, GCC 8) lacks it; distributions from glibc
+    # 2.31 on (Ubuntu 20.04, Debian 11) ship it.
+    (r"^dgl-2\.5\.0-.*-manylinux1_x86_64\.whl$", (2, 31)),
+]
+UNMEASURED: set[str] = set()
+
 LEGACY_MANYLINUX = {
     "manylinux1": (2, 5),
     "manylinux2010": (2, 12),
@@ -123,6 +151,7 @@ def canonical(name: str) -> str:
 
 def wheel_glibc(filename: str, arch: str, minor: int = 12) -> tuple[int, int] | None:
     """Return the glibc a wheel needs on arch (CPython 3.minor), or None if it cannot."""
+    filename = filename.replace("%2B", "+")
     parts = filename[:-4].split("-")
     if len(parts) < 5:
         return None
@@ -133,13 +162,20 @@ def wheel_glibc(filename: str, arch: str, minor: int = 12) -> tuple[int, int] | 
         for p in py.split(".")
     ):
         return None
+    if not any(t == "any" or t.endswith(f"_{arch}") for t in plat.split(".")):
+        return None
+    for pattern, floor in MEASURED_FLOORS:
+        if re.search(pattern, filename):
+            return floor
     best = None
     for tag in plat.split("."):
         if tag == "any":
             return (0, 0)
-        # A plain linux_<arch> wheel (PyG's extensions) states no glibc floor;
-        # uv installs it on any Linux of that architecture.
+        # A plain linux_<arch> wheel (PyG's extensions) states no glibc floor
+        # (uv installs it on any Linux of that architecture), so its binaries
+        # must have been measured (MEASURED_FLOORS).
         if tag == f"linux_{arch}":
+            UNMEASURED.add(filename)
             return (0, 0)
         m = re.fullmatch(r"manylinux_(\d+)_(\d+)_(\w+)", tag)
         if m and m.group(3) == arch:
@@ -239,6 +275,13 @@ def main() -> int:
     args = parser.parse_args()
 
     text, report = render()
+    if UNMEASURED:
+        print("wheels with a plain linux_<arch> tag, whose glibc floor is unknown:")
+        for name in sorted(UNMEASURED):
+            print(f"  {name}")
+        print("measure them (venv/run cpu python tools/scan_wheel_floors.py <project>)")
+        print("and add the result to MEASURED_FLOORS in tools/lock_platforms.py")
+        return 1
     if args.report:
         print("\n".join(report))
         return 0

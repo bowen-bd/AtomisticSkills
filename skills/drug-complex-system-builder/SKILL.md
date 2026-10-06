@@ -72,7 +72,8 @@ Visually inspect `complex_solvated.pdb` to verify:
 ### 4. Troubleshooting
 
 Common issues:
-- **Ligand parameterization fails**: ensure the ligand SDF has explicit hydrogens and correct bond orders. Re-run [drug-ligand-prep](../drug-ligand-prep/SKILL.md) if needed. The script assigns AM1-BCC partial charges automatically; any pre-existing charges in the SDF are overwritten to ensure deterministic behavior.
+- **Ligand parameterization fails**: ensure the ligand SDF has explicit hydrogens and correct bond orders. Re-run [drug-ligand-prep](../drug-ligand-prep/SKILL.md) if needed. The script assigns partial charges itself (`--charge_method`, default `am1bcc`); any pre-existing charges in the SDF are overwritten to ensure deterministic behavior.
+- **AM1-BCC charges or GAFF**: both need AmberTools (`sqm`, `antechamber`) on `PATH`, and AmberTools has no PyPI distribution, so it is not in any uv environment: install it separately (conda-forge `ambertools`, or a source build). Without it, use OpenFF Sage (`--ligand_ff openff-2.2.0`, the default) with `--charge_method mmff94` or `gasteiger` (RDKit charges): cruder than AM1-BCC, fine for screening and smoke tests, not for production free energies.
 - **Steric clash warning**: the script checks minimum protein-ligand interatomic distances before solvation. If you see a clash warning, the docking pose may need refinement. Mild clashes (1.0-1.5 A) can often be resolved by energy minimization, but severe clashes (<1.0 A) usually indicate a bad pose.
 - **Missing residues in protein**: the builder does not fix gaps. Use [drug-protein-prep](../drug-protein-prep/SKILL.md) first.
 - **Box too small**: increase `--box_padding` if you see solute atoms near box edges.

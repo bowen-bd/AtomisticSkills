@@ -278,9 +278,21 @@ docking = [
     { name = "vina", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')" },
 ]
 openmm = [
+    { name = "cachetools", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')" },
+    { name = "networkx", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')" },
+    { name = "openff-interchange", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')" },
+    { name = "openff-toolkit", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')" },
+    { name = "openff-units", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')" },
+    { name = "openff-utilities", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')" },
+    { name = "openforcefields", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')" },
     { name = "openmm", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')" },
+    { name = "openmmforcefields", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')" },
+    { name = "packaging", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')" },
     { name = "parmed", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')" },
     { name = "pdbfixer", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')" },
+    { name = "pydantic", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')" },
+    { name = "python-constraint", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')" },
+    { name = "xmltodict", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')" },
 ]
 pymol = [
     { name = "pymol-open-source", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
@@ -306,6 +318,7 @@ requires-dist = [
     { name = "atomisticskills", editable = "../../" },
     { name = "beautifulsoup4" },
     { name = "biopython" },
+    { name = "cachetools", marker = "extra == 'openmm'" },
     { name = "cvxpy" },
     { name = "dara-xrd" },
     { name = "datasets" },
@@ -328,13 +341,21 @@ requires-dist = [
     { name = "meeko" },
     { name = "mp-api" },
     { name = "mpcontribs-client" },
+    { name = "networkx", marker = "extra == 'openmm'" },
     { name = "nmrglue" },
     { name = "nmrsim" },
     { name = "numpy", specifier = ">=2" },
     { name = "openbabel-wheel" },
     { name = "opencv-python-headless" },
+    { name = "openff-interchange", marker = "extra == 'openmm'", git = "https://github.com/openforcefield/openff-interchange?tag=v0.5.5" },
+    { name = "openff-toolkit", marker = "extra == 'openmm'", git = "https://github.com/openforcefield/openff-toolkit?tag=0.19.0" },
+    { name = "openff-units", marker = "extra == 'openmm'", git = "https://github.com/openforcefield/openff-units?tag=0.4.0" },
+    { name = "openff-utilities", marker = "extra == 'openmm'", git = "https://github.com/openforcefield/openff-utilities?tag=v0.1.18" },
+    { name = "openforcefields", marker = "extra == 'openmm'", git = "https://github.com/openforcefield/openff-forcefields?tag=2026.09.0" },
     { name = "openmm", marker = "extra == 'openmm'" },
+    { name = "openmmforcefields", marker = "extra == 'openmm'" },
     { name = "optimade", extras = ["http-client"] },
+    { name = "packaging", marker = "extra == 'openmm'" },
     { name = "pandas" },
     { name = "parmed", marker = "extra == 'openmm'" },
     { name = "pdbfixer", marker = "extra == 'openmm'" },
@@ -343,11 +364,13 @@ requires-dist = [
     { name = "posebusters" },
     { name = "prolif" },
     { name = "pycalphad" },
+    { name = "pydantic", marker = "extra == 'openmm'" },
     { name = "pymatgen" },
     { name = "pymatgen-analysis-defects" },
     { name = "pymatgen-analysis-diffusion" },
     { name = "pymol-open-source", marker = "platform_machine == 'x86_64' and extra == 'pymol'", specifier = "==3.2.0a0" },
     { name = "pymupdf" },
+    { name = "python-constraint", marker = "extra == 'openmm'" },
     { name = "python-pptx" },
     { name = "pyyaml" },
     { name = "rdkit" },
@@ -365,6 +388,7 @@ requires-dist = [
     { name = "vina", marker = "extra == 'docking'" },
     { name = "void", marker = "extra == 'void'", git = "https://github.com/learningmatter-mit/VOID.git" },
     { name = "xarray" },
+    { name = "xmltodict", marker = "extra == 'openmm'" },
 ]
 provides-extras = ["openmm", "pymol", "docking", "void", "transport"]
 
@@ -2240,6 +2264,36 @@ wheels = [
 ]
 
 [[package]]
+name = "openff-interchange"
+version = "0.5.5"
+source = { git = "https://github.com/openforcefield/openff-interchange?tag=v0.5.5#27bbeb374a0edc4de1ae707a1c13a49d79675d67" }
+
+[[package]]
+name = "openff-toolkit"
+version = "0.19.0"
+source = { git = "https://github.com/openforcefield/openff-toolkit?tag=0.19.0#3673715c3223e1d0572a41a346fae113e8aff287" }
+
+[[package]]
+name = "openff-units"
+version = "0.4.0"
+source = { git = "https://github.com/openforcefield/openff-units?tag=0.4.0#d745081774d205043478c1cc07131190205d3679" }
+dependencies = [
+    { name = "numpy", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')" },
+    { name = "openff-utilities", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')" },
+    { name = "pint", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')" },
+]
+
+[[package]]
+name = "openff-utilities"
+version = "0.1.18"
+source = { git = "https://github.com/openforcefield/openff-utilities?tag=v0.1.18#4fc551250f568b86d42555d3108d34e4868376b6" }
+
+[[package]]
+name = "openforcefields"
+version = "2026.9.0"
+source = { git = "https://github.com/openforcefield/openff-forcefields?tag=2026.09.0#b59862aa828809e6fbef14cf6e33225bf24ce944" }
+
+[[package]]
 name = "openmm"
 version = "8.6.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2250,6 +2304,12 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/1a/2ba2706a2cf22bc6142a5688ddc032d908b082aba7d74727b995536587f9/openmm-8.6.1-cp312-cp312-manylinux_2_34_aarch64.whl", hash = "sha256:cbf75e64bc1350857c07c67bad71264fb270a15ed8ee7fa59ba0bd106af32589", size = 13919342, upload-time = "2026-09-11T21:14:32.75Z" },
     { url = "https://files.pythonhosted.org/packages/01/09/23fa5df6c710336300d3b69b2b409099612a100f97faed2c13df9adb73a2/openmm-8.6.1-cp312-cp312-manylinux_2_34_x86_64.whl", hash = "sha256:c198fa3a0cb236ab2e8c6405b59ee8acc4ffb6b1a54d001e29c4afb8419e959b", size = 14413848, upload-time = "2026-09-11T21:14:37.362Z" },
 ]
+
+[[package]]
+name = "openmmforcefields"
+version = "0.15.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/84/c6/92730898236872d856066e180283291786e2dc4649491141b5b9efe0fa4c/openmmforcefields-0.15.1.tar.gz", hash = "sha256:c8c5e806ed89c81691e742fb86f768f4c3c06f0173f7343e8420b78ee8645595", size = 5304142, upload-time = "2026-02-26T10:12:26.75Z" }
 
 [[package]]
 name = "opentelemetry-api"
@@ -2458,7 +2518,7 @@ wheels = [
 
 [[package]]
 name = "pint"
-version = "0.26.1"
+version = "0.25.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "flexcache", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')" },
@@ -2466,9 +2526,9 @@ dependencies = [
     { name = "platformdirs", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')" },
     { name = "typing-extensions", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9f/bc/2c38c32e0fb1f966d3695f4493a3f3ce2cc0cca1bbe7c958b92261b31af9/pint-0.26.1.tar.gz", hash = "sha256:1bbde36eae57a5a289cd05081c6405618a5899814940752064ce351cd0204f71", size = 273631, upload-time = "2026-09-10T21:16:49.712Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/52/9d/b1379cdbd33a49d17d627bc24e2b63cca06a1c5343b38072d2889499e82e/pint-0.25.3.tar.gz", hash = "sha256:f8f5df6cf65314d74da1ade1bf96f8e3e4d0c41b51577ac53c49e7d44ca5acee", size = 255106, upload-time = "2026-03-19T21:57:08.72Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6d/5c/9507ea3c732f8a259f45ddf190a741e9bf7d3fe229b5d473917ee6efbf1e/pint-0.26.1-py3-none-any.whl", hash = "sha256:e982b129415c09c63308f314ae44697d83e5c96f253bcc0d5b833fc3329eb6d4", size = 326478, upload-time = "2026-09-10T21:16:48.316Z" },
+    { url = "https://files.pythonhosted.org/packages/1b/dd/a9fe6a0a09512da23951c68bf36466aeecd89def3183dc095edbc807ddc5/pint-0.25.3-py3-none-any.whl", hash = "sha256:27eb25143bd5de9fcc4d5a4b484f16faf6b4615aa93ece6b3373a8c1a3c1b97d", size = 307488, upload-time = "2026-03-19T21:57:07.022Z" },
 ]
 
 [[package]]
@@ -2999,6 +3059,12 @@ sdist = { url = "https://files.pythonhosted.org/packages/ac/82/4c9ecabab13363e72
 wheels = [
     { url = "https://files.pythonhosted.org/packages/fa/b6/3127540ecdf1464a00e5a01ee60a1b09175f6913f0644ac748494d9c4b21/pytest_timeout-2.4.0-py3-none-any.whl", hash = "sha256:c42667e5cdadb151aeb5b26d114aff6bdf5a907f176a007a30b940d3d865b5c2", size = 14382, upload-time = "2025-05-05T19:44:33.502Z" },
 ]
+
+[[package]]
+name = "python-constraint"
+version = "1.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/37/8b/5f1bc2734ca611943e1d6733ee244238679f6410a10cd45ede55a61a8402/python-constraint-1.4.0.tar.bz2", hash = "sha256:501d6f17afe0032dfc6ea6c0f8acc12e44f992733f00e8538961031ef27ccb8e", size = 18416, upload-time = "2018-11-05T09:02:44.334Z" }
 
 [[package]]
 name = "python-dateutil"

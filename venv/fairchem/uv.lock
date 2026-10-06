@@ -346,6 +346,7 @@ dependencies = [
     { name = "scine-readuct", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
     { name = "scine-utilities", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
     { name = "scipy", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "sella", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
     { name = "smol", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
     { name = "sympy", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
     { name = "tinydb", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
@@ -373,9 +374,21 @@ lammps = [
     { name = "lammps", extra = ["mpi"], marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
 ]
 openmm = [
+    { name = "cachetools", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "networkx", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "openff-interchange", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "openff-toolkit", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "openff-units", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "openff-utilities", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "openforcefields", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
     { name = "openmm", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "openmmforcefields", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "packaging", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
     { name = "parmed", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
     { name = "pdbfixer", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "pydantic", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "python-constraint", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "xmltodict", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
 ]
 pymol = [
     { name = "pymol-open-source", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
@@ -401,6 +414,7 @@ requires-dist = [
     { name = "atomisticskills", editable = "../../" },
     { name = "beautifulsoup4" },
     { name = "biopython" },
+    { name = "cachetools", marker = "extra == 'openmm'" },
     { name = "cvxpy" },
     { name = "dara-xrd" },
     { name = "datasets" },
@@ -426,14 +440,22 @@ requires-dist = [
     { name = "meeko" },
     { name = "mp-api" },
     { name = "mpcontribs-client" },
+    { name = "networkx", marker = "extra == 'openmm'" },
     { name = "nmrglue" },
     { name = "nmrsim" },
     { name = "numpy", specifier = ">=2" },
     { name = "nvalchemi-toolkit", specifier = ">=0.2" },
     { name = "openbabel-wheel" },
     { name = "opencv-python-headless" },
+    { name = "openff-interchange", marker = "extra == 'openmm'", git = "https://github.com/openforcefield/openff-interchange?tag=v0.5.5" },
+    { name = "openff-toolkit", marker = "extra == 'openmm'", git = "https://github.com/openforcefield/openff-toolkit?tag=0.19.0" },
+    { name = "openff-units", marker = "extra == 'openmm'", git = "https://github.com/openforcefield/openff-units?tag=0.4.0" },
+    { name = "openff-utilities", marker = "extra == 'openmm'", git = "https://github.com/openforcefield/openff-utilities?tag=v0.1.18" },
+    { name = "openforcefields", marker = "extra == 'openmm'", git = "https://github.com/openforcefield/openff-forcefields?tag=2026.09.0" },
     { name = "openmm", marker = "extra == 'openmm'" },
+    { name = "openmmforcefields", marker = "extra == 'openmm'" },
     { name = "optimade", extras = ["http-client"] },
+    { name = "packaging", marker = "extra == 'openmm'" },
     { name = "pandas" },
     { name = "parmed", marker = "extra == 'openmm'" },
     { name = "pdbfixer", marker = "extra == 'openmm'" },
@@ -442,11 +464,13 @@ requires-dist = [
     { name = "posebusters" },
     { name = "prolif" },
     { name = "pycalphad" },
+    { name = "pydantic", marker = "extra == 'openmm'" },
     { name = "pymatgen" },
     { name = "pymatgen-analysis-defects" },
     { name = "pymatgen-analysis-diffusion" },
     { name = "pymol-open-source", marker = "platform_machine == 'x86_64' and extra == 'pymol'", specifier = "==3.2.0a0" },
     { name = "pymupdf" },
+    { name = "python-constraint", marker = "extra == 'openmm'" },
     { name = "python-pptx" },
     { name = "pyyaml" },
     { name = "rdkit" },
@@ -457,6 +481,7 @@ requires-dist = [
     { name = "scine-readuct", marker = "platform_machine == 'x86_64'" },
     { name = "scine-utilities", marker = "platform_machine == 'x86_64'" },
     { name = "scipy" },
+    { name = "sella" },
     { name = "smol" },
     { name = "sympy" },
     { name = "tinydb" },
@@ -469,6 +494,7 @@ requires-dist = [
     { name = "vina", marker = "extra == 'docking'" },
     { name = "void", marker = "extra == 'void'", git = "https://github.com/learningmatter-mit/VOID.git" },
     { name = "xarray" },
+    { name = "xmltodict", marker = "extra == 'openmm'" },
 ]
 provides-extras = ["openmm", "pymol", "docking", "void", "transport", "lammps", "cu126", "cu130"]
 
@@ -2086,6 +2112,38 @@ wheels = [
 ]
 
 [[package]]
+name = "jax"
+version = "0.11.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "jaxlib", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "ml-dtypes", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "numpy", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "opt-einsum", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "scipy", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/96/c3/cbb70e5e0846891b45c9b02b0755235618043cd2a8edd1f5bfe24b077cf4/jax-0.11.2.tar.gz", hash = "sha256:540dc0bed96bd5a0d8acca15cf16198fea98ef2fc151d40bdf1ace49eb76efd9", size = 2904036, upload-time = "2026-09-17T23:43:35.896Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ca/87/0c0ca8433e1135f6d1acd355cff21f31c3d433d937d6547aa545c8b060b8/jax-0.11.2-py3-none-any.whl", hash = "sha256:59e7ed9bd9ace049f4856752fe580c890e0164e1c023f40fadac386408daad66", size = 3345045, upload-time = "2026-09-17T23:41:14.517Z" },
+]
+
+[[package]]
+name = "jaxlib"
+version = "0.11.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "ml-dtypes", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "numpy", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "scipy", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3f/af/56ca13ef7a98137b087ef0c24dd5ace3163895f0164670babaa7dfcb69e6/jaxlib-0.11.2-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:eca80e745b7623369a76b5f685676ec233a33a55d69f60fa7e57cbefcfd47adc", size = 64867740, upload-time = "2026-09-17T23:42:19.368Z" },
+    { url = "https://files.pythonhosted.org/packages/69/72/318270378f5ff554ee921944bd97f59c0d6b35a8397cd35771dfdce1f445/jaxlib-0.11.2-cp312-cp312-manylinux_2_27_aarch64.whl", hash = "sha256:d497004e80daa91b98258d645b374e8dff480bf017d2c5f3e30b1371ac8f54b1", size = 84659774, upload-time = "2026-09-17T23:42:22.846Z" },
+    { url = "https://files.pythonhosted.org/packages/51/d2/07c3ea737d65b328b00377462e0e5dc8993a8a88d2a8a89e1c42038a4e53/jaxlib-0.11.2-cp312-cp312-manylinux_2_27_x86_64.whl", hash = "sha256:6338a1f0956f60d02529404ac33a8070015a52635cdb6bbb15d0d199757077bb", size = 89896206, upload-time = "2026-09-17T23:42:26.851Z" },
+    { url = "https://files.pythonhosted.org/packages/74/f7/8f6f7c55b80ca45e2225c78f4f44dbda8e5f420f933a5896e21045c3fb41/jaxlib-0.11.2-cp312-cp312-win_amd64.whl", hash = "sha256:53217a47d14eedd8fb5101f16aab1dfd58067835b4fb11910b50306218c7e620", size = 73563902, upload-time = "2026-09-17T23:42:30.216Z" },
+]
+
+[[package]]
 name = "jaxtyping"
 version = "0.3.11"
 source = { registry = "https://pypi.org/simple" }
@@ -3550,6 +3608,36 @@ wheels = [
 ]
 
 [[package]]
+name = "openff-interchange"
+version = "0.5.5"
+source = { git = "https://github.com/openforcefield/openff-interchange?tag=v0.5.5#27bbeb374a0edc4de1ae707a1c13a49d79675d67" }
+
+[[package]]
+name = "openff-toolkit"
+version = "0.19.0"
+source = { git = "https://github.com/openforcefield/openff-toolkit?tag=0.19.0#3673715c3223e1d0572a41a346fae113e8aff287" }
+
+[[package]]
+name = "openff-units"
+version = "0.4.0"
+source = { git = "https://github.com/openforcefield/openff-units?tag=0.4.0#d745081774d205043478c1cc07131190205d3679" }
+dependencies = [
+    { name = "numpy", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "openff-utilities", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "pint", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+]
+
+[[package]]
+name = "openff-utilities"
+version = "0.1.18"
+source = { git = "https://github.com/openforcefield/openff-utilities?tag=v0.1.18#4fc551250f568b86d42555d3108d34e4868376b6" }
+
+[[package]]
+name = "openforcefields"
+version = "2026.9.0"
+source = { git = "https://github.com/openforcefield/openff-forcefields?tag=2026.09.0#b59862aa828809e6fbef14cf6e33225bf24ce944" }
+
+[[package]]
 name = "openmm"
 version = "8.6.1"
 source = { registry = "https://pypi.org/simple" }
@@ -3562,6 +3650,12 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/01/09/23fa5df6c710336300d3b69b2b409099612a100f97faed2c13df9adb73a2/openmm-8.6.1-cp312-cp312-manylinux_2_34_x86_64.whl", hash = "sha256:c198fa3a0cb236ab2e8c6405b59ee8acc4ffb6b1a54d001e29c4afb8419e959b", size = 14413848, upload-time = "2026-09-11T21:14:37.362Z" },
     { url = "https://files.pythonhosted.org/packages/10/67/174355f48699620920094b94791d8e7a41fff3dcd7c5f9d8fed6d4a8fd88/openmm-8.6.1-cp312-cp312-win_amd64.whl", hash = "sha256:81d2db56d6cfc9d7ade0adc0039020cb995d3606915087fab3563499981e739a", size = 13167407, upload-time = "2026-09-11T21:14:41.858Z" },
 ]
+
+[[package]]
+name = "openmmforcefields"
+version = "0.15.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/84/c6/92730898236872d856066e180283291786e2dc4649491141b5b9efe0fa4c/openmmforcefields-0.15.1.tar.gz", hash = "sha256:c8c5e806ed89c81691e742fb86f768f4c3c06f0173f7343e8420b78ee8645595", size = 5304142, upload-time = "2026-02-26T10:12:26.75Z" }
 
 [[package]]
 name = "opentelemetry-api"
@@ -3935,7 +4029,7 @@ wheels = [
 
 [[package]]
 name = "pint"
-version = "0.26.1"
+version = "0.25.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "flexcache", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
@@ -3943,9 +4037,9 @@ dependencies = [
     { name = "platformdirs", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
     { name = "typing-extensions", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9f/bc/2c38c32e0fb1f966d3695f4493a3f3ce2cc0cca1bbe7c958b92261b31af9/pint-0.26.1.tar.gz", hash = "sha256:1bbde36eae57a5a289cd05081c6405618a5899814940752064ce351cd0204f71", size = 273631, upload-time = "2026-09-10T21:16:49.712Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/52/9d/b1379cdbd33a49d17d627bc24e2b63cca06a1c5343b38072d2889499e82e/pint-0.25.3.tar.gz", hash = "sha256:f8f5df6cf65314d74da1ade1bf96f8e3e4d0c41b51577ac53c49e7d44ca5acee", size = 255106, upload-time = "2026-03-19T21:57:08.72Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6d/5c/9507ea3c732f8a259f45ddf190a741e9bf7d3fe229b5d473917ee6efbf1e/pint-0.26.1-py3-none-any.whl", hash = "sha256:e982b129415c09c63308f314ae44697d83e5c96f253bcc0d5b833fc3329eb6d4", size = 326478, upload-time = "2026-09-10T21:16:48.316Z" },
+    { url = "https://files.pythonhosted.org/packages/1b/dd/a9fe6a0a09512da23951c68bf36466aeecd89def3183dc095edbc807ddc5/pint-0.25.3-py3-none-any.whl", hash = "sha256:27eb25143bd5de9fcc4d5a4b484f16faf6b4615aa93ece6b3373a8c1a3c1b97d", size = 307488, upload-time = "2026-03-19T21:57:07.022Z" },
 ]
 
 [[package]]
@@ -4616,6 +4710,12 @@ wheels = [
 ]
 
 [[package]]
+name = "python-constraint"
+version = "1.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/37/8b/5f1bc2734ca611943e1d6733ee244238679f6410a10cd45ede55a61a8402/python-constraint-1.4.0.tar.bz2", hash = "sha256:501d6f17afe0032dfc6ea6c0f8acc12e44f992733f00e8538961031ef27ccb8e", size = 18416, upload-time = "2018-11-05T09:02:44.334Z" }
+
+[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 source = { registry = "https://pypi.org/simple" }
@@ -5165,6 +5265,22 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/8f/7f/19a5fdbf0dac0d2560458a66240f988096a55525c3fe9d8cd228a423318e/seekpath-2.2.2.tar.gz", hash = "sha256:d3bb08b7fb21d5cff5fc27aff9904a865da5e0648fc0f8fef699642d88e27f2b", size = 44937, upload-time = "2026-09-25T11:13:04.69Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ab/83/7ff497c62ce4eb1e7356df12499c201e7cead5213529ba95ce128ba7c453/seekpath-2.2.2-py3-none-any.whl", hash = "sha256:701fa16528b56b5bcd2f4a5274295a7a9288a238a1e06b9380afb49e3ebd41f4", size = 78514, upload-time = "2026-09-25T11:13:03.131Z" },
+]
+
+[[package]]
+name = "sella"
+version = "2.6.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "ase", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "jax", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "jaxlib", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "numpy", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+    { name = "scipy", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-29-atomisticskills-venv-fairchem-cu126' and extra == 'extra-29-atomisticskills-venv-fairchem-cu130')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d5/e8/4ee9960010ca9156ed794efe249ba071d161411c59e61aa7378ebe11d292/sella-2.6.0.tar.gz", hash = "sha256:7effc2a10f6d43c0bbdff11acb1fe36e16424cd9f01746660e87985662713384", size = 182652, upload-time = "2026-09-02T23:09:22.216Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/20/86/f06e254ea018baf0bf584369c0f25b5e3693f0b57242ed44bb3cbc39bada/sella-2.6.0-py3-none-any.whl", hash = "sha256:cce6594830cd6afb5d0f4c934a6dd8111ad422882477fdc9cfd04ce65ee544f9", size = 127109, upload-time = "2026-09-02T23:09:20.997Z" },
 ]
 
 [[package]]

@@ -2,15 +2,15 @@
 # mattergen), built from the same venv/<venv>/uv.lock files a host install
 # uses, on a CUDA toolkit image.
 #
-# On x86_64 these stacks install from wheels on the host. On aarch64 PyG
-# publishes no wheels for their compiled extensions (torch-scatter,
-# torch-sparse, torch-cluster), so they are built from source here, against
-# each environment's torch. That needs nvcc, and FORCE_CUDA=1: the build sees
+# On amd64 the image installs PyG's wheels, which need glibc 2.32: hosts older
+# than that (EL8) use the image. On arm64 PyG publishes no wheels for these
+# compiled extensions (torch-scatter, torch-sparse, torch-cluster), so they are
+# built from source here, against each environment's torch. That needs nvcc, and FORCE_CUDA=1: the build sees
 # no GPU, and without it the extensions silently compile without their CUDA
 # kernels ("Not compiled with CUDA support" at the first GPU call).
 #
 # Build:
-#   docker buildx build -f docker/Dockerfile.cuda --platform linux/arm64 \
+#   docker buildx build -f docker/Dockerfile.cuda --platform linux/amd64,linux/arm64 \
 #     --build-arg VENVS="adit diffcsp mattergen" --build-arg IMAGE_NAME=generative \
 #     -t ghcr.io/learningmatter-mit/atomisticskills-generative:dev .
 FROM nvidia/cuda:13.0.1-devel-ubuntu24.04

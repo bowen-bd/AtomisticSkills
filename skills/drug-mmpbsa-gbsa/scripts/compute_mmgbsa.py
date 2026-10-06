@@ -75,14 +75,16 @@ def _apply_minimum_image_ligand(universe: mda.Universe, ligand_sel: str) -> None
     universe.trajectory.add_transformations(_MinImageLigand(protein_ca, ligand))
 
 
-def load_openff_molecule(sdf_path: Path):
-    """Load an OpenFF Molecule from SDF and assign AM1-BCC charges."""
+def load_openff_molecule(sdf_path: Path, charge_method: str = "am1bcc"):
+    """Load an OpenFF Molecule from SDF and assign partial charges."""
     from openff.toolkit import Molecule
+
+    from src.utils.drugdisc_utils import assign_ligand_charges
 
     mol = Molecule.from_file(str(sdf_path), allow_undefined_stereo=True)
     if isinstance(mol, list):
         mol = mol[0]
-    mol.assign_partial_charges("am1bcc")
+    assign_ligand_charges(mol, charge_method)
     return mol
 
 
@@ -165,6 +167,7 @@ def compute_mmgbsa(
     solute_dielectric: float = 1.0,
     solvent_dielectric: float = 78.5,
     output_dir: Path = Path("mmgbsa"),
+    charge_method: str = "am1bcc",
 ) -> dict:
     """Run single-trajectory MM-GBSA calculation."""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -185,12 +188,12 @@ def compute_mmgbsa(
 
     # Step 2: Load small molecules for template generator
     print("\n--- Loading small molecules for parameterization ---")
-    ligand_mol = load_openff_molecule(ligand_sdf)
+    ligand_mol = load_openff_molecule(ligand_sdf, charge_method)
     small_molecules = [ligand_mol]
 
     cofactor_mol = None
     if cofactor_sdf:
-        cofactor_mol = load_openff_molecule(cofactor_sdf)
+        cofactor_mol = load_openff_molecule(cofactor_sdf, charge_method)
         small_molecules.append(cofactor_mol)
 
     # Step 3: Build three implicit-solvent systems
@@ -452,6 +455,13 @@ def main() -> None:
         "needs to be changed.",
     )
     parser.add_argument(
+        "--charge_method",
+        default="am1bcc",
+        choices=["am1bcc", "mmff94", "gasteiger"],
+        help="Ligand partial charges (default: am1bcc, which needs AmberTools' sqm on "
+        "PATH). mmff94 and gasteiger come from RDKit: cruder, for screening and tests.",
+    )
+    parser.add_argument(
         "--output_dir", required=True, help="Output directory for MM-GBSA results."
     )
     args = parser.parse_args()
@@ -499,6 +509,7 @@ def main() -> None:
         solute_dielectric=args.solute_dielectric,
         solvent_dielectric=args.solvent_dielectric,
         output_dir=Path(args.output_dir),
+        charge_method=args.charge_method,
     )
 
     # Save input configs for reproducibility

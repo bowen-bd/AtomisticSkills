@@ -145,7 +145,7 @@ class Host:
                 "fi\n"
                 'if [[ "$1" == --version ]]; then echo "uv 0.0.0"; fi\n'
                 # One line per call: what each uv invocation was given.
-                'echo "$1 pref=${UV_PYTHON_PREFERENCE:-} ssl=${SSL_CERT_FILE:-}"'
+                'echo "$1 pref=${UV_PYTHON_PREFERENCE:-} ssl=${SSL_CERT_FILE:-} lock=${UV_LOCK_TIMEOUT:-}"'
                 f' >> "{self.logs}/uv.envlines"'
             ),
         )
@@ -222,6 +222,14 @@ class Host:
 @pytest.fixture
 def host(tmp_path, sysbin):
     return Host(tmp_path, sysbin)
+
+
+def sif_name(
+    image: str, arch: str = "arm64", registry: str = "ghcr.io/learningmatter-mit"
+) -> str:
+    """The cached SIF of an image: the whole identity (registry, tag, platform)."""
+    slug = registry.replace("/", "_").replace(":", "_")
+    return f"atomisticskills-{image}-{VERSION}-{arch}-{slug}.sif"
 
 
 def flag_value(argv: list[str], flag: str) -> list[str]:
@@ -496,19 +504,40 @@ class TestServerMode:
         assert flag_value(run, "--project")[0].endswith("venv/adit")
         assert run[-2:] == ["-m", "src.mcp_server.adit_server"]
 
-    def test_container_only_server_is_refused_on_the_wrong_architecture(self, host):
+    def test_an_image_for_another_platform_is_refused(self, host):
         """No bytes may move for an image the host cannot run (29 GB once did).
 
-        The generative image is arm64-only, so an x86_64 host too old for the uv
-        project (glibc 2.17) must be refused rather than pull it."""
+        A host too old for a server's uv project (glibc 2.17), whose image is
+        built for another platform only, must be refused rather than pull it."""
         host.stub_uv()
         host.set_platform("x86_64", "2.17")
+        table = host.repo / "venv" / "servers.tsv"
+        rows = [
+            r.replace("linux/amd64,linux/arm64", "linux/arm64")
+            if r.startswith("mattergen\t")
+            else r
+            for r in table.read_text().splitlines()
+        ]
+        table.write_text("\n".join(rows) + "\n")
         docker = host.recorder("docker")
         result = host.run("--server", "mattergen")
         assert result.returncode != 0
         assert "unavailable on this machine" in result.stderr
         assert "linux/amd64" in result.stderr
         assert not host.calls(docker)
+
+    def test_generative_servers_run_their_image_on_an_old_x86_host(self, host):
+        """PyG's x86_64 wheels need glibc 2.32; EL8-era hosts use the amd64 image."""
+        host.stub_uv()
+        host.set_platform("x86_64", "2.28")
+        docker = host.recorder("docker")
+        result = host.run("--server", "mattergen")
+        assert result.returncode == 0, result.stderr
+        argv = host.calls(docker)[-1]
+        assert (
+            argv[-2]
+            == f"ghcr.io/learningmatter-mit/atomisticskills-generative:{VERSION}"
+        )
 
     def test_container_only_server_runs_its_image(self, host):
         docker = host.recorder("docker")
@@ -547,6 +576,39 @@ class TestDockerInvocation:
         assert f"PYTHONPATH={host.repo}" in envs
         assert f"ATOMISTIC_WORKSPACE={host.workspace}" in envs
         assert argv[-2:] == ["python", "x.py"]
+
+    def test_gpu_selection_crosses_into_the_container(self, host):
+        """CUDA_VISIBLE_DEVICES narrows what the container gets; it is not lost."""
+        host.stub("nvidia-smi", 'echo "GPU 0: NVIDIA A100"\n')
+        argv, _ = self.run_in_docker(
+            host, "mlip", "python", "x.py", CUDA_VISIBLE_DEVICES="2,GPU-1a2b"
+        )
+        assert flag_value(argv, "--gpus") == ['"device=2,GPU-1a2b"']
+        # The runtime renumbers the exposed GPUs from 0: the variable stays out.
+        assert not [
+            e for e in flag_value(argv, "--env") if e.startswith("CUDA_VISIBLE")
+        ]
+        argv, _ = self.run_in_docker(
+            host, "mlip", "python", "x.py", CUDA_VISIBLE_DEVICES=""
+        )
+        assert "--gpus" not in argv, "an empty CUDA_VISIBLE_DEVICES means no GPU"
+        argv, _ = self.run_in_docker(host, "mlip", "python", "x.py")
+        assert flag_value(argv, "--gpus") == ["all"]
+
+    def test_podman_gets_the_selected_gpus_as_cdi_devices(self, host):
+        host.stub("nvidia-smi", 'echo "GPU 0: NVIDIA A100"\n')
+        podman = host.recorder("podman")
+        result = host.run(
+            "mlip",
+            "python",
+            "x.py",
+            ATOMISTIC_RUNTIME="podman",
+            CUDA_VISIBLE_DEVICES="1,3",
+        )
+        assert result.returncode == 0, result.stderr
+        argv = host.calls(podman)[-1]
+        assert flag_value(argv, "--device") == ["nvidia.com/gpu=1", "nvidia.com/gpu=3"]
+        assert "--gpus" not in argv
 
     def test_a_command_names_its_environment(self, host):
         """An image may carry several environments (generative)."""
@@ -661,7 +723,7 @@ class TestApptainerInvocation:
         assert "ATOMISTIC_VENV=cpu" in flag_value(argv, "--env")
 
     def test_reuses_an_existing_sif(self, host):
-        sif = host.tmp / "cache" / "sif" / f"atomisticskills-cpu-{VERSION}.sif"
+        sif = host.tmp / "cache" / "sif" / sif_name("cpu")
         sif.parent.mkdir(parents=True)
         sif.write_text("pretend SIF")
         result, calls = self.run_apptainer(host, "cpu", "python", "x.py")
@@ -673,11 +735,27 @@ class TestApptainerInvocation:
         """The pre-build and the launcher must agree without guessing paths."""
         shared = host.home / ".cache" / "atomisticskills" / "sif"
         shared.mkdir(parents=True)
-        (shared / f"atomisticskills-mlip-{VERSION}.sif").write_text("prebuilt")
+        (shared / sif_name("mlip")).write_text("prebuilt")
         result, calls = self.run_apptainer(host, "mlip", "python", "x.py")
         assert result.returncode == 0, result.stderr
         assert [c[0] for c in calls] == ["exec"]
         assert any(str(shared) in a for a in calls[-1])
+
+    def test_another_registry_or_platform_gets_its_own_sif(self, host):
+        """Switching image_registry must not keep running the old one's image."""
+        cache = host.tmp / "cache" / "sif"
+        cache.mkdir(parents=True)
+        (cache / sif_name("cpu")).write_text("official")
+        (cache / sif_name("cpu", arch="amd64")).write_text("other platform")
+        result, calls = self.run_apptainer(
+            host, "cpu", "python", "x.py", ATOMISTIC_IMAGE_REGISTRY="ghcr.io/somefork"
+        )
+        assert result.returncode == 0, result.stderr
+        assert calls[0][0] == "build"
+        assert (
+            calls[0][-1] == f"docker://ghcr.io/somefork/atomisticskills-cpu:{VERSION}"
+        )
+        assert (cache / sif_name("cpu", registry="ghcr.io/somefork")).exists()
 
     def test_gpu_uses_nv(self, host):
         host.stub("nvidia-smi", 'echo "GPU 0: NVIDIA H100"\n')
@@ -796,6 +874,18 @@ class TestHostQuirks:
         # every command for environments built before this default.
         assert lines["run"].startswith("pref= ")
 
+    def test_syncs_wait_for_another_sync_s_cache_lock(self, host):
+        """Two environments building at once share wheels; uv's 300 s lock wait
+        is shorter than a cold CUDA download on a cluster link."""
+        host.stub_uv()
+        host.run("cpu", "python", "x.py", cwd=host.workspace)
+        assert host.uv_env_lines()["sync"].endswith("lock=3600")
+        host.mark_synced("cpu", "openmm")
+        host.run(
+            "cpu+docking", "python", "x.py", cwd=host.workspace, UV_LOCK_TIMEOUT="60"
+        )
+        assert host.uv_env_lines()["sync"].endswith("lock=60")
+
     def test_a_chosen_python_preference_is_kept(self, host):
         host.stub_uv()
         host.run(
@@ -818,7 +908,7 @@ class TestHostQuirks:
                 if os.path.exists(path):
                     expected = path
                     break
-        assert host.uv_env_lines()["run"].endswith(f"ssl={expected}")
+        assert f"ssl={expected} " in host.uv_env_lines()["run"]
 
     def test_a_chosen_ca_bundle_is_kept(self, host):
         host.stub_uv()
@@ -826,7 +916,7 @@ class TestHostQuirks:
         host.run(
             "cpu", "python", "x.py", cwd=host.workspace, SSL_CERT_FILE="/corp/ca.pem"
         )
-        assert host.uv_env_lines()["run"].endswith("ssl=/corp/ca.pem")
+        assert "ssl=/corp/ca.pem " in host.uv_env_lines()["run"]
 
     def test_containers_do_not_get_the_host_ca_bundle(self, host):
         """The host path would not exist inside the image."""
@@ -959,6 +1049,19 @@ class TestTorchCudaBuild:
     def test_a_bad_override_is_refused(self, host):
         result = host.run("mlip", "python", "x.py", ATOMISTIC_TORCH_CUDA="cu999")
         assert result.returncode != 0 and "cu126 or cu130" in result.stderr
+
+    def test_extras_after_an_explicit_build_are_kept(self, host):
+        """`mlip+cu126+openmm` once synced only cu126: the order of extras mattered."""
+        host.stub_uv()
+        result = host.run("mlip+cu126+openmm", "python", "x.py", cwd=host.workspace)
+        assert result.returncode == 0, result.stderr
+        assert sorted(self.sync_extras(host)) == ["cu126", "openmm"]
+
+    def test_two_builds_are_refused(self, host):
+        host.stub_uv()
+        result = host.run("mlip+cu126+cu130", "python", "x.py", cwd=host.workspace)
+        assert result.returncode != 0
+        assert "two torch builds requested" in result.stderr
 
     def test_switching_builds_drops_the_other_one(self, host):
         """cu126 and cu130 conflict: carrying the old one over would fail the sync."""

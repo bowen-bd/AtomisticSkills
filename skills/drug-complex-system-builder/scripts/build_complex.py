@@ -27,9 +27,13 @@ import openmm.app as app
 import openmm.unit as unit
 
 
-def load_ligand_molecule(sdf_path: Path, pose_index: int = 0):
-    """Load a ligand from SDF and assign AM1-BCC partial charges."""
+def load_ligand_molecule(
+    sdf_path: Path, pose_index: int = 0, charge_method: str = "am1bcc"
+):
+    """Load a ligand from SDF and assign partial charges (AM1-BCC by default)."""
     from openff.toolkit import Molecule
+
+    from src.utils.drugdisc_utils import assign_ligand_charges
 
     molecules = Molecule.from_file(str(sdf_path), allow_undefined_stereo=True)
     if isinstance(molecules, list):
@@ -41,7 +45,7 @@ def load_ligand_molecule(sdf_path: Path, pose_index: int = 0):
     else:
         mol = molecules
 
-    mol.assign_partial_charges("am1bcc")
+    assign_ligand_charges(mol, charge_method)
     return mol
 
 
@@ -51,6 +55,10 @@ def create_template_generator(ligand_mol, ligand_ff: str):
         GAFFTemplateGenerator,
         SMIRNOFFTemplateGenerator,
     )
+
+    from src.utils.drugdisc_utils import require_antechamber
+
+    require_antechamber(ligand_ff)
 
     if ligand_ff.startswith("openff"):
         generator = SMIRNOFFTemplateGenerator(
@@ -102,6 +110,7 @@ def build_complex(
     hydrogen_mass: float = 4.0,
     box_shape: str = "cube",
     output_dir: Path = Path("system"),
+    charge_method: str = "am1bcc",
 ) -> dict:
     """Build a solvated protein-ligand complex."""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -121,9 +130,9 @@ def build_complex(
             f"Supported: {', '.join(water_ff_map.keys())}"
         )
 
-    # Load ligand (assigns AM1-BCC charges)
-    print(f"Loading ligand from {ligand_path} (pose {pose_index})...")
-    ligand_mol = load_ligand_molecule(ligand_path, pose_index)
+    # Load ligand and assign its partial charges
+    print(f"Loading ligand from {ligand_path} (pose {pose_index}, {charge_method})...")
+    ligand_mol = load_ligand_molecule(ligand_path, pose_index, charge_method)
 
     # Create template generator for ligand
     print(f"Parameterizing ligand with {ligand_ff}...")
@@ -271,6 +280,13 @@ def main() -> None:
         help="Ligand force field (default: openff-2.2.0). Options: openff-2.2.0, gaff-2.11.",
     )
     parser.add_argument(
+        "--charge_method",
+        default="am1bcc",
+        choices=["am1bcc", "mmff94", "gasteiger"],
+        help="Ligand partial charges (default: am1bcc, which needs AmberTools' sqm on "
+        "PATH). mmff94 and gasteiger come from RDKit: cruder, for screening and tests.",
+    )
+    parser.add_argument(
         "--protein_ff",
         default="amber/ff14SB",
         help="Protein force field (default: amber/ff14SB).",
@@ -343,6 +359,7 @@ def main() -> None:
         pose_index=args.pose_index,
         hydrogen_mass=args.hydrogen_mass,
         box_shape=args.box_shape,
+        charge_method=args.charge_method,
         output_dir=Path(args.output_dir),
     )
 

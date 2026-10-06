@@ -75,9 +75,13 @@
       ],
       "gpu": true,
       "platforms": [
+        "linux/amd64",
         "linux/arm64"
       ],
-      "torch_cuda_arch_list": "12.1",
+      "torch_cuda_arch_list": {
+        "linux/amd64": "7.5;8.0;8.6;8.9;9.0;10.0;12.0+PTX",
+        "linux/arm64": "12.1"
+      },
       "servers": {
         "adit": {
           "venv": "adit",
@@ -92,7 +96,7 @@
           "module": "src.mcp_server.mattergen_server"
         }
       },
-      "notes": "arm64 only: on x86_64 these servers run from their uv projects on the host (PyG publishes x86_64 wheels). The image compiles torch-scatter/sparse/cluster with CUDA for TORCH_CUDA_ARCH_LIST (GB10: sm_121)."
+      "notes": "Both platforms. On arm64 the image compiles torch-scatter/sparse/cluster with CUDA for TORCH_CUDA_ARCH_LIST (GB10: sm_121), since PyG publishes no aarch64 wheels; on amd64 it installs PyG's wheels, which need glibc 2.32, so hosts older than that (EL8) run these servers from the image."
     }
   ]
 }

@@ -229,9 +229,22 @@ torch_cuda_extra() {  # torch_cuda_extra VENV -> cu126|cu130, or nothing
 
 # with_torch_cuda VENV EXTRAS... -> the extras, plus the torch build the
 # project needs here unless one was named explicitly (mlip+cu126).
-with_torch_cuda() {
-    local venv="$1" e cuda; shift
-    for e in "$@"; do printf '%s\n' "$e"; [[ "$e" =~ ^cu1[0-9]+$ ]] && return 0; done
+one_torch_build() {  # one_torch_build EXTRAS... : refuse two different torch builds
+    local e cuda=""
+    for e in "$@"; do
+        [[ "$e" =~ ^cu1[0-9]+$ ]] || continue
+        [[ -n "$cuda" && "$cuda" != "$e" ]] && die "two torch builds requested ('${cuda}' and '${e}'); name one"
+        cuda="$e"
+    done
+    return 0
+}
+with_torch_cuda() {  # with_torch_cuda VENV EXTRAS... -> the extras, plus the torch build if none is named
+    local venv="$1" e cuda="" ; shift
+    for e in "$@"; do
+        [[ "$e" =~ ^cu1[0-9]+$ ]] && cuda="$e"
+        printf '%s\n' "$e"
+    done
+    [[ -n "$cuda" ]] && return 0
     cuda="$(torch_cuda_extra "$venv")"
     [[ -n "$cuda" ]] && printf '%s\n' "$cuda"
     return 0
@@ -306,7 +319,11 @@ uv_sync() {
     # A uv-managed CPython ships its own headers. uv would otherwise pick any
     # system python3.12, and on RHEL-family hosts that often lacks Python.h,
     # so packages built from source (smol) fail to compile.
-    UV_PYTHON_PREFERENCE="${UV_PYTHON_PREFERENCE:-only-managed}" uv sync "${args[@]}" >&2
+    # Environments share uv's cache: a second sync waits for the first one's
+    # lock on a shared wheel. uv gives up after 300 s, shorter than a cold
+    # download of a CUDA stack on a slow link.
+    UV_PYTHON_PREFERENCE="${UV_PYTHON_PREFERENCE:-only-managed}" UV_LOCK_TIMEOUT="${UV_LOCK_TIMEOUT:-3600}" \
+        uv sync "${args[@]}" >&2
     record_sync "$venv" ${extras[@]+"${extras[@]}"}
 }
 
@@ -344,7 +361,10 @@ apptainer_sif() {  # apptainer_sif RUNTIME IMAGE_NAME -> path of a ready SIF
     export SINGULARITY_TMPDIR="${SINGULARITY_TMPDIR:-$APPTAINER_TMPDIR}"
     mkdir -p "$APPTAINER_CACHEDIR" "$APPTAINER_TMPDIR" "${MODEL_CACHE}/sif"
 
-    sif_name="atomisticskills-${name}-${TAG}.sif"
+    # The whole image identity: a registry or platform switch must not reuse
+    # another image's SIF (a shared cache may serve several architectures).
+    local registry_slug="${REGISTRY//\//_}"; registry_slug="${registry_slug//:/_}"
+    sif_name="atomisticskills-${name}-${TAG}-${OCI_ARCH}-${registry_slug}.sif"
     sif="${MODEL_CACHE}/sif/${sif_name}"
     if [[ ! -f "$sif" ]]; then
         for alt in "${ATOMISTIC_SIF_DIR:-}" "$HOME/.cache/atomisticskills"; do
@@ -367,7 +387,7 @@ apptainer_sif() {  # apptainer_sif RUNTIME IMAGE_NAME -> path of a ready SIF
     fi
     procs="$ATOMISTIC_SQUASHFS_PROCS"
 
-    lock="${MODEL_CACHE}/sif/.${name}.lock"
+    lock="${MODEL_CACHE}/sif/.${sif_name}.lock"
     log "building ${sif_name} from ${ref} (minutes; 'venv/run --setup' does this ahead of time)"
     if command -v flock >/dev/null 2>&1; then
         exec {lockfd}>"$lock"
@@ -405,6 +425,27 @@ apptainer_sif() {  # apptainer_sif RUNTIME IMAGE_NAME -> path of a ready SIF
 
 platform_allowed() {  # platform_allowed "linux/amd64,linux/arm64"
     [[ -z "$1" || ",$1," == *",linux/${OCI_ARCH},"* ]]
+}
+
+# container_gpu_args RUNTIME -> the arguments that expose GPUs to a docker or
+#   podman container: all of them, unless the caller narrowed them with
+#   CUDA_VISIBLE_DEVICES (indices, UUIDs or MIG IDs). The runtime then exposes
+#   only those, numbered from 0 inside, so the variable itself is not passed
+#   on; an empty value exposes none. Apptainer inherits the variable instead.
+container_gpu_args() {
+    local rt="$1" id ids=()
+    if [[ -z "${CUDA_VISIBLE_DEVICES+set}" ]]; then
+        printf '%s\n' --gpus all
+        return 0
+    fi
+    [[ -n "$CUDA_VISIBLE_DEVICES" ]] || return 0
+    if [[ "$rt" == docker ]]; then
+        # Quoted: docker parses the value as CSV, and a device list has commas.
+        printf '%s\n' --gpus "\"device=${CUDA_VISIBLE_DEVICES}\""
+    else
+        IFS=',' read -r -a ids <<<"$CUDA_VISIBLE_DEVICES"
+        for id in "${ids[@]}"; do printf '%s\n' --device "nvidia.com/gpu=${id}"; done
+    fi
 }
 
 # run_container RUNTIME IMAGE_NAME GPU MODE COMMAND...
@@ -465,7 +506,7 @@ run_container() {
             [[ -n "$cwd_mount" ]] && args+=(--volume "${cwd_mount}:${cwd_mount}")
             for v in ${src_dirs[@]+"${src_dirs[@]}"}; do args+=(--volume "${v}:${v}"); done
             for v in "${envs[@]}"; do args+=(--env "$v"); done
-            [[ "$gpu_ok" == 1 ]] && args+=(--gpus all)
+            [[ "$gpu_ok" == 1 ]] && mapfile -t -O "${#args[@]}" args < <(container_gpu_args "$rt")
             args+=(--workdir "$here" "$(image_ref "$name")" "$@")
             exec "$rt" "${args[@]}"
             ;;
@@ -557,6 +598,7 @@ run_command() {
     [[ -n "${rest:-}" ]] && IFS='+' read -r -a extras <<<"$rest"
     [[ -f "${VENV_DIR}/${venv}/pyproject.toml" ]] \
         || die "unknown venv '${venv}'; available: $(cd "$VENV_DIR" && ls -d */ | tr -d / | paste -sd' ' -)"
+    one_torch_build ${extras[@]+"${extras[@]}"}
     mapfile -t extras < <(with_torch_cuda "$venv" ${extras[@]+"${extras[@]}"})
 
     backend="$(choose_backend "$venv" ${extras[@]+"${extras[@]}"})"

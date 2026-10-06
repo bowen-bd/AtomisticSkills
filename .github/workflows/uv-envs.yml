@@ -108,12 +108,13 @@ jobs:
         # gated UMA model (HF_TOKEN), and the research stacks their upstream
         # checkouts, so those run on the test machines instead.
         run: |
+          # cpu runs with its openmm extra, for the ligand parameterization test.
           case "${{ matrix.venv }}" in
-            cpu)  dirs="tests/base tests/atomate2 tests/drugdisc tests/smol tests/orca" ;;
-            mlip) dirs="tests/mace tests/matgl" ;;
+            cpu)  env=cpu+openmm; dirs="tests/base tests/atomate2 tests/drugdisc tests/smol tests/orca" ;;
+            mlip) env=mlip; dirs="tests/mace tests/matgl" ;;
             *)    echo "No server tests in CI for ${{ matrix.venv }}"; exit 0 ;;
           esac
-          venv/run ${{ matrix.venv }} python -m pytest $dirs -q -p no:cacheprovider -o log_cli=false
+          venv/run $env python -m pytest $dirs -q -p no:cacheprovider -o log_cli=false
 
       - name: MCP server smoke test
         run: |

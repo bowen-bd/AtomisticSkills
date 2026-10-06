@@ -398,3 +398,50 @@ def compute_fingerprints(
         result["similarity_matrix"] = matrix
 
     return result
+
+
+# Partial-charge methods for ligands parameterized with OpenFF (the openmm
+# extra). AM1-BCC is the standard for Sage and GAFF; OpenFF computes it with
+# AmberTools' sqm, which has no PyPI distribution. The RDKit methods need
+# nothing more but are cruder: fine for a smoke test or a screen, not for
+# production free energies.
+LIGAND_CHARGE_METHODS = ("am1bcc", "mmff94", "gasteiger")
+
+
+def assign_ligand_charges(molecule: Any, method: str = "am1bcc") -> None:
+    """Assign partial charges to an OpenFF Molecule, in place.
+
+    Args:
+        molecule: An ``openff.toolkit.Molecule``.
+        method: One of LIGAND_CHARGE_METHODS.
+
+    Raises:
+        ValueError: For an unknown method.
+        RuntimeError: For AM1-BCC without AmberTools' ``sqm`` on PATH.
+    """
+    import shutil
+
+    if method not in LIGAND_CHARGE_METHODS:
+        raise ValueError(
+            f"unknown charge method {method!r}; choose from {LIGAND_CHARGE_METHODS}"
+        )
+    if method == "am1bcc" and shutil.which("sqm") is None:
+        raise RuntimeError(
+            "AM1-BCC charges need AmberTools (sqm) on PATH, and AmberTools has no "
+            "PyPI distribution: install it (conda-forge 'ambertools', or a source "
+            "build) and put its bin/ on PATH, or use --charge_method mmff94 or "
+            "gasteiger (RDKit charges: cruder, for screening and tests)."
+        )
+    molecule.assign_partial_charges(method)
+
+
+def require_antechamber(ligand_ff: str) -> None:
+    """GAFF atom typing runs AmberTools' antechamber; fail clearly without it."""
+    import shutil
+
+    if ligand_ff.startswith("gaff") and shutil.which("antechamber") is None:
+        raise RuntimeError(
+            f"{ligand_ff} needs AmberTools' antechamber on PATH, and AmberTools has "
+            "no PyPI distribution: install it, or use an OpenFF force field "
+            "(e.g. openff-2.2.0), which needs nothing more."
+        )

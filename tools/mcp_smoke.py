@@ -106,7 +106,15 @@ def main() -> int:
         metavar=("TOOL", "JSON"),
         help="tool call to make after listing tools (repeatable; applies to every server)",
     )
-    parser.add_argument("--timeout", type=float, default=600, help="seconds per server")
+    # A first start may build the environment, which venv/run allows
+    # ATOMISTIC_SERVER_SETUP_WAIT seconds for: wait at least that long.
+    setup_wait = float(os.environ.get("ATOMISTIC_SERVER_SETUP_WAIT", 0) or 0)
+    parser.add_argument(
+        "--timeout",
+        type=float,
+        default=max(600.0, setup_wait + 120),
+        help="seconds per server (default: 600, or ATOMISTIC_SERVER_SETUP_WAIT + 120)",
+    )
     parser.add_argument(
         "--server-env",
         action="append",

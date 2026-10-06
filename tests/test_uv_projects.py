@@ -53,8 +53,9 @@ ADDED = {
         "nvalchemi-toolkit",
         "pytorch-lightning",
         "wandb",
+        "sella",
     },
-    "fairchem": {"torch", "fairchem-core", "nvalchemi-toolkit"},
+    "fairchem": {"torch", "fairchem-core", "nvalchemi-toolkit", "sella"},
 }
 
 
@@ -231,8 +232,27 @@ def test_research_stacks_reproduce_their_verified_environment(project):
         )
 
 
+# Research stacks whose x86_64 binaries need more than RHEL 8's glibc 2.28 and
+# that no image carries: hosts that old cannot run them (documented in
+# docs/setup.md). The generative stacks need glibc 2.32 too, but run from the
+# generative image there.
+NATIVE_ONLY_X86_FLOOR = {"msms": (2, 31), "scd": (2, 32)}
+
+
+def image_platforms(project: str) -> set[str]:
+    rows = (VENV_DIR / "servers.tsv").read_text().splitlines()
+    return {
+        p
+        for r in rows
+        if r and not r.startswith("#") and r.split("\t")[1] == project
+        for p in r.split("\t")[5].split(",")
+    }
+
+
 @pytest.mark.parametrize("project", STACKS)
-def test_research_stack_builds_install_on_rhel8_era_x86(project):
+def test_research_stacks_reach_rhel8_era_x86_hosts(project):
+    """Natively where their binaries allow glibc 2.28, else through an amd64
+    image; the exceptions are listed, with the floor they need."""
     table = (VENV_DIR / "platforms.tsv").read_text().splitlines()
     rows = [ln.split("\t") for ln in table if ln and not ln.startswith("#")]
     has_builds = bool(load(project)["project"].get("optional-dependencies"))
@@ -243,4 +263,7 @@ def test_research_stack_builds_install_on_rhel8_era_x86(project):
     assert set(floors) == set(wanted), f"{project} missing from venv/platforms.tsv"
     for extra, glibc in floors.items():
         assert not glibc.startswith("unavailable"), (project, extra, glibc)
-        assert tuple(map(int, glibc.split("."))) <= (2, 28), (project, extra, glibc)
+        need = tuple(map(int, glibc.split(".")))
+        if need <= (2, 28) or "linux/amd64" in image_platforms(project):
+            continue
+        assert need == NATIVE_ONLY_X86_FLOOR.get(project), (project, extra, glibc)

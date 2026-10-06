@@ -73,7 +73,29 @@ dependencies = [
 # (RHEL 9, Ubuntu 22.04 or newer) and there is no source distribution. In the
 # base set it would stop the whole project from installing on RHEL 8-era
 # clusters. Skills that need it run with `--extra openmm`.
-openmm = ["openmm", "pdbfixer", "parmed"]
+openmm = [
+  "openmm",
+  "pdbfixer",
+  "parmed",
+  # Ligand parameterization (drug-complex-system-builder, drug-mmpbsa-gbsa):
+  # OpenFF and openmmforcefields. OpenFF publishes through conda only (its
+  # PyPI uploads were yanked), so its pure-Python packages come from their
+  # release tags (sources below), and their requirements, which they declare
+  # only for conda, are listed here. AM1-BCC charges need AmberTools (sqm),
+  # which has no PyPI distribution; RDKit charges need nothing more.
+  "openff-toolkit",
+  "openff-interchange",
+  "openmmforcefields",
+  "openforcefields",
+  "packaging",
+  "openff-units",
+  "openff-utilities",
+  "networkx",
+  "cachetools",
+  "xmltodict",
+  "python-constraint",
+  "pydantic",
+]
 # PyMOL is published for x86_64 only, as a pre-release, and needs glibc 2.35.
 # Only the structure-rendering scripts use it.
 pymol = ["pymol-open-source==3.2.0a0 ; platform_machine == 'x86_64'"]
@@ -118,6 +140,12 @@ boltztrap2 = ["cmake>=3.24"]
 
 [tool.uv.sources]
 atomisticskills = { path = "../..", editable = true }
+# OpenFF (the openmm extra), from release tags: OpenFF publishes through conda only.
+openff-toolkit = { git = "https://github.com/openforcefield/openff-toolkit", tag = "0.19.0" }
+openff-interchange = { git = "https://github.com/openforcefield/openff-interchange", tag = "v0.5.5" }
+openforcefields = { git = "https://github.com/openforcefield/openff-forcefields", tag = "2026.09.0" }
+openff-units = { git = "https://github.com/openforcefield/openff-units", tag = "0.4.0" }
+openff-utilities = { git = "https://github.com/openforcefield/openff-utilities", tag = "v0.1.18" }
 # The Voronoi docking library used by chem-docking-void. Not on PyPI -- the
 # package published there under the name "void" is an unrelated utility.
 VOID = { git = "https://github.com/learningmatter-mit/VOID.git" }

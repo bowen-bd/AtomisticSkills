@@ -118,12 +118,15 @@ def strip_and_write_pdbs(
 
 
 def load_openff_molecule(sdf_path: Path):
+    """Load an OpenFF Molecule from SDF with AM1-BCC charges (AmberTools)."""
     from openff.toolkit import Molecule
+
+    from src.utils.drugdisc_utils import assign_ligand_charges
 
     mol = Molecule.from_file(str(sdf_path), allow_undefined_stereo=True)
     if isinstance(mol, list):
         mol = mol[0]
-    mol.assign_partial_charges("am1bcc")
+    assign_ligand_charges(mol, "am1bcc")
     return mol
 
 

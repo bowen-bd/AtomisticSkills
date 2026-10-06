@@ -180,10 +180,8 @@ class MatGLWrapper(MLIPModel):
             state_attr = None
             if "BandGap" in self.model_name:
                 functional = self.BANDGAP_FUNCTIONALS.get(self.task_name or "PBE", 0)
-                state_attr = torch.tensor(
-                    [functional], dtype=torch.float32, device=self.device
-                )
-            prediction = self.model.predict_structure(structure, state_attr=state_attr)
+                state_attr = torch.tensor([functional], dtype=torch.float32)
+            prediction = self._predict_structure(structure, state_attr)
             val = float(
                 prediction.item() if hasattr(prediction, "item") else prediction
             )
@@ -200,6 +198,32 @@ class MatGLWrapper(MLIPModel):
 
             logger.error(f"Property prediction failed: {e}\n{traceback.format_exc()}")
             return {"error": f"Property prediction failed: {str(e)}"}
+
+    def _predict_structure(self, structure, state_attr: Optional[torch.Tensor]):
+        """A property model's prediction, as ``model.predict_structure`` makes it.
+
+        MatGL builds the graph where its neighbor-list backend runs (the default
+        CUDA device whenever one is visible) and the default state on the CPU,
+        then calls the model wherever it is: with the model on the CPU or on
+        another GPU that fails ("Expected all tensors to be on the same device").
+        Here graph, lattice and state go to the model's device.
+        """
+        from matgl.ext.pymatgen import Structure2Graph
+
+        device = next(self.model.parameters()).device
+        # The Eform models wrap the network in a TransformedTargetModel, whose
+        # forward un-normalizes the output; the graph settings are the network's.
+        network = getattr(self.model, "model", self.model)
+        converter = Structure2Graph(
+            element_types=network.element_types, cutoff=network.cutoff
+        )
+        g, lat, state_default = converter.get_graph(structure)
+        g, lat = g.to(device), lat.to(device)
+        g.pbc_offshift = torch.matmul(g.pbc_offset, lat[0])
+        g.pos = g.frac_coords @ lat[0]
+        if state_attr is None:
+            state_attr = torch.tensor(state_default, dtype=matgl.float_th)
+        return self.model(g=g, state_attr=state_attr.to(device)).detach()
 
     def predict_atomic_features(self, structure_data: Any) -> Dict[str, Any]:
         """Predict per-atom latent features for a structure."""
