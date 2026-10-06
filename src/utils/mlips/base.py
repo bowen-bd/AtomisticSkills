@@ -558,7 +558,7 @@ class MLIPModel(ABC):
             from nvalchemi.dynamics.base import DynamicsStage
             from nvalchemi.dynamics.optimizers.fire import FIRE
             from nvalchemi.dynamics.optimizers.fire2 import FIRE2VariableCell
-            from nvalchemi.hooks.neighbor_list import NeighborListHook
+            from src.utils.mlips.nvalchemi.neighbor_list import make_neighbor_list_hook
         except ImportError as e:
             logger.warning(f"NValchemi import failed: {e}; falling back to sequential.")
             return self._batch_relax_sequential(
@@ -667,7 +667,7 @@ class MLIPModel(ABC):
             PositionWrappingHook(stage=DynamicsStage.BEFORE_COMPUTE)
         )
         if getattr(nv_model.model_config, "neighbor_config", None) is not None:
-            nl_hook = NeighborListHook(
+            nl_hook = make_neighbor_list_hook(
                 nv_model.model_config.neighbor_config,
                 stage=DynamicsStage.BEFORE_COMPUTE,
             )
@@ -824,7 +824,7 @@ class MLIPModel(ABC):
             relax_convergence_hook,
             warp_on_torch_stream,
         )
-        from nvalchemi.hooks.neighbor_list import NeighborListHook
+        from src.utils.mlips.nvalchemi.neighbor_list import make_neighbor_list_hook
         from pymatgen.io.ase import AseAtomsAdaptor
         from src.utils.mlips.nvalchemi.nvalchemi_utils import (
             AtomsDataset,
@@ -955,7 +955,9 @@ class MLIPModel(ABC):
         fused.register_hook(RelaxStepCountHook(DynamicsStage.BEFORE_STEP))
         if neighbor_config is not None:
             fused.register_hook(
-                NeighborListHook(neighbor_config, stage=DynamicsStage.BEFORE_COMPUTE)
+                make_neighbor_list_hook(
+                    neighbor_config, stage=DynamicsStage.BEFORE_COMPUTE
+                )
             )
         fused.register_hook(
             ForceStressClippingHook(
@@ -1431,7 +1433,7 @@ class MLIPModel(ABC):
         try:
             from nvalchemi.data import Batch
             from nvalchemi.dynamics.base import DynamicsStage
-            from nvalchemi.hooks.neighbor_list import NeighborListHook
+            from src.utils.mlips.nvalchemi.neighbor_list import make_neighbor_list_hook
             from nvalchemi.dynamics._ops.thermostat_utils import initialize_velocities
             from nvalchemi.dynamics.integrators.nve import NVE
             from nvalchemi.dynamics.integrators.nvt_nose_hoover import NVTNoseHoover
@@ -1535,7 +1537,7 @@ class MLIPModel(ABC):
                 return {"error": f"Unknown ensemble '{ensemble}'."}
 
             if getattr(nv_model.model_config, "neighbor_config", None) is not None:
-                nl_hook = NeighborListHook(
+                nl_hook = make_neighbor_list_hook(
                     nv_model.model_config.neighbor_config,
                     stage=DynamicsStage.BEFORE_COMPUTE,
                 )

@@ -89,13 +89,20 @@ For variable-cell runs, convergence includes the per-atom virial row norm as
 well as atomic forces. This is the small-strain counterpart of ASE's
 `FrechetCellFilter` criterion, not exact equality at finite strain.
 
-**Upstream dependency limitation:** NValchemi 0.2.0 caches neighbor-list
-geometry by total batch dimensions. A refill or cell update can omit neighbors
-without changing those dimensions. It can also return energies inconsistent
-with frozen coordinates after a structure converges. These defects must be
-fixed in NValchemi; MatGL inflight remains disabled pending a validated upstream
-release. Trajectory extraction preserves the first converged snapshot; turning
-extraction off exposes the upstream live-batch output limitation.
+**Neighbor-cache handling in 2.0.0:** NValchemi 0.2.x can omit neighbors after
+same-size refills or gradual cell changes. AtomisticSkills uses a version-gated
+guard for every neighbor hook in fixed relaxation, inflight relaxation and
+batch MD. Changes to cell, PBC or atom partition trigger a complete allocation
+refresh; ordinary fixed-cell steps retain their buffers. Installed packages
+are unchanged. MACE inflight stays enabled, and FairChem builds its own graph
+without this hook. See the [exposure and timing report](../../docs/verification/nvalchemi-neighbor-cache.md).
+
+The separate upstream inactive-output defect can still return live energies
+inconsistent with frozen coordinates after convergence. MatGL inflight remains
+disabled pending validation of that repair. Trajectory extraction preserves
+the first converged snapshot; turning extraction off exposes the live-batch
+output limitation. A corrected upstream release is still needed to retire
+the compatibility guard.
 
 The former variable-cell speedup tables used force-only convergence and are
 withdrawn. New speedups remain pending a supported upstream release containing
