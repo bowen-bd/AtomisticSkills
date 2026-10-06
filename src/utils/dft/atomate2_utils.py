@@ -317,7 +317,7 @@ class Atomate2Handler:
                     if job_id.isdigit():
                         jobs_info = jc.get_jobs_info(db_ids=[job_id])
                     else:
-                        jobs_info = jc.get_jobs_info(uuids=[job_id])
+                        jobs_info = jc.get_jobs_info(custom_query={"uuid": job_id})
 
                     if jobs_info:
                         job_info = jobs_info[0]

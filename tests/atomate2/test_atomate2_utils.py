@@ -106,3 +106,34 @@ class TestAtomate2Handler(unittest.TestCase):
         assert len(results) == 1
         assert results[0]["energy"] == -123.456
         assert results[0]["forces"] == [[0.1, -0.2, 0.3]]
+
+    @patch("jobflow_remote.jobs.jobcontroller.JobController")
+    def test_check_status_job_uuid(self, mock_jc_class):
+        """Test checking remote job status using a UUID"""
+        mock_jc = MagicMock()
+        mock_jc_class.from_project_name.return_value = mock_jc
+
+        # Return no matching flows so it falls back to searching as a job
+        mock_jc.get_flows_info.return_value = []
+
+        class FakeJobInfo:
+            def __init__(self, state_name):
+                class FakeState:
+                    def __init__(self, name):
+                        self.name = name
+
+                self.state = FakeState(state_name)
+
+        mock_jc.get_jobs_info.return_value = [FakeJobInfo("COMPLETED")]
+
+        handler = Atomate2Handler()
+        res = handler.check_status(
+            job_id="fake-job-uuid-1234", project_name="mock_proj"
+        )
+
+        mock_jc.get_jobs_info.assert_called_once_with(
+            custom_query={"uuid": "fake-job-uuid-1234"}
+        )
+        assert res["status"] == "completed"
+        assert res["type"] == "job"
+        assert res["remote"] is True
