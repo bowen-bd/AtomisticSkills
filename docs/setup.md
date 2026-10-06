@@ -127,8 +127,14 @@ ATOMISTIC_RUNTIME: auto
   each) from `~/.cache/atomisticskills/sif/` or `$ATOMISTIC_MODEL_CACHE/sif/`.
 - GPU nodes can differ from login nodes. A node with glibc older than 2.28 (for
   example CentOS 7) needs a container runtime installed there, and the images
-  carry the CUDA 13 build (driver ≥ 580). On a native uv node, a driver of 525–579
-  gets the CUDA 12.6 build automatically.
+  carry the CUDA 13 build. Driver ≥ 580 is the baseline for CUDA 13 minor-version
+  compatibility; older drivers require a compatible forward-compatibility setup
+  on supported hardware. Verify actual CUDA execution in the image rather than
+  inferring it from GPU visibility. On a native uv node, a driver of 525–579 gets
+  the CUDA 12.6 build automatically. See NVIDIA's
+  [minor-version compatibility](https://docs.nvidia.com/deploy/cuda-compatibility/minor-version-compatibility.html)
+  and [forward compatibility](https://docs.nvidia.com/deploy/cuda-compatibility/forward-compatibility.html)
+  requirements.
 - Keep large caches off a small home quota with `UV_CACHE_DIR` (uv's download cache)
   and `ATOMISTIC_MODEL_CACHE` (container checkpoints and SIF files).
 
@@ -185,7 +191,7 @@ Then run a live test with the user:
 | An MCP server is not connected | Run `venv/run --doctor`. A first start creates the environment in the background; reconnect with `/mcp` when it finishes, or run `venv/run --setup` first. |
 | `needs glibc >= …` or `needs a C compiler` | Install a container runtime (Apptainer on HPC, Docker elsewhere); `auto` then uses it. |
 | `No module named ...` in a skill script | Run the command exactly as the skill writes it: `venv/run <env> ...` picks the environment the script needs. |
-| GPU not used | Run `venv/run --doctor`: drivers 525–579 get the CUDA 12.6 build, 580+ CUDA 13, older ones the CPU. In a container (images are CUDA 13) a driver older than 580 means CPU; use the uv backend there. |
+| GPU not used | Run `venv/run --doctor`: native uv selects CUDA 12.6 for drivers 525–579 and CUDA 13 for 580+. Containers retain their image's CUDA build; test an actual CUDA tensor operation and check model GPU activity. Older-driver container execution depends on the compatibility setup; it does not imply CPU-only execution. See the HPC guidance above and the [validated desta result](changes/2.0.0-verification.md). |
 | FairChem `load_model` fails with `401` / gated repo | UMA checkpoints are gated: request access at https://huggingface.co/facebook/UMA, then set `HF_TOKEN` (in `~/.config/atomistic_skills.yaml` or the environment). |
 | Model download fails with `CERTIFICATE_VERIFY_FAILED` | The launcher points Python at the system CA bundle; behind a proxy or with a custom bundle, set `SSL_CERT_FILE` to it. |
 | Apptainer model download fails with a missing host CA path (such as `/etc/pki/tls/certs/ca-bundle.crt`) | Update `venv/run`: it now binds the selected host bundle read-only into the image and sets the container's `SSL_CERT_FILE` to that mount. |
