@@ -13,7 +13,22 @@
 #   docker buildx build -f docker/Dockerfile.cuda --platform linux/amd64,linux/arm64 \
 #     --build-arg VENVS="adit diffcsp mattergen" --build-arg IMAGE_NAME=generative \
 #     -t ghcr.io/learningmatter-mit/atomisticskills-generative:dev .
-FROM nvidia/cuda:13.0.1-devel-ubuntu24.04
+ARG BASE_IMAGE=nvidia/cuda:13.0.1-devel-ubuntu24.04
+
+# Only the selected projects' pyproject.toml and uv.lock pass to the build
+# stage. COPY --from is keyed on content, so a change anywhere else under venv/
+# (another project's lock, venv/run) leaves the compiled extensions cached; on
+# arm64 that compile is most of the build time.
+FROM ${BASE_IMAGE} AS locks
+ARG VENVS="adit diffcsp mattergen"
+COPY venv/ /tmp/venv-context/
+RUN set -eux; \
+    for v in ${VENVS}; do \
+        mkdir -p /locks/$v; \
+        cp /tmp/venv-context/$v/pyproject.toml /tmp/venv-context/$v/uv.lock /locks/$v/; \
+    done
+
+FROM ${BASE_IMAGE}
 
 ARG IMAGE_NAME=generative
 ARG VENVS="adit diffcsp mattergen"
@@ -46,13 +61,7 @@ WORKDIR ${REPO_DIR}
 # The environments first, so edits to code do not invalidate the multi-GB
 # layers. Each image carries only the projects VENVS names.
 COPY pyproject.toml VERSION ${REPO_DIR}/
-COPY venv/ /tmp/venv-context/
-RUN set -eux; \
-    for v in ${VENVS}; do \
-        mkdir -p venv/$v; \
-        cp /tmp/venv-context/$v/pyproject.toml /tmp/venv-context/$v/uv.lock venv/$v/; \
-    done; \
-    rm -rf /tmp/venv-context
+COPY --from=locks /locks/ ${REPO_DIR}/venv/
 
 # Images carry the CUDA 13 build of torch (cu130).
 RUN --mount=type=cache,target=/root/.cache/uv \
