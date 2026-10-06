@@ -411,7 +411,7 @@ class MLIPModel(ABC):
 
             OptClass = getattr(ase.optimize, optimizer)
             opt = OptClass(opt_atoms, logfile=log_file, trajectory=traj_file)
-            opt.run(fmax=fmax, steps=steps)
+            converged = bool(opt.run(fmax=fmax, steps=steps))
 
             # Clear constraints before returning/saving
             final_struct = atoms
@@ -434,6 +434,9 @@ class MLIPModel(ABC):
                     f.write(str(energy_val))
 
             return {
+                "status": "success" if converged else "not_converged",
+                "converged": converged,
+                "steps": opt.nsteps,
                 "energy": energy_val,
                 "trajectory_path": traj_file,
                 "log_path": log_file,
@@ -543,6 +546,7 @@ class MLIPModel(ABC):
         from src.utils.mlips.nvalchemi.nvalchemi_utils import (
             ForceStressClippingHook,
             PositionWrappingHook,
+            RelaxStepCountHook,
             atoms_to_atomic_data,
             extract_batch_results as extract_batch_results_fn,
             relax_convergence_hook,
@@ -553,9 +557,7 @@ class MLIPModel(ABC):
             from nvalchemi.data import Batch
             from nvalchemi.dynamics.base import DynamicsStage
             from nvalchemi.dynamics.optimizers.fire import FIRE
-            from src.utils.mlips.nvalchemi.nvalchemi_utils import (
-                ScaledFIRE2VariableCell,
-            )
+            from nvalchemi.dynamics.optimizers.fire2 import FIRE2VariableCell
             from nvalchemi.hooks.neighbor_list import NeighborListHook
         except ImportError as e:
             logger.warning(f"NValchemi import failed: {e}; falling back to sequential.")
@@ -632,13 +634,20 @@ class MLIPModel(ABC):
             atoms_to_atomic_data(a, device=device, dtype=torch.float32)
             for a in atoms_list
         ]
+        for data in data_list:
+            data.add_system_property(
+                "relax_steps", torch.zeros(1, 1, dtype=torch.long, device=device)
+            )
         batch = Batch.from_data_list(data_list)
         batch.status = torch.zeros(batch.num_graphs, dtype=torch.int32, device=device)
 
         if relax_cell:
-            optimizer_obj = ScaledFIRE2VariableCell(
+            optimizer_obj = FIRE2VariableCell(
                 model=nv_model,
                 dt=0.05,
+                tmax=0.5,
+                delaystep=5,
+                maxstep=0.2,
                 n_steps=steps,
                 convergence_hook=relax_convergence_hook(fmax, relax_cell=True),
             )
@@ -653,6 +662,7 @@ class MLIPModel(ABC):
 
         if optimizer_obj.convergence_hook is not None:
             optimizer_obj.register_hook(optimizer_obj.convergence_hook)
+        optimizer_obj.register_hook(RelaxStepCountHook(DynamicsStage.BEFORE_STEP))
         optimizer_obj.register_hook(
             PositionWrappingHook(stage=DynamicsStage.BEFORE_COMPUTE)
         )
@@ -729,14 +739,19 @@ class MLIPModel(ABC):
         )
 
         n_success = sum(1 for r in results if r["status"] == "success")
-        n_failed = len(results) - n_success
-        logger.info(f"NValchemi batch relaxation: {n_success} OK, {n_failed} failed")
+        n_not_converged = sum(r["status"] == "not_converged" for r in results)
+        n_failed = sum(r["status"] == "failed" for r in results)
+        logger.info(
+            f"NValchemi batch relaxation: {n_success} converged, "
+            f"{n_not_converged} not converged, {n_failed} failed"
+        )
 
         return {
             "mode": "batch",
             "backend": "nvalchemi",
             "total_structures": len(results),
             "successful": n_success,
+            "not_converged": n_not_converged,
             "failed": n_failed,
             "output_dir": output_dir,
             "results": results,
@@ -804,8 +819,8 @@ class MLIPModel(ABC):
         from nvalchemi.dynamics import SizeAwareSampler
         from nvalchemi.dynamics.base import DynamicsStage, FusedStage
         from nvalchemi.dynamics.optimizers.fire import FIRE
+        from nvalchemi.dynamics.optimizers.fire2 import FIRE2VariableCell
         from src.utils.mlips.nvalchemi.nvalchemi_utils import (
-            ScaledFIRE2VariableCell,
             relax_convergence_hook,
             warp_on_torch_stream,
         )
@@ -817,6 +832,7 @@ class MLIPModel(ABC):
             HostMemoryWithSystemId,
             PositionWrappingHook,
             RelaxLogHook,
+            RelaxStepCountHook,
             atomic_data_to_atoms,
         )
 
@@ -847,10 +863,17 @@ class MLIPModel(ABC):
                 final_energy = atoms.get_potential_energy()
                 with open(os.path.join(out_dir, "relaxed_energy.txt"), "w") as f:
                     f.write(f"{final_energy}\n")
-                # Determine converged status from actual forces rather than relying
-                # on graduation reason (could be converged or step-budget exhausted).
                 fmax_actual = float(data_cpu["forces"].norm(dim=-1).max().item())
-                converged = fmax_actual < fmax
+                # FusedStage uses status=1 for both convergence and budget
+                # exhaustion. Re-evaluate the same force AND cell criteria.
+                from nvalchemi.data import Batch
+
+                converged = (
+                    relax_convergence_hook(fmax, relax_cell).evaluate(
+                        Batch.from_data_list([data_cpu])
+                    )
+                    is not None
+                )
                 saved_to_disk[orig_idx] = {
                     "structure_name": struct_name,
                     "status": "success" if converged else "not_converged",
@@ -858,6 +881,7 @@ class MLIPModel(ABC):
                     "cif_path": cif_path,
                     "output_dir": out_dir,
                     "converged": converged,
+                    "steps": int(data_cpu.relax_steps.item()),
                 }
                 logger.debug(
                     f"Graduated [{orig_idx}] {struct_name}: "
@@ -887,9 +911,12 @@ class MLIPModel(ABC):
         )
 
         if relax_cell:
-            fire_stage = ScaledFIRE2VariableCell(
+            fire_stage = FIRE2VariableCell(
                 model=nv_model,
                 dt=0.05,
+                tmax=0.5,
+                delaystep=5,
+                maxstep=0.2,
                 # Per-system step budget: structures graduate after `steps` FIRE
                 # steps even if fmax never drops below threshold.
                 n_steps=steps,
@@ -925,6 +952,7 @@ class MLIPModel(ABC):
         # This also covers the initial "prime forces" call in FusedStage.run().
 
         fused.register_hook(PositionWrappingHook(stage=DynamicsStage.BEFORE_COMPUTE))
+        fused.register_hook(RelaxStepCountHook(DynamicsStage.BEFORE_STEP))
         if neighbor_config is not None:
             fused.register_hook(
                 NeighborListHook(neighbor_config, stage=DynamicsStage.BEFORE_COMPUTE)
@@ -1017,6 +1045,7 @@ class MLIPModel(ABC):
                         "cif_path": cif_path,
                         "output_dir": out_dir,
                         "converged": False,
+                        "steps": int(remaining_by_id[i].relax_steps.item()),
                     }
                 )
             except Exception as e:
@@ -1149,7 +1178,7 @@ class MLIPModel(ABC):
                         results.append(
                             {
                                 "structure_name": struct_name,
-                                "status": "success",
+                                "status": relax_result["status"],
                                 "energy": relax_result.get("energy"),
                                 "output_dir": struct_output,
                                 **{
@@ -1160,7 +1189,8 @@ class MLIPModel(ABC):
                             }
                         )
                         logger.info(
-                            f"Successfully relaxed {struct_name} ({idx+1}/{len(structure_list)})"
+                            f"Relaxed {struct_name}: {relax_result['status']} "
+                            f"({idx + 1}/{len(structure_list)})"
                         )
 
                 except Exception as e:
@@ -1178,10 +1208,12 @@ class MLIPModel(ABC):
 
             # Summary
             n_success = sum(1 for r in results if r["status"] == "success")
-            n_failed = len(results) - n_success
+            n_not_converged = sum(r["status"] == "not_converged" for r in results)
+            n_failed = sum(r["status"] == "failed" for r in results)
 
             logger.info(
-                f"Batch relaxation complete: {n_success} successful, {n_failed} failed"
+                f"Batch relaxation complete: {n_success} converged, "
+                f"{n_not_converged} not converged, {n_failed} failed"
             )
 
             return {
@@ -1189,6 +1221,7 @@ class MLIPModel(ABC):
                 "backend": "sequential",
                 "total_structures": len(results),
                 "successful": n_success,
+                "not_converged": n_not_converged,
                 "failed": n_failed,
                 "output_dir": output_dir,
                 "results": results,

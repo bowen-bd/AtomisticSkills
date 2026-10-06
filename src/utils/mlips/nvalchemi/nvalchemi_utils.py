@@ -11,7 +11,6 @@ try:
     from nvalchemi.data import AtomicData
     from nvalchemi.dynamics.base import ConvergenceHook, _ConvergenceCriterion
     from nvalchemi.dynamics.sinks import HostMemory
-    from nvalchemi.dynamics.optimizers.fire2 import FIRE2VariableCell
 
     NVALCHEMI_AVAILABLE = True
 except ImportError:
@@ -24,10 +23,6 @@ except ImportError:
         pass
 
     class HostMemory:  # type: ignore
-        def __init__(self, *args: Any, **kwargs: Any) -> None:
-            pass
-
-    class FIRE2VariableCell:  # type: ignore
         def __init__(self, *args: Any, **kwargs: Any) -> None:
             pass
 
@@ -86,8 +81,7 @@ def atoms_to_atomic_data(
     """
     if not NVALCHEMI_AVAILABLE:
         raise ImportError(
-            "nvalchemi-toolkit is required. "
-            "Install with: pip install nvalchemi-toolkit"
+            "nvalchemi-toolkit is required. Install with: pip install nvalchemi-toolkit"
         )
     if dtype is None:
         dtype = torch.float32
@@ -213,6 +207,7 @@ def extract_batch_results(
                     }
                 )
     elif mode == "relax":
+        final_data = final_batch.to_data_list()
         if memory_sink is not None:
             stored_batch = memory_sink.read()
             data_list = stored_batch.to_data_list()
@@ -230,6 +225,7 @@ def extract_batch_results(
             os.makedirs(out_dir, exist_ok=True)
             try:
                 struct_atoms_list = []
+                terminal_snapshot = False
                 if memory_sink is not None:
                     for s in range(n_snapshots):
                         idx = s * n_structures + i
@@ -244,12 +240,31 @@ def extract_batch_results(
                                     else status_val
                                 )
                                 if val >= 1:
+                                    terminal_snapshot = True
                                     break
                 else:
                     struct_atoms_list.append(atomic_data_to_atoms(data_list[i]))
 
                 if not struct_atoms_list:
                     raise RuntimeError("No trajectory snapshots recorded.")
+
+                # Preserve the first converged snapshot as this structure's
+                # terminal state. Otherwise a sparse history may omit its last
+                # step, so complete the trajectory from the returned batch.
+                final_atoms = (
+                    struct_atoms_list[-1]
+                    if terminal_snapshot
+                    else atomic_data_to_atoms(final_data[i])
+                )
+                status = getattr(final_data[i], "status", None)
+                converged = status is not None and int(status.item()) == 1
+                last = struct_atoms_list[-1]
+                if not np.array_equal(
+                    last.positions, final_atoms.positions
+                ) or not np.array_equal(last.cell, final_atoms.cell):
+                    struct_atoms_list.append(final_atoms)
+                else:
+                    struct_atoms_list[-1] = final_atoms
 
                 traj_file = None
                 log_file = None
@@ -268,7 +283,6 @@ def extract_batch_results(
                                 f"FIRE:  {step_idx:9d}  {energy:14.6f}  {fmax:12.6f}\n"
                             )
 
-                final_atoms = struct_atoms_list[-1]
                 structure = AseAtomsAdaptor.get_structure(final_atoms)
                 cif_path = os.path.join(out_dir, "relaxed_structure.cif")
                 structure.to(filename=cif_path)
@@ -279,11 +293,15 @@ def extract_batch_results(
 
                 res_dict = {
                     "structure_name": struct_name,
-                    "status": "success",
+                    "status": "success" if converged else "not_converged",
+                    "converged": converged,
                     "energy": final_energy,
                     "cif_path": cif_path,
                     "output_dir": out_dir,
                 }
+                step_count = getattr(final_data[i], "relax_steps", None)
+                if step_count is not None:
+                    res_dict["steps"] = int(step_count.item())
                 if traj_file is not None:
                     res_dict["trajectory_path"] = traj_file
                 if log_file is not None:
@@ -557,6 +575,9 @@ class AtomsDataset:
             "orig_idx",
             torch.tensor([[idx]], dtype=torch.long, device=self._device),
         )
+        data.add_system_property(
+            "relax_steps", torch.zeros(1, 1, dtype=torch.long, device=self._device)
+        )
         return data, {"name": self._names[idx], "index": idx}
 
 
@@ -806,14 +827,14 @@ class ForceStressClippingHook:
 
 
 class CellForceCriterion(_ConvergenceCriterion):
-    """Variable-cell convergence test equal to ASE's ``FrechetCellFilter``.
+    """Cell convergence using the per-atom virial row norm.
 
     ``ConvergenceHook.from_fmax`` tests atomic forces only, so a variable-cell
     relaxation of a crystal whose forces vanish by symmetry "converges" at step
     0 with its cell untouched. ASE folds the cell into ``fmax`` as the rows of
-    the virial divided by the number of atoms -- the scaling
-    :class:`ScaledFIRE2VariableCell` applies to the cell force -- and this
-    criterion applies the same test to every system in the batch.
+    the virial divided by the number of atoms near the reference cell. This is
+    the small-strain counterpart of the full Frechet derivative used by ASE,
+    not an exact equality at finite strain.
     """
 
     key: str = "stress"
@@ -847,66 +868,15 @@ def relax_convergence_hook(fmax: float, relax_cell: bool) -> "ConvergenceHook":
     return hook
 
 
-class ScaledFIRE2VariableCell(FIRE2VariableCell):
-    """FIRE2 variable-cell optimizer with cell force and velocity scaling.
+class RelaxStepCountHook:
+    """Count actual integration steps per system, surviving inflight refills."""
 
-    Prevents cell explosion by scaling cell degrees of freedom by a factor
-    proportional to the number of atoms in the system, matching the behavior
-    of ASE's UnitCellFilter.
-    """
+    frequency = 1
 
-    def pre_update(self, batch: Any) -> None:
-        import torch
-        from nvalchemi.dynamics.optimizers.fire2 import fire2_step_coord_cell
-        from nvalchemi.dynamics._ops.npt_nph import stress_to_cell_force
+    def __init__(self, stage: Any) -> None:
+        self.stage = stage
 
-        # 1. Compute cell force from stress
-        volumes = torch.linalg.det(batch.cell).abs()
-        stress_sigma = batch.stress
-        cell_force = stress_to_cell_force(stress_sigma, batch.cell, volumes)
-
-        # 2. Compute per-system cell factor f = number of atoms
-        num_atoms_per_system = torch.zeros(
-            batch.num_graphs, dtype=torch.int32, device=batch.device
-        )
-        num_atoms_per_system.scatter_add_(
-            0,
-            batch.batch_idx.long(),
-            torch.ones_like(batch.batch_idx, dtype=torch.int32),
-        )
-        f = num_atoms_per_system.to(batch.positions.dtype)
-        f = torch.clamp(f, min=1.0).view(-1, 1, 1)
-
-        # 3. Scale cell, cell_velocities, and cell_force
-        batch.cell.copy_(batch.cell * f)
-        self._state.cell_velocities.copy_(self._state.cell_velocities * f)
-        cell_force_scaled = cell_force / f
-
-        # 4. Call the original step function
-        fire2_step_coord_cell(
-            batch.positions.detach(),
-            batch.velocities,
-            batch.forces,
-            batch.cell.detach(),
-            self._state.cell_velocities,
-            cell_force_scaled,
-            batch.batch_idx.int(),
-            self._state.alpha,
-            self._state.dt,
-            self._state.nsteps_inc,
-            vf=self._state.vf,
-            v_sumsq=self._state.v_sumsq,
-            f_sumsq=self._state.f_sumsq,
-            delaystep=self.delaystep,
-            dtgrow=self.dtgrow,
-            dtshrink=self.dtshrink,
-            alphashrink=self.alphashrink,
-            alpha0=self.alpha0,
-            tmax=self.tmax,
-            tmin=self.tmin,
-            maxstep=self.maxstep,
-        )
-
-        # 5. Unscale cell and cell_velocities
-        batch.cell.copy_(batch.cell / f)
-        self._state.cell_velocities.copy_(self._state.cell_velocities / f)
+    def __call__(self, ctx: Any, stage: Any) -> None:
+        """Increment only the active systems before their coordinates advance."""
+        batch = ctx.batch
+        batch.relax_steps.view(-1).add_((batch.status.view(-1) == 0).long())

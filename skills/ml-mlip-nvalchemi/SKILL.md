@@ -75,39 +75,33 @@ Logger messages (written to stderr / MCP server log) also signal transitions:
 - `"Total atoms (N) exceeds batch limit (M); switching to inflight batching."`
 - `"NValchemi inflight relax: N structures, live batch ≤M atoms, ≤S steps/structure."`
 
-### Inflight vs sequential benchmark (FairChem uma-s-1p2, GB10 GPU, 100 Si MP structures)
+### Variable-cell relaxation validation
 
-| Mode | Wall time | Per structure | Converged |
-|---|---|---|---|
-| NValchemi inflight (`max_batch_atoms=500`) | **42.6 s** | 0.43 s | 100/100 |
-| Sequential ASE FIRE | **70.4 s** | 0.70 s | 100/100 |
-| Speed-up | **1.65×** | | |
+Variable-cell relaxation uses upstream `FIRE2VariableCell` with `dt=0.05`,
+`tmax=0.5`, `delaystep=5`, and `maxstep=0.2`. Its cell force is already normalized
+by system size; AtomisticSkills no longer applies an additional atom-count
+scaling. Standard-form cell preparation is retained.
 
-The gap grows with larger structures (more atoms → more FIRE steps → GPU stays busier per structure loaded).
+All three relaxation modes report `success` only on convergence,
+`not_converged` at the step limit, and `failed` for execution errors. Results
+include `converged` and per-structure `steps`, with separate aggregate counts.
+For variable-cell runs, convergence includes the per-atom virial row norm as
+well as atomic forces. This is the small-strain counterpart of ASE's
+`FrechetCellFilter` criterion, not exact equality at finite strain.
 
-### Mode Benchmark: Serial vs. Fixed-Batch vs. Inflight-Batch (10 structures, 50 steps)
+**Upstream dependency limitation:** NValchemi 0.2.0 caches neighbor-list
+geometry by total batch dimensions. A refill or cell update can omit neighbors
+without changing those dimensions. It can also return energies inconsistent
+with frozen coordinates after a structure converges. These defects must be
+fixed in NValchemi; MatGL inflight remains disabled pending a validated upstream
+release. Trajectory extraction preserves the first converged snapshot; turning
+extraction off exposes the upstream live-batch output limitation.
 
-Below is a three-way relaxation mode benchmark on 10 structures for 50 steps using MACE, TensorNet, and FairChem:
-
-> **Variable-Cell Convergence Note:** Variable-cell batch relaxation (`relax_cell=True`) now converges only when the cell force (virial / N, as in ASE's `FrechetCellFilter`) is also below `fmax`. Speedups quoted below for variable-cell batch relaxation were measured with force-only convergence and are pending re-measurement under full virial/cell force convergence.
-
-#### MACE-OMAT-0-small (`mlip`)
-- **Serial Mode:** 13.24 s
-- **Fixed-Batch Mode:** 5.75 s (**2.3x speedup**)
-- **Inflight-Batch Mode:** 9.51 s (**1.4x speedup**)
-
-#### TensorNet-PES-MatPES-PBE-2025.2 (`mlip`)
-- **Serial Mode:** 8.50 s
-- **Fixed-Batch Mode:** 12.95 s (0.7x - JIT compiler/graph overhead dominates for small datasets)
-- **Inflight-Batch Mode:** 14.53 s (0.6x - JIT compiler/graph overhead dominates for small datasets)
-
-> **Important (MatGL Inflight Energy Discrepancy):** Inflight batching stays off for the MatGL wrappers (TensorNet, M3GNet, CHGNet) for a measured reason: after graduation, energies are wrong (TensorNet Cu −83.70 vs −86.57 eV fixed-batch; CHGNet 0.26 eV; M3GNet 28 meV), while MACE inflight agrees to meV. We explicitly set `_nvalchemi_supports_inflight = False` for all MatGL wrappers, forcing them to fall back to fixed-batch or sequential mode.
-
-#### FairChem uma-s-1p2 (`fairchem`)
-- **Serial Mode:** 24.58 s
-- **Fixed-Batch Mode:** 30.89 s (0.8x - overhead dominates fixed-batch execution for small datasets)
-- **Inflight-Batch Mode:** 16.57 s (**1.5x speedup**)
-
+The former variable-cell speedup tables used force-only convergence and are
+withdrawn. New speedups remain pending a supported upstream release containing
+the neighbor-cache and inactive-output repairs. A source-checkout validation
+run must not be presented as performance of the committed dependency locks.
+Static-inference and MD tables below measure different operations.
 
 ### Molecular Dynamics (MD) Benchmark: Sequential vs. Batched (20 structures, 100 steps)
 
@@ -194,7 +188,7 @@ result = wrapper.relax_structure(
 print(result["backend"])         # "nvalchemi_inflight", "nvalchemi", or "sequential"
 ```
 
-Variable-cell batch relaxation (`relax_cell=True`) converges only when the cell force (virial / N, matching ASE's `FrechetCellFilter`) is also below `fmax`. Per-structure `relax.log` files (ASE FIRE format) are written incrementally to `{output_dir}/{structure_name}/relax.log` during inflight runs, so partial results survive an OOM abort.
+Variable-cell batch relaxation (`relax_cell=True`) converges only when the per-atom virial row norm is also below `fmax` (the small-strain counterpart of ASE's `FrechetCellFilter`). Per-structure `relax.log` files (ASE FIRE format) are written incrementally to `{output_dir}/{structure_name}/relax.log` during inflight runs, so partial results survive an OOM abort.
 
 ### Step 4 — Batch Molecular Dynamics
 

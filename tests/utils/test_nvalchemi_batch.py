@@ -1100,7 +1100,7 @@ class TestInflightRelaxTensorNet:
         wrapper.load()
         return wrapper
 
-    def test_inflight_backend_selected(self, tmp_path, monkeypatch):
+    def test_inflight_optout_keeps_fixed_backend(self, tmp_path, monkeypatch):
         import src.utils.mlips.nvalchemi.nvalchemi_utils as nv_utils
         from src.utils.mlips.nvalchemi.nvalchemi_utils import NVALCHEMI_AVAILABLE
 
@@ -1122,7 +1122,8 @@ class TestInflightRelaxTensorNet:
             steps=2,
             output_dir=str(tmp_path),
         )
-        assert result.get("backend") == "nvalchemi_inflight"
+        assert wrapper._get_nvalchemi_model()._nvalchemi_supports_inflight is False
+        assert result.get("backend") == "nvalchemi"
 
     def test_inflight_output_files_written(self, tmp_path, monkeypatch):
         import os

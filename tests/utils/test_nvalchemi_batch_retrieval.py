@@ -48,13 +48,16 @@ class TestBatchRetrieval:
 
         assert result["status"] == "success" if "status" in result else True
         assert result["mode"] == "batch"
-        assert result["successful"] == 2
+        assert result["successful"] == 0
+        assert result["not_converged"] == 2
+        assert result["failed"] == 0
 
         for r in result["results"]:
             name = r["structure_name"]
             out_dir = r["output_dir"]
             assert name in structure_names
-            assert r["status"] == "success"
+            assert r["status"] == "not_converged"
+            assert r["converged"] is False
 
             # Check files existence
             assert os.path.exists(r["trajectory_path"])
@@ -187,13 +190,16 @@ class TestBatchRetrieval:
 
         assert result["status"] == "success" if "status" in result else True
         assert result["mode"] == "batch"
-        assert result["successful"] == 2
+        assert result["successful"] == 0
+        assert result["not_converged"] == 2
+        assert result["failed"] == 0
 
         for r in result["results"]:
             name = r["structure_name"]
             out_dir = r["output_dir"]
             assert name in structure_names
-            assert r["status"] == "success"
+            assert r["status"] == "not_converged"
+            assert r["converged"] is False
 
             # Check that traj and log paths are not in the result, and files do not exist
             assert "trajectory_path" not in r
