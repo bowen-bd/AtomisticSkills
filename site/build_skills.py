@@ -429,7 +429,8 @@ def make_skill_page(
 
 <footer>
   <p>AtomisticSkills — Open-sourced AI research infrastructure &nbsp;·&nbsp;
-    <a href="https://github.com/learningmatter-mit/AtomisticSkills" target="_blank">GitHub</a>
+    <a href="https://github.com/learningmatter-mit/AtomisticSkills" target="_blank">GitHub</a> &nbsp;·&nbsp;
+    <a href="https://learningmatter-mit.github.io/AtomisticSkillsBenchmark/" target="_blank">Benchmark Leaderboard</a>
   </p>
 </footer>
 

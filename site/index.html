@@ -978,6 +978,7 @@
       <li><a href="#environments">Environments</a></li>
       <li><a href="#guides">Docs</a></li>
       <li><a href="#install">Install</a></li>
+      <li><a href="https://learningmatter-mit.github.io/AtomisticSkillsBenchmark/" target="_blank">Benchmark ↗</a></li>
     </ul>
     <a class="nav-cta" href="https://github.com/learningmatter-mit/AtomisticSkills" target="_blank">GitHub →</a>
   </nav>
@@ -1006,6 +1007,7 @@
       style="display: flex; gap: .875rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem;">
       <a class="btn-primary" href="#skills" id="browse-skills-btn">Browse Skills ↓</a>
       <a class="btn-primary" href="#install" id="install-btn">Install</a>
+      <a class="btn-secondary" href="https://learningmatter-mit.github.io/AtomisticSkillsBenchmark/" target="_blank">📊 Benchmark Leaderboard</a>
       <a class="btn-secondary" href="https://www.youtube.com/watch?v=oiyZ52RS5oo&feature=youtu.be" target="_blank">🎬 Watch Demo</a>
       <a class="btn-secondary" href="https://github.com/learningmatter-mit/AtomisticSkills" target="_blank">⭐ Star on GitHub</a>
     </div>
@@ -1540,6 +1542,7 @@
     <p>Open-sourced AI research infrastructure.</p>
     <p style="margin-top:.5rem">
       <a href="https://github.com/learningmatter-mit/AtomisticSkills" target="_blank">GitHub</a> ·
+      <a href="https://learningmatter-mit.github.io/AtomisticSkillsBenchmark/" target="_blank">Benchmark Leaderboard</a> ·
       <a href="https://github.com/learningmatter-mit/AtomisticSkills/blob/main/LICENSE" target="_blank">MIT License</a> ·
       <a href="https://github.com/learningmatter-mit/AtomisticSkills/blob/main/README.md" target="_blank">Docs</a>
     </p>
@@ -1551,6 +1554,7 @@
     const GUIDES = [
       { id: "setup", title: "Quick Start & Setup", desc: "Interactive agent-ready setup flow and environment installation guide.", icon: "🚀" },
       { id: "developer_guide", title: "Developer Guide", desc: "Best practices for implementing modular research skills and tools.", icon: "🛠️" },
+      { id: "benchmark", title: "Benchmark & Leaderboard", desc: "Interactive leaderboard evaluating AI agents across 31 atomistic research tasks.", icon: "📊", url: "https://learningmatter-mit.github.io/AtomisticSkillsBenchmark/" },
       { id: "environment_variables", title: "Environment Variables", desc: "Configuration guide for Materials Project keys and custom MLIP backend paths.", icon: "⚙️" },
       { id: "visualize_structure", title: "Structure Visualization", desc: "How to generate high-quality publications-ready crystal and molecule renders.", icon: "🎨" },
       { id: "mcp_stdio_redirection", title: "STDIO Redirection", desc: "File-descriptor level log output control for Python-based MCP servers.", icon: "🔧" }
@@ -1632,7 +1636,8 @@
       const grid = document.getElementById('guides-grid');
       GUIDES.forEach(g => {
         const card = document.createElement('a');
-        card.href = `${g.id}.html`;
+        card.href = g.url || `${g.id}.html`;
+        if (g.url) card.target = "_blank";
         card.className = 'guide-card';
         card.innerHTML = `
       <div class="guide-icon">${g.icon}</div>

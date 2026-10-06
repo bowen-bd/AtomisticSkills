@@ -1,6 +1,6 @@
 # AtomisticSkills
 
-![AtomisticSkills Logo](site/logo/atomisticskills_logo.svg)
+[![AtomisticSkills Logo](site/logo/atomisticskills_logo.svg)](https://learningmatter-mit.github.io/AtomisticSkills/)
 
 [![arXiv](https://img.shields.io/badge/arXiv-2605.24002-b31b1b.svg)](https://arxiv.org/abs/2605.24002)
 
