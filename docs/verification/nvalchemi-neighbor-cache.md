@@ -119,7 +119,8 @@ Peak benchmark allocation: 858.6 MB. Disabling inflight adds no hook cost to unc
   change. MatGL inflight stays disabled, and previous variable-cell speedup
   claims remain withdrawn.
 
-The upstream issue and PR have deliberately **not** been posted. There is no
+The upstream issue and PR have deliberately **not** been posted; the draft
+report is [nvalchemi-upstream-issue.md](nvalchemi-upstream-issue.md). There is no
 issue URL to link yet. The affected
 [upstream 0.2.0 hook](https://github.com/NVIDIA/nvalchemi-toolkit/blob/v0.2.0/nvalchemi/hooks/neighbor_list.py)
 and this reproduction document are the references until the release owner
