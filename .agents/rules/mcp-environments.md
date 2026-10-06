@@ -53,7 +53,7 @@ Environments support optional extras specified as `<venv>+<extra>` (e.g., `cpu+o
 | `diffcsp` | `diffcsp` | `generative` | Yes | DiffCSP++ crystal structure generation |
 | `mattergen` | `mattergen` | `generative` | Yes | MatterGen generative diffusion model |
 
-The generative servers run from their uv projects on x86_64; PyG publishes no aarch64 wheels for their compiled extensions, so on aarch64 `venv/run` uses the `generative` container image (linux/arm64), built with those extensions compiled from source.
+The generative servers run from their uv projects on x86_64 hosts with glibc ≥ 2.32 (PyG's wheels need it); elsewhere `venv/run` uses the `generative` container image (linux/amd64 and linux/arm64; on arm64 it compiles the PyG extensions from source, since PyG publishes no aarch64 wheels).
 
 ## 3. No Conda
 

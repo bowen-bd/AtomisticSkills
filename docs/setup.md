@@ -137,10 +137,22 @@ ATOMISTIC_RUNTIME: auto
 MatterGen, ADiT and DiffCSP++ (`ml-generative-*`), ICEBERG (`chem-msms-predict`),
 React-OT (`chem-react-ot`) and SelfConditionedDenoisingAtoms
 (`ml-property-predict-scd`) each have their own pinned uv project under `venv/`,
-created on first use like the shared ones. Most are x86_64 only, because their
-compiled extensions publish no aarch64 wheels; on aarch64 the generative servers
-run from the `generative` container image instead (`venv/run --setup generative`
-pulls it ahead of time). `venv/run --doctor` shows what a host can run.
+created on first use like the shared ones. Their compiled dependencies set what
+a host needs, and `venv/run --doctor` shows what this one can run:
+
+- MatterGen, ADiT, DiffCSP++: natively on x86_64 with glibc ≥ 2.32 (PyG's
+  wheels need it); elsewhere (aarch64, or EL8-era clusters with glibc 2.28) from
+  the `generative` container image (`venv/run --setup generative` pulls it).
+- SelfConditionedDenoisingAtoms (`scd`): x86_64 with glibc ≥ 2.32; no image.
+- ICEBERG (`msms`): x86_64 with GCC 9's libstdc++ (DGL needs `GLIBCXX_3.4.26`:
+  glibc ≥ 2.31 distributions ship it). On EL8, put a newer GCC runtime first
+  (e.g. `module load gcc` or `LD_LIBRARY_PATH=<gcc>/lib64:$LD_LIBRARY_PATH`) and
+  run it natively with `ATOMISTIC_RUNTIME=uv`.
+- React-OT (`reactot`): x86_64 and aarch64.
+
+These stacks download several GB of CUDA libraries on first use; on a cluster,
+create them ahead of time (`venv/run --setup mattergen adit ...`) rather than on
+an MCP server's first start.
 
 LAMMPS with ML plugins (`mat-lammps-md`) is built against the `mlip`
 environment by the skill's build scripts; FairChem's `lmp_fc` comes with the

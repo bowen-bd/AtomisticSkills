@@ -100,9 +100,9 @@ See `README.md` for full installation instructions.
 
 Every container image is built from committed `venv/<name>/uv.lock` files, so a container
 runs the same environment as a native install: `cpu`, `mlip` and `fairchem` (linux/amd64 and
-linux/arm64) via `docker/Dockerfile`, and `generative` (linux/arm64) via `docker/Dockerfile.cuda`,
-which installs `adit`, `diffcsp` and `mattergen` side by side and compiles their PyG extensions
-with CUDA. On x86_64 the generative servers run from their uv projects on the host.
+linux/arm64) via `docker/Dockerfile`, and `generative` (both platforms) via `docker/Dockerfile.cuda`,
+which installs `adit`, `diffcsp` and `mattergen` side by side (compiling their PyG extensions
+with CUDA on arm64). On x86_64 hosts with glibc ≥ 2.32 the generative servers run natively.
 
 `docker/images.json` is the single source of truth mapping each server to its runtime image.
 The server table `venv/servers.tsv`, the `mcpServers` block of `.claude-plugin/plugin.json`,

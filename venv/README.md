@@ -12,12 +12,12 @@ Research stacks, pinned to the versions they were verified with:
 
 | uv project | Used by | Torch | Platforms |
 | :--- | :--- | :--- | :--- |
-| `venv/adit` | `adit` server, `ml-generative-adit` | 2.9.1, CUDA | x86_64 (aarch64: `generative` image) |
-| `venv/diffcsp` | `diffcsp` server, `ml-generative-diffcsp` | 2.10.0, CUDA | x86_64 (aarch64: `generative` image) |
-| `venv/mattergen` | `mattergen` server, `ml-generative-mattergen` | 2.9.1, CUDA | x86_64 (aarch64: `generative` image) |
-| `venv/msms` | `chem-msms-predict` (ICEBERG 2.1) | 2.6.0, CPU | x86_64 |
+| `venv/adit` | `adit` server, `ml-generative-adit` | 2.9.1, CUDA | x86_64 with glibc ≥ 2.32 (elsewhere: `generative` image) |
+| `venv/diffcsp` | `diffcsp` server, `ml-generative-diffcsp` | 2.10.0, CUDA | x86_64 with glibc ≥ 2.32 (elsewhere: `generative` image) |
+| `venv/mattergen` | `mattergen` server, `ml-generative-mattergen` | 2.9.1, CUDA | x86_64 with glibc ≥ 2.32 (elsewhere: `generative` image) |
+| `venv/msms` | `chem-msms-predict` (ICEBERG 2.1) | 2.6.0, CPU | x86_64 with glibc ≥ 2.31 and GCC 9's libstdc++ |
 | `venv/reactot` | `chem-react-ot` | 2.2.1 | x86_64, aarch64 |
-| `venv/scd` | `ml-property-predict-scd` | 2.10.0, CUDA | x86_64 |
+| `venv/scd` | `ml-property-predict-scd` | 2.10.0, CUDA | x86_64 with glibc ≥ 2.32 |
 
 The x86_64-only stacks depend on compiled extensions (PyG's, DGL) that publish no aarch64 wheels. `venv/run --doctor` lists which stacks a host can run and how.
 

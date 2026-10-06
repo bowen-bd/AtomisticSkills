@@ -11,7 +11,7 @@ These container images serve as the automatic fallback runtime for the `venv/run
 | `atomisticskills-cpu` | `uv` (from `venv/cpu/uv.lock`) | `atomate2`, `base`, `drugdisc`, `smol` | linux/amd64, linux/arm64 | No |
 | `atomisticskills-mlip` | `uv` (from `venv/mlip/uv.lock`) | `mace`, `matgl` | linux/amd64, linux/arm64 | Yes |
 | `atomisticskills-fairchem` | `uv` (from `venv/fairchem/uv.lock`) | `fairchem` | linux/amd64, linux/arm64 | Yes |
-| `atomisticskills-generative` | `uv` (from `venv/{adit,diffcsp,mattergen}/uv.lock`) | `adit`, `diffcsp`, `mattergen` | linux/arm64 | Yes |
+| `atomisticskills-generative` | `uv` (from `venv/{adit,diffcsp,mattergen}/uv.lock`) | `adit`, `diffcsp`, `mattergen` | linux/amd64, linux/arm64 | Yes |
 
 ### Build Strategies
 
@@ -19,7 +19,7 @@ Every image is built from committed `venv/<name>/uv.lock` files, so a container 
 
 1. **One project (`cpu`, `mlip`, `fairchem`)**: `docker/Dockerfile`, on Ubuntu 24.04 with the build tools and system programs some skills call (Boost, Packmol, fpocket).
 
-2. **Several projects (`generative`)**: `docker/Dockerfile.cuda` installs `adit`, `diffcsp` and `mattergen` side by side on a CUDA toolkit image, for linux/arm64. PyG publishes no aarch64 wheels for `torch-scatter`, `torch-sparse` and `torch-cluster`, so the image compiles them against each environment's torch with `FORCE_CUDA=1` for `TORCH_CUDA_ARCH_LIST` (default `12.1`, GB10 / DGX Spark), and the build fails if they lack their CUDA kernels. Each server runs in its own environment; a command runs in the one `ATOMISTIC_VENV` names (`venv/run` passes it). The ADiT, DiffCSP++ and MatterGen source checkouts are not in the image: `venv/run` mounts them from the host (see `docs/environment_variables.md`).
+2. **Several projects (`generative`)**: `docker/Dockerfile.cuda` installs `adit`, `diffcsp` and `mattergen` side by side on a CUDA toolkit image, for linux/amd64 and linux/arm64. On amd64 it installs PyG's wheels (they need glibc 2.32, so EL8-era hosts use this image). PyG publishes no aarch64 wheels for `torch-scatter`, `torch-sparse` and `torch-cluster`, so on arm64 the image compiles them against each environment's torch with `FORCE_CUDA=1` for `TORCH_CUDA_ARCH_LIST` (default `12.1`, GB10 / DGX Spark). Either way the build fails if they lack their CUDA kernels. Each server runs in its own environment; a command runs in the one `ATOMISTIC_VENV` names (`venv/run` passes it). The ADiT, DiffCSP++ and MatterGen source checkouts are not in the image: `venv/run` mounts them from the host (see `docs/environment_variables.md`).
 
 ## Building Images Locally
 
@@ -106,6 +106,6 @@ venv/run --setup
 
 ## Known Limitations
 
-- **Generative image is arm64 only**: on x86_64 the `adit`, `diffcsp` and `mattergen` servers run from their uv projects on the host, which install PyG's wheels; a host too old for those (glibc < 2.28) cannot run them.
+- **Generative servers on x86_64** run natively where glibc ≥ 2.32 (PyG's wheels) and from the amd64 `generative` image elsewhere.
 - **GPU Driver Requirements**: On aarch64, CUDA 13 wheels require NVIDIA driver ≥ 580.
 - **Model Checkpoints**: Model weights are downloaded on first use into the mounted cache directory (`ATOMISTIC_MODEL_CACHE` or `~/.cache/atomisticskills`), so they persist across container restarts and updates.
