@@ -1,0 +1,36 @@
+name: pytest
+
+on:
+  push:
+    branches: ["main"]
+    tags: ["v*"]
+    paths-ignore: ["docs/**"]
+  pull_request:
+    paths-ignore: ["docs/**"]
+  workflow_dispatch:
+
+concurrency:
+  group: pytest-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: pytest (cpu)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "venv/cpu/uv.lock"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup CPU environment
+        run: venv/run --setup cpu
+
+      - name: Run unit & skill tests
+        run: venv/run cpu python -m pytest tests/test_*.py -q
