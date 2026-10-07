@@ -42,6 +42,47 @@ logger = logging.getLogger("Adsorption-Skill")
 from src.utils.mlips.loader import load_wrapper
 
 
+def process_adsorption_results(results_list):
+    """
+    Process raw results from AdsorptionCalc.calc_adslabs into structured site entries.
+
+    Args:
+        results_list: List of dictionaries returned by AdsorptionCalc.calc_adslabs
+
+    Returns:
+        tuple: (adsorption_energies, min_energy_site)
+    """
+    adsorption_energies = []
+    for i, result in enumerate(results_list):
+        ads_energy = result.get("adsorption_energy", None)
+        site_info = result.get("adsorption_site", result.get("site", "unknown"))
+        if ads_energy is not None:
+            site_entry = {
+                "site_index": i,
+                "site": str(site_info),
+                "adsorption_energy": float(ads_energy),
+                "adslab_energy": result.get("adslab_energy", None),
+                "slab_energy": result.get("slab_energy", None),
+                "adsorbate_energy": result.get("adsorbate_energy", None),
+            }
+            site_coord = result.get(
+                "adsorption_site_coord", result.get("site_coord", None)
+            )
+            if site_coord is not None:
+                site_entry["site_coord"] = site_coord
+            adsorption_energies.append(site_entry)
+            logger.info(f"  Site {i} ({site_info}): E_ads = {ads_energy:.3f} eV")
+
+    min_energy_site = None
+    if adsorption_energies:
+        min_energy_site = min(adsorption_energies, key=lambda x: x["adsorption_energy"])
+        logger.info(
+            f"Most stable site: {min_energy_site['site']} with E_ads = {min_energy_site['adsorption_energy']:.3f} eV"
+        )
+
+    return adsorption_energies, min_energy_site
+
+
 def run_adsorption(args, wrapper, bulk_atoms, adsorbate):
     """
     Run adsorption energy calculation using MatCalc's AdsorptionCalc.
@@ -114,29 +155,7 @@ def run_adsorption(args, wrapper, bulk_atoms, adsorbate):
     )
 
     # Process results
-    adsorption_energies = []
-    for i, result in enumerate(results_list):
-        ads_energy = result.get("adsorption_energy", None)
-        site_info = result.get("site", "unknown")
-        if ads_energy is not None:
-            adsorption_energies.append(
-                {
-                    "site_index": i,
-                    "site": str(site_info),
-                    "adsorption_energy": float(ads_energy),
-                    "adslab_energy": result.get("adslab_energy", None),
-                    "slab_energy": result.get("slab_energy", None),
-                    "adsorbate_energy": result.get("adsorbate_energy", None),
-                }
-            )
-            logger.info(f"  Site {i}: E_ads = {ads_energy:.3f} eV")
-
-    # Find most stable site
-    if adsorption_energies:
-        min_energy_site = min(adsorption_energies, key=lambda x: x["adsorption_energy"])
-        logger.info(
-            f"Most stable site: {min_energy_site['site']} with E_ads = {min_energy_site['adsorption_energy']:.3f} eV"
-        )
+    adsorption_energies, min_energy_site = process_adsorption_results(results_list)
 
     # Create summary
     summary = {
