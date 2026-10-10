@@ -27,8 +27,9 @@ As of **2026-01-30**, the library is fully expanded and contains **89 elements**
 - **MatGL**: CHGNet (MPtrj, MatPES), M3GNet (MP, MatPES), TensorNet (MatPES).
 - **FairChem**: UMA (S/M) with all heads (omat, omol, oc20).
 
-**Corrections (2026-10):** `TensorNet-MatPES-r2SCAN-v2025.1-PES` was regenerated for all 89
-elements with the weights that name now loads. Four O entries whose relaxation collapses the O2
+**Corrections (2026-10):** `TensorNet-MatPES-r2SCAN-v2025.1-PES` and
+`TensorNet-MatPES-PBE-v2025.1-PES` were regenerated for all 89 elements with the 2025.2 weights
+that those names now load (the PBE O entry is the MP single point, see Constraints). Four O entries whose relaxation collapses the O2
 crystal now hold the single point on the MP structure: MACE-MP-medium, and MACE-MH-0 omat_pbe,
 matpes_r2scan and oc20_usemppbe (see Constraints). Two entries that the library protocol did not
 reproduce were replaced by its converged, physical results: MACE-MATPES-PBE-0 O
@@ -54,13 +55,13 @@ reproduce were replaced by its converged, physical results: MACE-MATPES-PBE-0 O
   contact below 2.0 Å (MP: 2.145 Å), 0.15–0.86 eV/atom below the single point. When
   this happens the stored O value is the **single point on the MP structure** instead.
   This applies to MACE-MP-medium and MACE-MH-0 (omat_pbe, matpes_r2scan, oc20_usemppbe).
-  TensorNet-PES-MatPES-PBE-2025.2 shows the same collapse (-5.117 eV/atom fully relaxed
-  vs -4.964 single point). More than one MP entry can also tie at `energy_above_hull = 0` for these
+  The same rule gives the O entry of `TensorNet-MatPES-PBE-v2025.1-PES` (-5.117 eV/atom fully
+  relaxed vs -4.964 single point). More than one MP entry can also tie at `energy_above_hull = 0` for these
   elements (O2: mp-12957 and mp-1524462), so pin the `material_id` rather than relying
   on a formula lookup returning a stable order.
-- **Checkpoint names vs weights**: matgl 4.x loads `TensorNet-MatPES-r2SCAN-v2025.1-PES`
-  and the `M3GNet-MatPES-*-v2025.1-PES` names as the 2025.2 weights. The TensorNet
-  r2SCAN file was regenerated with those weights (2026-10). The M3GNet-MatPES files
+- **Checkpoint names vs weights**: matgl 4.x loads the `TensorNet-MatPES-*-v2025.1-PES`
+  and `M3GNet-MatPES-*-v2025.1-PES` names as the 2025.2 weights. Both TensorNet files were
+  regenerated with those weights (2026-10). The M3GNet-MatPES files
   still hold the old weights' energies (e.g. Si -0.46 and -0.63 eV/atom off), and
   `M3GNet-MP-2021.2.8-PES` now loads M3GNet-PES-MatPES-PBE-2025.2 weights, so check
   that a library file matches the loaded model before use.

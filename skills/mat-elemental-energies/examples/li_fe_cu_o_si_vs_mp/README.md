@@ -218,8 +218,8 @@ every oxide formation energy too positive by 0.86 eV per O atom. The other MPtrj
   older weights: Fe, Si and O were off by 11, 79 and 493 meV/atom, and the MAE vs MP was 164.5 meV/atom.
 
 **Do not mix functionals.** The MatPES-PBE checkpoints are on yet another absolute scale. For Cu the
-library holds -3.746 (CHGNet-MatPES-PBE), -3.760 (TensorNet-MatPES-PBE) and -3.745 eV/atom
-(MACE-MATPES-PBE-0), 339–354 meV/atom above MP's GGA value. Always take references and compound
+library holds -3.746 (CHGNet-MatPES-PBE), -3.735 (TensorNet-MatPES-PBE) and -3.745 eV/atom
+(MACE-MATPES-PBE-0), 353–365 meV/atom above MP's GGA value. Always take references and compound
 energies from the same checkpoint.
 
 ### Library reproducibility (CPU recomputation, [`cpu_verification.json`](cpu_verification.json))
