@@ -14,7 +14,7 @@ Usage:
         --time_unit min \
         --protons 18 18 \
         --names "borneol" "isoborneol" \
-        --baseline_correct \
+        --baseline_window 2.40 3.40 \
         --output_dir results/kinetics
 
 Requirements: numpy, scipy (>= 1.7), matplotlib
@@ -27,7 +27,13 @@ import pathlib
 import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
-from deconvolve import load_xy, baseline_correct, deconvolve_spectra
+from deconvolve import load_xy, deconvolve_spectra  # noqa: E402
+from spectra import (  # noqa: E402
+    BASELINE_STATS,
+    effective_protons,
+    preprocess_spectrum,
+    restrict_ppm,
+)
 
 
 def save_kinetics_plot(
@@ -117,10 +123,47 @@ def main():
     ap.add_argument(
         "--names", nargs="+", help="Component names (must match number of --refs)"
     )
-    ap.add_argument(
+    baseline = ap.add_mutually_exclusive_group()
+    baseline.add_argument(
         "--baseline_correct",
         action="store_true",
-        help="Shift each spectrum so its minimum intensity = 0.",
+        help="Legacy: shift each spectrum so its minimum intensity = 0. "
+        "Biased for noisy or offset spectra; prefer --baseline_window.",
+    )
+    baseline.add_argument(
+        "--baseline_window",
+        type=float,
+        nargs=2,
+        metavar=("LO", "HI"),
+        default=None,
+        help="Signal-free ppm window; its --baseline_stat is subtracted from every "
+        "time point and reference, and negatives are clipped to 0.",
+    )
+    ap.add_argument(
+        "--baseline_stat",
+        choices=BASELINE_STATS,
+        default="median",
+        help="Baseline estimate in --baseline_window: median (noisy/offset "
+        "spectra, default) or max (one-sided floors such as digitization residue).",
+    )
+    ap.add_argument(
+        "--ppm_range",
+        type=float,
+        nargs=2,
+        metavar=("LO", "HI"),
+        default=None,
+        help="Deconvolve only this ppm range (applied after baseline correction). "
+        "The proton correction then counts only each reference's protons inside "
+        "the range: see --range_protons.",
+    )
+    ap.add_argument(
+        "--range_protons",
+        type=float,
+        nargs="+",
+        default=None,
+        help="With --ppm_range: protons of each reference whose signals lie inside "
+        "the range. If omitted, each --protons count is scaled by the fraction of "
+        "the full reference's area inside the range.",
     )
     ap.add_argument(
         "--kappa", type=float, default=0.25, help="Denoising penalty (default: 0.25)"
@@ -154,22 +197,54 @@ def main():
     if args.protons and len(args.protons) != n_refs:
         print("ERROR: --protons length must equal number of --refs.", file=sys.stderr)
         sys.exit(1)
+    if args.range_protons is not None and (
+        args.ppm_range is None or len(args.range_protons) != n_refs
+    ):
+        print(
+            "ERROR: --range_protons requires --ppm_range and one count per reference.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     # Load reference spectra once
-    ref_arrays = [load_xy(p, mnova=args.mnova) for p in args.refs]
-    if args.baseline_correct:
-        ref_arrays = [baseline_correct(a) for a in ref_arrays]
+    prep = dict(
+        baseline_correct=args.baseline_correct,
+        baseline_window=args.baseline_window,
+        baseline_stat=args.baseline_stat,
+        ppm_range=args.ppm_range,
+    )
+    # Keep the full baseline-corrected references: the proton correction of a
+    # cropped fit needs the share of each reference's signal inside the range.
+    ref_full = [
+        preprocess_spectrum(
+            load_xy(p, mnova=args.mnova), **{**prep, "ppm_range": None}
+        )[0]
+        for p in args.refs
+    ]
+    ref_arrays = (
+        [restrict_ppm(a, args.ppm_range) for a in ref_full]
+        if args.ppm_range is not None
+        else ref_full
+    )
+    protons = effective_protons(ref_full, protons, args.ppm_range, args.range_protons)
+    if args.ppm_range is not None and not args.quiet:
+        print(
+            "Protons inside the ppm range: "
+            + ", ".join(f"{nm}={v:.4g}" for nm, v in zip(names, protons))
+        )
 
     proportions_over_time = []
     wd_over_time = []
+    noise_over_time = []
+    baseline_over_time = []
 
     for t, tp_path in zip(args.times, args.timepoints):
         if not args.quiet:
             print(f"  t={t} {args.time_unit}  <- {os.path.basename(tp_path)}", end="  ")
         try:
-            mix_arr = load_xy(tp_path, mnova=args.mnova)
-            if args.baseline_correct:
-                mix_arr = baseline_correct(mix_arr)
+            mix_arr, mix_base = preprocess_spectrum(
+                load_xy(tp_path, mnova=args.mnova), **prep
+            )
 
             res = deconvolve_spectra(mix_arr, ref_arrays, protons, kappa=args.kappa)
             props_dict = dict(zip(names, res["proportions"]))
@@ -177,24 +252,40 @@ def main():
 
             proportions_over_time.append(props_dict)
             wd_over_time.append(wd)
+            noise_over_time.append(res["noise"])
+            baseline_over_time.append(mix_base)
 
             if not args.quiet:
                 frac_str = "  ".join(
-                    f"{n}={props_dict.get(n, 0)*100:.1f}%" for n in names
+                    f"{n}={props_dict.get(n, 0) * 100:.1f}%" for n in names
                 )
-                print(f"{frac_str}  WD={wd:.5f}")
+                print(f"{frac_str}  WD={wd:.5f}  noise={res['noise']:.3f}")
         except Exception as e:
             print(f"FAILED: {e}", file=sys.stderr)
             proportions_over_time.append({n: float("nan") for n in names})
             wd_over_time.append(float("nan"))
+            noise_over_time.append(float("nan"))
+            baseline_over_time.append(float("nan"))
 
     # Save CSV table
     csv_path = out_dir / "kinetics.csv"
     with open(csv_path, "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow([f"time_{args.time_unit}"] + names + ["wasserstein_distance"])
-        for t, props, wd in zip(args.times, proportions_over_time, wd_over_time):
-            writer.writerow([t] + [props.get(n, float("nan")) for n in names] + [wd])
+        writer.writerow(
+            [f"time_{args.time_unit}"]
+            + names
+            + ["wasserstein_distance", "noise_fraction", "mixture_baseline"]
+        )
+        for t, props, wd, noise, base in zip(
+            args.times,
+            proportions_over_time,
+            wd_over_time,
+            noise_over_time,
+            baseline_over_time,
+        ):
+            writer.writerow(
+                [t] + [props.get(n, float("nan")) for n in names] + [wd, noise, base]
+            )
     if not args.quiet:
         print(f"\nKinetics table -> {csv_path}")
 

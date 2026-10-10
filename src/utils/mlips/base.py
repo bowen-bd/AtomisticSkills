@@ -1777,9 +1777,12 @@ class MLIPModel(ABC):
         # Convert pressure from bar to eV/A^3 for MatCalc
         pressure_ev_ang3 = pressure * units.bar if pressure is not None else 0.0
 
-        has_velocities = (
-            hasattr(atoms, "get_velocities") and atoms.get_velocities() is not None
-        )
+        # ASE returns zeros (never None) from get_velocities() when no momenta
+        # are stored, so test for the momenta array itself. Inputs that carry one
+        # (e.g. a .traj frame, or explicitly set momenta, including all zeros)
+        # keep their velocities and skip relaxation; others are relaxed and drawn
+        # from a Maxwell-Boltzmann distribution.
+        has_velocities = "momenta" in atoms.arrays
 
         md_calc = CustomMDCalc(
             calculator=calc,
@@ -1799,25 +1802,32 @@ class MLIPModel(ABC):
         )
 
         # Run simulation
+        status, stop_reason = "success", None
         try:
             from src.utils.mlips.md_utils import MDStopIteration
 
             md_calc.calc(atoms)
         except MDStopIteration as e:
+            status, stop_reason = "stopped", str(e)
             logger.info(f"MD terminated early by monitor: {e}")
 
-        # Normal Final struct update
-        final_structure = AseAtomsAdaptor.get_structure(atoms)
+        # Final structure = last MD frame (the input when the MD never started)
+        md_atoms = getattr(md_calc, "md_atoms", None)
+        final_atoms = md_atoms.copy() if md_atoms is not None else atoms
+        final_structure = AseAtomsAdaptor.get_structure(final_atoms)
         cif_path = os.path.join(output_dir, "final_structure.cif")
         final_structure.to(filename=cif_path)
 
-        return {
-            "status": "success",
+        result = {
+            "status": status,
             "trajectory_path": traj_path,
             "log_path": log_path,
             "cif_path": cif_path,
             "final_structure": final_structure.as_dict(),
         }
+        if stop_reason is not None:
+            result["stop_reason"] = stop_reason
+        return result
 
     def run_md(
         self,
@@ -1984,6 +1994,7 @@ class MLIPModel(ABC):
                         {
                             "structure_name": struct_name,
                             "status": md_res.get("status", "success"),
+                            "stop_reason": md_res.get("stop_reason"),
                             "trajectory_path": md_res.get("trajectory_path"),
                             "log_path": md_res.get("log_path"),
                             "output_dir": struct_output_dir,
@@ -1994,9 +2005,7 @@ class MLIPModel(ABC):
                     {"structure_name": struct_name, "status": "failed", "error": str(e)}
                 )
 
-        n_success = sum(
-            1 for r in results if r["status"] in ["success", "stopped_early"]
-        )
+        n_success = sum(1 for r in results if r["status"] in ["success", "stopped"])
         n_failed = len(results) - n_success
 
         logger.info(f"Batch MD complete: {n_success} successful, {n_failed} failed")

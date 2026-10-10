@@ -17,19 +17,29 @@ built-in HiGHS backend.
 
 Usage:
   venv/run cpu python deconvolve.py crude.csv ref_a.csv ref_b.csv \
-      --protons 18 18 --names borneol isoborneol --baseline-correct --json
+      --protons 18 18 --names borneol isoborneol \
+      --baseline-window 2.40 3.40 --ppm-range 3.50 4.10 --json
 
 Requirements: numpy, scipy (>= 1.7), matplotlib (optional, for --plot)
 """
 
 import argparse
 import json
+import os
 import pathlib
 import sys
 from typing import Optional
 
 import numpy as np
 from scipy.optimize import linprog
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from spectra import (  # noqa: E402
+    BASELINE_STATS,
+    effective_protons,
+    preprocess_spectrum,
+    restrict_ppm,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -61,12 +71,6 @@ def load_xy(
     if arr.ndim != 2 or arr.shape[1] < 2:
         raise ValueError(f"{path}: expected two numeric columns (ppm, intensity)")
     return arr
-
-
-def baseline_correct(arr: np.ndarray) -> np.ndarray:
-    corrected = arr.copy()
-    corrected[:, 1] -= arr[:, 1].min()
-    return corrected
 
 
 # ---------------------------------------------------------------------------
@@ -242,20 +246,25 @@ def deconvolve_spectra(
         Mixture spectrum (ppm, intensity).
     comp_arrays : list of ndarray of shape (N_i, 2)
         Component reference spectra.
-    protons : list of int
-        Number of 1H protons per component molecule.
+    protons : list of float
+        Protons per component molecule that contribute to the supplied
+        component spectra. For full spectra this is the per-molecule count; for
+        spectra restricted to a ppm range it is the number of each component's
+        protons inside that range (see ``spectra.effective_protons``).
     kappa : float
         Denoising penalty.
 
     Returns
     -------
-    dict with "proportions", "wasserstein_distance", "noise"
+    dict with "proportions", "wasserstein_distance", "noise", "signal_fractions"
     """
     mix_confs = list(zip(mix_arr[:, 0].tolist(), mix_arr[:, 1].tolist()))
     comp_confs = [list(zip(a[:, 0].tolist(), a[:, 1].tolist())) for a in comp_arrays]
 
     raw = wasserstein_deconvolve(mix_confs, comp_confs, kappa=kappa)
     raw_props = raw["proportions"]
+    # Fraction of the mixture signal assigned to each component (before proton correction)
+    raw["signal_fractions"] = list(raw_props)
 
     # Proton correction: convert area-proportional to concentration-proportional
     if protons and all(p > 0 for p in protons):
@@ -280,10 +289,13 @@ def _save_plot(
     names: list,
     props: list,
     wd: float,
+    signal_fractions: list | None = None,
 ) -> None:
     from plot import plot_deconvolution
 
-    plot_deconvolution(mix_arr, comp_arrays, names, props, wd, out_path)
+    plot_deconvolution(
+        mix_arr, comp_arrays, names, props, wd, out_path, signal_fractions
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -320,10 +332,47 @@ def main():
         action="store_true",
         help="Treat inputs as Mnova TSV (delimiter='\\t')",
     )
-    ap.add_argument(
+    baseline = ap.add_mutually_exclusive_group()
+    baseline.add_argument(
         "--baseline-correct",
         action="store_true",
-        help="Shift each spectrum so its minimum intensity becomes 0.",
+        help="Legacy: shift each spectrum so its minimum intensity becomes 0. "
+        "Biased for noisy or offset spectra; prefer --baseline-window.",
+    )
+    baseline.add_argument(
+        "--baseline-window",
+        type=float,
+        nargs=2,
+        metavar=("LO", "HI"),
+        default=None,
+        help="Signal-free ppm window; its --baseline-stat is subtracted from the "
+        "mixture and every reference, and negatives are clipped to 0.",
+    )
+    ap.add_argument(
+        "--baseline-stat",
+        choices=BASELINE_STATS,
+        default="median",
+        help="Baseline estimate in --baseline-window: median (noisy/offset "
+        "spectra, default) or max (one-sided floors such as digitization residue).",
+    )
+    ap.add_argument(
+        "--ppm-range",
+        type=float,
+        nargs=2,
+        metavar=("LO", "HI"),
+        default=None,
+        help="Deconvolve only this ppm range (applied after baseline correction). "
+        "The proton correction then counts only each reference's protons inside "
+        "the range: see --range-protons.",
+    )
+    ap.add_argument(
+        "--range-protons",
+        type=float,
+        nargs="+",
+        default=None,
+        help="With --ppm-range: protons of each component whose signals lie inside "
+        "the range (e.g. 1 1 for one diagnostic CH each). If omitted, each --protons "
+        "count is scaled by the fraction of the full reference's area inside the range.",
     )
     ap.add_argument(
         "--plot",
@@ -341,13 +390,44 @@ def main():
     mix_arr = load_xy(args.mixture, mnova=args.mnova)
     comp_arrays = [load_xy(p, mnova=args.mnova) for p in args.components]
 
-    if args.baseline_correct:
-        if not args.quiet:
+    if args.range_protons is not None and args.ppm_range is None:
+        print("ERROR: --range-protons requires --ppm-range.", file=sys.stderr)
+        sys.exit(2)
+    prep = dict(
+        baseline_correct=args.baseline_correct,
+        baseline_window=args.baseline_window,
+        baseline_stat=args.baseline_stat,
+        ppm_range=args.ppm_range,
+    )
+    mix_arr, mix_base = preprocess_spectrum(mix_arr, **prep)
+    # Keep the full baseline-corrected references: the proton correction of a
+    # cropped fit needs the share of each reference's signal inside the range.
+    comp_prepped = [
+        preprocess_spectrum(a, **{**prep, "ppm_range": None}) for a in comp_arrays
+    ]
+    comp_full = [a for a, _ in comp_prepped]
+    comp_arrays = (
+        [restrict_ppm(a, args.ppm_range) for a in comp_full]
+        if args.ppm_range is not None
+        else comp_full
+    )
+    baselines = [mix_base] + [b for _, b in comp_prepped]
+    if not args.quiet:
+        if args.baseline_window is not None:
+            lo, hi = args.baseline_window
             print(
-                "Baseline correction: shifting each spectrum so its minimum intensity = 0."
+                f"Baseline: subtracted the {args.baseline_stat} of {lo}-{hi} ppm "
+                "(negatives clipped to 0)."
             )
-        mix_arr = baseline_correct(mix_arr)
-        comp_arrays = [baseline_correct(a) for a in comp_arrays]
+        elif args.baseline_correct:
+            print(
+                "Baseline correction (legacy): shifting each spectrum so its "
+                "minimum intensity = 0."
+            )
+        if args.ppm_range is not None:
+            print(
+                f"ppm range restricted to {min(args.ppm_range)}-{max(args.ppm_range)}."
+            )
 
     n = len(comp_arrays)
     names = (
@@ -372,6 +452,25 @@ def main():
             "NOTE: No --protons provided; assuming 1 for each component.",
             file=sys.stderr,
         )
+    if args.range_protons is not None and len(args.range_protons) != n:
+        print(
+            "ERROR: --range-protons length must equal number of components.",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+    protons = effective_protons(comp_full, protons, args.ppm_range, args.range_protons)
+    if args.ppm_range is not None and not args.quiet:
+        source = (
+            "--range-protons"
+            if args.range_protons is not None
+            else "reference area inside the range"
+        )
+        print(
+            "Protons inside the ppm range ("
+            + source
+            + "): "
+            + ", ".join(f"{nm}={v:.4g}" for nm, v in zip(names, protons))
+        )
 
     # Deconvolve
     result = deconvolve_spectra(mix_arr, comp_arrays, protons, kappa=args.kappa)
@@ -384,13 +483,34 @@ def main():
     for name, val in zip(names, props):
         print(f"  {name.ljust(width)} {val:.6f}")
     print(f"\nWasserstein distance: {wd:.12f}")
+    print(f"Unexplained (noise) signal fraction: {result['noise']:.6f}")
+    baseline_map = dict(zip(["mixture"] + names, baselines))
+    if args.baseline_window is not None or args.baseline_correct:
+        print(
+            "Subtracted baselines: "
+            + ", ".join(f"{k}={v:.6g}" for k, v in baseline_map.items())
+        )
 
     if args.json:
-        out = {"proportions": dict(zip(names, props)), "Wasserstein distance": wd}
+        out = {
+            "proportions": dict(zip(names, props)),
+            "Wasserstein distance": wd,
+            "noise": result["noise"],
+            "baselines": baseline_map,
+            "protons_used": dict(zip(names, protons)),
+        }
         print("\nJSON:", json.dumps(out))
 
     if args.plot:
-        _save_plot(args.plot, mix_arr, comp_arrays, names, props, wd)
+        _save_plot(
+            args.plot,
+            mix_arr,
+            comp_arrays,
+            names,
+            props,
+            wd,
+            result["signal_fractions"],
+        )
         if not args.quiet:
             print(f"\nPlot saved -> {args.plot}")
 
