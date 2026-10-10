@@ -73,6 +73,9 @@ Performance benchmarks conducted on **NVIDIA GB10** reveal distinct performance 
 > [!TIP]
 > Use these results to select models for long MD simulations or large-scale screening. For systems >1000 atoms, prioritize models with latency < 0.5 ms/atom if ns-scale MD is required.
 
+## Examples
+- [Small benchmark on NaCl supercells](examples/nacl_gb10_small/README.md): MACE-MP-small/medium, TensorNet-MatPES-r2SCAN and uma-s-1p1 up to 2000 atoms on NVIDIA GB10, compared with the stored reference. MACE and TensorNet reproduce it (ms/atom within 5–18 %, MB/atom within 1–7 %); uma-s-1p1 is now 4.5× faster.
+
 ## Resources
 - [Example Benchmark Data (NVIDIA GB10)](resources/speed_benchmark_dgx_spark.yaml)
 ---

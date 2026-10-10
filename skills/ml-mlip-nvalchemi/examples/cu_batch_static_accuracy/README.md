@@ -89,12 +89,37 @@ Read the speedups with two caveats:
 - **N = 2 for MACE is slower when batched** (0.93×), in both this run and the stored table. The
   first batched call includes NValchemi warm-up that best-of-3 does not fully hide.
 
-## Not reproduced here
+## Batched MD timing (`run_md_benchmark.py`)
 
-The batched-MD timing (`scripts/run_md_benchmark.py`; stored: MACE-OMAT-0-small 54.5 s sequential
-vs 11.1 s batched, 4.9×) was run once. It gave 59.9 s vs 42.8 s (1.4×), but an unrelated
-70 GB GPU process was loading on the same unified-memory device during the run. That timing is
-therefore not reported as a reproduction.
+The script runs 20 strained Cu FCC supercells (108 atoms each, 2160 in the batch) for 100 steps of
+`nvt_nose_hoover` at 300 K, dt = 2 fs. It compares one-at-a-time `run_md` calls (default path)
+with a single `run_md(..., use_nvalchemi=True)` batch, best of 2. It ran on an otherwise idle GPU:
+
+```bash
+venv/run mlip python skills/ml-mlip-nvalchemi/scripts/run_md_benchmark.py --env mace --n-repeat 2
+venv/run mlip python skills/ml-mlip-nvalchemi/scripts/run_md_benchmark.py --env matgl --n-repeat 2
+```
+
+| Model | Sequential (s) | Batched (s) | Speedup | Stored (SKILL.md) | Peak GPU memory |
+| :--- | ---: | ---: | ---: | :--- | ---: |
+| MACE-OMAT-0-small | 53.1 | 38.0 (`backend=nvalchemi`) | **1.40×** | 54.5 / 11.1 s, 4.90× | 19.9 GB (batched) |
+| TensorNet-PES-MatPES-PBE-2025.2 | 59.4 | stopped (> 37 GB) | — | 1.8× (16 structures × 200 steps) | > 37 GB (batched) |
+
+- **MACE: the sequential time reproduces (−3 %), the batched time does not (3.4× slower).** One
+  batched NValchemi forward on the 2160-atom batch takes 398 ms, against 28 ms for one 108-atom
+  structure (552 ms for 20). The batched step (about 380 ms) is therefore bound by the model
+  forward, and about 1.4× is the ceiling for this workload with the current stack (mace-torch
+  0.3.16, nvalchemi-toolkit 0.2.0, no cuEquivariance). The stored 11.1 s (June 2026, mace-torch
+  0.3.15) implies a forward 3.6× faster than today's. The 2.0.0 neighbor-cache guard adds only
+  6–8 % for MACE ([verification report](../../../../docs/verification/nvalchemi-neighbor-cache.md)),
+  so it does not explain the gap. As `SKILL.md` warns, historical speedups do not certify the
+  current release.
+- **TensorNet batched MD was stopped for memory safety.** GPU use jumped above 37 GB (from below
+  28 GB within one second) on this unified-memory machine, and the run was killed before
+  finishing. Batched TensorNet MD for 20 × 108 atoms is not safe on a shared GB10. Use fewer or
+  smaller structures per batch.
+- Batched MD memory is far larger than static inference. MACE needed 19.9 GB here versus 3 GB for
+  the static benchmark above, so size batches from a small trial run.
 
 ## References
 
