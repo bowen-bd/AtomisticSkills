@@ -205,7 +205,7 @@ See [examples/](examples/) for the complete DOS calculation showing the distribu
 For exploratory band structure analysis using MLIPs (not DFT):
 
 - **CHGNet**: Can predict band gaps, but accuracy varies
-- **Note**: MACE, M3GNet, and other MLIPs trained on PES data do not predict electronic properties
+- **Note**: MACE, CHGNet, TensorNet and other MLIPs trained on PES data do not predict electronic properties
 
 For production calculations, **always use DFT** (this skill) and choose the appropriate functional:
 - **Standard screening**: PBE (omat/mp presets)

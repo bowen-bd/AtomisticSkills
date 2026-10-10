@@ -24,7 +24,7 @@ class TestMatGLPredictAtomicFeatures:
         from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
 
         wrapper = MatGLWrapper(
-            model_name="CHGNet-PES-MatPES-PBE-2025.2.10", device="cpu"
+            model_name="CHGNet-PES-MatPES-PBE-1M-2026.9", device="cpu"
         )
         wrapper.load()
 
@@ -62,7 +62,7 @@ class TestMatGLPredictAtomicFeatures:
         from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
 
         wrapper = MatGLWrapper(
-            model_name="CHGNet-PES-MatPES-PBE-2025.2.10", device="cpu"
+            model_name="CHGNet-PES-MatPES-PBE-1M-2026.9", device="cpu"
         )
         wrapper.load()
 
@@ -77,7 +77,7 @@ class TestMatGLPredictAtomicFeatures:
         from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
 
         wrapper = MatGLWrapper(
-            model_name="CHGNet-PES-MatPES-PBE-2025.2.10", device="cpu"
+            model_name="CHGNet-PES-MatPES-PBE-1M-2026.9", device="cpu"
         )
         wrapper.load()
 
@@ -110,7 +110,7 @@ class TestMatGLCalculator:
         from ase.calculators.calculator import Calculator
 
         wrapper = MatGLWrapper(
-            model_name="CHGNet-PES-MatPES-PBE-2025.2.10", device="cpu"
+            model_name="CHGNet-PES-MatPES-PBE-1M-2026.9", device="cpu"
         )
         wrapper.load()
 
@@ -139,7 +139,7 @@ class TestMatGLCalculator:
         from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
 
         wrapper = MatGLWrapper(
-            model_name="CHGNet-PES-MatPES-PBE-2025.2.10", device="cpu"
+            model_name="CHGNet-PES-MatPES-PBE-1M-2026.9", device="cpu"
         )
         wrapper.load()
 
@@ -164,7 +164,7 @@ class TestMatGLModelLoading:
         from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
 
         wrapper = MatGLWrapper(
-            model_name="CHGNet-PES-MatPES-PBE-2025.2.10", device="cpu"
+            model_name="CHGNet-PES-MatPES-PBE-1M-2026.9", device="cpu"
         )
         wrapper.load()
 
@@ -195,7 +195,7 @@ class TestMatGLModelLoading:
         from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
 
         wrapper = MatGLWrapper(
-            model_name="CHGNet-PES-MatPES-PBE-2025.2.10", device="cpu"
+            model_name="CHGNet-PES-MatPES-PBE-1M-2026.9", device="cpu"
         )
         wrapper.load()
 

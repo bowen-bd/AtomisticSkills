@@ -36,8 +36,6 @@ This correction is **REQUIRED** for:
 - **MACE-MH-0** `omat_pbe` head
 - **MACE-OMAT-0-small**, **MACE-OMAT-0-medium**
 - **MACE-MP-small**, **MACE-MP-medium**, **MACE-MP-large**
-- **M3GNet-MP-2021.2.8-PES**
-- **M3GNet-MP-2021.2.8-DIRECT-PES**
 - **uma-s-1**, **uma-s-1p1**, **uma-m-1p1** (with `omat` head)
 
 This correction is **NOT** for:

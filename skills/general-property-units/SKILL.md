@@ -38,7 +38,7 @@ Energy is eV and forces are eV/Å everywhere, at both layers. Only stress varies
 | **MACE** (`MACECalculator`) | eV/Å³ | eV/Å³ | none |
 | **UMA / FairChem** (`FAIRChemCalculator`) | eV/Å³ | eV/Å³ | none |
 | **CHGNet standalone** (`CHGNetCalculator`) | **GPa** | eV/Å³ | `× stress_weight`, default `1/160.21766208` |
-| **CHGNet / M3GNet / TensorNet via MatGL** (`PESCalculator`) | **GPa** | **GPa** unless asked otherwise | none by default — pass `stress_unit="eV/A3"` |
+| **CHGNet / TensorNet via MatGL** (`PESCalculator`) | **GPa** | **GPa** unless asked otherwise | none by default — pass `stress_unit="eV/A3"` |
 
 Measured on one compressed Si cell (xx component), 2026-08-25:
 
@@ -49,7 +49,6 @@ Measured on one compressed Si cell (xx component), 2026-08-25:
 | CHGNet standalone 0.4.2 | -13.906347 | -0.0867966 | — |
 | MatGL `TensorNet-PES-MatPES-PBE-2025.2` | -10.780773 | -10.780773 | -0.067288 |
 | MatGL `CHGNet-PES-MatPES-PBE-1M-2026.9` | — | -15.229350 | -0.095054 |
-| MatGL `M3GNet-PES-MatPES-2025.2` | — | -20.293510 | -0.126662 |
 
 Every ratio above is exactly `160.21766208`, i.e. GPa per eV/Å³.
 
@@ -73,7 +72,7 @@ Training labels in `training_data.json` are stored in ASE standard units (eV, eV
 |:--------|:-------------|:------------|:-------------|:-------------------|
 | **MACE** | eV | eV/Å | eV/Å³ | None — trains in eV/Å³ |
 | **FairChem (UMA)** | eV | eV/Å | eV/Å³ | None — trains in eV/Å³ |
-| **MatGL (CHGNet/M3GNet)** | eV | eV/Å | **GPa** (converted) | `eV/Å³ → GPa` in `_prepare_training_data` |
+| **MatGL (CHGNet/TensorNet)** | eV | eV/Å | **GPa** (converted) | `eV/Å³ → GPa` in `_prepare_training_data` |
 
 > [!IMPORTANT]
 > **MatGL is the only trainer that requires stress conversion.** The conversion from eV/Å³ → GPa is performed automatically inside `MATGLWrapper._prepare_training_data()`. Users should always provide stress labels in eV/Å³.
@@ -86,7 +85,7 @@ Each MLIP trainer natively reports MAE in **eV**. All wrappers apply a **×1000 
 |:--------|:------------------|:-----------------|:-------------------|:-----------|
 | **MACE** | eV/atom | eV/Å | eV/Å³ | **meV** (×1000) |
 | **FairChem (UMA)** | eV/atom | eV/Å | eV/Å³ | **meV** (×1000) |
-| **MatGL (CHGNet/M3GNet)** | eV/atom | eV/Å | GPa → eV/Å³ | **meV** (×1000) |
+| **MatGL (CHGNet/TensorNet)** | eV/atom | eV/Å | GPa → eV/Å³ | **meV** (×1000) |
 
 The `training_history.json` keys and their units:
 

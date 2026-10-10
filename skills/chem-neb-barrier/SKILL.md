@@ -104,7 +104,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/calcu
     - These models are trained on datasets including transition states or diverse structures (OMat24, MatPES), making them more reliable for NEB.
 
 - **Discouraged**:
-    - **MPtrj** trained models (e.g., `M3GNet-MP-2021`, `CHGNet-MPtrj-2023.12.1-2.7M-PES`)
+    - **MPtrj** trained models (e.g., `MACE-MP-small`, `MACE-MP-medium`)
     - These are primarily trained on ground-state or near-equilibrium structures and may underestimate barriers or fail to converge for high-energy transition states.
 
 ### Non-periodic Molecules (transition states)

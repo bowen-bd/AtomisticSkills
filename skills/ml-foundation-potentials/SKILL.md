@@ -105,7 +105,7 @@ Consider the chemical elements present in the system:
 - **Inorganic**:
   - Use **MatGL**, **MACE models**, or **UMA** with `omat` head.
 - **For Phase Diagrams & Thermodynamic Stability**:
-  - It is highly recommended to use **MatPES-r2SCAN** trained checkpoints (e.g., `CHGNet-MatPES-r2SCAN`, `MACE-MATPES-r2SCAN`). These offer superior energy accuracy for phase stability and bypass messy energy compatibility corrections in GGA (see [mat-mp2020-compatibility](../mat-mp2020-compatibility/SKILL.md)).
+  - It is highly recommended to use **MatPES-r2SCAN** trained checkpoints (e.g., `CHGNet-MatPES-r2SCAN`, `MACE-MATPES-r2SCAN`). These offer superior energy accuracy for phase stability and bypass messy energy compatibility corrections in GGA (see [mat-dft-mixing-functionals](../mat-dft-mixing-functionals/SKILL.md)).
 
 ### 4. Default
 For general materials where no specific constraints apply:

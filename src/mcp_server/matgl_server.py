@@ -46,13 +46,11 @@ def load_model(
     Load a MatGL model.
 
     Supported models include:
-    - CHGNet PES: 'CHGNet-PES-MatPES-PBE-1M-2026.9' (default), 'CHGNet-PES-MatPES-r2SCAN-1M-2026.9';
-      earlier checkpoints 'CHGNet-PES-MatPES-PBE-2025.2.10', 'CHGNet-PES-MatPES-r2SCAN-2025.2.10'
-    - M3GNet PES: 'M3GNet-PES-MatPES-PBE-2025.2', 'M3GNet-PES-MatPES-r2SCAN-2025.2', 'M3GNet-PES-ANI-1x-Subset'
+    - CHGNet PES: 'CHGNet-PES-MatPES-PBE-1M-2026.9' (default), 'CHGNet-PES-MatPES-r2SCAN-1M-2026.9'
     - TensorNet PES: 'TensorNet-PES-MatPES-PBE-2025.2', 'TensorNet-PES-MatPES-r2SCAN-2025.2', 'TensorNet-PES-ANI-1x-Subset'
     - QET PES: 'QET-PES-MatPES-PBE-2025.2', 'QET-PES-MatPES-r2SCAN-2025.2', 'QET-PES-MatQ'
     - SO3Net PES: 'SO3Net-PES-ANI-1x-Subset'
-    - Formation energy: 'MEGNet-Eform-MP-2018.6.1', 'M3GNet-Eform-MP-2018.6.1'
+    - Formation energy: 'MEGNet-Eform-MP-2018.6.1'
 
     Args:
         model_name: Name of the model to load.

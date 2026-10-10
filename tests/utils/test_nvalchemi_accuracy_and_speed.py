@@ -120,9 +120,9 @@ def _compare_static(label: str, wrapper: Any, structures: list) -> dict:
 
     # Sequential fallback (same code path, NValchemi disabled)
     result_seq, t_seq = _time_call(lambda: wrapper.static_calculation(structures))
-    assert "error" not in result_seq, (
-        f"Sequential batch failed: {result_seq.get('error')}"
-    )
+    assert (
+        "error" not in result_seq
+    ), f"Sequential batch failed: {result_seq.get('error')}"
 
     # Per-structure comparison
     n = len(structures)
@@ -150,15 +150,15 @@ def _compare_static(label: str, wrapper: Any, structures: list) -> dict:
         f"  ΔS max      : {max(s_diffs):.2e} eV/Å³  (tol {STRESS_TOL:.0e})\n"
     )
 
-    assert max(e_diffs) < ENERGY_TOL, (
-        f"[{label}] max ΔE={max(e_diffs):.3e} eV > {ENERGY_TOL}"
-    )
-    assert max(f_diffs) < FORCE_TOL, (
-        f"[{label}] max ΔF={max(f_diffs):.3e} eV/Å > {FORCE_TOL}"
-    )
-    assert max(s_diffs) < STRESS_TOL, (
-        f"[{label}] max ΔS={max(s_diffs):.3e} eV/Å³ > {STRESS_TOL}"
-    )
+    assert (
+        max(e_diffs) < ENERGY_TOL
+    ), f"[{label}] max ΔE={max(e_diffs):.3e} eV > {ENERGY_TOL}"
+    assert (
+        max(f_diffs) < FORCE_TOL
+    ), f"[{label}] max ΔF={max(f_diffs):.3e} eV/Å > {FORCE_TOL}"
+    assert (
+        max(s_diffs) < STRESS_TOL
+    ), f"[{label}] max ΔS={max(s_diffs):.3e} eV/Å³ > {STRESS_TOL}"
 
     return {
         "label": label,
@@ -233,9 +233,9 @@ class TestStaticMACE:
 
         e_single = single["energy"]
         e_batch = batch["results"][0]["energy"]
-        assert abs(e_single - e_batch) < ENERGY_TOL, (
-            f"Single result {e_single:.4f} != batch[0] result {e_batch:.4f}"
-        )
+        assert (
+            abs(e_single - e_batch) < ENERGY_TOL
+        ), f"Single result {e_single:.4f} != batch[0] result {e_batch:.4f}"
 
 
 # ---------------------------------------------------------------------------
@@ -290,12 +290,12 @@ class TestStaticCHGNet:
         _require_nvalchemi()
         return _load_wrapper(
             "src.utils.mlips.matgl.matgl_wrapper.MatGLWrapper",
-            "CHGNet-PES-MatPES-PBE-2025.2.10",
+            "CHGNet-PES-MatPES-PBE-1M-2026.9",
         )
 
     def test_energy_forces_stress_5_structures(self, wrapper):
         _compare_static(
-            "CHGNet-PES-MatPES-PBE-2025.2.10 | 5×Cu FCC", wrapper, _cu_structures(5)
+            "CHGNet-PES-MatPES-PBE-1M-2026.9 | 5×Cu FCC", wrapper, _cu_structures(5)
         )
 
 
@@ -344,7 +344,7 @@ if __name__ == "__main__":
             "src.utils.mlips.matgl.matgl_wrapper.MatGLWrapper",
         ),
         (
-            "CHGNet-PES-MatPES-PBE-2025.2.10",
+            "CHGNet-PES-MatPES-PBE-1M-2026.9",
             "src.utils.mlips.matgl.matgl_wrapper.MatGLWrapper",
         ),
         ("uma-s-1p2", "src.utils.mlips.fairchem.fairchem_wrapper.FAIRCHEMWrapper"),

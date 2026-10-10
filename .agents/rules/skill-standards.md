@@ -212,7 +212,7 @@ Every skill must declare its environment in its `SKILL.md` frontmatter:
 ### 2. Environment Mapping
 Refer to `mcp-environments.md` for standard environment mapping:
 - `cpu`: General materials tools, chemistry, drug discovery, MP API, parsing, analysis (no torch). MCP servers: `base`, `atomate2`, `drugdisc`, `smol`.
-- `mlip`: MACE and MatGL (CHGNet, TensorNet, M3GNet) foundation models and training (GPU). MCP servers: `mace`, `matgl`.
+- `mlip`: MACE and MatGL (CHGNet, TensorNet) foundation models and training (GPU). MCP servers: `mace`, `matgl`.
 - `fairchem`: FairChem (UMA, eSEN) models and training (GPU). MCP servers: `fairchem`.
 
 ### 3. Documentation Consistency
