@@ -1,0 +1,9 @@
+elements:
+- Li
+- Fe
+- Cu
+- O
+- Si
+checkpoint: CHGNet-PES-MatPES-r2SCAN-1M-2026.9
+resources_dir: null
+output: skills/mat-elemental-energies/examples/li_fe_cu_o_si_vs_mp/CHGNet-PES-MatPES-r2SCAN-1M-2026.9/elemental_energies.json

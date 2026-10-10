@@ -27,9 +27,8 @@ DEFAULT_MODELS = {
         "MACE-MH-1",
     ],
     "matgl": [
-        "M3GNet",
-        "TensorNet",
-        "CHGNet",
+        "TensorNet-PES-MatPES-PBE-2025.2",
+        "CHGNet-PES-MatPES-PBE-1M-2026.9",
     ],
     "fairchem": [
         "uma-s-1p1",

@@ -1,7 +1,7 @@
 {
-  "model": "CHGNet-MatPES-PBE-2025.2.10-2.7M-PES",
-  "train_data": "skills/ml-matgl-finetune/examples/matgl-wbm-finetune/output/train_data.json",
-  "val_data": "skills/ml-matgl-finetune/examples/matgl-wbm-finetune/output/val_data.json",
+  "model": "CHGNet-PES-MatPES-PBE-1M-2026.9",
+  "train_data": ".agents/test/wbm/train_data.json",
+  "val_data": ".agents/test/wbm/val_data.json",
   "training_config": {
     "max_epochs": 10,
     "learning_rate": 0.0001,
@@ -12,11 +12,11 @@
     "force_weight": 10.0,
     "stress_weight": 1.0,
     "scheduler": "ReduceLROnPlateau",
-    "patience": 20
+    "patience": 3
   },
   "result": {
     "status": "success",
     "epochs": 10,
-    "final_loss": 1.2844845056533813
+    "final_loss": 1.4398046731948853
   }
 }

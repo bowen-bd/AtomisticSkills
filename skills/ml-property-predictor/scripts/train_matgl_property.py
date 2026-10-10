@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Train a property predictor on a MatGL backbone (M3GNet or MEGNet).
+"""Train a property predictor on a pretrained MatGL CHGNet backbone.
 
 matgl >= 4 is built on PyTorch Geometric only: graphs are PyG ``Data`` objects,
 batched with ``Batch.from_data_list``. Positions and periodic image shifts are
@@ -8,7 +8,7 @@ lattice to turn ``pbc_offset`` into a Cartesian shift.
 
 Usage:
     venv/run mlip python train_matgl_property.py --data_path data.json \
-        --model_name M3GNet-PES-MatPES-PBE-2025.2 --target_property bulk_modulus
+        --model_name CHGNet-PES-MatPES-PBE-1M-2026.9 --target_property bulk_modulus
 
 Requirements:
     - Environment: mlip (run with: venv/run mlip python ...)
@@ -24,7 +24,7 @@ import torch
 from torch_geometric.data import Batch
 
 import matgl
-from matgl.models import M3GNet
+from matgl.models import CHGNet
 from matgl.ext.pymatgen import Structure2Graph, get_element_list
 
 # Ase/Pymatgen
@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Train a MEGNet property predictor using MatGL."
+        description="Train a property predictor on a pretrained MatGL CHGNet backbone."
     )
     parser.add_argument(
         "--data_path",
@@ -51,8 +51,8 @@ def parse_args():
     parser.add_argument(
         "--model_name",
         type=str,
-        default="M3GNet-PES-MatPES-PBE-2025.2",
-        help="Pretrained MatGL model to start from (see matgl.get_available_pretrained_models()).",
+        default="CHGNet-PES-MatPES-PBE-1M-2026.9",
+        help="Pretrained MatGL CHGNet model to start from (e.g. CHGNet-PES-MatPES-r2SCAN-1M-2026.9).",
     )
     parser.add_argument(
         "--target_property",
@@ -157,7 +157,7 @@ def main():
         logger.warning(
             f"Failed to load pretrained model '{args.model_name}', falling back to fresh initialization: {e}"
         )
-        model = M3GNet(
+        model = CHGNet(
             element_types=get_element_list(structures),
             is_intensive=(args.property_type == "intensive"),
         )
@@ -228,13 +228,7 @@ def main():
         num_workers=0,
         shuffle=False,
     )
-    test_loader = DataLoader(
-        test_data,
-        collate_fn=my_collate,
-        batch_size=batch_size,
-        num_workers=0,
-        shuffle=False,
-    )
+    # test_data (10%) is held out and not used during training.
 
     # We do NOT override model.is_intensive here because changing an extensive
     # pretrained model to intensive breaks its forward method (missing 'readout' attr).

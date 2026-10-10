@@ -53,14 +53,15 @@ def run_matgl():
     wrapper = MatGLWrapper(model_name="custom", device="cpu")
     wrapper.load(model_path=os.path.join(out_dir, "matgl_model"))
 
+    # The pretrained CHGNet head is extensive; training divides its output by the
+    # atom count for an intensive target, so the reload check does the same.
+    per_atom = not getattr(wrapper.model, "is_intensive", True)
     for i, struct in enumerate(atoms):
         res = wrapper.static_calculation(struct)
-        val = res.get("bulk_modulus", res.get("energy", 0.0))
+        val = res["property_prediction"]
         if isinstance(val, (list, np.ndarray)):
             val = val[0]
-
-        # MatGL MEGNet explicitly trains to raw target inputs
-        pred = float(val)
+        pred = float(val) / (len(struct) if per_atom else 1)
         print(f"Sample {i}: Target = {props[i]:.2f}, Prediction = {pred:.2f}")
 
     # Cleanup large checkpoint binaries

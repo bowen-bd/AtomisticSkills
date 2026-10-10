@@ -22,18 +22,18 @@
       },
       "O": {
         "library_eV_per_atom": -4.925097,
-        "recomputed_relaxed_eV_per_atom": -5.789394,
-        "recomputed_minus_library_meV_per_atom": -864.3,
+        "recomputed_relaxed_eV_per_atom": -5.786326,
+        "recomputed_minus_library_meV_per_atom": -861.2,
         "relaxation_converged": false,
         "single_point_on_mp_structure_eV_per_atom": -4.925097,
-        "previous_library_eV_per_atom": -5.788798,
         "library_source": "single point on the MP structure; the cell relaxation collapses the O2 crystal (not a molecular minimum of this model)"
       },
       "Si": {
         "library_eV_per_atom": -5.342036,
         "recomputed_relaxed_eV_per_atom": -5.342029,
         "recomputed_minus_library_meV_per_atom": 0.0,
-        "relaxation_converged": true
+        "relaxation_converged": true,
+        "single_point_on_mp_structure_eV_per_atom": -5.341839
       }
     },
     "MACE-MATPES-R2SCAN-0": {
@@ -57,57 +57,86 @@
       },
       "O": {
         "library_eV_per_atom": -5.894701,
-        "recomputed_relaxed_eV_per_atom": -5.894891,
-        "recomputed_minus_library_meV_per_atom": -0.2,
+        "recomputed_relaxed_eV_per_atom": -5.894704,
+        "recomputed_minus_library_meV_per_atom": -0.0,
         "relaxation_converged": false,
         "single_point_on_mp_structure_eV_per_atom": -5.778373
       },
       "Si": {
         "library_eV_per_atom": -8.791338,
-        "recomputed_relaxed_eV_per_atom": -8.791319,
+        "recomputed_relaxed_eV_per_atom": -8.791317,
         "recomputed_minus_library_meV_per_atom": 0.0,
-        "relaxation_converged": true
+        "relaxation_converged": true,
+        "single_point_on_mp_structure_eV_per_atom": -8.791306
       }
     },
     "TensorNet-MatPES-r2SCAN-v2025.1-PES": {
       "Li": {
         "library_eV_per_atom": -2.374202,
         "recomputed_relaxed_eV_per_atom": -2.374202,
-        "recomputed_minus_library_meV_per_atom": -0.0,
-        "relaxation_converged": true,
-        "previous_library_eV_per_atom": -2.374505
+        "recomputed_minus_library_meV_per_atom": 0.0,
+        "relaxation_converged": true
       },
       "Fe": {
         "library_eV_per_atom": -14.413324,
         "recomputed_relaxed_eV_per_atom": -14.413324,
         "recomputed_minus_library_meV_per_atom": 0.0,
-        "relaxation_converged": true,
-        "previous_library_eV_per_atom": -14.402709
+        "relaxation_converged": true
       },
       "Cu": {
         "library_eV_per_atom": -10.821499,
         "recomputed_relaxed_eV_per_atom": -10.821499,
-        "recomputed_minus_library_meV_per_atom": -0.0,
-        "relaxation_converged": true,
-        "previous_library_eV_per_atom": -10.825553
+        "recomputed_minus_library_meV_per_atom": 0.0,
+        "relaxation_converged": true
       },
       "O": {
         "library_eV_per_atom": -5.883437,
         "recomputed_relaxed_eV_per_atom": -5.883435,
         "recomputed_minus_library_meV_per_atom": 0.0,
         "relaxation_converged": true,
-        "single_point_on_mp_structure_eV_per_atom": -5.789088,
-        "previous_library_eV_per_atom": -5.390427
+        "single_point_on_mp_structure_eV_per_atom": -5.789088
       },
       "Si": {
         "library_eV_per_atom": -8.655971,
-        "recomputed_relaxed_eV_per_atom": -8.655971,
+        "recomputed_relaxed_eV_per_atom": -8.65597,
+        "recomputed_minus_library_meV_per_atom": 0.0,
+        "relaxation_converged": true,
+        "single_point_on_mp_structure_eV_per_atom": -8.655861
+      }
+    },
+    "CHGNet-PES-MatPES-r2SCAN-1M-2026.9": {
+      "Li": {
+        "library_eV_per_atom": -2.382085,
+        "recomputed_relaxed_eV_per_atom": -2.382086,
+        "recomputed_minus_library_meV_per_atom": -0.0,
+        "relaxation_converged": true
+      },
+      "Fe": {
+        "library_eV_per_atom": -14.418371,
+        "recomputed_relaxed_eV_per_atom": -14.418369,
+        "recomputed_minus_library_meV_per_atom": 0.0,
+        "relaxation_converged": true
+      },
+      "Cu": {
+        "library_eV_per_atom": -10.837117,
+        "recomputed_relaxed_eV_per_atom": -10.837117,
+        "recomputed_minus_library_meV_per_atom": 0.0,
+        "relaxation_converged": true
+      },
+      "O": {
+        "library_eV_per_atom": -5.836297,
+        "recomputed_relaxed_eV_per_atom": -5.836337,
         "recomputed_minus_library_meV_per_atom": -0.0,
         "relaxation_converged": true,
-        "single_point_on_mp_structure_eV_per_atom": -8.655861,
-        "previous_library_eV_per_atom": -8.57743
+        "single_point_on_mp_structure_eV_per_atom": -5.822788
       },
-      "note": "library regenerated (2026-10) with the weights matgl 4.x loads under this name (TensorNet-PES-MatPES-r2SCAN-2025.2); previous_library_eV_per_atom are the stale entries"
+      "Si": {
+        "library_eV_per_atom": -8.738706,
+        "recomputed_relaxed_eV_per_atom": -8.738705,
+        "recomputed_minus_library_meV_per_atom": 0.0,
+        "relaxation_converged": true,
+        "single_point_on_mp_structure_eV_per_atom": -8.738705
+      }
     }
   }
 }

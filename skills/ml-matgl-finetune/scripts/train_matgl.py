@@ -4,7 +4,7 @@ Fine-tune a MatGL model using prepared JSON data.
 
 Usage:
     python train_matgl.py --train-data path/to/train.json --val-data path/to/val.json \
-        --model CHGNet-MatPES-PBE-2025.2.10-2.7M-PES --epochs 10 --lr 1e-3 --output-dir ./fine_tuning
+        --model CHGNet-PES-MatPES-PBE-1M-2026.9 --epochs 10 --lr 1e-3 --output-dir ./fine_tuning
 """
 
 import argparse
@@ -409,15 +409,6 @@ def main():
     # Strictly extract cutoffs without dangerous arbitrary defaults.
     cutoff = getattr(pot.model, "cutoff")
 
-    if hasattr(pot.model, "threebody_cutoff"):
-        threebody_cutoff = pot.model.threebody_cutoff
-    elif hasattr(pot.model, "three_body_cutoff"):
-        threebody_cutoff = pot.model.three_body_cutoff
-    else:
-        raise AttributeError(
-            f"Model {pot.model.__class__.__name__} is missing a three-body cutoff attribute (checked 'threebody_cutoff' and 'three_body_cutoff')."
-        )
-
     converter = Structure2Graph(element_types=element_types, cutoff=cutoff)
 
     def to_list(obj):
@@ -435,15 +426,14 @@ def main():
     dataset_dir.mkdir(parents=True, exist_ok=True)
     dataset_dir = str(dataset_dir)
 
-    is_chgnet = "CHGNet" in args.model
+    # matgl >= 4 (PyG): CHGNet builds its line graph inside
+    # forward(), so the dataset carries only the atom graph.
     dataset = MGLDataset(
         structures=structures,
         converter=converter,
         labels=labels,
-        threebody_cutoff=threebody_cutoff,
-        include_line_graph=True,
-        directed_line_graph=is_chgnet,
-        save_dir=os.path.join(dataset_dir, "train"),
+        include_line_graph=False,
+        root=os.path.join(dataset_dir, "train"),
     )
 
     if processed_val_data:
@@ -461,10 +451,8 @@ def main():
                 "forces": [to_list(f) for f in val_forces],
                 "stresses": [to_list(s) for s in val_stresses],
             },
-            threebody_cutoff=threebody_cutoff,
-            include_line_graph=True,
-            directed_line_graph=is_chgnet,
-            save_dir=os.path.join(dataset_dir, "val"),
+            include_line_graph=False,
+            root=os.path.join(dataset_dir, "val"),
         )
         train_ds, val_ds = dataset, val_dataset
     else:
@@ -491,7 +479,7 @@ def main():
         return obj
 
     def my_collate(batch):
-        return move_to_device(collate_fn_pes(batch, include_line_graph=True), device)
+        return move_to_device(collate_fn_pes(batch, include_line_graph=False), device)
 
     train_loader, val_loader = MGLDataLoader(
         train_data=train_ds,
@@ -499,6 +487,7 @@ def main():
         collate_fn=my_collate,
         batch_size=training_config["batch_size"],
         num_workers=0,
+        pin_memory=False,  # my_collate already moves batches to the device
     )
 
     # 2. Setup Training Module
@@ -537,6 +526,9 @@ def main():
     prop_offset = getattr(pot, "element_refs", None)
     if prop_offset and hasattr(prop_offset, "property_offset"):
         prop_offset = prop_offset.property_offset
+    if isinstance(prop_offset, torch.Tensor):
+        # PotentialLightningModule calls np.asarray on it; the model may be on GPU.
+        prop_offset = prop_offset.detach().cpu().numpy()
 
     pre_data_std = float(pot.data_std) if hasattr(pot, "data_std") else 1.0
     pre_data_mean = float(pot.data_mean) if hasattr(pot, "data_mean") else 0.0
@@ -545,7 +537,7 @@ def main():
         model=pot.model,
         element_refs=prop_offset,
         lr=training_config["learning_rate"],
-        include_line_graph=True,
+        include_line_graph=False,
         energy_weight=training_config["energy_weight"],
         force_weight=training_config["force_weight"],
         stress_weight=training_config["stress_weight"],
@@ -607,6 +599,7 @@ def main():
         enable_checkpointing=True,
         default_root_dir=output_dir,
         logger=False,
+        inference_mode=False,  # forces/stresses need autograd during validation
     )
 
     logger.info(

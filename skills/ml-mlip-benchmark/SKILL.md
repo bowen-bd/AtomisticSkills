@@ -56,7 +56,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/plot_b
     --output_dir <path_to_save_plots>
 ```
 
-This generates `energy_parity.png`, `forces_parity.png`, and (if stress was present) `stress_parity.png`.
+This generates `parity_energy.png`, `parity_forces.png`, and (if stress was present) `parity_stress.png`.
 
 ### 3. Reconcile units before comparing anything
 
@@ -115,8 +115,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/plot_b
 
 ### Resulting Parity Plots (Filtered R2SCAN Data)
 ![MACE-MATPES-R2SCAN-0 Parity Plot](examples/mace_parity.png)
-![CHGNet-MatPES-r2SCAN-2025.2.10-2.7M Parity Plot](examples/chgnet_parity.png)
-![M3GNet-MatPES-r2SCAN-v2025.1 Parity Plot](examples/m3gnet_parity.png)
+![CHGNet-PES-MatPES-r2SCAN-1M-2026.9 Parity Plot](examples/chgnet_parity.png)
 ![TensorNet-MatPES-r2SCAN-v2025.1 Parity Plot](examples/tensornet_parity.png)
 
 ## Typical Combinations

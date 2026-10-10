@@ -32,7 +32,7 @@ To calculate thermodynamically consistent Pourbaix (pH-voltage) diagrams for ass
 
 ## Features
 
-- **Automated Referenced**: Fetches elemental energies from `elemental-energies` skill to fill missing terminal entries (e.g., if you relaxed `LiCoO2` but forgot `Li` metal, it will be auto-loaded).
+- **Automated Referenced**: Fetches elemental energies from the `mat-elemental-energies` skill to fill missing terminal entries (e.g., if you relaxed `LiCoO2` but forgot `Li` metal, it will be auto-loaded).
 - **H2O Reference**: Checks `resources/h2o_energies.json` values matching the MLIP checkpoint. If found, uses this pre-calculated energy. If not found, falls back to look for `H2O` relaxation in the `--relaxed_solids` directory.
 - **MP2020 Compatibility**: Automatically detects if compatibility corrections are needed via `gga-ggau-mixed-mlips.yaml`.
 
@@ -52,7 +52,7 @@ We use a robust cycle that fixes the hydrogen reference to the Standard Hydrogen
 ### 3. Automated Referencing
 
 The script `calculate_pourbaix.py` automatically:
-1. Fetches per-atom elemental energies from the `elemental-energies` skill.
+1. Fetches per-atom elemental energies from the `mat-elemental-energies` skill.
 2. Applies thermodynamic corrections for H₂ gas ($S^\circ$, $\Delta H$) to deriving $\mu_H$.
 3. Uses a locally relaxed H₂O structure to derive $\mu_O$, ensuring correct water formation energy.
    *   **H2O Reference**: Checks `resources/h2o_energies.json` values matching the MLIP checkpoint. If found, uses this pre-calculated energy. If not found, falls back to look for `H2O` relaxation in the `--relaxed_solids` directory.
@@ -167,7 +167,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/calcul
 - `--comp_dict`: (Optional) Composition dictionary for K-nary systems (e.g. "Li=1,Fe=1")
 - `--mlip_name`: Name for the plot title (and for looking up elemental energies)
 - `--output`: Output directory
-- `--apply_solid_compat`: (Optional) Apply Materials Project 2020 compatibility corrections. **Use only if your MLIP is trained on MP data (e.g. MACE-MP, CHGNet)**. Do NOT use for UMA or generic potentials unless verified.
+- `--apply_solid_compat`: (Optional) Apply Materials Project 2020 compatibility corrections. **Use only if your MLIP is trained on MP data (e.g. MACE-MP)**. Do NOT use for UMA or generic potentials unless verified.
 - `--ion_concentration`: Ion concentration in M (default: 1e-6)
 
 

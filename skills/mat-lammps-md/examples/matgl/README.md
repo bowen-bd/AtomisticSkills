@@ -1,7 +1,7 @@
 # MatGL Example: Cu Phase-Transition Scan
 
 This example runs a simple heat-and-hold workflow for fcc Copper (Cu) with
-ASE and a MatGL potential (CHGNet by default), as a reference for the LAMMPS
+ASE and a MatGL potential (`CHGNet-PES-MatPES-PBE-1M-2026.9` by default), as a reference for the LAMMPS
 ML-IAP build. The script:
 
 1. creates an fcc Cu supercell data file;

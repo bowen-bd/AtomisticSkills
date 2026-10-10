@@ -4,13 +4,18 @@
 
 Retrieve elemental reference energies (eV/atom) for Li, Fe, Cu, O and Si from four library checkpoints:
 
-- **GGA/GGA+U (MPtrj-trained):** `MACE-MP-medium`, `CHGNet-MPtrj-2023.12.1-2.7M-PES`
-- **r2SCAN (MatPES-trained):** `TensorNet-MatPES-r2SCAN-v2025.1-PES`, `MACE-MATPES-R2SCAN-0`
+- **GGA/GGA+U:** `MACE-MP-medium` (trained on MPtrj, i.e. MP GGA/GGA+U data)
+- **r2SCAN (MatPES-trained):** `TensorNet-MatPES-r2SCAN-v2025.1-PES`, `MACE-MATPES-R2SCAN-0`,
+  `CHGNet-PES-MatPES-r2SCAN-1M-2026.9`
+
+The MatPES-PBE checkpoints (for example `CHGNet-PES-MatPES-PBE-1M-2026.9`) are not compared with MP
+GGA. MatPES-PBE uses different pseudopotentials and settings from MP's GGA workflow, and its
+elemental energies sit on a different absolute scale (see "Do not mix functionals" below).
 
 The example then:
 
 1. compares them with Materials Project (MP) DFT energies of the same ground-state materials, GGA for
-   the MPtrj models and r2SCAN for the MatPES models;
+   MACE-MP-medium and r2SCAN for the MatPES models;
 2. recomputes the library values on CPU to check that they are reproducible;
 3. uses the references to compute Li2O and Fe2O3 formation energies and compares them with MP.
 
@@ -64,7 +69,7 @@ All commands run from the repository root.
 ### 1. Retrieve the library energies
 
 ```bash
-for ck in MACE-MP-medium CHGNet-MPtrj-2023.12.1-2.7M-PES TensorNet-MatPES-r2SCAN-v2025.1-PES MACE-MATPES-R2SCAN-0; do
+for ck in MACE-MP-medium TensorNet-MatPES-r2SCAN-v2025.1-PES MACE-MATPES-R2SCAN-0 CHGNet-PES-MatPES-r2SCAN-1M-2026.9; do
   venv/run cpu python skills/mat-elemental-energies/scripts/get_elemental_energies.py \
       --elements Li Fe Cu O Si --checkpoint $ck \
       --output skills/mat-elemental-energies/examples/li_fe_cu_o_si_vs_mp/$ck/elemental_energies.json
@@ -85,36 +90,24 @@ in [`cpu_verification.json`](cpu_verification.json).
 ```bash
 S=skills/mat-elemental-energies/resources/structures
 O=.agents/test/skill_examples
-# MACE-MP-medium (GGA); predict_structure = single point on the MP structure
-CUDA_VISIBLE_DEVICES="" venv/run mlip python -m src.mcp_server.cli mace load_model model_name=MACE-MP-medium device=cpu \
-    predict_structure structure_data=$S/O.cif \
-    relax_structure structure_data=$S/Li.cif output_dir=$O/mace_cpu/Li \
-    relax_structure structure_data=$S/Fe.cif output_dir=$O/mace_cpu/Fe \
-    relax_structure structure_data=$S/Cu.cif output_dir=$O/mace_cpu/Cu \
-    relax_structure structure_data=$S/Si.cif output_dir=$O/mace_cpu/Si \
-    relax_structure structure_data=$S/O.cif  output_dir=$O/mace_cpu/O
-# MACE-MATPES-R2SCAN-0 (r2SCAN)
-CUDA_VISIBLE_DEVICES="" venv/run mlip python -m src.mcp_server.cli mace load_model model_name=MACE-MATPES-R2SCAN-0 device=cpu \
-    predict_structure structure_data=$S/O.cif \
-    relax_structure structure_data=$S/Li.cif output_dir=$O/mace_r2scan_cpu/Li \
-    relax_structure structure_data=$S/Fe.cif output_dir=$O/mace_r2scan_cpu/Fe \
-    relax_structure structure_data=$S/Cu.cif output_dir=$O/mace_r2scan_cpu/Cu \
-    relax_structure structure_data=$S/Si.cif output_dir=$O/mace_r2scan_cpu/Si \
-    relax_structure structure_data=$S/O.cif  output_dir=$O/mace_r2scan_cpu/O
-# TensorNet-MatPES-r2SCAN-v2025.1-PES (r2SCAN)
-CUDA_VISIBLE_DEVICES="" venv/run mlip python -m src.mcp_server.cli matgl load_model model_name=TensorNet-MatPES-r2SCAN-v2025.1-PES device=cpu \
+# predict_structure = single point on the MP structure (Si and O); relax_structure = library protocol
+run() { srv=$1; model=$2; tag=$3
+  CUDA_VISIBLE_DEVICES="" venv/run mlip python -m src.mcp_server.cli $srv load_model model_name=$model device=cpu \
     predict_structure structure_data=$S/Si.cif predict_structure structure_data=$S/O.cif \
-    relax_structure structure_data=$S/Li.cif output_dir=$O/tensornet_cpu/Li \
-    relax_structure structure_data=$S/Fe.cif output_dir=$O/tensornet_cpu/Fe \
-    relax_structure structure_data=$S/Cu.cif output_dir=$O/tensornet_cpu/Cu \
-    relax_structure structure_data=$S/Si.cif output_dir=$O/tensornet_cpu/Si \
-    relax_structure structure_data=$S/O.cif  output_dir=$O/tensornet_cpu/O
+    relax_structure structure_data=$S/Li.cif output_dir=$O/$tag/Li \
+    relax_structure structure_data=$S/Fe.cif output_dir=$O/$tag/Fe \
+    relax_structure structure_data=$S/Cu.cif output_dir=$O/$tag/Cu \
+    relax_structure structure_data=$S/Si.cif output_dir=$O/$tag/Si \
+    relax_structure structure_data=$S/O.cif  output_dir=$O/$tag/O
+}
+run mace  MACE-MP-medium                      mace_cpu           # GGA
+run mace  MACE-MATPES-R2SCAN-0                mace_r2scan_cpu    # r2SCAN
+run matgl TensorNet-MatPES-r2SCAN-v2025.1-PES tensornet_cpu      # r2SCAN
+run matgl CHGNet-PES-MatPES-r2SCAN-1M-2026.9  chgnet_r2scan_cpu  # r2SCAN
 ```
 
-The tool defaults are `fmax=0.02`, `steps=500`, `optimizer=FIRE` and `relax_cell=True`. The tool calls
-were split over several CLI invocations, but the parameters are the same as above. Each run takes
-seconds to a few minutes on CPU. `CHGNet-MPtrj-2023.12.1-2.7M-PES` is not recomputed: the current
-matgl 4.x wrapper (`src/utils/mlips/matgl/matgl_wrapper.py`) cannot load it.
+The tool defaults are `fmax=0.02`, `steps=500`, `optimizer=FIRE` and `relax_cell=True`. Each run
+takes seconds to a few minutes on CPU.
 
 ### 3. Formation energies of Li2O and Fe2O3 (MACE-MP-medium)
 
@@ -140,35 +133,31 @@ Here μ<sub>i</sub> are the library energies from step 1. The results are in
 
 ## Results
 
-### GGA: MPtrj checkpoints vs MP GGA (thermo type `GGA_GGA+U`)
+### GGA: MACE-MP-medium vs MP GGA (thermo type `GGA_GGA+U`)
 
 Δ = library − MP, in meV/atom ([`comparison_vs_mp.csv`](comparison_vs_mp.csv)).
 
-| Element | MP ID | MP GGA (eV/atom) | MACE-MP-medium (eV/atom) | Δ | CHGNet-MPtrj-2023.12.1 (eV/atom) | Δ |
-| :--- | :--- | ---: | ---: | ---: | ---: | ---: |
-| Li | mp-1018134 | -1.90892 | -1.90653 | +2.4 | -1.86350 | +45.4 |
-| Fe | mp-13 | -8.47002 | -8.39086 | +79.2 | -8.35561 | +114.4 |
-| Cu | mp-30 | -4.09921 | -4.08482 | +14.4 | -4.07275 | +26.5 |
-| Si | mp-149 | -5.42532 | -5.34204 | +83.3 | -5.39151 | +33.8 |
-| O | mp-12957 | -4.94796 | -4.92510 | +22.9 (single point, see below) | -4.86834 | +79.6 |
-| **MAE** | | | | **40.4** | | **59.9** |
-| **Published energy MAE** | | | | 18 (MACE-MP-0 medium, MPtrj) | | 30 (CHGNet, MPtrj test set) |
+| Element | MP ID | MP GGA (eV/atom) | MACE-MP-medium (eV/atom) | Δ |
+| :--- | :--- | ---: | ---: | ---: |
+| Li | mp-1018134 | -1.90892 | -1.90653 | +2.4 |
+| Fe | mp-13 | -8.47002 | -8.39086 | +79.2 |
+| Cu | mp-30 | -4.09921 | -4.08482 | +14.4 |
+| Si | mp-149 | -5.42532 | -5.34204 | +83.3 |
+| O | mp-12957 | -4.94796 | -4.92510 | +22.9 (single point, see below) |
+| **MAE** | | | | **40.4** |
+| **Published energy MAE** | | | | 18 (MACE-MP-0 medium, MPtrj) |
 
-The deviations are 2–114 meV/atom, and they are positive for every element. In other words, both
-models slightly underbind these elements relative to DFT. The mean deviation is about 2.2×
-MACE-MP-0's and 2.0× CHGNet's published MPtrj energy MAE.
+The deviations are 2–83 meV/atom, and they are positive for every element. In other words,
+MACE-MP-medium slightly underbinds these elements relative to DFT. The mean deviation is about 2.2×
+MACE-MP-0's published MPtrj energy MAE.
 
 That is within expected scatter, for two reasons:
 
-- An MAE is an average over many structures. Individual structures, such as Fe (+79 and +114 meV/atom)
-  and Si (+83 meV/atom for MACE), can sit several MAEs away.
+- An MAE is an average over many structures. Individual structures, such as Fe (+79 meV/atom) and
+  Si (+83 meV/atom), can sit several MAEs away.
 - The MP energies here are from the 2026.04.13 database, while MPtrj was parsed from the September 2022
-  MP database (Deng et al., 2023). MP's current task for a material need not be the one the models
-  were trained on.
-
-The published CHGNet number is for the original CHGNet. `CHGNet-MPtrj-2023.12.1-2.7M-PES` is MatGL's
-re-implementation trained on MPtrj; the MatPES paper reports 30 meV/atom validation MAE for a
-MatGL CHGNet trained on MPtrj (Kaplan et al., 2025, Table 1).
+  MP database (Deng et al., 2023). MP's current task for a material need not be the one the model
+  was trained on.
 
 **MACE-MP-medium O is stored as a single point on MP's O2 structure.** MACE-MP-medium has no
 molecular minimum for this crystal. The library protocol (cell relaxation, 500 FIRE steps) does not
@@ -182,33 +171,33 @@ converge and ends in an unphysical structure at -5.789 eV/atom
 Even a positions-only relaxation in MP's cell collapses the same way (1.92 Å contacts). The library
 therefore stores the single point, **-4.9251 eV/atom, +22.9 meV/atom from MP**. Before this
 correction it held the collapsed -5.789 eV/atom, an O reference 0.86 eV/atom too low that made
-every oxide formation energy too positive by 0.86 eV per O atom. The other MPtrj library entries for O are consistent with MP:
+every oxide formation energy too positive by 0.86 eV per O atom. The other MACE-MP library entries for O are consistent with MP:
 
 | Checkpoint | Δ vs MP (meV/atom) |
 | :--- | ---: |
 | MACE-MP-small | -2.4 |
 | MACE-MP-large | -38.6 |
-| M3GNet-MP-2021.2.8-PES | +7.5 |
-| CHGNet-MPtrj-2024.2.13-11M-PES | +87.0 |
 
 ### r2SCAN: MatPES checkpoints vs MP r2SCAN (thermo type `R2SCAN`)
 
 Δ in meV/atom.
 
-| Element | MP ID | MP r2SCAN (eV/atom) | TensorNet-MatPES-r2SCAN (eV/atom) | Δ | MACE-MATPES-R2SCAN-0 (eV/atom) | Δ |
-| :--- | :--- | ---: | ---: | ---: | ---: | ---: |
-| Li | mp-1018134 | -2.38671 | -2.37420 | +12.5 | -2.36335 | +23.4 |
-| Fe | mp-13 | -14.41339 | -14.41332 | +0.1 | -14.44184 | -28.5 |
-| Cu | mp-30 | -10.84680 | -10.82150 | +25.3 | -10.83915 | +7.6 |
-| Si | mp-149 | -8.77376 | -8.65597 | +117.8 | -8.79134 | -17.6 |
-| O | mp-1524462 | -5.97253 | -5.88344 | +89.1 | -5.89470 | +77.8 |
-| **MAE** | | | | 49.0 | | **31.0** |
-| **Published energy MAE** (MatPES r2SCAN test set) | | | | 34 (TensorNet) | | — |
+| Element | MP ID | MP r2SCAN (eV/atom) | TensorNet-MatPES-r2SCAN (eV/atom) | Δ | MACE-MATPES-R2SCAN-0 (eV/atom) | Δ | CHGNet-PES-MatPES-r2SCAN-1M-2026.9 (eV/atom) | Δ |
+| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Li | mp-1018134 | -2.38671 | -2.37420 | +12.5 | -2.36335 | +23.4 | -2.38209 | +4.6 |
+| Fe | mp-13 | -14.41339 | -14.41332 | +0.1 | -14.44184 | -28.5 | -14.41837 | -5.0 |
+| Cu | mp-30 | -10.84680 | -10.82150 | +25.3 | -10.83915 | +7.6 | -10.83712 | +9.7 |
+| Si | mp-149 | -8.77376 | -8.65597 | +117.8 | -8.79134 | -17.6 | -8.73871 | +35.1 |
+| O | mp-1524462 | -5.97253 | -5.88344 | +89.1 | -5.89470 | +77.8 | -5.83630 | +136.2 |
+| **MAE** | | | | 49.0 | | **31.0** | | 38.1 |
+| **Published energy MAE** (MatPES r2SCAN test set) | | | | 34 (TensorNet) | | — | | 30 (CHGNet)¹ |
+
+¹ For the CHGNet model in the MatPES paper (Kaplan et al., 2025), not specifically the 1M-2026.9
+checkpoint.
 
 - **MACE-MATPES-R2SCAN-0** agrees with MP r2SCAN to 31 meV/atom MAE (8–78 meV/atom per element). That
-  is in line with the 30–44 meV/atom test MAEs that Kaplan et al. (2025, Table 1) report for MatPES
-  r2SCAN models (CHGNet 30, TensorNet 34, M3GNet 44). The MatPES paper reports no number for the MACE
-  model itself.
+  is in line with the test MAEs that Kaplan et al. (2025, Table 1) report for MatPES r2SCAN models
+  (CHGNet 30, TensorNet 34). The MatPES paper reports no number for the MACE model itself.
 - Exact agreement is not expected. MatPES uses the PBE 64 pseudopotential set and its own
   `MatPESStaticSet` parameters (Kaplan et al., 2025), which differ from MP's r2SCAN workflow. Even so,
   the MACE-MATPES-R2SCAN-0 deviations stay below 80 meV/atom for these elements.
@@ -216,10 +205,14 @@ every oxide formation energy too positive by 0.86 eV per O atom. The other MPtrj
   34 meV/atom. Its library file was regenerated (2026-10) with the weights the matgl wrapper loads
   under this name (`TensorNet-PES-MatPES-r2SCAN-2025.2`). The previous file held the energies of the
   older weights: Fe, Si and O were off by 11, 79 and 493 meV/atom, and the MAE vs MP was 164.5 meV/atom.
+- **CHGNet-PES-MatPES-r2SCAN-1M-2026.9** agrees to 38.1 meV/atom MAE: within 10 meV/atom for the
+  three metals, +35 meV/atom for Si and +136 meV/atom for O. The O value is a converged, molecular
+  relaxation (O=O 1.216 Å, intermolecular contact 2.11 Å), so the O deviation is the model's
+  molecular-crystal energy, not a collapse.
 
 **Do not mix functionals.** The MatPES-PBE checkpoints are on yet another absolute scale. For Cu the
-library holds -3.746 (CHGNet-MatPES-PBE), -3.735 (TensorNet-MatPES-PBE) and -3.745 eV/atom
-(MACE-MATPES-PBE-0), 353–365 meV/atom above MP's GGA value. Always take references and compound
+library holds -3.749 (CHGNet-PES-MatPES-PBE-1M-2026.9), -3.735 (TensorNet-MatPES-PBE) and
+-3.745 eV/atom (MACE-MATPES-PBE-0), 350–365 meV/atom above MP's GGA value. Always take references and compound
 energies from the same checkpoint.
 
 ### Library reproducibility (CPU recomputation, [`cpu_verification.json`](cpu_verification.json))
@@ -228,11 +221,12 @@ Recomputed minus library, in meV/atom.
 
 | Checkpoint | Li | Fe | Cu | Si | O |
 | :--- | ---: | ---: | ---: | ---: | ---: |
-| MACE-MP-medium | 0.0 | 0.0 | 0.0 | 0.0 | -864.3 (collapsed relaxation; library stores the single point) |
-| MACE-MATPES-R2SCAN-0 | 0.0 | 0.0 | 0.0 | 0.0 | -0.2 (not converged, stays molecular) |
-| TensorNet-MatPES-r2SCAN-v2025.1-PES | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 (regenerated library) |
+| MACE-MP-medium | 0.0 | 0.0 | 0.0 | 0.0 | -861.2 (collapsed relaxation; library stores the single point) |
+| MACE-MATPES-R2SCAN-0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 (not converged, stays molecular) |
+| TensorNet-MatPES-r2SCAN-v2025.1-PES | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
+| CHGNet-PES-MatPES-r2SCAN-1M-2026.9 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
 
-All three libraries are reproduced to within 0.05 meV/atom by the protocol stated in `SKILL.md`, except
+All four libraries are reproduced to within 0.05 meV/atom by the protocol stated in `SKILL.md`, except
 the deliberate single-point O entry of MACE-MP-medium.
 The MACE-MATPES-R2SCAN-0 O2 relaxation also hits the 500-step limit, but it ends at a final fmax of
 0.09 eV/Å with the molecules intact (O–O 1.21–1.22 Å). Its stored value is therefore a reasonable
@@ -270,11 +264,11 @@ MP values are GGA_GGA+U `formation_energy_per_atom`. Δ = MLIP − MP.
   of 39 meV/Å for the medium model. [DOI: 10.48550/arXiv.2401.00096](https://doi.org/10.48550/arXiv.2401.00096)
 - B. Deng, P. Zhong, K. Jun, J. Riebesell, K. Han, C. J. Bartel, G. Ceder, "CHGNet as a pretrained universal
   neural network potential for charge-informed atomistic modelling", *Nat. Mach. Intell.* **5**, 1031–1041
-  (2023). Table I: energy MAE 30 meV/atom on the MPtrj test set.
+  (2023). Source of the MPtrj dataset that MACE-MP-0 was trained on.
   [DOI: 10.1038/s42256-023-00716-3](https://doi.org/10.1038/s42256-023-00716-3)
 - A. D. Kaplan, R. Liu, J. Qi et al., "A Foundational Potential Energy Surface Dataset for Materials",
-  arXiv:2503.04070 (2025). Table 1: MatPES r2SCAN test energy MAEs of 30 (CHGNet), 34 (TensorNet) and
-  44 (M3GNet) meV/atom. [DOI: 10.48550/arXiv.2503.04070](https://doi.org/10.48550/arXiv.2503.04070)
+  arXiv:2503.04070 (2025). Table 1: MatPES r2SCAN test energy MAEs of 30 (CHGNet) and 34 (TensorNet)
+  meV/atom. [DOI: 10.48550/arXiv.2503.04070](https://doi.org/10.48550/arXiv.2503.04070)
 - A. Wang et al., "A framework for quantifying uncertainty in DFT energy corrections", *Sci. Rep.* **11**,
   15496 (2021). [DOI: 10.1038/s41598-021-94550-5](https://doi.org/10.1038/s41598-021-94550-5)
 - R. S. Kingsbury et al., "A flexible and scalable scheme for mixing computed formation energies from

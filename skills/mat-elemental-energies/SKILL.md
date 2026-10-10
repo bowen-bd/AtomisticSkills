@@ -22,9 +22,9 @@ Checkpoint names are matched case-insensitively against `resources/<checkpoint>_
 
 
 ## Library Status
-As of **2026-01-30**, the library is fully expanded and contains **89 elements** (Ground states from H to Lr) across **36 MLIP variants**, including:
+As of **2026-01-30**, the library is fully expanded and contains **89 elements** (Ground states from H to Lr) across **30 MLIP variants**, including:
 - **MACE**: MACE-MP (S/M/L), MACE-MH-0/1 (all heads), MACE-OMAT (S/M), MACE-MATPES (PBE/R2SCAN).
-- **MatGL**: CHGNet (MPtrj, MatPES), M3GNet (MP, MatPES), TensorNet (MatPES).
+- **MatGL**: CHGNet (`CHGNet-PES-MatPES-PBE-1M-2026.9`, `CHGNet-PES-MatPES-r2SCAN-1M-2026.9`), TensorNet (MatPES PBE/r2SCAN).
 - **FairChem**: UMA (S/M) with all heads (omat, omol, oc20).
 
 **Corrections (2026-10):** `TensorNet-MatPES-r2SCAN-v2025.1-PES` and
@@ -33,10 +33,12 @@ that those names now load (the PBE O entry is the MP single point, see Constrain
 crystal now hold the single point on the MP structure: MACE-MP-medium, and MACE-MH-0 omat_pbe,
 matpes_r2scan and oc20_usemppbe (see Constraints). Two entries that the library protocol did not
 reproduce were replaced by its converged, physical results: MACE-MATPES-PBE-0 O
-(-5.575 → -4.905 eV/atom) and MACE-MP-small Cl (-2.146 → -1.838 eV/atom).
+(-5.575 → -4.905 eV/atom) and MACE-MP-small Cl (-2.146 → -1.838 eV/atom). The two CHGNet
+`1M-2026.9` files were generated with the same protocol (no O2 collapse for either). They
+replace the older CHGNet library files, which are no longer offered.
 
 ## Examples
-- [Li, Fe, Cu, O, Si references vs Materials Project](examples/li_fe_cu_o_si_vs_mp/README.md): MPtrj and MatPES-r2SCAN library energies compared with MP's GGA and r2SCAN energies, with a CPU reproducibility check and Li2O / Fe2O3 formation energies. It documents the corrected MACE-MP-medium O and regenerated TensorNet-MatPES-r2SCAN entries.
+- [Li, Fe, Cu, O, Si references vs Materials Project](examples/li_fe_cu_o_si_vs_mp/README.md): MACE-MP-medium (GGA) and three MatPES-r2SCAN checkpoints (TensorNet, MACE, CHGNet-PES-MatPES-r2SCAN-1M-2026.9) compared with MP's GGA and r2SCAN energies, with a CPU reproducibility check and Li2O / Fe2O3 formation energies.
 
 ## Constraints
 - **Materials Project**: Structures must be queried from Materials Project to ensure they represent the true ground-state phases.
@@ -60,11 +62,9 @@ reproduce were replaced by its converged, physical results: MACE-MATPES-PBE-0 O
   elements (O2: mp-12957 and mp-1524462), so pin the `material_id` rather than relying
   on a formula lookup returning a stable order.
 - **Checkpoint names vs weights**: matgl 4.x loads the `TensorNet-MatPES-*-v2025.1-PES`
-  and `M3GNet-MatPES-*-v2025.1-PES` names as the 2025.2 weights. Both TensorNet files were
-  regenerated with those weights (2026-10). The M3GNet-MatPES files
-  still hold the old weights' energies (e.g. Si -0.46 and -0.63 eV/atom off), and
-  `M3GNet-MP-2021.2.8-PES` now loads M3GNet-PES-MatPES-PBE-2025.2 weights, so check
-  that a library file matches the loaded model before use.
+  names as the 2025.2 weights, and both TensorNet files were regenerated with those weights
+  (2026-10). If a checkpoint name is re-pointed to new weights, regenerate its library file
+  before use.
 ---
 
 **Author:** Bowen Deng

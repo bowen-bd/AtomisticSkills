@@ -56,7 +56,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/bench
 
 Performance benchmarks conducted on **NVIDIA GB10** reveal distinct performance tiers:
 
-- **High Speed / Low Cost:** Models like `M3GNet` and `TensorNet` scale efficiently to large systems (>10,000 atoms) with very low latency (~0.1 ms/atom).
+- **High Speed / Low Cost:** `CHGNet-PES-MatPES-PBE-1M-2026.9`, `TensorNet` and `MACE-MP-small` reach ~0.1 ms/atom at 1,000–2,700 atoms. The CHGNet entry in the reference file was measured in 2026-10 with the current `mlip` stack; the other entries are from an earlier run.
 - **Intermediate:** `MACE` small/medium models and `eSEN` models occupy the mid-range (~0.3 - 1.0 ms/atom).
 - **High Accuracy / High Cost:** `MACE-MH-1` and `UMA-medium` are heavier (~1.5 - 4.0 ms/atom), making them ideal for static calculations or small-scale MD.
 

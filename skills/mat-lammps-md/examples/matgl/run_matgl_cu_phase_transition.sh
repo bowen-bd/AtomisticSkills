@@ -8,7 +8,7 @@ set -euo pipefail
 #   venv/run mlip bash skills/mat-lammps-md/examples/matgl/run_matgl_cu_phase_transition.sh
 
 OUT_DIR="${OUT_DIR:-./out-matgl-cu-phase-transition}"
-CHGNET_MODEL="${CHGNET_MODEL:-CHGNet}"
+CHGNET_MODEL="${CHGNET_MODEL:-CHGNet-PES-MatPES-PBE-1M-2026.9}"
 HEAT_STEPS="${HEAT_STEPS:-500}"
 HOLD_STEPS="${HOLD_STEPS:-500}"
 TRAJ_EVERY="${TRAJ_EVERY:-20}"

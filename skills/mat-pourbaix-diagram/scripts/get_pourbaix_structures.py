@@ -62,13 +62,13 @@ def get_structures(chemsys: str, api_key: str, output_dir: Path):
         # We need to query structures for these entry_ids.
         # FIX: Strip suffixes like "-GGA" from entry_ids (e.g. "mp-1178680-GGA" -> "mp-1178680")
         solid_ids = [
-            e.entry_id.split("-")[0] + "-" + e.entry_id.split("-")[1] for e in solids
+            str(e.entry_id).split("-")[0] + "-" + str(e.entry_id).split("-")[1]
+            for e in solids
         ]
         # Better robust way:
         clean_ids = []
-        original_map = {}  # Map clean ID back to entry if needed, but we just need structures
         for e in solids:
-            eid = e.entry_id
+            eid = str(e.entry_id)  # mp_api may return an EntryID object
             # Handle "mp-123", "mp-123-GGA", "mvc-123"
             parts = eid.split("-")
             if len(parts) >= 2:
