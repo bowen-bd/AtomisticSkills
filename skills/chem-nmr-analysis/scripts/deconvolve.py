@@ -34,7 +34,12 @@ import numpy as np
 from scipy.optimize import linprog
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from spectra import BASELINE_STATS, preprocess_spectrum  # noqa: E402
+from spectra import (  # noqa: E402
+    BASELINE_STATS,
+    effective_protons,
+    preprocess_spectrum,
+    restrict_ppm,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -241,8 +246,11 @@ def deconvolve_spectra(
         Mixture spectrum (ppm, intensity).
     comp_arrays : list of ndarray of shape (N_i, 2)
         Component reference spectra.
-    protons : list of int
-        Number of 1H protons per component molecule.
+    protons : list of float
+        Protons per component molecule that contribute to the supplied
+        component spectra. For full spectra this is the per-molecule count; for
+        spectra restricted to a ppm range it is the number of each component's
+        protons inside that range (see ``spectra.effective_protons``).
     kappa : float
         Denoising penalty.
 
@@ -353,7 +361,18 @@ def main():
         nargs=2,
         metavar=("LO", "HI"),
         default=None,
-        help="Deconvolve only this ppm range (applied after baseline correction).",
+        help="Deconvolve only this ppm range (applied after baseline correction). "
+        "The proton correction then counts only each reference's protons inside "
+        "the range: see --range-protons.",
+    )
+    ap.add_argument(
+        "--range-protons",
+        type=float,
+        nargs="+",
+        default=None,
+        help="With --ppm-range: protons of each component whose signals lie inside "
+        "the range (e.g. 1 1 for one diagnostic CH each). If omitted, each --protons "
+        "count is scaled by the fraction of the full reference's area inside the range.",
     )
     ap.add_argument(
         "--plot",
@@ -371,6 +390,9 @@ def main():
     mix_arr = load_xy(args.mixture, mnova=args.mnova)
     comp_arrays = [load_xy(p, mnova=args.mnova) for p in args.components]
 
+    if args.range_protons is not None and args.ppm_range is None:
+        print("ERROR: --range-protons requires --ppm-range.", file=sys.stderr)
+        sys.exit(2)
     prep = dict(
         baseline_correct=args.baseline_correct,
         baseline_window=args.baseline_window,
@@ -378,8 +400,17 @@ def main():
         ppm_range=args.ppm_range,
     )
     mix_arr, mix_base = preprocess_spectrum(mix_arr, **prep)
-    comp_prepped = [preprocess_spectrum(a, **prep) for a in comp_arrays]
-    comp_arrays = [a for a, _ in comp_prepped]
+    # Keep the full baseline-corrected references: the proton correction of a
+    # cropped fit needs the share of each reference's signal inside the range.
+    comp_prepped = [
+        preprocess_spectrum(a, **{**prep, "ppm_range": None}) for a in comp_arrays
+    ]
+    comp_full = [a for a, _ in comp_prepped]
+    comp_arrays = (
+        [restrict_ppm(a, args.ppm_range) for a in comp_full]
+        if args.ppm_range is not None
+        else comp_full
+    )
     baselines = [mix_base] + [b for _, b in comp_prepped]
     if not args.quiet:
         if args.baseline_window is not None:
@@ -421,6 +452,25 @@ def main():
             "NOTE: No --protons provided; assuming 1 for each component.",
             file=sys.stderr,
         )
+    if args.range_protons is not None and len(args.range_protons) != n:
+        print(
+            "ERROR: --range-protons length must equal number of components.",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+    protons = effective_protons(comp_full, protons, args.ppm_range, args.range_protons)
+    if args.ppm_range is not None and not args.quiet:
+        source = (
+            "--range-protons"
+            if args.range_protons is not None
+            else "reference area inside the range"
+        )
+        print(
+            "Protons inside the ppm range ("
+            + source
+            + "): "
+            + ", ".join(f"{nm}={v:.4g}" for nm, v in zip(names, protons))
+        )
 
     # Deconvolve
     result = deconvolve_spectra(mix_arr, comp_arrays, protons, kappa=args.kappa)
@@ -447,6 +497,7 @@ def main():
             "Wasserstein distance": wd,
             "noise": result["noise"],
             "baselines": baseline_map,
+            "protons_used": dict(zip(names, protons)),
         }
         print("\nJSON:", json.dumps(out))
 

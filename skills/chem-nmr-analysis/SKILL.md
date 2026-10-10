@@ -62,6 +62,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/deconv
   --names "borneol" "isoborneol" \
   --baseline-window 3.70 3.94 \
   --ppm-range 3.50 4.10 \
+  --range-protons 1 1 \
   --plot <research_dir>/deconvolution_result.png \
   --json
 ```
@@ -71,7 +72,11 @@ mixture or any reference, preferably close to the peaks being quantified. Add
 `--baseline-stat max` when the baseline is a one-sided floor rather than noise (e.g.
 digitized spectra, whose traced flat line leaves a small positive residue). Use
 `--ppm-range` to fit only a region where each component has an isolated diagnostic
-signal; omit it to fit the full spectrum.
+signal; omit it to fit the full spectrum. A restricted fit only sees the protons whose
+signals lie in the range, so give their number per component with `--range-protons`
+(here 1 1: one H2 proton in each isomer). Without it, each `--protons` count is scaled
+by the fraction of the reference's area inside the range, which is only as reliable as
+the reference spectrum's full-range integrals.
 
 ### kinetics.py
 
@@ -90,7 +95,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/kineti
 ```
 
 `kinetics.py` takes the same baseline and range options as `deconvolve.py`, spelled
-with underscores (`--baseline_window`, `--baseline_stat`, `--ppm_range`).
+with underscores (`--baseline_window`, `--baseline_stat`, `--ppm_range`, `--range_protons`).
 `kinetics.csv` also records the noise fraction and the subtracted baseline of every
 time point.
 
@@ -111,7 +116,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/plot.p
 ## Key Arguments for deconvolve.py
 
 `kinetics.py` accepts the same baseline and range options with underscores
-(`--baseline_window`, `--baseline_stat`, `--ppm_range`, `--baseline_correct`).
+(`--baseline_window`, `--baseline_stat`, `--ppm_range`, `--range_protons`, `--baseline_correct`).
 
 | Argument | Required | Description |
 |---|---|---|
@@ -120,6 +125,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run cpu python ${CLAUDE_SKILL_DIR}/scripts/plot.p
 | `--baseline-window LO HI` | Recommended | Signal-free ppm window. Its `--baseline-stat` is subtracted from the mixture and every reference, and negatives are clipped to 0. If a spectrum has no samples in the window (dropped zero runs), the points bounding the gap are used. The agent should use this for any spectrum with noise or a baseline offset. |
 | `--baseline-stat` | No | `median` (default) for noisy or offset baselines; `max` for one-sided floors such as the residue of a digitized flat line, which a median only half removes. `max` subtracts about 3σ from every peak of a noisy spectrum, so do not use it there. |
 | `--ppm-range LO HI` | No | Deconvolve only this range, applied after the baseline step. Use it to fit isolated diagnostic signals. |
+| `--range-protons` | With `--ppm-range` | Protons of each component whose signals lie inside `--ppm-range`, used for the proton correction instead of `--protons`. The agent should give it whenever the range is restricted and the counts are known (e.g. `1 1` for one diagnostic CH each). If omitted, each `--protons` count is scaled by the fraction of the full reference's area inside the range. |
 | `--baseline-correct` | No | Legacy: shifts each spectrum so its minimum is 0. Exact only for noise-free spectra with a constant offset. On noisy spectra the minimum is several σ below the baseline, which leaves a positive pedestal and pulls fractions toward an even mixture; on a reference floor with a zero-valued minimum it removes nothing. Mutually exclusive with `--baseline-window`. |
 | `--kappa` | No | Denoising penalty (default 0.25). The agent should not change this unless instructed. |
 | `--plot` | No | Output plot path. The agent should always generate a plot. |

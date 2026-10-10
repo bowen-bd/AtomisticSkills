@@ -18,6 +18,9 @@ baseline_stat: max
 ppm_range:
 - 3.5
 - 4.1
+range_protons:
+- 1.0
+- 1.0
 plot: skills/chem-nmr-analysis/examples/deconvolution/output/h2_window/deconvolution_result.png
 json: true
 quiet: false

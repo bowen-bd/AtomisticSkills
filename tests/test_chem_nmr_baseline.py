@@ -5,7 +5,10 @@ window baseline recovers the true fractions where the legacy minimum
 subtraction (``--baseline-correct``) does not.
 """
 
+import csv
+import json
 import os
+import subprocess
 import sys
 
 import numpy as np
@@ -16,8 +19,9 @@ SCRIPTS = os.path.abspath(
 )
 sys.path.insert(0, SCRIPTS)
 
-from deconvolve import deconvolve_spectra  # noqa: E402
-from spectra import (  # noqa: E402
+from deconvolve import deconvolve_spectra
+from spectra import (
+    effective_protons,
     min_baseline,
     preprocess_spectrum,
     restrict_ppm,
@@ -133,3 +137,139 @@ def test_baseline_options_are_mutually_exclusive() -> None:
         )
     with pytest.raises(ValueError):
         window_baseline(_spectrum(COMP_A), SIGNAL_FREE, "mean")
+
+
+# ---------------------------------------------------------------------------
+# Proton correction of a fit restricted to a ppm range
+# ---------------------------------------------------------------------------
+
+# Two six-proton molecules in a 50:50 mixture with unequal protons in 0-3 ppm:
+# A has 3 H at 1 ppm and 3 H at 7 ppm; B has 1 H at 2 ppm and 5 H at 8 ppm.
+WIDE = np.linspace(0.0, 9.0, 3600)
+WINDOW = (0.0, 3.0)
+
+
+def _lines(centres_protons: list[tuple[float, float]]) -> np.ndarray:
+    """Spectrum on WIDE whose line areas are proportional to the proton counts."""
+    width = 0.01
+    return np.column_stack(
+        [
+            WIDE,
+            sum(
+                n
+                * np.exp(-0.5 * ((WIDE - c) / width) ** 2)
+                / (width * np.sqrt(2 * np.pi))
+                for c, n in centres_protons
+            ),
+        ]
+    )
+
+
+WIN_A = _lines([(1.0, 3.0), (7.0, 3.0)])
+WIN_B = _lines([(2.0, 1.0), (8.0, 5.0)])
+WIN_MIX = np.column_stack([WIDE, WIN_A[:, 1] + WIN_B[:, 1]])  # equal moles
+
+
+def test_effective_protons_scale_by_reference_area_in_range() -> None:
+    """Without explicit counts, each count is scaled by the area share in range."""
+    counts = effective_protons([WIN_A, WIN_B], [6, 6], WINDOW)
+    assert counts == pytest.approx([3.0, 1.0], rel=1e-3)
+    assert effective_protons([WIN_A, WIN_B], [6, 6]) == [6.0, 6.0]
+    assert effective_protons([WIN_A, WIN_B], [6, 6], WINDOW, [3, 1]) == [3.0, 1.0]
+
+
+def test_cropped_fit_with_per_molecule_counts_is_biased() -> None:
+    """Dividing cropped signal fractions by whole-molecule counts gives 75:25."""
+    crop = [restrict_ppm(a, WINDOW) for a in (WIN_MIX, WIN_A, WIN_B)]
+    res = deconvolve_spectra(crop[0], crop[1:], [6, 6])
+    assert res["proportions"][0] == pytest.approx(0.75, abs=0.01)
+
+
+def test_cropped_fit_with_range_protons_recovers_composition() -> None:
+    """Range proton counts recover 50:50 from the 0-3 ppm window."""
+    crop = [restrict_ppm(a, WINDOW) for a in (WIN_MIX, WIN_A, WIN_B)]
+    counts = effective_protons([WIN_A, WIN_B], [6, 6], WINDOW)
+    res = deconvolve_spectra(crop[0], crop[1:], counts)
+    assert res["proportions"][0] == pytest.approx(0.5, abs=0.01)
+
+
+def _write(path: str, arr: np.ndarray) -> str:
+    np.savetxt(path, arr, delimiter=",")
+    return path
+
+
+@pytest.mark.parametrize("extra", [[], ["--range-protons", "3", "1"]])
+def test_deconvolve_cli_ppm_range_recovers_composition(tmp_path, extra) -> None:
+    """deconvolve.py --ppm-range returns 50:50 with automatic or explicit counts."""
+    files = [
+        _write(str(tmp_path / f"{n}.csv"), a)
+        for n, a in (("mix", WIN_MIX), ("a", WIN_A), ("b", WIN_B))
+    ]
+    out = subprocess.run(
+        [
+            sys.executable,
+            os.path.join(SCRIPTS, "deconvolve.py"),
+            *files,
+            "--protons",
+            "6",
+            "6",
+            "--names",
+            "A",
+            "B",
+            "--ppm-range",
+            "0",
+            "3",
+            "--json",
+            "--quiet",
+            *extra,
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=tmp_path,
+    ).stdout
+    result = json.loads(out.split("JSON:", 1)[1])
+    assert result["proportions"]["A"] == pytest.approx(0.5, abs=0.01)
+
+
+@pytest.mark.parametrize("extra", [[], ["--range_protons", "3", "1"]])
+def test_kinetics_cli_ppm_range_recovers_composition(tmp_path, extra) -> None:
+    """kinetics.py --ppm_range returns 50:50 at every time point."""
+    refs = [
+        _write(str(tmp_path / f"{n}.csv"), a) for n, a in (("a", WIN_A), ("b", WIN_B))
+    ]
+    tps = [_write(str(tmp_path / f"t{i}.csv"), WIN_MIX) for i in range(2)]
+    subprocess.run(
+        [
+            sys.executable,
+            os.path.join(SCRIPTS, "kinetics.py"),
+            "--refs",
+            *refs,
+            "--timepoints",
+            *tps,
+            "--times",
+            "0",
+            "10",
+            "--protons",
+            "6",
+            "6",
+            "--names",
+            "A",
+            "B",
+            "--ppm_range",
+            "0",
+            "3",
+            "--quiet",
+            "--output_dir",
+            str(tmp_path / "out"),
+            *extra,
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=tmp_path,
+    )
+    with open(tmp_path / "out" / "kinetics.csv") as fh:
+        rows = list(csv.DictReader(fh))
+    assert len(rows) == 2
+    assert all(float(r["A"]) == pytest.approx(0.5, abs=0.01) for r in rows)

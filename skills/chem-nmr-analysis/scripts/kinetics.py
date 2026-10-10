@@ -28,7 +28,12 @@ import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 from deconvolve import load_xy, deconvolve_spectra  # noqa: E402
-from spectra import BASELINE_STATS, preprocess_spectrum  # noqa: E402
+from spectra import (  # noqa: E402
+    BASELINE_STATS,
+    effective_protons,
+    preprocess_spectrum,
+    restrict_ppm,
+)
 
 
 def save_kinetics_plot(
@@ -147,7 +152,18 @@ def main():
         nargs=2,
         metavar=("LO", "HI"),
         default=None,
-        help="Deconvolve only this ppm range (applied after baseline correction).",
+        help="Deconvolve only this ppm range (applied after baseline correction). "
+        "The proton correction then counts only each reference's protons inside "
+        "the range: see --range_protons.",
+    )
+    ap.add_argument(
+        "--range_protons",
+        type=float,
+        nargs="+",
+        default=None,
+        help="With --ppm_range: protons of each reference whose signals lie inside "
+        "the range. If omitted, each --protons count is scaled by the fraction of "
+        "the full reference's area inside the range.",
     )
     ap.add_argument(
         "--kappa", type=float, default=0.25, help="Denoising penalty (default: 0.25)"
@@ -181,6 +197,14 @@ def main():
     if args.protons and len(args.protons) != n_refs:
         print("ERROR: --protons length must equal number of --refs.", file=sys.stderr)
         sys.exit(1)
+    if args.range_protons is not None and (
+        args.ppm_range is None or len(args.range_protons) != n_refs
+    ):
+        print(
+            "ERROR: --range_protons requires --ppm_range and one count per reference.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     # Load reference spectra once
     prep = dict(
@@ -189,9 +213,25 @@ def main():
         baseline_stat=args.baseline_stat,
         ppm_range=args.ppm_range,
     )
-    ref_arrays = [
-        preprocess_spectrum(load_xy(p, mnova=args.mnova), **prep)[0] for p in args.refs
+    # Keep the full baseline-corrected references: the proton correction of a
+    # cropped fit needs the share of each reference's signal inside the range.
+    ref_full = [
+        preprocess_spectrum(
+            load_xy(p, mnova=args.mnova), **{**prep, "ppm_range": None}
+        )[0]
+        for p in args.refs
     ]
+    ref_arrays = (
+        [restrict_ppm(a, args.ppm_range) for a in ref_full]
+        if args.ppm_range is not None
+        else ref_full
+    )
+    protons = effective_protons(ref_full, protons, args.ppm_range, args.range_protons)
+    if args.ppm_range is not None and not args.quiet:
+        print(
+            "Protons inside the ppm range: "
+            + ", ".join(f"{nm}={v:.4g}" for nm, v in zip(names, protons))
+        )
 
     proportions_over_time = []
     wd_over_time = []
@@ -217,7 +257,7 @@ def main():
 
             if not args.quiet:
                 frac_str = "  ".join(
-                    f"{n}={props_dict.get(n, 0)*100:.1f}%" for n in names
+                    f"{n}={props_dict.get(n, 0) * 100:.1f}%" for n in names
                 )
                 print(f"{frac_str}  WD={wd:.5f}  noise={res['noise']:.3f}")
         except Exception as e:

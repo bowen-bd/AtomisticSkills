@@ -228,3 +228,67 @@ def preprocess_spectrum(
     if ppm_range is not None:
         arr = restrict_ppm(arr, ppm_range)
     return arr, value
+
+
+def range_area_fraction(arr: np.ndarray, ppm_range: Tuple[float, float]) -> float:
+    """
+    Fraction of a spectrum's (non-negative) area that lies inside a ppm range.
+
+    For a reference spectrum covering all of a molecule's protons, this is the
+    fraction of those protons whose signals fall inside the range.
+
+    Args:
+        arr: (N, 2) array of (ppm, intensity), already baseline-corrected.
+        ppm_range: (lo, hi) ppm limits.
+
+    Returns:
+        Area inside the range divided by the total area (0.0 if the total is 0).
+    """
+    order = np.argsort(arr[:, 0])
+    ppm = arr[order, 0]
+    intensity = np.clip(arr[order, 1], 0.0, None)
+    total = float(np.trapezoid(intensity, ppm))
+    if total <= 0:
+        return 0.0
+    lo, hi = sorted(ppm_range)
+    inside = (ppm >= lo) & (ppm <= hi)
+    return float(np.trapezoid(intensity[inside], ppm[inside])) / total
+
+
+def effective_protons(
+    full_refs: List[np.ndarray],
+    protons: List[float],
+    ppm_range: Optional[Tuple[float, float]] = None,
+    range_protons: Optional[List[float]] = None,
+) -> List[float]:
+    """
+    Proton counts to use for the proton correction of a (possibly cropped) fit.
+
+    Deconvolution normalizes each reference over the fitted range, so its signal
+    fraction counts only the protons whose signals lie in that range. Without a
+    range, this is the per-molecule count. With a range, ``range_protons`` (the
+    protons of each reference inside the range) is used when given; otherwise
+    each per-molecule count is scaled by the fraction of the reference's area
+    inside the range, computed from the full baseline-corrected reference.
+
+    Args:
+        full_refs: Baseline-corrected reference spectra over their full range.
+        protons: Protons per molecule for each reference.
+        ppm_range: Fitted ppm range, or None for the full spectra.
+        range_protons: Optional protons of each reference inside ``ppm_range``.
+
+    Returns:
+        One proton count per reference.
+    """
+    if range_protons is not None:
+        if ppm_range is None:
+            raise ValueError("range protons require a ppm range")
+        if len(range_protons) != len(full_refs):
+            raise ValueError("give one range proton count per reference")
+        return [float(n) for n in range_protons]
+    if ppm_range is None:
+        return [float(n) for n in protons]
+    return [
+        float(n) * range_area_fraction(ref, ppm_range)
+        for n, ref in zip(protons, full_refs)
+    ]

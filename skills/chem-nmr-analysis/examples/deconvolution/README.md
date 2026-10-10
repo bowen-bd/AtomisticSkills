@@ -101,7 +101,7 @@ mkdir -p $D/output/h2_window
 venv/run cpu python skills/chem-nmr-analysis/scripts/deconvolve.py \
   $D/crude.csv $D/borneol.csv $D/isoborneol.csv \
   --protons 18 18 --names borneol isoborneol \
-  --baseline-window 3.70 3.94 --baseline-stat max --ppm-range 3.50 4.10 --json \
+  --baseline-window 3.70 3.94 --baseline-stat max --ppm-range 3.50 4.10 --range-protons 1 1 --json \
   --plot $D/output/h2_window/deconvolution_result.png \
   | grep '^JSON:' | cut -c7- > $D/output/h2_window/deconvolve_result.json
 ```
@@ -123,6 +123,14 @@ awk -F, '$1>=3.95 && $1<=4.06 {b+=$2} $1>=3.57 && $1<=3.67 {i+=$2}
 | B | 0.75–4.12 ppm | max of 3.70–3.94 ppm | 11.7 | 88.3 | 0.096 | 0.217 |
 | C (recommended) | 3.50–4.10 ppm | max of 3.70–3.94 ppm | 13.1 | 86.9 | 0.003 | 0.000 |
 | Direct H2 integral of `crude.csv` | 3.57–3.67 / 3.95–4.06 | none | 12.6 | 87.4 | – | – |
+
+Run C fits only the H2 multiplets, so its proton correction uses the protons inside the
+range: one H2 proton per isomer (`--range-protons 1 1`), not the 18 H of each molecule.
+Leaving `--range-protons` out makes the script estimate them from the share of each
+reference's area inside 3.50–4.10 ppm. For these digitized references that gives
+1.06 H (borneol) and 1.41 H (isoborneol) instead of 1 and 1, and 16.7 % borneol. The
+estimate inherits the distorted aliphatic region and the floor of the digitized traces,
+so give the counts explicitly whenever they are known.
 
 Subtracted baselines (Runs B and C): crude 2×10⁻⁶, borneol 0.0047, isoborneol 0.0063,
 as recorded in `deconvolve_result.json`.
