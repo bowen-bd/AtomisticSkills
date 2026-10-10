@@ -1778,9 +1778,11 @@ class MLIPModel(ABC):
         pressure_ev_ang3 = pressure * units.bar if pressure is not None else 0.0
 
         # ASE returns zeros (never None) from get_velocities() when no momenta
-        # are stored, so only a restart frame that carries momenta (e.g. a .traj
-        # written by a previous MD run) keeps its velocities and skips relaxation.
-        has_velocities = "momenta" in atoms.arrays and bool(atoms.get_momenta().any())
+        # are stored, so test for the momenta array itself. Inputs that carry one
+        # (e.g. a .traj frame, or explicitly set momenta, including all zeros)
+        # keep their velocities and skip relaxation; others are relaxed and drawn
+        # from a Maxwell-Boltzmann distribution.
+        has_velocities = "momenta" in atoms.arrays
 
         md_calc = CustomMDCalc(
             calculator=calc,

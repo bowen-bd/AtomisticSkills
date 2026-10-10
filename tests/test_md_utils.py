@@ -198,5 +198,34 @@ def test_run_md_returns_last_md_frame(tmp_path):
     assert frac_gap(final, last_frame) < 1e-5
 
 
+def test_run_md_keeps_explicit_zero_momenta(tmp_path):
+    """Explicitly stored zero momenta are a valid start from rest, not missing velocities.
+
+    The input must not be relaxed and its velocities must not be redrawn at the
+    target temperature, so an NVE run starts from the given positions at 0 K.
+    """
+    import numpy as np
+    from ase.io import read
+
+    model = _EMTModel()
+    atoms = bulk("Cu", "fcc", a=3.6, cubic=True).repeat(2)
+    atoms.rattle(stdev=0.05, seed=0)
+    atoms.set_momenta(np.zeros((len(atoms), 3)))
+
+    result = model.run_md(
+        atoms,
+        ensemble="nve",
+        temperature=300.0,
+        steps=1,
+        timestep=1.0,
+        log_interval=1,
+        output_dir=str(tmp_path),
+    )
+
+    first = read(result["trajectory_path"], index=0)
+    assert first.get_kinetic_energy() < 1e-8
+    assert np.abs(first.get_positions() - atoms.get_positions()).max() < 1e-8
+
+
 if __name__ == "__main__":
     pytest.main(["-v", __file__])
