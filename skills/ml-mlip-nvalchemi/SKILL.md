@@ -316,6 +316,10 @@ See [resources/benchmark_results.md](resources/benchmark_results.md) for the ful
 
 ¹ M3GNet energy errors (~0.7–1.8×10⁻³ eV) from different neighbor-list graph connectivity (NValchemi GPU warp kernel vs. CPU `radius_graph_pbc`). Forces are exact (ΔF = 0). Within 5×10⁻³ eV tolerance for PES screening.
 
+## Examples
+
+- [Batched vs sequential static inference on strained Cu](examples/cu_batch_static_accuracy/README.md): re-runs `run_nvalchemi_benchmark.py` for MACE-OMAT-0-small and TensorNet-PES-MatPES-PBE-2025.2 (N = 2–20). Batched and sequential results agree to float32 round-off (ΔF = 0, ΔE ≤ 1.9e-6 eV), with speedups reported next to the stored table.
+
 ## Constraints
 
 - **Explicit opt-in required**: Set `use_nvalchemi=True` for each batch request.

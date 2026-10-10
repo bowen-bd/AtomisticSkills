@@ -40,7 +40,13 @@ ${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/bench
 - `--providers`: Corresponding providers (`mace`, `matgl`, `fairchem`).
 - `--output_dir`: Directory to save results and plots.
 - `--max_atoms_limit`: Maximum system size to test (default: 5000).
-- `--only_plot`: Re-generate plots from an existing `speed_benchmark.yaml` file without running simulations.
+- `--only_plot`: Re-generate plots from an existing results file without running simulations.
+- `--results_file`: Results YAML that runs update and `--only_plot` reads (default: `<output_dir>/speed_benchmark.yaml`).
+- `--hardware_name`: Label for plot titles and file names (default: the detected GPU name, or `CPU`). Set it when replotting data measured elsewhere, e.g. the stored reference:
+  ```bash
+  ${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/benchmark_mlips.py --only_plot \
+      --results_file ${CLAUDE_SKILL_DIR}/resources/speed_benchmark_dgx_spark.yaml --hardware_name NVIDIA_GB10 --output_dir plots/
+  ```
 
 ### Metrics Explained
 - **Inference Time / Atom (ms):** The normalized time taken for a single force/energy calculation per atom. Converged values (for larger systems) provide the best comparison.
