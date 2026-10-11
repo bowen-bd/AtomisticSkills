@@ -221,10 +221,8 @@ def main():
     class TrainingHistoryCallback(pl.Callback):
         """Callback to collect training history during fine-tuning."""
 
-        def __init__(self, avg_atoms_train=1.0, avg_atoms_val=1.0):
+        def __init__(self):
             super().__init__()
-            self.avg_atoms_train = avg_atoms_train
-            self.avg_atoms_val = avg_atoms_val
             self.training_history = {
                 "loss_train": [],
                 "loss_val": [],
@@ -260,16 +258,12 @@ def main():
 
             e_mae = get_metric(["train_Energy_MAE", "train_energy_mae"], ["energy_mae"])
             if e_mae is not None:
-                self.training_history["energy_mae_train"].append(
-                    (e_mae / self.avg_atoms_train) * 1000
-                )
+                self.training_history["energy_mae_train"].append(e_mae * 1000)
             e_rmse = get_metric(
                 ["train_Energy_RMSE", "train_energy_rmse"], ["energy_rmse"]
             )
             if e_rmse is not None:
-                self.training_history["energy_rmse_train"].append(
-                    (e_rmse / self.avg_atoms_train) * 1000
-                )
+                self.training_history["energy_rmse_train"].append(e_rmse * 1000)
 
             f_mae = get_metric(["train_Force_MAE", "train_force_mae"], ["force_mae"])
             if f_mae is not None:
@@ -315,14 +309,10 @@ def main():
 
             e_mae = get_metric(["val_Energy_MAE", "val_energy_mae", "energy_mae"])
             if e_mae is not None:
-                self.training_history["energy_mae_val"].append(
-                    (e_mae / self.avg_atoms_val) * 1000
-                )
+                self.training_history["energy_mae_val"].append(e_mae * 1000)
             e_rmse = get_metric(["val_Energy_RMSE", "val_energy_rmse", "energy_rmse"])
             if e_rmse is not None:
-                self.training_history["energy_rmse_val"].append(
-                    (e_rmse / self.avg_atoms_val) * 1000
-                )
+                self.training_history["energy_rmse_val"].append(e_rmse * 1000)
 
             f_mae = get_metric(["val_Force_MAE", "val_force_mae", "force_mae"])
             if f_mae is not None:
@@ -396,9 +386,6 @@ def main():
         processed_train_data
     )
 
-    avg_atoms_train = np.mean([len(a) for a in train_atoms]) if train_atoms else 1.0
-    avg_atoms_val = avg_atoms_train  # Default fallback
-
     from pymatgen.io.ase import AseAtomsAdaptor
 
     adaptor = AseAtomsAdaptor()
@@ -440,8 +427,6 @@ def main():
         val_atoms, val_energies, val_forces, val_stresses = _prepare_training_data(
             processed_val_data
         )
-        if val_atoms:
-            avg_atoms_val = np.mean([len(a) for a in val_atoms])
         val_structures = [adaptor.get_structure(a) for a in val_atoms]
         val_dataset = MGLDataset(
             structures=val_structures,
@@ -568,16 +553,9 @@ def main():
         lit_model.on_train_epoch_end = lambda *args, **kwargs: None
 
     # 3. Trainer
-    avg_atoms_train = np.mean([len(a) for a in train_atoms]) if train_atoms else 1.0
-    avg_atoms_val = (
-        np.mean([len(a) for a in val_atoms])
-        if (processed_val_data and val_atoms)
-        else avg_atoms_train
-    )
-
-    history_callback = TrainingHistoryCallback(
-        avg_atoms_train=avg_atoms_train, avg_atoms_val=avg_atoms_val
-    )
+    # matgl 4.1 loss_fn already reports Energy_MAE/RMSE per atom, so the
+    # callback only converts eV to meV.
+    history_callback = TrainingHistoryCallback()
     callbacks = [history_callback]
 
     if args.patience:
@@ -619,14 +597,16 @@ def main():
     logger.info("Fine-tuning complete!")
     logger.info(f"Saving checkpoint to {output_dir}...")
 
-    # Save the fine-tuned model as checkpoint matching MatGLWrapper load format
+    # Save in the format MatGLWrapper.save_checkpoint() writes, so that
+    # MatGLWrapper(model_name=args.model).load_checkpoint(path) restores it.
+    # The lightning module trains pot.model in place, so pot holds the fine-tuned
+    # weights with the same Potential keys as MatGLWrapper.model after load().
     torch.save(
         {
+            "model_state_dict": pot.state_dict(),
             "model_name": args.model,
-            "element_types": element_types,
-            "weights": lit_model.model.state_dict(),
-            "data_std": getattr(pot, "data_std", 1.0),
-            "data_mean": getattr(pot, "data_mean", 0.0),
+            "is_fine_tuned": True,
+            "training_history": history_callback.training_history,
         },
         str(output_dir / "fine_tuned_model.pth"),
     )
@@ -660,6 +640,25 @@ def main():
         "final_loss": history_callback.training_history["loss_train"][-1]
         if history_callback.training_history["loss_train"]
         else None,
+    }
+
+    # Reference prediction of the fine-tuned potential on the first validation
+    # structure (or the first training structure), recorded so that a checkpoint
+    # round trip through MatGLWrapper.load_checkpoint() can be verified later.
+    from matgl.ext.ase import PESCalculator
+
+    ref_atoms = (val_atoms if processed_val_data and val_atoms else train_atoms)[
+        0
+    ].copy()
+    # Evaluate on CPU, the way MatGLWrapper(device="cpu") predicts after reloading.
+    pot.eval()
+    pot.to("cpu")
+    ref_atoms.calc = PESCalculator(potential=pot, device="cpu", stress_unit="eV/A3")
+    result["reference_prediction"] = {
+        "dataset": "val" if processed_val_data and val_atoms else "train",
+        "index": 0,
+        "num_atoms": len(ref_atoms),
+        "energy_eV": float(ref_atoms.get_potential_energy()),
     }
 
     config_record = {

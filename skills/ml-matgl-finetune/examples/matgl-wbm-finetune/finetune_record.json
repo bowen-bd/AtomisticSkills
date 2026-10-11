@@ -17,6 +17,12 @@
   "result": {
     "status": "success",
     "epochs": 10,
-    "final_loss": 1.4398046731948853
+    "final_loss": 1.437360167503357,
+    "reference_prediction": {
+      "dataset": "val",
+      "index": 0,
+      "num_atoms": 8,
+      "energy_eV": -23.609739303588867
+    }
   }
 }
