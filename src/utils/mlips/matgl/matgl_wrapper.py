@@ -105,7 +105,7 @@ class MatGLWrapper(MLIPModel):
 
     def __init__(
         self,
-        model_name: str = "M3GNet",
+        model_name: str = "CHGNet-PES-MatPES-PBE-1M-2026.9",
         model_version: str = "latest",
         device: str = "auto",
         task_name: Optional[str] = None,

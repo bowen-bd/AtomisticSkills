@@ -10,14 +10,18 @@ This directory contains a complete example workflow demonstrating how to extract
 
 ## MatPES-r2SCAN Foundation Benchmarks
 
-We executed this complete workflow evaluating 100 random analytical r2SCAN target structures natively against four zero-temperature foundation potentials trained on the OMat/MP-r2SCAN dataset:
+We ran this workflow on 100 r2SCAN structures from Materials Project (fetched 2026-10-10, f-block
+excluded) against three foundation potentials trained on MatPES-r2SCAN. All three use the same
+dataset, on an NVIDIA GB10 (mlip env: matgl 4.1.0, mace-torch 0.3.16):
 
-| Framework | Pre-Trained Foundation Potential Model | Mean Absolute Error (MAE) |
-| --- | --- | --- |
-| **MatGL** | `CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES` | **~65 meV/atom** |
-| **MACE**  | `MACE-MATPES-R2SCAN-0`                    | **~80 meV/atom** |
-| **MatGL** | `TensorNet-MatPES-r2SCAN-v2025.1-PES`     | **~150 meV/atom**|
-| **MatGL** | `M3GNet-MatPES-r2SCAN-v2025.1-PES`        | **~200 meV/atom**|
+| Framework | Pre-Trained Foundation Potential Model | Energy MAE (meV/atom) | Energy RMSE (meV/atom) |
+| --- | --- | ---: | ---: |
+| **MACE**  | `MACE-MATPES-R2SCAN-0` | **73.7** | 179.0 |
+| **MatGL** | `CHGNet-PES-MatPES-r2SCAN-1M-2026.9` | **77.5** | 176.7 |
+| **MatGL** | `TensorNet-MatPES-r2SCAN-v2025.1-PES` (loads `TensorNet-PES-MatPES-r2SCAN-2025.2`) | **88.3** | 169.7 |
+
+MP's r2SCAN calculations use different settings from MatPES, so these MAEs include that offset.
+The RMSE is dominated by a few outliers (see the parity plots).
 
 *(Note: Lanthanide and Actinide elements are programmatically excluded in the fetch script to avoid global potential correlation anomalies.)*
 
@@ -42,15 +46,9 @@ venv/run mlip python skills/ml-mlip-benchmark/scripts/run_benchmark.py \
 
 # CHGNet Potential Benchmark (Env: mlip)
 venv/run mlip python skills/ml-mlip-benchmark/scripts/run_benchmark.py \
-    --model CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES --backend matgl \
+    --model CHGNet-PES-MatPES-r2SCAN-1M-2026.9 --backend matgl \
     --data_path r2scan_data.json \
     --output research/2026-03-03_r2SCAN_benchmark/chgnet_results.json
-
-# M3GNet Potential Benchmark (Env: mlip)
-venv/run mlip python skills/ml-mlip-benchmark/scripts/run_benchmark.py \
-    --model M3GNet-MatPES-r2SCAN-v2025.1-PES --backend matgl \
-    --data_path r2scan_data.json \
-    --output research/2026-03-03_r2SCAN_benchmark/m3gnet_results.json
 
 # TensorNet Potential Benchmark (Env: mlip)
 venv/run mlip python skills/ml-mlip-benchmark/scripts/run_benchmark.py \

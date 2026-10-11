@@ -72,7 +72,7 @@ The full output is in [`apply_correction_output.txt`](apply_correction_output.tx
 ```bash
 venv/run cpu python skills/mat-dft-mixing-functionals/scripts/check_compatibility.py --name MACE-MP-medium
 venv/run cpu python skills/mat-dft-mixing-functionals/scripts/check_compatibility.py --name MACE-MH-1 --head omat_pbe
-venv/run cpu python skills/mat-dft-mixing-functionals/scripts/check_compatibility.py --name CHGNet-MPtrj-2023.12.1-2.7M-PES
+venv/run cpu python skills/mat-dft-mixing-functionals/scripts/check_compatibility.py --name CHGNet-PES-MatPES-PBE-1M-2026.9
 venv/run cpu python skills/mat-dft-mixing-functionals/scripts/check_compatibility.py --name MACE-MATPES-R2SCAN-0
 ```
 
@@ -121,14 +121,13 @@ computes with 2026.9.24.
 | :--- | :--- | :--- | :---: | :---: |
 | MACE-MP-medium | — | MPtrj (GGA/GGA+U) | True | 0 |
 | MACE-MH-1 | `omat_pbe` | OMat-PBE head | True | 0 |
-| CHGNet-MPtrj-2023.12.1-2.7M-PES | — | MPtrj with the MP2020 mixing correction already applied | False | 1 |
+| CHGNet-PES-MatPES-PBE-1M-2026.9 | — | MatPES PBE | False | 1 |
 | MACE-MATPES-R2SCAN-0 | — | MatPES r2SCAN | False | 1 |
 
-CHGNet and MACE-MP are both trained on MPtrj, but they need different treatment. The CHGNet paper
-states that the GGA/GGA+U mixing compatibility correction of Wang et al. was applied to the MPtrj
-energies (Deng et al., 2023), so CHGNet predictions already include the correction. Correcting them
-again would count it twice. MACE-MP-medium predicts uncorrected energies, as measured in the companion
-example
+Only checkpoints trained on Materials Project's mixed GGA/GGA+U energies (MPtrj, or the OMat PBE
+heads) need the correction. The MatPES checkpoints, CHGNet-PES-MatPES-PBE-1M-2026.9 and
+MACE-MATPES-R2SCAN-0, are not trained on those mixed energies, so the script returns False for them.
+MACE-MP-medium predicts uncorrected MPtrj energies, as measured in the companion example
 [mat-elemental-energies/examples/li_fe_cu_o_si_vs_mp](../../../mat-elemental-energies/examples/li_fe_cu_o_si_vs_mp/README.md).
 There, its raw Li2O energy is 9.5 meV/atom from MP's uncorrected value and 238 meV/atom from the
 corrected one. Applying this script, with an O2 reference from a single point on MP's O2 structure,
@@ -145,9 +144,6 @@ brings its Li2O formation energy to within 0.2 meV/atom of MP's.
   K. A. Persson, "A flexible and scalable scheme for mixing computed formation energies from different
   levels of theory", *npj Comput. Mater.* **8**, 195 (2022).
   [DOI: 10.1038/s41524-022-00881-w](https://doi.org/10.1038/s41524-022-00881-w)
-- B. Deng, P. Zhong, K. Jun, J. Riebesell, K. Han, C. J. Bartel, G. Ceder, "CHGNet as a pretrained universal
-  neural network potential for charge-informed atomistic modelling", *Nat. Mach. Intell.* **5**, 1031–1041
-  (2023). [DOI: 10.1038/s42256-023-00716-3](https://doi.org/10.1038/s42256-023-00716-3)
 - A. Jain et al., "Commentary: The Materials Project: A materials genome approach to accelerating materials
   innovation", *APL Mater.* **1**, 011002 (2013). [DOI: 10.1063/1.4812323](https://doi.org/10.1063/1.4812323)
 

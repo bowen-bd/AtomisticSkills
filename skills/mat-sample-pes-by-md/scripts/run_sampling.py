@@ -3,7 +3,7 @@ Unified script for PES sampling using MD-clustering or Order-Disorder methods.
 
 Usage:
     # Off-equilibrium sampling with MatGL (CHGNet)
-    python run_sampling.py input.cif --model_type matgl --model_name CHGNet-PES-MatPES-PBE-2025.2.10 \\
+    python run_sampling.py input.cif --model_type matgl --model_name CHGNet-PES-MatPES-PBE-1M-2026.9 \\
         --total_steps 2000 --temperature 1000 --n_clusters 10 --output_dir results_dir
 
     # Order-disorder sampling

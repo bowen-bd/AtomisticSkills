@@ -4,7 +4,7 @@ Fine-tune a MatGL model using prepared JSON data.
 
 Usage:
     python train_matgl.py --train-data path/to/train.json --val-data path/to/val.json \
-        --model CHGNet-MatPES-PBE-2025.2.10-2.7M-PES --epochs 10 --lr 1e-3 --output-dir ./fine_tuning
+        --model CHGNet-PES-MatPES-PBE-1M-2026.9 --epochs 10 --lr 1e-3 --output-dir ./fine_tuning
 """
 
 import argparse
@@ -221,10 +221,8 @@ def main():
     class TrainingHistoryCallback(pl.Callback):
         """Callback to collect training history during fine-tuning."""
 
-        def __init__(self, avg_atoms_train=1.0, avg_atoms_val=1.0):
+        def __init__(self):
             super().__init__()
-            self.avg_atoms_train = avg_atoms_train
-            self.avg_atoms_val = avg_atoms_val
             self.training_history = {
                 "loss_train": [],
                 "loss_val": [],
@@ -260,16 +258,12 @@ def main():
 
             e_mae = get_metric(["train_Energy_MAE", "train_energy_mae"], ["energy_mae"])
             if e_mae is not None:
-                self.training_history["energy_mae_train"].append(
-                    (e_mae / self.avg_atoms_train) * 1000
-                )
+                self.training_history["energy_mae_train"].append(e_mae * 1000)
             e_rmse = get_metric(
                 ["train_Energy_RMSE", "train_energy_rmse"], ["energy_rmse"]
             )
             if e_rmse is not None:
-                self.training_history["energy_rmse_train"].append(
-                    (e_rmse / self.avg_atoms_train) * 1000
-                )
+                self.training_history["energy_rmse_train"].append(e_rmse * 1000)
 
             f_mae = get_metric(["train_Force_MAE", "train_force_mae"], ["force_mae"])
             if f_mae is not None:
@@ -315,14 +309,10 @@ def main():
 
             e_mae = get_metric(["val_Energy_MAE", "val_energy_mae", "energy_mae"])
             if e_mae is not None:
-                self.training_history["energy_mae_val"].append(
-                    (e_mae / self.avg_atoms_val) * 1000
-                )
+                self.training_history["energy_mae_val"].append(e_mae * 1000)
             e_rmse = get_metric(["val_Energy_RMSE", "val_energy_rmse", "energy_rmse"])
             if e_rmse is not None:
-                self.training_history["energy_rmse_val"].append(
-                    (e_rmse / self.avg_atoms_val) * 1000
-                )
+                self.training_history["energy_rmse_val"].append(e_rmse * 1000)
 
             f_mae = get_metric(["val_Force_MAE", "val_force_mae", "force_mae"])
             if f_mae is not None:
@@ -396,9 +386,6 @@ def main():
         processed_train_data
     )
 
-    avg_atoms_train = np.mean([len(a) for a in train_atoms]) if train_atoms else 1.0
-    avg_atoms_val = avg_atoms_train  # Default fallback
-
     from pymatgen.io.ase import AseAtomsAdaptor
 
     adaptor = AseAtomsAdaptor()
@@ -408,15 +395,6 @@ def main():
 
     # Strictly extract cutoffs without dangerous arbitrary defaults.
     cutoff = getattr(pot.model, "cutoff")
-
-    if hasattr(pot.model, "threebody_cutoff"):
-        threebody_cutoff = pot.model.threebody_cutoff
-    elif hasattr(pot.model, "three_body_cutoff"):
-        threebody_cutoff = pot.model.three_body_cutoff
-    else:
-        raise AttributeError(
-            f"Model {pot.model.__class__.__name__} is missing a three-body cutoff attribute (checked 'threebody_cutoff' and 'three_body_cutoff')."
-        )
 
     converter = Structure2Graph(element_types=element_types, cutoff=cutoff)
 
@@ -435,23 +413,20 @@ def main():
     dataset_dir.mkdir(parents=True, exist_ok=True)
     dataset_dir = str(dataset_dir)
 
-    is_chgnet = "CHGNet" in args.model
+    # matgl >= 4 (PyG): CHGNet builds its line graph inside
+    # forward(), so the dataset carries only the atom graph.
     dataset = MGLDataset(
         structures=structures,
         converter=converter,
         labels=labels,
-        threebody_cutoff=threebody_cutoff,
-        include_line_graph=True,
-        directed_line_graph=is_chgnet,
-        save_dir=os.path.join(dataset_dir, "train"),
+        include_line_graph=False,
+        root=os.path.join(dataset_dir, "train"),
     )
 
     if processed_val_data:
         val_atoms, val_energies, val_forces, val_stresses = _prepare_training_data(
             processed_val_data
         )
-        if val_atoms:
-            avg_atoms_val = np.mean([len(a) for a in val_atoms])
         val_structures = [adaptor.get_structure(a) for a in val_atoms]
         val_dataset = MGLDataset(
             structures=val_structures,
@@ -461,10 +436,8 @@ def main():
                 "forces": [to_list(f) for f in val_forces],
                 "stresses": [to_list(s) for s in val_stresses],
             },
-            threebody_cutoff=threebody_cutoff,
-            include_line_graph=True,
-            directed_line_graph=is_chgnet,
-            save_dir=os.path.join(dataset_dir, "val"),
+            include_line_graph=False,
+            root=os.path.join(dataset_dir, "val"),
         )
         train_ds, val_ds = dataset, val_dataset
     else:
@@ -491,7 +464,7 @@ def main():
         return obj
 
     def my_collate(batch):
-        return move_to_device(collate_fn_pes(batch, include_line_graph=True), device)
+        return move_to_device(collate_fn_pes(batch, include_line_graph=False), device)
 
     train_loader, val_loader = MGLDataLoader(
         train_data=train_ds,
@@ -499,6 +472,7 @@ def main():
         collate_fn=my_collate,
         batch_size=training_config["batch_size"],
         num_workers=0,
+        pin_memory=False,  # my_collate already moves batches to the device
     )
 
     # 2. Setup Training Module
@@ -537,6 +511,9 @@ def main():
     prop_offset = getattr(pot, "element_refs", None)
     if prop_offset and hasattr(prop_offset, "property_offset"):
         prop_offset = prop_offset.property_offset
+    if isinstance(prop_offset, torch.Tensor):
+        # PotentialLightningModule calls np.asarray on it; the model may be on GPU.
+        prop_offset = prop_offset.detach().cpu().numpy()
 
     pre_data_std = float(pot.data_std) if hasattr(pot, "data_std") else 1.0
     pre_data_mean = float(pot.data_mean) if hasattr(pot, "data_mean") else 0.0
@@ -545,7 +522,7 @@ def main():
         model=pot.model,
         element_refs=prop_offset,
         lr=training_config["learning_rate"],
-        include_line_graph=True,
+        include_line_graph=False,
         energy_weight=training_config["energy_weight"],
         force_weight=training_config["force_weight"],
         stress_weight=training_config["stress_weight"],
@@ -576,16 +553,9 @@ def main():
         lit_model.on_train_epoch_end = lambda *args, **kwargs: None
 
     # 3. Trainer
-    avg_atoms_train = np.mean([len(a) for a in train_atoms]) if train_atoms else 1.0
-    avg_atoms_val = (
-        np.mean([len(a) for a in val_atoms])
-        if (processed_val_data and val_atoms)
-        else avg_atoms_train
-    )
-
-    history_callback = TrainingHistoryCallback(
-        avg_atoms_train=avg_atoms_train, avg_atoms_val=avg_atoms_val
-    )
+    # matgl 4.1 loss_fn already reports Energy_MAE/RMSE per atom, so the
+    # callback only converts eV to meV.
+    history_callback = TrainingHistoryCallback()
     callbacks = [history_callback]
 
     if args.patience:
@@ -607,6 +577,7 @@ def main():
         enable_checkpointing=True,
         default_root_dir=output_dir,
         logger=False,
+        inference_mode=False,  # forces/stresses need autograd during validation
     )
 
     logger.info(
@@ -626,14 +597,16 @@ def main():
     logger.info("Fine-tuning complete!")
     logger.info(f"Saving checkpoint to {output_dir}...")
 
-    # Save the fine-tuned model as checkpoint matching MatGLWrapper load format
+    # Save in the format MatGLWrapper.save_checkpoint() writes, so that
+    # MatGLWrapper(model_name=args.model).load_checkpoint(path) restores it.
+    # The lightning module trains pot.model in place, so pot holds the fine-tuned
+    # weights with the same Potential keys as MatGLWrapper.model after load().
     torch.save(
         {
+            "model_state_dict": pot.state_dict(),
             "model_name": args.model,
-            "element_types": element_types,
-            "weights": lit_model.model.state_dict(),
-            "data_std": getattr(pot, "data_std", 1.0),
-            "data_mean": getattr(pot, "data_mean", 0.0),
+            "is_fine_tuned": True,
+            "training_history": history_callback.training_history,
         },
         str(output_dir / "fine_tuned_model.pth"),
     )
@@ -667,6 +640,25 @@ def main():
         "final_loss": history_callback.training_history["loss_train"][-1]
         if history_callback.training_history["loss_train"]
         else None,
+    }
+
+    # Reference prediction of the fine-tuned potential on the first validation
+    # structure (or the first training structure), recorded so that a checkpoint
+    # round trip through MatGLWrapper.load_checkpoint() can be verified later.
+    from matgl.ext.ase import PESCalculator
+
+    ref_atoms = (val_atoms if processed_val_data and val_atoms else train_atoms)[
+        0
+    ].copy()
+    # Evaluate on CPU, the way MatGLWrapper(device="cpu") predicts after reloading.
+    pot.eval()
+    pot.to("cpu")
+    ref_atoms.calc = PESCalculator(potential=pot, device="cpu", stress_unit="eV/A3")
+    result["reference_prediction"] = {
+        "dataset": "val" if processed_val_data and val_atoms else "train",
+        "index": 0,
+        "num_atoms": len(ref_atoms),
+        "energy_eV": float(ref_atoms.get_potential_energy()),
     }
 
     config_record = {

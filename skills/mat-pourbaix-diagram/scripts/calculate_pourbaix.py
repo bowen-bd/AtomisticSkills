@@ -173,14 +173,14 @@ def main():
     print("Fetching elemental energies...")
     ee_path = (
         Path(__file__).parent.parent.parent
-        / "elemental-energies"
+        / "mat-elemental-energies"
         / "resources"
         / f"{args.mlip_name}_energies.json"
     )
 
     if not ee_path.exists():
         print(
-            f"Warning: {ee_path} not found. Ensure elemental-energies skill is run for {args.mlip_name}."
+            f"Warning: {ee_path} not found. Ensure the mat-elemental-energies library has an entry for {args.mlip_name}."
         )
         # Fallback empty dict, will fail if H/O missing unless found in relaxations
         ee_data = {}
@@ -222,7 +222,7 @@ def main():
 
     # Get references
     try:
-        mu_H = get_ref_energy_per_atom("H")  # H2 gas per atom
+        get_ref_energy_per_atom("H")  # H2 gas per atom; fail early if missing
         mu_O = get_ref_energy_per_atom("O")  # O2 gas per atom
         # Check references for all elements of interest to fail early if missing
         for el in elements_of_interest:

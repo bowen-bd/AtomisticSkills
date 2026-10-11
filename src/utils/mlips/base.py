@@ -35,7 +35,7 @@ class MLIPModel(ABC):
         Initialize the MLIP model.
 
         Args:
-            model_name: Name of the model (e.g., "M3GNet", "CHGNet")
+            model_name: Name of the model (e.g., "CHGNet", "TensorNet")
             model_version: Version of the model to use
         """
         self.model_name = model_name

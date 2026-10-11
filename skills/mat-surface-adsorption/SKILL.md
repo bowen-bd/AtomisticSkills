@@ -42,7 +42,7 @@ Adsorption energy calculations require accurate prediction of both energies and 
 >    - MACE-OMAT: `MACE-OMAT-0-small`, `MACE-OMAT-0-medium` (trained on OC datasets)
 > 2. **MatPES trained models** (Good for general surfaces):
 >    - `CHGNet-PES-MatPES-PBE-1M-2026.9`
->    - `M3GNet-MatPES-PBE-v2025.1-PES`
+>    - `TensorNet-PES-MatPES-PBE-2025.2`
 >    - `MACE-MatPES-PBE-0`
 > 3. **Avoid MPtrj-only models**: Models trained primarily on the `MPtrj` dataset may suffer from force prediction issues critical for adsorption.
 

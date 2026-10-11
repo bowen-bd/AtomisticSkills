@@ -1,6 +1,6 @@
 ---
 name: ml-mlip-nvalchemi
-description: Optional experimental GPU-accelerated batched inference for MACE, MatGL (TensorNet/M3GNet/CHGNet), and FairChem MLIPs using NValchemi, enabling parallel static, relax, and MD workflows across multiple structures simultaneously.
+description: Optional experimental GPU-accelerated batched inference for MACE, MatGL (TensorNet/CHGNet), and FairChem MLIPs using NValchemi, enabling parallel static, relax, and MD workflows across multiple structures simultaneously.
 metadata:
   category: [machine-learning]
   venv: [fairchem, mlip]
@@ -47,7 +47,6 @@ NValchemi provides batched dynamics integrators (FIRE, NVT Nose-Hoover, NPT, etc
 |------|------------------|----------|
 | MACE | `nvalchemi.models.mace.MACEWrapper` | upstream (nvalchemi-toolkit) |
 | MatGL TensorNet | `matgl.ext._alchmtk.TensorNetWrapper` | matgl package |
-| MatGL M3GNet | `M3GNetWrapper` | `src/utils/mlips/nvalchemi/matgl_wrappers.py` |
 | MatGL CHGNet | `CHGNetWrapper` | `src/utils/mlips/nvalchemi/matgl_wrappers.py` |
 | MatGL QET | `QETWrapper` | matgl package |
 | FairChem UMA | `FairChemWrapper` | `src/utils/mlips/nvalchemi/fairchem_nv.py` |
@@ -72,7 +71,7 @@ _batch_relax()
  │    NO  → _batch_relax_sequential()                          ← plain ASE FIRE, one by one
 ```
 
-> **Note**: All MatGL wrappers (`TensorNetWrapper`, `M3GNetWrapper`, `CHGNetWrapper`) set `_nvalchemi_supports_inflight=False` and use fixed-batch NValchemi regardless of structure count, because after graduation, energies are wrong (TensorNet Cu −83.70 vs −86.57 eV fixed-batch; CHGNet 0.26 eV; M3GNet 28 meV), MACE inflight is available after opt-in with the cache guard.
+> **Note**: All MatGL wrappers (`TensorNetWrapper`, `CHGNetWrapper`) set `_nvalchemi_supports_inflight=False` and use fixed-batch NValchemi regardless of structure count, because after graduation, energies are wrong (TensorNet Cu −83.70 vs −86.57 eV fixed-batch; CHGNet 0.26 eV), MACE inflight is available after opt-in with the cache guard.
 
 **Inflight batching** keeps only `max_batch_atoms` atoms on the GPU at once.  As each structure converges or exhausts its step budget it is evicted and a new one is loaded.  This is necessary when the full set of structures would exceed GPU memory.
 
@@ -80,7 +79,7 @@ _batch_relax()
 
 | How | Behaviour |
 |-----|-----------|
-| `max_batch_atoms=None` (default) | Auto-estimated: `free_VRAM × 0.5 / bytes_per_atom` using per-architecture calibration (FairChem 0.15 B/param/atom, MACE 0.5, M3GNet 4.0, fallback 5 MB/atom) |
+| `max_batch_atoms=None` (default) | Auto-estimated: `free_VRAM × 0.5 / bytes_per_atom` using per-architecture calibration (FairChem 0.15 B/param/atom, MACE 0.5, TensorNet 1.5, CHGNet 3.0, fallback 5 MB/atom) |
 | Explicit integer (e.g. `500`) | Forces inflight for almost any real dataset; recommended on shared GPUs |
 | Very large integer | Forces fixed-batch (all structures in one GPU call) |
 
@@ -303,10 +302,8 @@ See [resources/benchmark_results.md](resources/benchmark_results.md) for the ful
 | MACE-MATPES-R2SCAN-0 | 24.2× | **76×** | 1.9e-06 |
 | TensorNet-PES-MatPES-PBE-2025.2 | 3.6× | **11×** | 1.4e-07 |
 | TensorNet-PES-MatPES-r2SCAN-2025.2 | 3.8× | **12×** | 8.0e-07 |
-| M3GNet-PES-MatPES-PBE-2025.2 | 3.7× | **11×** | 1.3e-03¹ |
-| M3GNet-PES-MatPES-r2SCAN-2025.2 | 3.9× | **11×** | 7.2e-04¹ |
-| CHGNet-PES-MatPES-PBE-1M-2026.9 | 4.3× | **12×** | 2.4e-07 |
-| CHGNet-PES-MatPES-r2SCAN-1M-2026.9 | 4.2× | **13×** | 9.5e-07 |
+| CHGNet-PES-MatPES-PBE-1M-2026.9 | 3.4× | **11×** | 2.4e-07 |
+| CHGNet-PES-MatPES-r2SCAN-1M-2026.9 | 3.4× | **11×** | 9.5e-07 |
 | QET-PES-MatPES-PBE-2025.2 | 4.2× | **13×** | 7.2e-07 |
 | QET-PES-MatPES-r2SCAN-2025.2 | 3.9× | **14×** | 9.5e-07 |
 | SO3Net-PES-ANI-1x-Subset | — | — | not supported |
@@ -314,7 +311,6 @@ See [resources/benchmark_results.md](resources/benchmark_results.md) for the ful
 | FairChem uma-m-1p1 (omat) | 2.9× | 3.5× | 1.7e-07 |
 | FairChem uma-s-1p1 (omat) | 3.4× | 5.5× | 2.5e-07 |
 
-¹ M3GNet energy errors (~0.7–1.8×10⁻³ eV) from different neighbor-list graph connectivity (NValchemi GPU warp kernel vs. CPU `radius_graph_pbc`). Forces are exact (ΔF = 0). Within 5×10⁻³ eV tolerance for PES screening.
 
 ## Examples
 
@@ -325,22 +321,21 @@ See [resources/benchmark_results.md](resources/benchmark_results.md) for the ful
 - **Explicit opt-in required**: Set `use_nvalchemi=True` for each batch request.
 - **NValchemi required**: `nvalchemi-toolkit` must be installed. Check `NVALCHEMI_AVAILABLE` flag. Falls back to sequential if unavailable.
 - **Environment isolation**: Must use the correct uv environment per MLIP:
-  - `mlip` — MACE models and MatGL (TensorNet, M3GNet, CHGNet)
+  - `mlip` — MACE models and MatGL (TensorNet, CHGNet)
   - `fairchem` — FairChem UMA
 - **Stress format**: NValchemi returns 3×3 Cauchy stress tensor (eV/Å³); sequential path returns ASE Voigt-6. Both formats are accepted downstream — `_extract_static()` in tests handles the conversion.
 - **FairChem dataset field**: UMA model requires `dataset` (e.g., `"omat"`) passed to `FCAtomicData`. This is handled automatically by `FairChemWrapper`; defaults to `"omat"` when `task_name=None`.
-- **CHGNet batch speedup**: CHGNet directed line graph construction parallelizes well on GPU (12–13× at N=20). CPU performance is marginal (<3×); always use `device="cuda"` for batch workloads.
+- **CHGNet batch speedup**: CHGNet directed line graph construction parallelizes well on GPU (11× at N=20 for the 1M-2026.9 checkpoints). CPU performance is marginal (<3×); always use `device="cuda"` for batch workloads.
 - **SO3Net not supported**: `SO3Net-PES-ANI-1x-Subset` falls back to sequential automatically (`_get_nvalchemi_model()` returns `None`).
-- **ANI-1x models with transition metals**: TensorNet-PES-ANI-1x and M3GNet-PES-ANI-1x training sets cover only H/C/N/O. Using them with Cu or other transition metals causes a CUDA index OOB error that corrupts the CUDA context for the session. Run ANI-1x models in a separate process from other models.
-- **MatGL models (TensorNet, CHGNet, M3GNet) inflight batching not supported**: Inflight batching stays off for the MatGL wrappers (TensorNet, M3GNet, CHGNet), for a measured reason: after graduation, energies are wrong (TensorNet Cu −83.70 vs −86.57 eV fixed-batch; CHGNet 0.26 eV; M3GNet 28 meV), while MACE inflight agrees to meV. All MatGL wrappers set `_nvalchemi_supports_inflight=False`; when the total atom count exceeds the batch budget, they fall through to fixed-batch NValchemi (all structures in one GPU pass) rather than inflight. For large MatGL sets, split inputs into smaller calls or retain default sequential execution. `max_batch_atoms` does not cap the fixed-batch allocation when inflight is disabled.
+- **ANI-1x models with transition metals**: TensorNet-PES-ANI-1x training set covers only H/C/N/O. Using it with Cu or other transition metals causes a CUDA index OOB error that corrupts the CUDA context for the session. Run ANI-1x models in a separate process from other models.
+- **MatGL models (TensorNet, CHGNet) inflight batching not supported**: Inflight batching stays off for the MatGL wrappers (TensorNet, CHGNet), for a measured reason: after graduation, energies are wrong (TensorNet Cu −83.70 vs −86.57 eV fixed-batch; CHGNet 0.26 eV), while MACE inflight agrees to meV. All MatGL wrappers set `_nvalchemi_supports_inflight=False`; when the total atom count exceeds the batch budget, they fall through to fixed-batch NValchemi (all structures in one GPU pass) rather than inflight. For large MatGL sets, split inputs into smaller calls or retain default sequential execution. `max_batch_atoms` does not cap the fixed-batch allocation when inflight is disabled.
 - **Unsupported ensembles for batch MD**: `nvt_berendsen`, `nvt_andersen`, `nvt_bussi`, `npt_berendsen`, and `npt_inhomogeneous` have no NValchemi equivalent and always run sequentially.
 
 ## References
 
 - NValchemi toolkit: NVIDIA internal package (nvalchemi-toolkit, PyPI: `https://pypi.nvidia.com`)
 - MACE: Batatia et al., "MACE: Higher Order Equivariant Message Passing Neural Networks for Fast and Accurate Force Fields", *NeurIPS 2022*. [arXiv:2206.07697](https://arxiv.org/abs/2206.07697)
-- MatGL / TensorNet: Chen & Ong, "A Universal Graph Deep Learning Interatomic Potential for the Periodic Table", *Nature Computational Science 2023*. [DOI:10.1038/s43588-022-00349-3](https://doi.org/10.1038/s43588-022-00349-3)
-- M3GNet: Chen & Ong, "A universal graph deep learning interatomic potential for the periodic table", *Nature Computational Science 2022*.
+- MatGL: Chen & Ong, "A Universal Graph Deep Learning Interatomic Potential for the Periodic Table", *Nature Computational Science 2023*. [DOI:10.1038/s43588-022-00349-3](https://doi.org/10.1038/s43588-022-00349-3)
 - CHGNet: Deng et al., "CHGNet as a pretrained universal neural network potential for charge-informed atomistic modelling", *Nature Machine Intelligence 2023*. [DOI:10.1038/s42256-023-00716-3](https://doi.org/10.1038/s42256-023-00716-3)
 - FairChem UMA: Meta FAIR, "Scaling Universal Molecular Atomistic Machine Learning for Open Catalyst 2024". [arXiv:2411.12234](https://arxiv.org/abs/2411.12234)
 

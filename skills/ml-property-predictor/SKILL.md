@@ -51,16 +51,16 @@ ${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/train
 
 ---
 
-## Example 2: Training a MatGL (M3GNet) Property Predictor
+## Example 2: Training a MatGL (CHGNet) Property Predictor
 
-MatGL property training is handled by `scripts/train_matgl_property.py`. It loads a pretrained `M3GNet` model, replaces the data collater to safely handle graph caching, and trains the property explicitly.
+MatGL property training is handled by `scripts/train_matgl_property.py`. It loads a pretrained CHGNet model (`CHGNet-PES-MatPES-PBE-1M-2026.9` by default), replaces the data collater to safely handle graph caching, and trains the property explicitly.
 
 ```bash
 
 # Run the standalone MatGL property training script
 ${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/train_matgl_property.py \
     --data_path .agents/test/mp_bulk_modulus.json \
-    --model_name M3GNet-PES-MatPES-PBE-2025.2 \
+    --model_name CHGNet-PES-MatPES-PBE-1M-2026.9 \
     --target_property bulk_modulus \
     --property_type intensive \
     --epochs 30 \
@@ -70,9 +70,12 @@ ${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/train
     --output_dir custom_matgl_results/
 ```
 
-- `--freeze_backbone` is optional (defaults to `False` for MatGL). If passed, only the final `readout` MLP layers of the M3GNet model will be fine-tuned.
+- `--freeze_backbone` is optional (defaults to `False` for MatGL). If passed, only the final `readout` MLP layers of the CHGNet model will be fine-tuned.
 - Intensive extensive targets are handled seamlessly without breaking the pretrained model architecture.
 - Model checkpoints are securely saved in `custom_matgl_results/matgl_model/`.
+- The example dataset `.agents/test/mp_bulk_modulus.json` (500 MP K_VRH values) is produced by
+  [`examples/matgl_bulk_modulus/fetch_bulk_modulus.py`](examples/matgl_bulk_modulus/fetch_bulk_modulus.py);
+  see [the MatGL example](examples/matgl_bulk_modulus/README.md) for results against a mean-value baseline.
 
 ## Constraints
 
@@ -84,7 +87,7 @@ ${CLAUDE_SKILL_DIR}/../../venv/run mlip python ${CLAUDE_SKILL_DIR}/scripts/train
 ## References
 
 - Batatia et al., "MACE: Higher Order Equivariant Message Passing Neural Networks for Fast and Accurate Force Fields", *NeurIPS*, 2022. [DOI](https://doi.org/10.48550/arXiv.2206.07697)
-- Chen et al., "Universal potential energy machine learning models", *Nat. Comput. Sci.*, 2022. [DOI](https://doi.org/10.1038/s43588-022-00349-3)
+- Deng et al., "CHGNet as a pretrained universal neural network potential for charge-informed atomistic modelling", *Nat. Mach. Intell.* 5, 1031 (2023). [DOI](https://doi.org/10.1038/s42256-023-00716-3)
 
 ---
 

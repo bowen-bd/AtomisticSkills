@@ -47,7 +47,7 @@ Environments support optional extras specified as `<venv>+<extra>` (e.g., `cpu+o
 | `drugdisc` | `cpu` | `cpu` | No | Small-molecule standardization, descriptors, fingerprints |
 | `smol` | `cpu` | `cpu` | No | Cluster expansion and Monte Carlo simulations |
 | `mace` | `mlip` | `mlip` | Yes | MACE foundation models (relax, MD, features) |
-| `matgl` | `mlip` | `mlip` | Yes | MatGL models (CHGNet, TensorNet, M3GNet) |
+| `matgl` | `mlip` | `mlip` | Yes | MatGL models (CHGNet, TensorNet) |
 | `fairchem` | `fairchem` | `fairchem` | Yes | FairChem models (UMA, eSEN) |
 | `adit` | `adit` | `generative` | Yes | ADiT all-atom diffusion transformer |
 | `diffcsp` | `diffcsp` | `generative` | Yes | DiffCSP++ crystal structure generation |

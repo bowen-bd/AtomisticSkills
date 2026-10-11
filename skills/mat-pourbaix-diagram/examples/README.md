@@ -24,22 +24,29 @@ python skills/mat-pourbaix-diagram/scripts/calculate_pourbaix_mp.py \
 
 ## 2. CHGNet MatPES-r2SCAN (Recommended MLIP)
 
-Generated using `CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES`. This model is trained on r2SCAN data, making its solid formation energies (e.g., `NiO` ~ -1.97 eV/atom) compatible with MP aqueous ions (which are often -0.7 to -3.0 eV).
+Generated using `CHGNet-PES-MatPES-r2SCAN-1M-2026.9` (re-run 2026-10). This model is trained on r2SCAN data. Its solid formation energies are on MP's scale: NiO (mp-19009) comes out at -1.18 eV/atom, against MP's r2SCAN -1.10 and GGA+U -1.22 eV/atom. That makes the solids compatible with MP aqueous ions.
 
 ![MatPES Plot](./NaNi_MatPES_r2SCAN.png)
 
-**Command:**
+**Commands** (from the repository root; 86 solids, about 5 min on an NVIDIA GB10):
 ```bash
-python skills/mat-pourbaix-diagram/scripts/calculate_pourbaix.py \
+venv/run cpu python skills/mat-pourbaix-diagram/scripts/get_pourbaix_structures.py \
+    --chemsys "Na-Ni" --output_dir ./NaNi
+venv/run mlip python -m src.mcp_server.cli matgl load_model model_name=CHGNet-PES-MatPES-r2SCAN-1M-2026.9 \
+    relax_structure structure_data=./NaNi/structures relax_cell=true fmax=0.02 steps=500 output_dir=./relaxed_solids \
+    relax_structure structure_data=./NaNi/references relax_cell=true fmax=0.02 steps=500 output_dir=./relaxed_solids
+venv/run cpu python skills/mat-pourbaix-diagram/scripts/calculate_pourbaix.py \
     --relaxed_solids ./relaxed_solids \
     --comp_dict "Na=2,Ni=1" \
-    --mlip_name "CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES" \
+    --mlip_name "CHGNet-PES-MatPES-r2SCAN-1M-2026.9" \
     --output ./output_mlip \
     --target Ni
 ```
+76 of the 86 relaxations converge within 500 steps; the other 10 are mostly Na–H–O hydrates and
+peroxides. The H2O reference comes from `resources/h2o_energies.json`.
 
 **Why it works:**
-- Older/Standard MLIPs (like `CHGNet-PBE` or `M3GNet-MP`) often over-stabilize solids (e.g., predicting `NiO` at -4.3 eV/atom), which completely suppresses the aqueous ion domains in the diagram.
+- MLIP energies on a PBE/GGA absolute scale that are used without matching references or MP2020 corrections put the solids on a different scale from MP's aqueous-ion energies. They can over-stabilize solids and suppress the aqueous ion domains.
 - **MatPES-r2SCAN** models align much better with the MP/experimental energy scale, allowing ions and solids to compete correctly.
 
 ## Parameters Used

@@ -3,7 +3,7 @@
 Generate a training configuration JSON for MatGL.
 
 Usage:
-    python generate_matgl_config.py --train-data path/to/train_data.json --model CHGNet-MatPES-PBE-2025.2.10-2.7M-PES \
+    python generate_matgl_config.py --train-data path/to/train_data.json --model CHGNet-PES-MatPES-PBE-1M-2026.9 \
         --epochs 200 --lr 1e-2 --batch-size 2 --output-dir ./fine_tuning
 """
 

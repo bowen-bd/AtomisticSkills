@@ -28,7 +28,7 @@ Barrier computations and phonon calculations require MLIP models (MACE, MatGL, F
 These run through the corresponding MCP servers or directly via wrapper scripts:
 - **MACE**: `src/mcp_server/mace_server.py` — provides `relax_structure`, `predict_structure` tools.
   Used by `neb-barrier` and `phonon` scripts via `src/utils/mlips/mace/mace_wrapper.py`.
-- **MatGL**: `src/mcp_server/matgl_server.py` — same interface, CHGNet/M3GNet/TensorNet models.
+- **MatGL**: `src/mcp_server/matgl_server.py` — same interface, CHGNet/TensorNet models.
 - **FairChem**: `src/mcp_server/fairchem_server.py` — UMA/ESEN models.
 
 KMC scripts themselves do **not** call MLIPs — they consume barrier/prefactor values

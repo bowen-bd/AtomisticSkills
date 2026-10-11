@@ -1,0 +1,9 @@
+{
+  "checkpoint": "fine_tuned_model.pth",
+  "structure": "val[0] (8 atoms)",
+  "energy_recorded_after_training_eV": -23.609739303588867,
+  "energy_reloaded_checkpoint_eV": -23.609739303588867,
+  "abs_difference_meV": 0.0,
+  "energy_pretrained_eV": -24.5960693359375,
+  "fine_tuning_shift_meV": 986.3300323486328
+}

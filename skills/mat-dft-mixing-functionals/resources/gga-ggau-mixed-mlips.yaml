@@ -8,8 +8,6 @@ checkpoints_requiring_mp2020_compatibility:
   - name: MACE-MP-small
   - name: MACE-MP-medium
   - name: MACE-MP-large
-  - name: M3GNet-MP-2021.2.8-PES
-  - name: M3GNet-MP-2021.2.8-DIRECT-PES
   - name: uma-s-1
     head: omat
   - name: uma-s-1p1

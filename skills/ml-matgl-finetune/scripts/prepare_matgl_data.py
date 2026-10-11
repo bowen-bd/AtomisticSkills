@@ -3,7 +3,7 @@
 Convert fine-tuning JSON data into MatGL compatible format (MGLDataset).
 
 Usage:
-    python prepare_matgl_data.py --data path/to/data.json --model CHGNet-MatPES-PBE-2025.2.10-2.7M-PES \
+    python prepare_matgl_data.py --data path/to/data.json --model CHGNet-PES-MatPES-PBE-1M-2026.9 \
         --val-split 0.1 --output-dir ./fine_tuning
 """
 

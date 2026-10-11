@@ -257,7 +257,7 @@ class TestBatchRelaxCHGNet:
         from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
 
         wrapper = MatGLWrapper(
-            model_name="CHGNet-PES-MatPES-PBE-2025.2.10", device="cpu"
+            model_name="CHGNet-PES-MatPES-PBE-1M-2026.9", device="cpu"
         )
         try:
             wrapper.load()
@@ -286,7 +286,7 @@ class TestBatchRelaxCHGNet:
             from matgl.models._chgnet import CHGNet
             from src.utils.mlips.nvalchemi.matgl_wrappers import CHGNetWrapper
 
-            potential = matgl.load_model("CHGNet-PES-MatPES-PBE-2025.2.10")
+            potential = matgl.load_model("CHGNet-PES-MatPES-PBE-1M-2026.9")
         except Exception:
             pytest.skip("CHGNet model unavailable in this environment")
 
@@ -556,9 +556,9 @@ class TestInflightRelaxMACE:
             with open(log_path) as lf:
                 lines = lf.readlines()
             assert lines[0].startswith("           Step"), "Bad relax.log header"
-            assert any(ln.startswith("FIRE:") for ln in lines[1:]), (
-                "No FIRE steps logged"
-            )
+            assert any(
+                ln.startswith("FIRE:") for ln in lines[1:]
+            ), "No FIRE steps logged"
             assert isinstance(r["energy"], float)
 
     def test_inflight_fixed_batch_still_works_below_threshold(
@@ -730,9 +730,9 @@ class TestInflightRelaxFairChem:
             with open(log_path) as lf:
                 lines = lf.readlines()
             assert lines[0].startswith("           Step"), "Bad relax.log header"
-            assert any(ln.startswith("FIRE:") for ln in lines[1:]), (
-                "No FIRE steps logged"
-            )
+            assert any(
+                ln.startswith("FIRE:") for ln in lines[1:]
+            ), "No FIRE steps logged"
 
 
 # ---------------------------------------------------------------------------
@@ -774,9 +774,9 @@ class TestBackendKeyAllPaths:
             output_dir=str(tmp_path),
             use_nvalchemi=True,
         )
-        assert result.get("backend") == "sequential", (
-            f"Expected 'sequential', got {result.get('backend')!r}"
-        )
+        assert (
+            result.get("backend") == "sequential"
+        ), f"Expected 'sequential', got {result.get('backend')!r}"
 
     def test_fixed_batch_nvalchemi_backend_key(self, tmp_path, monkeypatch):
         """Fixed-batch NValchemi (all structures fit in one pass) must return backend='nvalchemi'."""
@@ -805,9 +805,9 @@ class TestBackendKeyAllPaths:
             output_dir=str(tmp_path),
             use_nvalchemi=True,
         )
-        assert result.get("backend") == "nvalchemi", (
-            f"Expected 'nvalchemi', got {result.get('backend')!r}"
-        )
+        assert (
+            result.get("backend") == "nvalchemi"
+        ), f"Expected 'nvalchemi', got {result.get('backend')!r}"
 
     def test_inflight_backend_key(self, tmp_path, monkeypatch):
         """Inflight mode (total atoms > threshold) must return backend='nvalchemi_inflight'."""
@@ -836,9 +836,9 @@ class TestBackendKeyAllPaths:
             output_dir=str(tmp_path),
             use_nvalchemi=True,
         )
-        assert result.get("backend") == "nvalchemi_inflight", (
-            f"Expected 'nvalchemi_inflight', got {result.get('backend')!r}"
-        )
+        assert (
+            result.get("backend") == "nvalchemi_inflight"
+        ), f"Expected 'nvalchemi_inflight', got {result.get('backend')!r}"
 
     def test_static_sequential_backend_key(self, tmp_path, monkeypatch):
         """Sequential static_calculation fallback must return backend='sequential'."""
@@ -855,9 +855,9 @@ class TestBackendKeyAllPaths:
         result = wrapper.static_calculation(
             structure_data=_make_structures(2), use_nvalchemi=True
         )
-        assert result.get("backend") == "sequential", (
-            f"Expected 'sequential', got {result.get('backend')!r}"
-        )
+        assert (
+            result.get("backend") == "sequential"
+        ), f"Expected 'sequential', got {result.get('backend')!r}"
 
 
 # ---------------------------------------------------------------------------
@@ -1082,9 +1082,9 @@ class TestInflightRelaxM3GNet:
             with open(log_path) as f:
                 lines = f.readlines()
             assert lines[0].startswith("           Step"), "Bad relax.log header"
-            assert any(ln.startswith("FIRE:") for ln in lines[1:]), (
-                "No FIRE steps logged"
-            )
+            assert any(
+                ln.startswith("FIRE:") for ln in lines[1:]
+            ), "No FIRE steps logged"
 
     def test_inflight_fixed_batch_still_works_below_threshold(
         self, tmp_path, monkeypatch
@@ -1196,7 +1196,7 @@ class TestInflightRelaxCHGNet:
         from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
 
         wrapper = MatGLWrapper(
-            model_name="CHGNet-PES-MatPES-PBE-2025.2.10", device="cpu"
+            model_name="CHGNet-PES-MatPES-PBE-1M-2026.9", device="cpu"
         )
         wrapper.load()
         return wrapper

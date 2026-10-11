@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 # Try imports
 try:
-    import matgl
+    import matgl  # noqa: F401
 
     MATGL_AVAILABLE = True
 except ImportError:
@@ -148,7 +148,7 @@ class MatGLCrystalFeaturePotential(nn.Module):
         if crystal_features is None:
             # Try to find node features to average
             node_features = None
-            # Check for various keys used in different versions (M3GNet/CHGNet)
+            # Check for various keys used in different versions (across MatGL model versions)
             if "gc_3" in model_output and isinstance(model_output["gc_3"], dict):
                 node_features = model_output["gc_3"].get("node_feat")
                 if node_features is None:

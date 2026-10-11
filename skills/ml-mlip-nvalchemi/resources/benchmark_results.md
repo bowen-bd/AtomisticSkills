@@ -22,10 +22,8 @@
 | MACE-MATPES-R2SCAN-0 | mlip | **24.2×** | **75.9×** | 1.9e-06 | 0.0 |
 | TensorNet-PES-MatPES-PBE-2025.2 | mlip | 3.6× | 11.1× | 1.4e-07 | 0.0 |
 | TensorNet-PES-MatPES-r2SCAN-2025.2 | mlip | 3.8× | 12.3× | 8.0e-07 | 0.0 |
-| M3GNet-PES-MatPES-PBE-2025.2 | mlip | 3.7× | 11.4× | 1.3e-03² | 0.0 |
-| M3GNet-PES-MatPES-r2SCAN-2025.2 | mlip | 3.9× | 10.8× | 7.2e-04² | 0.0 |
-| CHGNet-PES-MatPES-PBE-2025.2.10 | mlip | 4.3× | 12.2× | 2.4e-07 | 0.0 |
-| CHGNet-PES-MatPES-r2SCAN-2025.2.10 | mlip | 4.2× | 13.1× | 9.5e-07 | 0.0 |
+| CHGNet-PES-MatPES-PBE-1M-2026.9 | mlip | 3.4× | 10.7× | 2.4e-07 | 0.0 |
+| CHGNet-PES-MatPES-r2SCAN-1M-2026.9 | mlip | 3.4× | 10.9× | 9.5e-07 | 0.0 |
 | QET-PES-MatPES-PBE-2025.2 | mlip | 4.2× | 13.3× | 7.2e-07 | 0.0 |
 | QET-PES-MatPES-r2SCAN-2025.2 | mlip | 3.9× | 13.6× | 9.5e-07 | 0.0 |
 | SO3Net-PES-ANI-1x-Subset | mlip | — | — | — | — |
@@ -33,7 +31,6 @@
 | FairChem uma-m-1p1 (omat) | fairchem | 2.9× | 3.5× | 1.7e-07 | 0.0 |
 | FairChem uma-s-1p1 (omat) | fairchem | 3.4× | 5.5× | 2.5e-07 | 0.0 |
 
-¹ M3GNet energy errors (~0.7–1.8×10⁻³ eV) arise from different neighbor-list graph connectivity (NValchemi GPU warp kernel vs. CPU `radius_graph_pbc` fallback) producing slightly different bond distances at the float32 precision boundary. Errors are within the 5×10⁻³ eV tolerance for PES screening applications.
 
 ---
 
@@ -126,43 +123,25 @@
 | 10 | 21 | 144 | 6.9× | 8.0e-07 | 0.0 | 1.5e-07 |
 | 20 | 23 | 289 | **12.3×** | 1.6e-06 | 0.0 | 1.5e-07 |
 
-#### M3GNet-PES-MatPES-PBE-2025.2
+#### CHGNet-PES-MatPES-PBE-1M-2026.9
 
-> **Note:** Energy errors ~1–2×10⁻³ eV arise from different neighbor-list graphs (NValchemi GPU warp kernel vs. CPU `radius_graph_pbc`). Forces are exactly identical. Errors are within the 5×10⁻³ eV threshold for PES screening.
-
-| N structs | NV (ms) | Seq (ms) | Speedup | ΔE max (eV) | ΔF max (eV/Å) | ΔS max (eV/Å³) |
-|:---------:|--------:|---------:|--------:|:-----------:|:-------------:|:--------------:|
-| 2 | 20 | 33 | 1.6× | 1.2e-03 | 0.0 | 3.5e-04 |
-| 5 | 22 | 82 | 3.7× | 1.3e-03 | 0.0 | 3.9e-04 |
-| 10 | 23 | 167 | 7.3× | 1.6e-03 | 0.0 | 3.1e-04 |
-| 20 | 30 | 336 | **11.4×** | 1.8e-03 | 0.0 | 4.3e-04 |
-
-#### M3GNet-PES-MatPES-r2SCAN-2025.2
+Re-measured 2026-10 (matgl 4.1.0, nvalchemi-toolkit 0.2.0, same script and GB10).
 
 | N structs | NV (ms) | Seq (ms) | Speedup | ΔE max (eV) | ΔF max (eV/Å) | ΔS max (eV/Å³) |
 |:---------:|--------:|---------:|--------:|:-----------:|:-------------:|:--------------:|
-| 2 | 20 | 34 | 1.7× | 1.5e-03 | 0.0 | 4.4e-04 |
-| 5 | 22 | 84 | 3.9× | 7.2e-04 | 0.0 | 2.0e-04 |
-| 10 | 23 | 166 | 7.3× | 1.0e-03 | 0.0 | 2.4e-04 |
-| 20 | 31 | 330 | **10.8×** | 1.3e-03 | 0.0 | 3.0e-04 |
+| 2 | 23 | 32 | 1.4× | 2.4e-07 | 0.0 | 1.9e-07 |
+| 5 | 23 | 78 | 3.4× | 2.4e-07 | 0.0 | 8.9e-08 |
+| 10 | 24 | 153 | 6.3× | 2.4e-07 | 0.0 | 7.5e-08 |
+| 20 | 29 | 308 | **10.7×** | 2.4e-07 | 0.0 | 1.0e-07 |
 
-#### CHGNet-PES-MatPES-PBE-2025.2.10
-
-| N structs | NV (ms) | Seq (ms) | Speedup | ΔE max (eV) | ΔF max (eV/Å) | ΔS max (eV/Å³) |
-|:---------:|--------:|---------:|--------:|:-----------:|:-------------:|:--------------:|
-| 2 | 23 | 41 | 1.8× | 0.0 | 0.0 | 7.5e-08 |
-| 5 | 24 | 105 | 4.3× | 2.4e-07 | 0.0 | 1.0e-07 |
-| 10 | 26 | 192 | 7.4× | 4.8e-07 | 0.0 | 1.4e-07 |
-| 20 | 31 | 382 | **12.2×** | 4.8e-07 | 0.0 | 1.0e-07 |
-
-#### CHGNet-PES-MatPES-r2SCAN-2025.2.10
+#### CHGNet-PES-MatPES-r2SCAN-1M-2026.9
 
 | N structs | NV (ms) | Seq (ms) | Speedup | ΔE max (eV) | ΔF max (eV/Å) | ΔS max (eV/Å³) |
 |:---------:|--------:|---------:|--------:|:-----------:|:-------------:|:--------------:|
-| 2 | 23 | 38 | 1.6× | 0.0 | 0.0 | 3.7e-08 |
-| 5 | 23 | 96 | 4.2× | 9.5e-07 | 0.0 | 6.7e-08 |
-| 10 | 25 | 195 | 7.7× | 9.5e-07 | 0.0 | 1.2e-07 |
-| 20 | 30 | 390 | **13.1×** | 9.5e-07 | 0.0 | 1.4e-07 |
+| 2 | 22 | 31 | 1.4× | 0.0 | 0.0 | 1.3e-07 |
+| 5 | 23 | 77 | 3.4× | 9.5e-07 | 0.0 | 1.0e-07 |
+| 10 | 24 | 154 | 6.4× | 9.5e-07 | 0.0 | 1.4e-07 |
+| 20 | 28 | 309 | **10.9×** | 9.5e-07 | 0.0 | 1.3e-07 |
 
 #### QET-PES-MatPES-PBE-2025.2
 
@@ -226,7 +205,6 @@
 ### Accuracy
 - **Forces** are exactly identical across all models and batch sizes (ΔF = 0.0). Force correctness is guaranteed because both paths use the same autograd differentiation.
 - **MACE/TensorNet/CHGNet/QET/FairChem energy errors** are at or below floating-point epsilon (~1e-7 to 2e-6 eV), dominated by nondeterministic GPU/CPU kernel ordering.
-- **M3GNet energy errors** (~0.7–1.8×10⁻³ eV) are due to slightly different neighbor-list graphs from the NValchemi GPU warp kernel vs. the CPU `radius_graph_pbc` fallback. Forces remain exact.
 
 ### FairChem Task Heads
 The UMA models support multiple prediction heads:
@@ -243,7 +221,7 @@ wrapper = FAIRCHEMWrapper(model_name="uma-s-1p2", task_name="omol", device="cuda
 
 ### Unsupported Models
 - **SO3Net-PES-ANI-1x-Subset**: SO3Net architecture not supported by NValchemi → sequential only.
-- **ANI-1x models** (TensorNet-ANI, M3GNet-ANI): ANI-1x training set covers only H/C/N/O; Cu atoms cause CUDA index OOB. Do not use with Cu or transition metals.
+- **ANI-1x models** (TensorNet-ANI): ANI-1x training set covers only H/C/N/O; Cu atoms cause CUDA index OOB. Do not use with Cu or transition metals.
 
 ### Model Registry at Time of Benchmark
 - **mlip:** Python 3.12, mace-torch 0.3.15, matgl 2025.2, nvalchemi-toolkit

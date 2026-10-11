@@ -21,7 +21,7 @@ QHA calculations require accurate lattice expansion and vibrational properties.
 
 > [!IMPORTANT]
 > - **Use OMAT or MatPES trained models**: These models (e.g., `MACE-OMAT-0-small`, `TensorNet-MatPES-r2SCAN`) are specifically optimized for forces and vibrational stability.
-> - **Avoid MPtrj-trained models**: Models trained primarily on the `MPtrj` dataset (e.g., `CHGNet-MPtrj`) suffer from the "softening" problem, where the calculated phonon frequencies are significantly lower than DFT values.
+> - **Avoid MPtrj-trained models**: Models trained primarily on the `MPtrj` dataset (e.g., `MACE-MP-small`, `MACE-MP-medium`) suffer from the "softening" problem, where the calculated phonon frequencies are significantly lower than DFT values.
 
 Refer to the [foundation-potentials skill](../ml-foundation-potentials/SKILL.md) for more details.
 
@@ -54,7 +54,7 @@ volume. Read which convention a tool means before comparing windows across codes
 
 > [!NOTE]
 > **Widening the window is not automatically safer.** On BCC lithium with
-> M3GNet-PES-MatPES-PBE, going from +/-10% to the conventional +/-14/+16% in volume
+> a MatGL MatPES-PBE potential, going from +/-10% to the conventional +/-14/+16% in volume
 > moves the 0 K equilibrium volume by 0.09 A^3 (0.5%) and the thermal expansion
 > coefficient by 9%, with every sampled volume still dynamically stable -- so this is
 > fit sensitivity, not a soft-mode artefact. Neither window is wrong; quote the one you

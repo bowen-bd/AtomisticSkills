@@ -8,7 +8,7 @@ metadata:
 # MatGL Fine-tuning
 
 ## Goal
-To evaluate and improve the accuracy of a foundation MatGL potential (e.g., CHGNet, M3GNet, TensorNet) for a specific chemical system or physical property using the provided Python fine-tuning script.
+To evaluate and improve the accuracy of a foundation MatGL potential (e.g., CHGNet, TensorNet) for a specific chemical system or physical property using the provided Python fine-tuning script.
 
 ## Instructions
 
@@ -54,7 +54,7 @@ MatGL fine-tuning is divided into a data preparation step (formatting nested dic
 | Key | Type | Default | Description |
 |:----|:-----|:--------|:------------|
 | `--data` | str | (Required) | Path to JSON file containing ASE/pymatgen structure dictionaries |
-| `--model` | str | `CHGNet-MatPES-PBE-2025...` | Base model name or path to a checkpoint |
+| `--model` | str | `CHGNet-PES-MatPES-PBE-1M-2026.9` | Base model name or path to a checkpoint |
 | `--output-dir` | str | `./fine_tuning` | Directory to save the processed data |
 | `--val-split` | float | 0.1 | Fraction of data to set aside for validation |
 | `--seed` | int | 42 | Random seed for splitting validation data |
@@ -66,7 +66,7 @@ MatGL fine-tuning is divided into a data preparation step (formatting nested dic
 |:----|:-----|:--------|:------------|
 | `--train-data` | str | (Required) | Path to JSON file containing training data |
 | `--val-data` | str | None | Path to JSON file containing validation data (optional) |
-| `--model` | str | `CHGNet-MatPES-PBE-2025...` | Base model name or path to a checkpoint |
+| `--model` | str | `CHGNet-PES-MatPES-PBE-1M-2026.9` | Base model name or path to a checkpoint |
 | `--epochs` | int | 10 | Number of training epochs |
 | `--lr` | float | 1e-3 | Learning rate |
 | `--batch-size` | int | 4 | Training batch size |
