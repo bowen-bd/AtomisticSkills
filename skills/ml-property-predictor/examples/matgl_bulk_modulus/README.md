@@ -26,23 +26,32 @@ venv/run cpu python skills/ml-property-predictor/examples/matgl_bulk_modulus/run
 kept in this example folder. The CHGNet head is extensive, so for an intensive target
 the script divides the output by the number of atoms, both in training and in the reload check.
 
-## Results (NVIDIA GB10, about 3 min, about 1 GB GPU)
+## Results (NVIDIA GB10, about 3 min per run, about 1 GB GPU)
 
-The data are split 400/50/50 (train/validation/test) with seed 42.
+The data are split 400/50/50 (train/validation/test) with seed 42. Errors are averaged over
+structures, and the best-validation epoch is saved.
 
 | Model | Best validation MAE (GPa) |
 | :--- | ---: |
-| CHGNet-PES-MatPES-PBE-1M-2026.9, full fine-tune, lr 1e-3 (`run_matgl.py`, epoch 24) | 69.7 |
-| same, lr 1e-4 | 70.2 |
-| same, `--freeze_backbone` | 74.3 |
-| **Baseline: predict the training-set mean (118.4 GPa)** | **56.9** |
+| CHGNet-PES-MatPES-PBE-1M-2026.9, full fine-tune, lr 1e-3 (`run_matgl.py`, epoch 25) | **20.8** |
+| same, lr 1e-4 (epoch 18) | 21.0 |
+| same, `--freeze_backbone` (epoch 25) | 24.7 |
+| Baseline: predict the training-set mean (118.4 GPa) | 56.9 |
 
-Reload check on the first five structures (target → prediction, GPa): 1.97 → 1.86, 166.98 → 124.48,
-1.87 → 2.01, 365.05 → 183.98, 39.59 → 34.09.
+The saved lr 1e-3 model was also checked after reloading with `MatGLWrapper`:
+- its validation MAE reproduces at 20.81 GPa;
+- on the 50 held-out test structures, which training never sees, it scores **19.0 GPa MAE and
+  R² = 0.88**, against 62.1 GPa for the mean-value baseline.
 
-**This short run does not beat the mean-value baseline.** With 400 training structures and
-25 epochs, the model captures the trend (soft vs stiff solids) but compresses the range: 365 GPa is
-predicted as 184 GPa. Treat this example as a check that the training, saving and reload path works,
-not as a usable bulk-modulus model. For a usable model, train longer on more data and compare
-against the same baseline. Examples of more data are the full MP elasticity set and Matbench
-`matbench_log_kvrh`, which uses log K.
+Reload check on the first five structures (target → prediction, GPa): 1.97 → 0.98,
+166.98 → 167.04, 1.87 → 13.48, 365.05 → 290.33, 39.59 → 37.78.
+
+The pretrained CHGNet representation transfers well to bulk modulus, even with 400 training
+structures and 25 epochs. Full fine-tuning beats the frozen backbone by about 4 GPa. Very soft
+(< 5 GPa) and very stiff (> 300 GPa) solids carry the largest relative errors.
+
+**Correction:** an earlier version of this example reported about 70 GPa, worse than the
+baseline. That came from a batching bug in `train_matgl_property.py`. Dividing the per-structure
+CHGNet output (shape [B]) by a [B, 1] atom-count tensor broadcast to [B, B], so the loss mixed
+predictions across structures. `tests/matgl/test_matgl_property_batching.py` now compares batched
+predictions and errors with one-structure-at-a-time evaluation.
