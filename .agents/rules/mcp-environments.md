@@ -11,7 +11,7 @@ AtomisticSkills runs all skill scripts and MCP servers through the unified launc
 | Environment | Primary Packages | GPU | MCP Servers |
 | :--- | :--- | :--- | :--- |
 | `cpu` | ASE, pymatgen, RDKit, pycalphad, MDAnalysis (no torch) | No | `base`, `atomate2`, `drugdisc`, `smol` |
-| `mlip` | PyTorch 2.14.1, MACE-torch 0.3.16, MatGL 4.1.2, nvalchemi-toolkit 0.2.0 | Yes | `mace`, `matgl` |
+| `mlip` | PyTorch 2.14.1, MACE-torch 0.3.16 + cuEquivariance, MatGL 4.1.2, nvalchemi-toolkit 0.2.0 | Yes | `mace`, `matgl` |
 | `fairchem` | PyTorch 2.13.0, fairchem-core 2.24.0, nvalchemi-toolkit 0.2.0 | Yes | `fairchem` |
 
 ### Research Stacks
