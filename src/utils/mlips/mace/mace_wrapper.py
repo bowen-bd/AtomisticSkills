@@ -174,6 +174,18 @@ class MACEWrapper(MLIPModel):
             self.load_checkpoint(model_path)
             logger.info(f"Loaded model from checkpoint: {model_path}")
 
+    def _accepts_accelerator(self) -> bool:
+        """
+        Whether this model's calculator path can take an accelerator at all.
+
+        MACE-ANI-CC is built by mace_anicc, which fixes its own argument list,
+        so it cannot be handed enable_cueq. Reporting the cuEquivariance
+        speedup for it would promise a fast path that never runs — the same
+        mistake as announcing a Nitro fallback for a checkpoint that was never
+        eligible for Nitro.
+        """
+        return "ANI-CC" not in self.model_name.upper()
+
     def _accelerator_kwargs(self) -> Dict[str, Any]:
         """
         Calculator kwargs for the accelerated path, or empty when it is out.
@@ -183,6 +195,8 @@ class MACEWrapper(MLIPModel):
         lacks a GPU, the package, or a compatible card.
         """
         if self.accelerator == "none" or self._accelerator_failed:
+            return {}
+        if not self._accepts_accelerator():
             return {}
         if not _is_cuda(self.device):
             if not self._accelerator_warned:
@@ -216,6 +230,8 @@ class MACEWrapper(MLIPModel):
         """
         if self.accelerator == "none":
             return "none (disabled by request)"
+        if not self._accepts_accelerator():
+            return f"none ({self.model_name} has no accelerated calculator path)"
         if not _is_cuda(self.device):
             return f"none (device is {self.device}, and cueq needs CUDA)"
         if not cueq_installed():
