@@ -22,12 +22,17 @@ logger = logging.getLogger(__name__)
 # Model configurations, default tasks, and supported tasks
 MODEL_METADATA = {
     # UMA models (Universal) - Can handle both solid state (omat) and output molecular properties (omol)
-    "uma-s-1p2": {
+    # uma-s-1p2p1 is the release FAIR recommends by default, and the only
+    # checkpoint UMA Nitro (fast single-GPU inference, fairchem-core >= 2.24)
+    # can serve: nitro mode keys off this model_id plus an MD5 allowlist, so
+    # asking for it under any other UMA name silently falls back to the slower
+    # merged-MoLE path.
+    "uma-s-1p2p1": {
         "default_task": "omat",
         "supported_tasks": ["omat", "omol", "oc22"],
         "domain": "general",
     },
-    "uma-m-1p2": {
+    "uma-s-1p2": {
         "default_task": "omat",
         "supported_tasks": ["omat", "omol", "oc22"],
         "domain": "general",
@@ -42,10 +47,21 @@ MODEL_METADATA = {
         "supported_tasks": ["omat", "omol", "oc22"],
         "domain": "general",
     },
-    "uma-s-1": {
+    # Single-task fine-tunes of uma-s-1p2p1 at higher levels of theory. Each
+    # has exactly one task, so the head is not a choice.
+    #   -ft-r2scan: r2SCAN, not spin-polarised (no magnetic systems, and no
+    #   cohesive energies); pair it with DFTD3Calculator(functional="r2scan").
+    #   -ft-d4rev: wB97M-D4rev for molecules, dispersion already included, so
+    #   do not add D3 on top.
+    "uma-s-1p2p1-ft-r2scan": {
         "default_task": "omat",
-        "supported_tasks": ["omat", "omol", "oc22"],
+        "supported_tasks": ["omat"],
         "domain": "general",
+    },
+    "uma-s-1p2p1-ft-d4rev": {
+        "default_task": "omol",
+        "supported_tasks": ["omol"],
+        "domain": "molecular",
     },
     # ESEN models for organic molecules (Molecular only)
     "esen-md-direct-all-omol": {
@@ -439,6 +455,16 @@ class FAIRCHEMWrapper(MLIPModel):
             elif hasattr(checkpoint, "model_name"):
                 loaded_model_name = getattr(checkpoint, "model_name")
 
+            # A checkpoint carries the model_id baked in at training time
+            # ("UMA-S-1.2.1"), not our registry key ("uma-s-1p2p1"). The two
+            # differ only in case and in periods-for-p, so normalise before
+            # looking it up: without this an UMA-S-1.2.1 fine-tune fails the
+            # lookup and loads the wrong base model beneath its weights.
+            if loaded_model_name:
+                normalised = str(loaded_model_name).lower().replace(".", "p")
+                if normalised in MODEL_METADATA:
+                    loaded_model_name = normalised
+
             if loaded_model_name and loaded_model_name in MODEL_METADATA:
                 logging.info(
                     f"Inferred base model from checkpoint: {loaded_model_name}"
@@ -448,16 +474,17 @@ class FAIRCHEMWrapper(MLIPModel):
 
             # Now load base model if needed
             if not self.is_loaded:
-                # If model_name is still a path and we couldn't infer, we default to UMA-S-1P1 as reasonable fallback?
-                # Or we fail. UMA-S-1P1 is a safe bet for most testing.
+                # If model_name is still a path and we couldn't infer the base
+                # from its model_id, fall back to the release FAIR recommends
+                # by default rather than a guess.
                 if (
                     self.model_name not in MODEL_METADATA
                     and Path(self.model_name).exists()
                 ):
                     logging.warning(
-                        f"Could not infer base model from checkpoint {checkpoint_path}. Defaulting to 'uma-s-1p1'."
+                        f"Could not infer base model from checkpoint {checkpoint_path}. Defaulting to 'uma-s-1p2p1'."
                     )
-                    self.model_name = "uma-s-1p1"
+                    self.model_name = "uma-s-1p2p1"
                     self._setup_model_classes()
 
                 self.load()

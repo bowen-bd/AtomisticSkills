@@ -28,9 +28,34 @@ mcp = FastMCP("FAIRCHEM")
 wrapper: Optional[Any] = None
 
 
+def _inference_mode_note(loaded_wrapper: Any) -> str:
+    """
+    Say whether UMA Nitro is actually running.
+
+    fairchem downgrades to the merged-MoLE path whenever Nitro cannot serve the
+    request (no CUDA, a checkpoint outside its MD5 allowlist, a GPU whose
+    compute capability differs from the one current at import, batched input),
+    and only logs a warning. The slowdown is large enough that a caller should
+    see it in the tool result rather than in a server log.
+    """
+    settings = getattr(
+        getattr(loaded_wrapper, "model", None), "inference_settings", None
+    )
+    nitro = getattr(settings, "nitro", None)
+    if nitro is True:
+        return " Inference mode: nitro."
+    if nitro is False:
+        return (
+            " Inference mode: NOT nitro — fairchem fell back to the merged-MoLE "
+            "path (needs CUDA plus a checkpoint Nitro supports; see the "
+            "load_model inference_settings docs for the fast path)."
+        )
+    return ""
+
+
 @mcp.tool()
 def load_model(
-    model_name: str = "uma-s-1p2",
+    model_name: str = "uma-s-1p2p1",
     device: str = "auto",
     task_name: Optional[str] = None,
     inference_settings: str = "default",
@@ -39,13 +64,15 @@ def load_model(
     Load a FAIRCHEM model.
 
     Supported models include:
-    - UMA (Universal): 'uma-s-1p2', 'uma-m-1p2', 'uma-s-1p1', 'uma-m-1p1', 'uma-s-1'
+    - UMA (Universal): 'uma-s-1p2p1' (recommended default), 'uma-s-1p2', 'uma-s-1p1', 'uma-m-1p1'
+    - UMA 1.2.1 fine-tunes, one task each: 'uma-s-1p2p1-ft-r2scan' (omat, r2SCAN,
+      not spin-polarised) and 'uma-s-1p2p1-ft-d4rev' (omol, wB97M-D4rev)
     - ESEN (Organic/Molecular): 'esen-md-direct-all-omol', 'esen-sm-conserving-all-omol', 'esen-sm-direct-all-omol'
     - ESEN (Catalysis/OC25): 'esen-sm-conserving-all-oc25', 'esen-md-direct-all-oc25'
     - Fine-tuned checkpoint: provide the full path to an inference_ckpt.pt file
 
     Args:
-        model_name: Name of the model to load (default: "uma-s-1p2").
+        model_name: Name of the model to load (default: "uma-s-1p2p1").
                    Can also be a file path to a fine-tuned inference checkpoint
                    (e.g., "/path/to/inference_ckpt.pt" from fairchem CLI fine-tuning).
         device: Device to use ("auto", "cpu", "cuda").
@@ -55,10 +82,17 @@ def load_model(
                   'oc20': Heterogeneous catalysis / surface reactions (PBE-level).
                   'odac': Metal-Organic Frameworks / CO2 capture (PBE-level).
                   'omc': Molecular crystals (PBE-level).
-        inference_settings: Inference settings preset (default: "default").
+        inference_settings: Preset name. "default"/"nitro" selects UMA Nitro, the
+                  fast single-GPU engine — several times faster than the other
+                  presets on small and mid-size systems, computing in TF32. It
+                  needs a CUDA GPU and a checkpoint Nitro supports, and falls
+                  back with a warning otherwise. Use "high-precision" for FP32,
+                  or "multigpu" for multi-worker and batched inference. "turbo"
+                  was renamed to "multigpu" and now raises.
 
     Returns:
-        Confirmation message.
+        Confirmation message naming the inference mode actually in effect:
+        Nitro falls back silently otherwise, and the fallback costs the speedup.
 
     CRITICAL: This tool must be called before using any other tool to load the model into memory.
     """
@@ -74,7 +108,7 @@ def load_model(
             inference_settings=inference_settings,
         )
         wrapper.load()
-        return f"Successfully loaded FAIRCHEM model: {model_name}"
+        return f"Successfully loaded FAIRCHEM model: {model_name}{_inference_mode_note(wrapper)}"
     except Exception as e:
         message = f"Error loading model: {str(e)}"
         if "401" in str(e) or "gated repo" in str(e):
