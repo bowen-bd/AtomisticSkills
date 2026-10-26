@@ -129,6 +129,30 @@ class TestAcceleratorFallback:
 
 
 @pytest.mark.mace
+class TestModelsWithoutAcceleratedPath:
+    def test_ani_cc_never_requests_cueq(self, monkeypatch):
+        """mace_anicc fixes its own arguments, so cueq cannot be passed."""
+        monkeypatch.setattr(mw, "cueq_installed", lambda: True)
+        w = mw.MACEWrapper(model_name="MACE-ANI-CC", device="cuda")
+        assert w._accelerator_kwargs() == {}
+        assert w.accelerator_effective == "none"
+
+    def test_ani_cc_does_not_promise_the_speedup(self, monkeypatch):
+        """Do not announce an accelerator the model can never use."""
+        monkeypatch.setattr(mw, "cueq_installed", lambda: True)
+        w = mw.MACEWrapper(model_name="MACE-ANI-CC", device="cuda")
+        described = w.describe_accelerator()
+        assert described.startswith("none")
+        assert "no accelerated calculator path" in described
+
+    def test_other_models_do_accept_it(self, monkeypatch):
+        monkeypatch.setattr(mw, "cueq_installed", lambda: True)
+        for name in ("MACE-MH-1", "MACE-OFF23-medium", "MACE-OMOL-extra-large"):
+            w = mw.MACEWrapper(model_name=name, device="cuda")
+            assert w._accelerator_kwargs() == {"enable_cueq": True}, name
+
+
+@pytest.mark.mace
 class TestDescribeAccelerator:
     def test_reports_cpu_as_none(self):
         w = mw.MACEWrapper(model_name="MACE-MH-1", device="cpu")
