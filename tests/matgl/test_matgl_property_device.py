@@ -26,7 +26,10 @@ DEVICES = ["cpu"] + [f"cuda:{i}" for i in range(torch.cuda.device_count())]
         ("MEGNet-Eform-MP-2018.6.1", "formation_energy"),
     ],
 )
-def test_property_prediction_on_each_device(model_name, key, device):
+def test_property_prediction_on_each_device(
+    model_name, key, device, require_matgl_model
+):
+    require_matgl_model(model_name)
     wrapper = MatGLWrapper(model_name=model_name, device=device)
     wrapper.load()
     result = wrapper.static_calculation(SI.to_ase_atoms())

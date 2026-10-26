@@ -238,22 +238,27 @@ class TestMatGLBandgapFunctionals:
         wrapper.load()
         return wrapper.static_calculation(si_atoms)
 
-    def test_pbe_bandgap(self, si_atoms, skip_if_wrong_env):
+    def test_pbe_bandgap(self, si_atoms, skip_if_wrong_env, require_matgl_model):
+        require_matgl_model("MEGNet-BandGap-mfi-MP-2019.4.1")
         result = self._predict("PBE", si_atoms)
         assert "error" not in result, result.get("error")
         assert "bandgap" in result
         assert isinstance(result["bandgap"], float)
         assert result["bandgap"] > 0
 
-    def test_hse_bandgap(self, si_atoms, skip_if_wrong_env):
+    def test_hse_bandgap(self, si_atoms, skip_if_wrong_env, require_matgl_model):
+        require_matgl_model("MEGNet-BandGap-mfi-MP-2019.4.1")
         result = self._predict("HSE", si_atoms)
         assert "error" not in result, result.get("error")
         assert "bandgap" in result
         assert isinstance(result["bandgap"], float)
         assert result["bandgap"] > 0
 
-    def test_functionals_give_different_values(self, si_atoms, skip_if_wrong_env):
+    def test_functionals_give_different_values(
+        self, si_atoms, skip_if_wrong_env, require_matgl_model
+    ):
         """HSE should predict a larger bandgap than PBE for Si (consistent with DFT literature)."""
+        require_matgl_model("MEGNet-BandGap-mfi-MP-2019.4.1")
         pbe = self._predict("PBE", si_atoms)["bandgap"]
         hse = self._predict("HSE", si_atoms)["bandgap"]
         gllb = self._predict("GLLB-SC", si_atoms)["bandgap"]
@@ -263,8 +268,11 @@ class TestMatGLBandgapFunctionals:
         values = {pbe, hse, gllb, scan}
         assert len(values) > 1, f"All functionals returned the same bandgap: {values}"
 
-    def test_invalid_task_name_defaults_to_pbe(self, si_atoms, skip_if_wrong_env):
+    def test_invalid_task_name_defaults_to_pbe(
+        self, si_atoms, skip_if_wrong_env, require_matgl_model
+    ):
         """Unknown task_name should silently fall back to PBE (index 0)."""
+        require_matgl_model("MEGNet-BandGap-mfi-MP-2019.4.1")
         result_default = self._predict(None, si_atoms)
         result_unknown = self._predict("UNKNOWN", si_atoms)
         assert result_default["bandgap"] == pytest.approx(
