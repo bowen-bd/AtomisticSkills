@@ -52,7 +52,7 @@ Floors (not strict pins) keep the scientific packages of the shared projects cur
 | :--- | :--- | :--- | :--- |
 | torch | 2.14.1 (CUDA 12.6 or 13) | 2.13.0 (CUDA 12.6 or 13) | — |
 | mace-torch / e3nn | 0.3.16 / 0.4.4 | — | — |
-| matgl | 4.1.0 (PyG only; DGL removed) | — | — |
+| matgl | 4.1.2 (PyG only; DGL removed) | — | — |
 | fairchem-core / e3nn | — | 2.24.0 / 0.6.0 | — |
 | nvalchemi-toolkit | 0.2.0 | 0.2.0 | — |
 | numpy | 2.3.5 | 2.3.5 | 2.5.3 |

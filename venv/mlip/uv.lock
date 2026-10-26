@@ -419,7 +419,7 @@ requires-dist = [
     { name = "lobsterpy" },
     { name = "mace-torch", specifier = ">=0.3.16" },
     { name = "matcalc" },
-    { name = "matgl", specifier = ">=4.1" },
+    { name = "matgl", specifier = ">=4.1.2" },
     { name = "matplotlib" },
     { name = "mcp", specifier = "<2" },
     { name = "mdanalysis" },
@@ -2570,7 +2570,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/d0/96/716548aacbe155aac
 
 [[package]]
 name = "matgl"
-version = "4.1.0"
+version = "4.1.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "ase", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130')" },
@@ -2586,9 +2586,9 @@ dependencies = [
     { name = "torch-geometric", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130')" },
     { name = "torchdata", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or (sys_platform != 'linux' and extra == 'extra-25-atomisticskills-venv-mlip-cu126' and extra == 'extra-25-atomisticskills-venv-mlip-cu130')" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/38/9f/8777fda736b43d710650c16a3a8aad40139597e8c305ede4385a06f9b5b0/matgl-4.1.0.tar.gz", hash = "sha256:da2e15e49e19c15222a1fd5c61011fdbac116ad93a35da54d30b7933136040f3", size = 377216, upload-time = "2026-09-30T07:34:11.66Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/86/65/26e55dfe1f7e0617d4156fb83e8a08227c1111b8a0503a8775f7356abda0/matgl-4.1.2.tar.gz", hash = "sha256:ac0ae28beda103af72dafda7a700acbe066806dbc1a53f71167f2bf6cf2f3b21", size = 2916897, upload-time = "2026-10-26T10:06:49.781Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a0/19/84249515aa99256324419afa264265364ad5d675dcddc3a675f65fc921c4/matgl-4.1.0-py3-none-any.whl", hash = "sha256:df229fc2f90b9f8aa74115549e3c157fd15efc220b6573b5eb40525a5a6d138c", size = 399500, upload-time = "2026-09-30T07:34:09.745Z" },
+    { url = "https://files.pythonhosted.org/packages/d6/12/daecb73c9230197fbeed73fc823d1eb5b1d26f6b9ae842f5acd91533eea1/matgl-4.1.2-py3-none-any.whl", hash = "sha256:d79fca8825f37ee5e85264cc34724f49b44d32f22439ace580680a714464831c", size = 388298, upload-time = "2026-10-26T10:06:48.047Z" },
 ]
 
 [[package]]
