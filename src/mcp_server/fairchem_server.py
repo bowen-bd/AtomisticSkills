@@ -37,7 +37,19 @@ def _inference_mode_note(loaded_wrapper: Any) -> str:
     compute capability differs from the one current at import, batched input),
     and only logs a warning. The slowdown is large enough that a caller should
     see it in the tool result rather than in a server log.
+
+    The note is only meaningful for a checkpoint Nitro can serve. Every model is
+    handed the same ``inference_settings`` preset, so an ESEN checkpoint or an
+    older UMA release also comes back with ``nitro`` unset by fairchem's
+    fallback — but those never had the speedup to lose, and reporting a
+    "fallback" for them would be a false alarm rather than information.
     """
+    # Nitro serves only uma-s-1p2p1 (fairchem's NITRO_CHECKPOINT) and the
+    # fine-tunes that keep its UMA-S-1.2.1 model_id, so the name is the gate.
+    model_name = str(getattr(loaded_wrapper, "model_name", ""))
+    if not model_name.lower().startswith("uma-s-1p2p1"):
+        return ""
+
     settings = getattr(
         getattr(loaded_wrapper, "model", None), "inference_settings", None
     )

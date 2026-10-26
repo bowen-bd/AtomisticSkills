@@ -93,6 +93,25 @@ AVAILABLE_MATGL_MODELS = {
 }
 
 
+def resolve_model_name(name: str) -> str:
+    """
+    Map a model name or alias onto the checkpoint name MatGL loads.
+
+    Aliases match case-insensitively, so ``chgnet`` and ``CHGNet`` both reach
+    ``CHGNet-PES-MatPES-PBE-1M-2026.9``. A name outside the alias table is
+    returned unchanged: MatGL then resolves it against the Hub itself, which is
+    where a bare checkpoint name such as ``M3GNet-Eform-MP-2019.4.1`` ends up.
+
+    Single source of truth for the alias table, so callers that need to know
+    which artefact a name denotes (the tests' availability gate) cannot drift
+    from what ``load`` actually does.
+    """
+    for key, value in AVAILABLE_MATGL_MODELS.items():
+        if name.upper() == key.upper():
+            return value
+    return name
+
+
 class MatGLWrapper(MLIPModel):
     """MatGL model wrapper implementing the MLIPModel interface."""
 
@@ -118,10 +137,7 @@ class MatGLWrapper(MLIPModel):
 
         # Resolve aliases
         if model_path is None:
-            for key, val in AVAILABLE_MATGL_MODELS.items():
-                if name.upper() == key.upper():
-                    name = val
-                    break
+            name = resolve_model_name(name)
 
         logger.info(f"Loading MatGL model {name} on {self.device}")
         self.model = matgl.load_model(name)

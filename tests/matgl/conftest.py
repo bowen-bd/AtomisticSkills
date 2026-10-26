@@ -4,13 +4,17 @@ import pytest
 
 
 def _resolve(name: str) -> str:
-    """Apply the wrapper's alias table, the way MatGLWrapper.load does."""
-    from src.utils.mlips.matgl.matgl_wrapper import AVAILABLE_MATGL_MODELS
+    """
+    Apply the wrapper's alias table, the way ``MatGLWrapper.load`` does.
 
-    for key, value in AVAILABLE_MATGL_MODELS.items():
-        if name.upper() == key.upper():
-            return value
-    return name
+    The import stays inside the function because ``matgl_wrapper`` pulls in
+    torch and matplotlib at module scope; a module-level import here would
+    break collection of any suite that reaches ``tests/matgl`` without the
+    mlip environment.
+    """
+    from src.utils.mlips.matgl.matgl_wrapper import resolve_model_name
+
+    return resolve_model_name(name)
 
 
 @pytest.fixture(scope="session")
@@ -25,18 +29,25 @@ def matgl_pretrained_models() -> set[str]:
     the suite red: ask the Hub once per session and let the tests that need a
     missing model skip with the reason.
 
-    Returns an empty set rather than raising when matgl has no Hub lookup
-    (an older matgl elsewhere on the path), so a mis-targeted run skips
-    instead of erroring.
+    An empty answer is a different case and is *not* reported as "everything
+    was withdrawn": ``get_available_pretrained_models`` swallows Hub errors and
+    returns ``[]``, so an empty catalogue means this runner cannot reach the
+    Hub. Failing there is the point — skipping would name the wrong cause, and
+    the property tests would quietly stop running instead of the suite saying
+    it has no network.
     """
-    try:
-        from matgl.utils.io import get_available_pretrained_models
-    except (ImportError, AttributeError):
-        return set()
+    from matgl.utils.io import get_available_pretrained_models
 
-    # get_available_pretrained_models swallows Hub errors and returns [], which
-    # degrades to "skip everything" when the Hub is unreachable.
-    return set(get_available_pretrained_models())
+    models = set(get_available_pretrained_models())
+    if not models:
+        pytest.fail(
+            "matgl reported an empty pretrained catalogue: "
+            "get_available_pretrained_models() returns [] when the Hugging Face "
+            "Hub is unreachable, so this runner most likely has no network. "
+            "That is not the same as every artefact being withdrawn upstream, "
+            "and it must not silently skip the model tests."
+        )
+    return models
 
 
 @pytest.fixture(scope="session")
@@ -45,7 +56,7 @@ def require_matgl_model(matgl_pretrained_models):
     Return a callable that skips the calling test if a model is unavailable.
 
     Usage:
-        def test_bandgap(require_matgl_model):
+        def test_formation_energy(require_matgl_model):
             require_matgl_model("M3GNet-Eform-MP-2019.4.1")
             ...
     """
