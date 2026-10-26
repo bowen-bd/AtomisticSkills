@@ -46,7 +46,7 @@ def require_matgl_model(matgl_pretrained_models):
 
     Usage:
         def test_bandgap(require_matgl_model):
-            require_matgl_model("MEGNet-MP-2019.4.1-BandGap-mfi")
+            require_matgl_model("M3GNet-Eform-MP-2019.4.1")
             ...
     """
 

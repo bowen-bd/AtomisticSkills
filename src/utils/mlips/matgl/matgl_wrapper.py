@@ -88,20 +88,18 @@ AVAILABLE_MATGL_MODELS = {
     # SO3Net PES models
     "SO3Net": "SO3Net-PES-ANI-1x-Subset",
     "SO3Net-PES-ANI-1x-Subset": "SO3Net-PES-ANI-1x-Subset",
-    # Property models (MEGNet)
-    "MEGNet-BandGap-mfi-MP-2019.4.1": "MEGNet-BandGap-mfi-MP-2019.4.1",
-    "MEGNet-MP-2019.4.1-BandGap-mfi": "MEGNet-BandGap-mfi-MP-2019.4.1",
-    "MEGNet-BandGap-mfi": "MEGNet-BandGap-mfi-MP-2019.4.1",
-    "MEGNet-Eform-MP-2018.6.1": "MEGNet-Eform-MP-2018.6.1",
-    "M3GNet-Eform-MP-2018.6.1": "M3GNet-Eform-MP-2018.6.1",
+    # Property model. The MEGNet property models are gone: the materialyze
+    # Hugging Face org, the only source matgl 4.x resolves a bare model name
+    # against, stopped publishing MEGNet-BandGap-mfi and MEGNet-Eform, and it
+    # offers no bandgap replacement at all. Nothing here may point at a model
+    # that cannot be downloaded.
+    "M3GNet-Eform": "M3GNet-Eform-MP-2019.4.1",
+    "M3GNet-Eform-MP-2019.4.1": "M3GNet-Eform-MP-2019.4.1",
 }
 
 
 class MatGLWrapper(MLIPModel):
     """MatGL model wrapper implementing the MLIPModel interface."""
-
-    # Functional indices for MEGNet-BandGap-mfi (ntypes_state=4)
-    BANDGAP_FUNCTIONALS: Dict[str, int] = {"PBE": 0, "GLLB-SC": 1, "HSE": 2, "SCAN": 3}
 
     def __init__(
         self,
@@ -148,12 +146,7 @@ class MatGLWrapper(MLIPModel):
     def static_calculation(
         self, structure_data: Any, use_nvalchemi: bool = False
     ) -> Dict[str, Any]:
-        """Run a static single-point calculation.
-
-        For MEGNet-BandGap models the DFT functional is selected via ``task_name``
-        set at construction time (default "PBE"). Supported values: "PBE", "GLLB-SC",
-        "HSE", "SCAN".
-        """
+        """Run a static single-point calculation."""
         if not self.is_loaded:
             return {"error": "Model not loaded. Please call load() first."}
 
@@ -175,26 +168,18 @@ class MatGLWrapper(MLIPModel):
         if "Potential" in model_class:
             return super().static_calculation(atoms)
 
-        # Property predictor (MEGNet bandgap / Eform)
+        # Property predictor (M3GNet formation energy)
         try:
             from pymatgen.io.ase import AseAtomsAdaptor
 
             structure = AseAtomsAdaptor.get_structure(atoms)
-            # MEGNet-BandGap uses ntypes_state=4; predict_structure requires an explicit
-            # functional index passed as state_attr. Resolve from task_name (default PBE=0).
-            state_attr = None
-            if "BandGap" in self.model_name:
-                functional = self.BANDGAP_FUNCTIONALS.get(self.task_name or "PBE", 0)
-                state_attr = torch.tensor([functional], dtype=torch.float32)
-            prediction = self._predict_structure(structure, state_attr)
+            prediction = self._predict_structure(structure, None)
             val = float(
                 prediction.item() if hasattr(prediction, "item") else prediction
             )
 
             prop_name = "property_prediction"
-            if "BandGap" in self.model_name or "band_gap" in self.model_name.lower():
-                prop_name = "bandgap"
-            elif "Eform" in self.model_name or "formation" in self.model_name.lower():
+            if "Eform" in self.model_name or "formation" in self.model_name.lower():
                 prop_name = "formation_energy"
 
             return {prop_name: val, "unit": "eV"}

@@ -85,10 +85,3 @@ def test_predict_atomic_features(loaded_server, cu_structure):
     assert "error" not in res
     assert "atomic_features" in res
     assert "feature_dim" in res
-
-
-def test_predict_bandgap(loaded_server, cu_structure, require_matgl_model):
-    require_matgl_model("MEGNet-BandGap-mfi-MP-2019.4.1")
-    res = loaded_server.predict_bandgap(cu_structure)
-    assert "error" not in res
-    assert "bandgap" in res

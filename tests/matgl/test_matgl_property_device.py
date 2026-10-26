@@ -22,8 +22,10 @@ DEVICES = ["cpu"] + [f"cuda:{i}" for i in range(torch.cuda.device_count())]
 @pytest.mark.parametrize(
     "model_name, key",
     [
-        ("MEGNet-MP-2019.4.1-BandGap-mfi", "bandgap"),
-        ("MEGNet-Eform-MP-2018.6.1", "formation_energy"),
+        # The only property model matgl still publishes: the MEGNet bandgap and
+        # Eform checkpoints were withdrawn from its Hugging Face org, and it
+        # offers no bandgap replacement at all.
+        ("M3GNet-Eform-MP-2019.4.1", "formation_energy"),
     ],
 )
 def test_property_prediction_on_each_device(

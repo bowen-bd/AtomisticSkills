@@ -50,7 +50,7 @@ def load_model(
     - TensorNet PES: 'TensorNet-PES-MatPES-PBE-2025.2', 'TensorNet-PES-MatPES-r2SCAN-2025.2', 'TensorNet-PES-ANI-1x-Subset'
     - QET PES: 'QET-PES-MatPES-PBE-2025.2', 'QET-PES-MatPES-r2SCAN-2025.2', 'QET-PES-MatQ'
     - SO3Net PES: 'SO3Net-PES-ANI-1x-Subset'
-    - Formation energy: 'MEGNet-Eform-MP-2018.6.1'
+    - Formation energy: 'M3GNet-Eform-MP-2019.4.1'
 
     Args:
         model_name: Name of the model to load.
@@ -59,7 +59,7 @@ def load_model(
     Returns:
         Confirmation message.
 
-    CRITICAL: This tool must be called before using any other tool (except predict_bandgap) to load the model into memory.
+    CRITICAL: This tool must be called before using any other tool to load the model into memory.
     """
     global wrapper
     try:
@@ -165,44 +165,6 @@ def predict_atomic_features(
         # If saving fails, still return the features but with error info
         result["save_error"] = f"Failed to save features: {str(e)}"
         return result
-
-
-# Local variable to cache bandgap predictor separate from global PES wrapper
-_bandgap_wrapper: Optional[Any] = None
-
-
-@mcp.tool()
-def predict_bandgap(
-    structure_data: Union[Dict[str, Any], str],
-    task_name: Optional[str] = None,
-) -> Dict[str, Any]:
-    """
-    Predict the bandgap for a structure using MEGNet-BandGap-mfi.
-    Uses an isolated model instance to avoid conflicts with PES calculations.
-
-    Args:
-        structure_data: Single structure or batch (directory path, list of dicts/paths).
-        task_name: DFT functional for the bandgap prediction.
-            Supported: "PBE" (default), "GLLB-SC", "HSE", "SCAN".
-
-    Returns:
-        Dictionary containing "bandgap" in eV.
-    """
-    global _bandgap_wrapper
-    try:
-        if _bandgap_wrapper is None or _bandgap_wrapper.task_name != task_name:
-            from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
-
-            _bandgap_wrapper = MatGLWrapper(
-                model_name="MEGNet-MP-2019.4.1-BandGap-mfi",
-                device="auto",
-                task_name=task_name,
-            )
-            _bandgap_wrapper.load()
-
-        return _bandgap_wrapper.static_calculation(structure_data)
-    except Exception as e:
-        return {"error": f"Bandgap prediction failed: {str(e)}"}
 
 
 @mcp.tool()

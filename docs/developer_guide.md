@@ -43,7 +43,7 @@ Each MCP server is a standalone Python module that exposes tools via the FastMCP
 | [drugdisc_server.py](../src/mcp_server/drugdisc_server.py) | `cpu` | Molecular descriptors, standardization, PDBQT conversion |
 | [smol_server.py](../src/mcp_server/smol_server.py) | `cpu` | Cluster expansion training and Monte Carlo simulations |
 | [mace_server.py](../src/mcp_server/mace_server.py) | `mlip` | MACE foundation models (relax, MD, features) |
-| [matgl_server.py](../src/mcp_server/matgl_server.py) | `mlip` | MatGL models (CHGNet, TensorNet), bandgap prediction |
+| [matgl_server.py](../src/mcp_server/matgl_server.py) | `mlip` | MatGL models (CHGNet, TensorNet, M3GNet) |
 | [fairchem_server.py](../src/mcp_server/fairchem_server.py) | `fairchem` | FairChem models (UMA, eSEN) |
 | [mattergen_server.py](../src/mcp_server/mattergen_server.py) | `mattergen` (aarch64: `generative` image) | MatterGen generative crystal design |
 | [adit_server.py](../src/mcp_server/adit_server.py) | `adit` (aarch64: `generative` image) | ADiT all-atom diffusion transformer |
