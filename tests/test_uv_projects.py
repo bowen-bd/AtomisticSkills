@@ -125,7 +125,30 @@ def test_extras_are_the_same_everywhere(project):
     # from each (build support in mlip, the LAMMPS wheel in fairchem); everything
     # else matches cpu.
     if project in ("mlip", "fairchem"):
-        assert extras.pop("cu126") == extras.pop("cu130") == ["torch", "torchvision"]
+        cu126, cu130 = extras.pop("cu126"), extras.pop("cu130")
+        # torch and torchvision are the same two names in both flavours, told
+        # apart by their index (see test_gpu_projects_lock_both_torch_cuda_builds).
+        assert cu126[:2] == cu130[:2] == ["torch", "torchvision"]
+        if project == "mlip":
+            # cuEquivariance is the one dependency whose wheel is compiled per
+            # CUDA major under a different *distribution name*
+            # (…-ops-torch-cu12 / …-ops-torch-cu13) with no unsuffixed
+            # meta-package, so unlike torch it cannot be switched by index.
+            # Spell both halves out: anything else appearing here, or the two
+            # flavours drifting apart, still fails.
+            def split_cueq(extra):
+                tail = extra[2:]
+                ops = [e for e in tail if e.startswith("cuequivariance-ops-torch-cu")]
+                assert len(ops) == 1, extra
+                return set(tail) - set(ops), ops[0]
+
+            shared126, ops126 = split_cueq(cu126)
+            shared130, ops130 = split_cueq(cu130)
+            assert shared126 == shared130 == {"cuequivariance-torch>=0.2.0"}
+            assert ops126 == "cuequivariance-ops-torch-cu12>=0.2.0"
+            assert ops130 == "cuequivariance-ops-torch-cu13>=0.2.0"
+        else:
+            assert cu126 == cu130 == ["torch", "torchvision"]
         assert extras.pop("lammps"), project
     assert extras == load("cpu")["project"]["optional-dependencies"]
     assert set(extras) == {"openmm", "pymol", "docking", "void", "transport"}
