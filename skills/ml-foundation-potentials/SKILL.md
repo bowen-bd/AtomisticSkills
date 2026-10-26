@@ -45,7 +45,7 @@ Select the appropriate machine learning interatomic potential (MLIP) for a given
 
 - **uma-s-1p2p1** (default; UMA checkpoints are gated on Hugging Face: request access at https://huggingface.co/facebook/UMA and set `HF_TOKEN`):
   - Use for organic and inorganic simulations.
-  - **Speed:** this is the one checkpoint UMA Nitro serves (fairchem-core >= 2.24, the `fairchem` env), which is what makes UMA viable for dynamics. The gain is largest on small systems — several-fold versus the pre-Nitro paths at tens of atoms — and narrows to about 1.5x by a thousand atoms. Nitro computes in TF32, so energies and forces differ from the FP32 path at the meV level; use `high-precision` when you need FP32.
+  - **Speed:** this is the one checkpoint UMA Nitro serves (fairchem-core >= 2.24, the `fairchem` env), which is what makes UMA viable for dynamics. The gain is largest on small systems — several-fold versus the pre-Nitro paths at tens of atoms — and narrows to about 1.5x by a thousand atoms. Nitro runs in reduced precision — TF32 where the GPU allows it, IEEE matmul on compute capability 8.x, which fairchem holds to its numerical limits — so energies and forces differ from the FP32 path at the meV level; use `high-precision` when you need FP32.
   - Nitro needs a CUDA GPU; check the `load_model` result, which reports whether Nitro or a fallback is running. Off CUDA, on other UMA checkpoints, or for batched input it silently falls back and you lose most of the speed.
 - **uma-s-1p2p1-ft-r2scan** / **uma-s-1p2p1-ft-d4rev**:
   - Single-task 1.2.1 fine-tunes at higher levels of theory, both served by Nitro.

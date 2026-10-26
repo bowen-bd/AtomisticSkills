@@ -36,7 +36,7 @@ This correction is **REQUIRED** for:
 - **MACE-MH-0** `omat_pbe` head
 - **MACE-OMAT-0-small**, **MACE-OMAT-0-medium**
 - **MACE-MP-small**, **MACE-MP-medium**, **MACE-MP-large**
-- **uma-s-1**, **uma-s-1p1**, **uma-m-1p1** (with `omat` head)
+- **uma-s-1p2p1**, **uma-s-1p1**, **uma-m-1p1** (with `omat` head)
 
 This correction is **NOT** for:
 - **CHGNet** (e.g. `CHGNet-PES-MatPES-r2SCAN-1M-2026.9`)

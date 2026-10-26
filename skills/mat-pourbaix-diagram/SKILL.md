@@ -62,7 +62,7 @@ The script `calculate_pourbaix.py` automatically:
 
 ## Resources
 
-- `resources/h2o_energies.json`: A dictionary mapping MLIP checkpoint names (e.g., `MACE-MP-medium`, `uma-s-1_omat`) to the relaxed energy of H2O per atom. This avoids the need for manual H2O relaxation when using supported MLIPs.
+- `resources/h2o_energies.json`: A dictionary mapping MLIP checkpoint names (e.g., `MACE-MP-medium`, `uma-s-1p1_omat`) to the relaxed energy of H2O per atom. This avoids the need for manual H2O relaxation when using supported MLIPs. Keys are `{model}_{head}` where a head applies; a model absent from the file falls back to relaxing H2O locally. The `uma-s-1_*` entries are a record of a checkpoint matgl/fairchem no longer serve — inert, not selectable.
 
 
 ## Methods: MLIP vs. Pure Materials Project
