@@ -59,7 +59,6 @@ AVAILABLE_MATGL_MODELS = {
     "M3GNet-MatPES-r2SCAN": "M3GNet-PES-MatPES-r2SCAN-2025.2",
     "M3GNet-MatPES-r2SCAN-v2025.1-PES": "M3GNet-PES-MatPES-r2SCAN-2025.2",
     "M3GNet-PES-MatPES-r2SCAN-2025.2": "M3GNet-PES-MatPES-r2SCAN-2025.2",
-    "M3GNet-PES-ANI-1x-Subset": "M3GNet-PES-ANI-1x-Subset",
     # CHGNet PES models. The 1M-2026.9 checkpoints (matgl 4.1) are the default
     # CHGNet; versioned 2025 names still load exactly the weights they name.
     "CHGNet": "CHGNet-PES-MatPES-PBE-1M-2026.9",
@@ -79,20 +78,16 @@ AVAILABLE_MATGL_MODELS = {
     "TensorNet-MatPES-PBE": "TensorNet-PES-MatPES-PBE-2025.2",
     "TensorNet-MatPES-PBE-v2025.1-PES": "TensorNet-PES-MatPES-PBE-2025.2",
     "TensorNet-PES-MatPES-PBE-2025.2": "TensorNet-PES-MatPES-PBE-2025.2",
-    "TensorNet-PES-ANI-1x-Subset": "TensorNet-PES-ANI-1x-Subset",
     # QET PES models
     "QET": "QET-PES-MatPES-PBE-2025.2",
     "QET-PES-MatPES-PBE-2025.2": "QET-PES-MatPES-PBE-2025.2",
     "QET-PES-MatPES-r2SCAN-2025.2": "QET-PES-MatPES-r2SCAN-2025.2",
-    "QET-PES-MatQ": "QET-PES-MatQ",
-    # SO3Net PES models
-    "SO3Net": "SO3Net-PES-ANI-1x-Subset",
-    "SO3Net-PES-ANI-1x-Subset": "SO3Net-PES-ANI-1x-Subset",
-    # Property model. The MEGNet property models are gone: the materialyze
-    # Hugging Face org, the only source matgl 4.x resolves a bare model name
-    # against, stopped publishing MEGNet-BandGap-mfi and MEGNet-Eform, and it
-    # offers no bandgap replacement at all. Nothing here may point at a model
-    # that cannot be downloaded.
+    # Nothing past the MatPES checkpoints survives upstream. matgl 4.1.2
+    # dropped DGL support instead of remapping the keys, and every checkpoint
+    # it could not port was deleted from the materialyze org: the DGL-era
+    # ANI-1x subsets, QET-PES-MatQ, and the MEGNet property models. That is
+    # also why no bandgap model is left to name. The one property checkpoint
+    # upstream audited as loading cleanly is the M3GNet Eform below.
     "M3GNet-Eform": "M3GNet-Eform-MP-2019.4.1",
     "M3GNet-Eform-MP-2019.4.1": "M3GNet-Eform-MP-2019.4.1",
 }

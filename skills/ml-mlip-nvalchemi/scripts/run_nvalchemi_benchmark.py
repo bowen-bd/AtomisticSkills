@@ -98,12 +98,6 @@ ENV_MODELS: dict[str, list[tuple[str, str, str | None, str]]] = {
             None,
             "TensorNet-PES-r2SCAN-2025.2",
         ),
-        (
-            "TensorNet-PES-ANI-1x-Subset",
-            "src.utils.mlips.matgl.matgl_wrapper.MatGLWrapper",
-            None,
-            "TensorNet-PES-ANI-1x",
-        ),
         # CHGNet PES (NValchemi supported)
         (
             "CHGNet-PES-MatPES-PBE-1M-2026.9",
@@ -129,13 +123,6 @@ ENV_MODELS: dict[str, list[tuple[str, str, str | None, str]]] = {
             "src.utils.mlips.matgl.matgl_wrapper.MatGLWrapper",
             None,
             "QET-PES-r2SCAN-2025.2",
-        ),
-        # SO3Net PES (NValchemi NOT supported — will skip gracefully)
-        (
-            "SO3Net-PES-ANI-1x-Subset",
-            "src.utils.mlips.matgl.matgl_wrapper.MatGLWrapper",
-            None,
-            "SO3Net-PES-ANI-1x",
         ),
     ],
     "fairchem": [
