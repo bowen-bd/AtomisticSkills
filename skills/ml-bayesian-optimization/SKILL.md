@@ -89,7 +89,7 @@ For each row in `candidates_round_0.csv`, call the appropriate MCP tool to evalu
 | Objective type | Recommended MCP tool |
 |---|---|
 | Energy / formation energy | `mace.relax_structure` or `matgl.relax_structure` |
-| Bandgap | No MLIP tool: `matgl.predict_bandgap` was removed because matgl withdrew its bandgap model and publishes no replacement — evaluate with `atomate2.run_atomate2_vasp_calculation` instead |
+| Bandgap | No MLIP tool: matgl withdrew its bandgap model and publishes no replacement — evaluate with `atomate2.run_atomate2_vasp_calculation` instead |
 | Arbitrary property | `mace.predict_structure` |
 | DFT reference | `atomate2.run_atomate2_vasp_calculation` |
 
