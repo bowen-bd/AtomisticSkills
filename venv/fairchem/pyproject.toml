@@ -70,7 +70,7 @@ dependencies = [
   # Lower bounds keep the science packages on their latest releases: left
   # unbounded, the resolver would rather keep torch/numpy newest and silently
   # fall back to old releases of these. Raise them as new versions come out.
-  "fairchem-core>=2.23",
+  "fairchem-core>=2.24",
   # Saddle-point and IRC searches with an MLIP (chem-ts-optimization,
   # chem-irc-verification); the 1.x mace-agent and fairchem-agent had it.
   "sella",

@@ -12,7 +12,7 @@ AtomisticSkills runs all skill scripts and MCP servers through the unified launc
 | :--- | :--- | :--- | :--- |
 | `cpu` | ASE, pymatgen, RDKit, pycalphad, MDAnalysis (no torch) | No | `base`, `atomate2`, `drugdisc`, `smol` |
 | `mlip` | PyTorch 2.14.1, MACE-torch 0.3.16, MatGL 4.1.0, nvalchemi-toolkit 0.2.0 | Yes | `mace`, `matgl` |
-| `fairchem` | PyTorch 2.13.0, fairchem-core 2.23.0, nvalchemi-toolkit 0.2.0 | Yes | `fairchem` |
+| `fairchem` | PyTorch 2.13.0, fairchem-core 2.24.0, nvalchemi-toolkit 0.2.0 | Yes | `fairchem` |
 
 ### Research Stacks
 
@@ -27,7 +27,7 @@ Pinned to the versions they were verified with, rather than tracking the latest 
 
 ### Why Three Shared Environments?
 1. **Package conflicts**: `mace-torch` pins `e3nn==0.4.4`, whereas `fairchem-core` requires `e3nn>=0.5`.
-2. **PyTorch versions**: `fairchem-core` 2.23 requires `torch~=2.13`, while `mlip` runs PyTorch 2.14.1.
+2. **PyTorch versions**: `fairchem-core` 2.24 requires `torch~=2.13`, while `mlip` runs PyTorch 2.14.1.
 3. **NumPy constraints**: `nvalchemi-toolkit` 0.2 requires `numpy<2.4`, so GPU environments use NumPy 2.3.5 while `cpu` uses NumPy 2.5+.
 
 ### Optional Extras
