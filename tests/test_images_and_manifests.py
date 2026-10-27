@@ -310,3 +310,74 @@ class TestImagePublication:
             image_publish.publish(
                 self.matrix("cpu"), self.REGISTRY, self.RUN_ID, VERSION
             )
+
+
+class TestMatrixSelection:
+    """A change only rebuilds the images it can affect.
+
+    The build matrix is narrowed by diffing, because the generative image
+    compiles the PyG extensions from source on arm64 and takes about two hours;
+    rebuilding it for a change to `venv/mlip/uv.lock` is pure cost. Anything the
+    filter cannot attribute to exactly one image must select every image, since
+    building too much only wastes time while building too little ships a broken
+    image.
+    """
+
+    ALL = [image["name"] for image in SPEC["images"]]
+
+    def test_no_information_builds_everything(self):
+        assert render.select_images(SPEC, set()) == self.ALL
+
+    def test_a_project_lock_selects_only_its_image(self):
+        assert render.select_images(SPEC, {"venv/mlip/uv.lock"}) == ["mlip"]
+        assert render.select_images(SPEC, {"venv/fairchem/pyproject.toml"}) == [
+            "fairchem"
+        ]
+
+    def test_a_multi_project_image_is_selected_by_either_project(self):
+        for project in ("adit", "diffcsp", "mattergen"):
+            assert render.select_images(SPEC, {f"venv/{project}/uv.lock"}) == [
+                "generative"
+            ]
+
+    def test_the_build_itself_selects_everything(self):
+        for path in (
+            "docker/Dockerfile",
+            "docker/Dockerfile.cuda",
+            "docker/images.json",
+        ):
+            assert render.select_images(SPEC, {path}) == self.ALL, path
+
+    def test_the_sources_images_copy_select_everything(self):
+        # Images install the repository itself, so a source change can alter any
+        # of them; nothing in the filter narrows that.
+        for path in ("src/mcp_server/mace_server.py", "pyproject.toml", "README.md"):
+            assert render.select_images(SPEC, {path}) == self.ALL, path
+
+    def test_one_unattributable_path_selects_everything(self):
+        mixed = {"venv/mlip/uv.lock", "src/utils/mlips/base.py"}
+        assert render.select_images(SPEC, mixed) == self.ALL
+
+    def test_the_real_change_this_rule_exists_for(self):
+        """Both FairChem and MatGL bumps touch locks the generative image does
+        not use; that image must drop out of the matrix."""
+        changed = {"venv/mlip/uv.lock", "venv/fairchem/uv.lock"}
+        assert render.select_images(SPEC, changed) == ["mlip", "fairchem"]
+
+    def test_matrix_emits_only_the_selected_images(self):
+        for changed, expected in (
+            ([], self.ALL),
+            (["venv/mlip/uv.lock"], ["mlip"]),
+            (["venv/adit/uv.lock"], ["generative"]),
+        ):
+            argv = [
+                sys.executable,
+                str(PROJECT_ROOT / "docker" / "render.py"),
+                "matrix",
+            ]
+            for path in changed:
+                argv += ["--changed", path]
+            result = subprocess.run(argv, capture_output=True, text=True)
+            assert result.returncode == 0, result.stderr
+            images = sorted({e["image"] for e in json.loads(result.stdout)["include"]})
+            assert images == sorted(expected), changed
