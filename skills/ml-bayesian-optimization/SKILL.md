@@ -18,7 +18,7 @@ metadata:
 >
 > ```bash
 > ${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli mace relax_structure key=value predict_structure key=value
-> ${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli matgl relax_structure key=value predict_bandgap key=value
+> ${CLAUDE_SKILL_DIR}/../../venv/run mlip python -m src.mcp_server.cli matgl relax_structure key=value predict_structure key=value
 > ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli atomate2 run_atomate2_vasp_calculation key=value
 > ${CLAUDE_SKILL_DIR}/../../venv/run cpu python -m src.mcp_server.cli base visualize_structure key=value
 > ```
@@ -89,7 +89,7 @@ For each row in `candidates_round_0.csv`, call the appropriate MCP tool to evalu
 | Objective type | Recommended MCP tool |
 |---|---|
 | Energy / formation energy | `mace.relax_structure` or `matgl.relax_structure` |
-| Bandgap | `matgl.predict_bandgap` |
+| Bandgap | No MLIP tool: matgl withdrew its bandgap model and publishes no replacement — evaluate with `atomate2.run_atomate2_vasp_calculation` instead |
 | Arbitrary property | `mace.predict_structure` |
 | DFT reference | `atomate2.run_atomate2_vasp_calculation` |
 

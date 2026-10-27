@@ -205,7 +205,7 @@ venv/run fairchem python skills/chem-sorption-gcmc/scripts/run_gcmc_multi.py \
 |---|---|---|
 | General MOF screening (physisorption) | `uma-s-1p2` (FairChem) | `omol` |
 | Chemisorption / reactive systems | `MACE-MH-1` | `matpes_r2scan` |
-| Speed-critical large supercells | `uma-s-1` (smaller) | `omol` |
+| Speed-critical large supercells | `uma-s-1p2p1` (small UMA) | `omol` |
 
 > **Note:** Always use the same MLIP and the same `task-name` for both Widom and GCMC to ensure internal consistency between the infinite-dilution and finite-pressure results.
 

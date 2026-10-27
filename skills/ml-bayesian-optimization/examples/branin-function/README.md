@@ -137,7 +137,7 @@ The `gp_model_2d.png` shows:
 | Branin step | Real materials equivalent |
 |---|---|
 | Read `(x1, x2)` from CSV | Read composition or hyperparameters from `candidates_round_N.csv` |
-| Compute `branin(x1, x2)` | Call `mcp_mace_relax_structure` or `mcp_matgl_predict_bandgap` |
+| Compute `branin(x1, x2)` | Call `mcp_mace_relax_structure` or `mcp_matgl_predict_structure` |
 | Append `(x1, x2, branin)` to `evaluated.csv` | Append `(params..., property)` to `evaluated.csv` |
 
 The BO script is fully agnostic to the evaluation backend — it only reads parameter values and objective scores from CSV.

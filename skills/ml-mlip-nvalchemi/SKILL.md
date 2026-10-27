@@ -306,7 +306,6 @@ See [resources/benchmark_results.md](resources/benchmark_results.md) for the ful
 | CHGNet-PES-MatPES-r2SCAN-1M-2026.9 | 3.4× | **11×** | 9.5e-07 |
 | QET-PES-MatPES-PBE-2025.2 | 4.2× | **13×** | 7.2e-07 |
 | QET-PES-MatPES-r2SCAN-2025.2 | 3.9× | **14×** | 9.5e-07 |
-| SO3Net-PES-ANI-1x-Subset | — | — | not supported |
 | FairChem uma-s-1p2 (omat) | 3.0× | 2.9× | 1.6e-07 |
 | FairChem uma-m-1p1 (omat) | 2.9× | 3.5× | 1.7e-07 |
 | FairChem uma-s-1p1 (omat) | 3.4× | 5.5× | 2.5e-07 |
@@ -326,8 +325,6 @@ See [resources/benchmark_results.md](resources/benchmark_results.md) for the ful
 - **Stress format**: NValchemi returns 3×3 Cauchy stress tensor (eV/Å³); sequential path returns ASE Voigt-6. Both formats are accepted downstream — `_extract_static()` in tests handles the conversion.
 - **FairChem dataset field**: UMA model requires `dataset` (e.g., `"omat"`) passed to `FCAtomicData`. This is handled automatically by `FairChemWrapper`; defaults to `"omat"` when `task_name=None`.
 - **CHGNet batch speedup**: CHGNet directed line graph construction parallelizes well on GPU (11× at N=20 for the 1M-2026.9 checkpoints). CPU performance is marginal (<3×); always use `device="cuda"` for batch workloads.
-- **SO3Net not supported**: `SO3Net-PES-ANI-1x-Subset` falls back to sequential automatically (`_get_nvalchemi_model()` returns `None`).
-- **ANI-1x models with transition metals**: TensorNet-PES-ANI-1x training set covers only H/C/N/O. Using it with Cu or other transition metals causes a CUDA index OOB error that corrupts the CUDA context for the session. Run ANI-1x models in a separate process from other models.
 - **MatGL models (TensorNet, CHGNet) inflight batching not supported**: Inflight batching stays off for the MatGL wrappers (TensorNet, CHGNet), for a measured reason: after graduation, energies are wrong (TensorNet Cu −83.70 vs −86.57 eV fixed-batch; CHGNet 0.26 eV), while MACE inflight agrees to meV. All MatGL wrappers set `_nvalchemi_supports_inflight=False`; when the total atom count exceeds the batch budget, they fall through to fixed-batch NValchemi (all structures in one GPU pass) rather than inflight. For large MatGL sets, split inputs into smaller calls or retain default sequential execution. `max_batch_atoms` does not cap the fixed-batch allocation when inflight is disabled.
 - **Unsupported ensembles for batch MD**: `nvt_berendsen`, `nvt_andersen`, `nvt_bussi`, `npt_berendsen`, and `npt_inhomogeneous` have no NValchemi equivalent and always run sequentially.
 

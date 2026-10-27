@@ -74,7 +74,11 @@ dependencies = [
   # Saddle-point and IRC searches with an MLIP (chem-ts-optimization,
   # chem-irc-verification); the 1.x mace-agent and fairchem-agent had it.
   "sella",
-  "matgl>=4.1",
+  # 4.1.2 loads checkpoints strictly: a parameter that the checkpoint does not
+  # carry now raises, where 4.1.0 skipped it and left the layer at its random
+  # initialisation (the DGL-era Set2Set mismatch cost 12 LSTM tensors). That
+  # matters most for ml-matgl-finetune, which loads its own checkpoints back.
+  "matgl>=4.1.2",
   # GPU-batched relaxation and MD (ml-mlip-nvalchemi, and the batch path in
   # src/utils/mlips/base.py).
   "nvalchemi-toolkit>=0.2",

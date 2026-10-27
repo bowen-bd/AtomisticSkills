@@ -43,9 +43,14 @@ Select the appropriate machine learning interatomic potential (MLIP) for a given
 ### FAIRCHEM Models
 **Environment:** `fairchem`
 
-- **uma-s-1p1** (UMA checkpoints are gated on Hugging Face: request access at https://huggingface.co/facebook/UMA and set `HF_TOKEN`):
+- **uma-s-1p2p1** (default; UMA checkpoints are gated on Hugging Face: request access at https://huggingface.co/facebook/UMA and set `HF_TOKEN`):
   - Use for organic and inorganic simulations.
-  - **Note:** UMA models are typically slower and more expensive. Avoid for dynamic simulations with systems >500 atoms.
+  - **Speed:** this is the one checkpoint UMA Nitro serves (fairchem-core >= 2.24, the `fairchem` env), which is what makes UMA viable for dynamics. The gain is largest on small systems — several-fold versus the pre-Nitro paths at tens of atoms — and narrows to about 1.5x by a thousand atoms. Nitro runs in reduced precision — TF32 where the GPU allows it, IEEE matmul on compute capability 8.x, which fairchem holds to its numerical limits — so energies and forces differ from the FP32 path at the meV level; use `high-precision` when you need FP32.
+  - Nitro needs a CUDA GPU; check the `load_model` result, which reports whether Nitro or a fallback is running. Off CUDA, on other UMA checkpoints, or for batched input it silently falls back and you lose most of the speed.
+- **uma-s-1p2p1-ft-r2scan** / **uma-s-1p2p1-ft-d4rev**:
+  - Single-task 1.2.1 fine-tunes at higher levels of theory, both served by Nitro.
+  - `-ft-r2scan` (omat, r2SCAN): materials. Not spin-polarised — do not use for magnetic systems or cohesive energies; add dispersion with `DFTD3Calculator(functional="r2scan")`.
+  - `-ft-d4rev` (omol, wB97M-D4rev): molecules and non-covalent interactions. Dispersion is already included; do not add D3.
 - **uma-m-1p1**:
   - Use for organic and inorganic simulations with <100 atoms.
 - **esen-md-direct-all-omol**:
@@ -97,6 +102,9 @@ If the simulation involves dynamic or expensive calculations (Molecular Dynamics
   - `TensorNet-MatPES-r2SCAN-v2025.1-PES`
   - `MACE-MATPES-r2SCAN-0` (or MACE small variants)
 - **Avoid UMA models** for dynamic simulations due to higher cost, unless the system is very small.
+  - Exception: `uma-s-1p2p1` under UMA Nitro (see the FAIRCHEM section) is
+    competitive for MD up to a few hundred atoms. Still prefer a smaller model
+    for thousands of atoms, where Nitro's advantage disappears.
 
 ### 3. System Composition
 Consider the chemical elements present in the system:
