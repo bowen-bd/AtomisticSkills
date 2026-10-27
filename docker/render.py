@@ -154,11 +154,60 @@ def per_platform(image: dict, key: str, platform: str, default):
     return value
 
 
+def image_project_paths(image: dict) -> set[str]:
+    """The paths that own this image's contents.
+
+    An image installs one uv project (``venv``) or several (``venvs``) from
+    their locks, so only those files can change what it contains.
+    """
+    projects = image.get("venvs") or [image["venv"]]
+    return {
+        path
+        for project in projects
+        for path in (f"venv/{project}/uv.lock", f"venv/{project}/pyproject.toml")
+    }
+
+
+def select_images(spec: dict, changed: set[str]) -> list[str]:
+    """Images a change can affect, given the paths it touches.
+
+    Everything an image installs comes from its own project locks or from the
+    build itself, so a change to `venv/mlip/uv.lock` cannot alter the
+    generative image and rebuilding it is pure cost. Anything not owned by a
+    single image — docker/, this workflow, the sources the images copy in — is
+    shared, and selects every image. An empty change set also selects every
+    image: without information, build everything rather than guess.
+    """
+    names = [image["name"] for image in spec["images"]]
+    if not changed:
+        return names
+    owners = {
+        path: image["name"]
+        for image in spec["images"]
+        for path in image_project_paths(image)
+    }
+    wanted = set()
+    for path in changed:
+        owner = owners.get(path)
+        if owner is None:
+            return names
+        wanted.add(owner)
+    return [name for name in names if name in wanted]
+
+
 def cmd_matrix(spec: dict, args: argparse.Namespace) -> int:
     """Print the GitHub Actions matrix as JSON, one entry per image+platform."""
     runner = {"linux/amd64": "ubuntu-24.04", "linux/arm64": "ubuntu-24.04-arm"}
+    # args may be None: cmd_matrix is also called directly from the tests.
+    changed = set(getattr(args, "changed", None) or ())
+    if "-" in changed:
+        changed.discard("-")
+        changed.update(line.strip() for line in sys.stdin if line.strip())
+    wanted = select_images(spec, changed)
     include = []
     for image in spec["images"]:
+        if image["name"] not in wanted:
+            continue
         for platform in image["platforms"]:
             if "venvs" in image:
                 dockerfile = "docker/Dockerfile.cuda"
@@ -266,6 +315,17 @@ def main() -> int:
     p.set_defaults(func=cmd_server_map)
 
     p = sub.add_parser("matrix", help="GitHub Actions build matrix as JSON")
+    p.add_argument(
+        "--changed",
+        action="append",
+        metavar="PATH",
+        default=None,
+        help=(
+            "A path this change touches; repeat it, or pass '-' to read paths "
+            "from stdin. Only the images those paths can affect are emitted. "
+            "Without it the full matrix is printed."
+        ),
+    )
     p.set_defaults(func=cmd_matrix)
 
     args = parser.parse_args()

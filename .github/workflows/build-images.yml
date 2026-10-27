@@ -46,7 +46,11 @@ jobs:
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
     steps:
+      # Full history: the matrix below diffs against the base commit to work
+      # out which images this change can actually affect.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -94,12 +98,40 @@ jobs:
           print(f"all lockfiles present ({checked} projects)")
           PY
 
+      - name: Which images this change can affect
+        id: changed
+        # An image installs its own uv projects from their locks, so a change
+        # to one lock cannot alter another image. Diffing lets the matrix drop
+        # the ones it cannot affect: the generative image compiles the PyG
+        # extensions from source on arm64 and takes about two hours, which is
+        # pure cost on a change to, say, venv/mlip/uv.lock. When the base is
+        # unknown (a new branch, a forced push) the list is left empty and
+        # every image is built.
+        run: |
+          BASE=""
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="origin/${{ github.base_ref }}"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            BASE="${{ github.event.before }}"
+          fi
+          : > /tmp/changed.txt
+          if [ -n "$BASE" ] && git rev-parse --verify -q "$BASE^{commit}" >/dev/null; then
+            git diff --name-only "$BASE...HEAD" > /tmp/changed.txt || : > /tmp/changed.txt
+          fi
+          echo "paths changed against '${BASE}': $(wc -l < /tmp/changed.txt)"
+          cat /tmp/changed.txt
+
       - name: Render build matrix
         id: matrix
         env:
           FILTER: ${{ inputs.images }}
         run: |
-          MATRIX="$(python docker/render.py matrix)"
+          # An explicit dispatch selection wins over the diff.
+          if [ -n "$FILTER" ]; then
+            MATRIX="$(python docker/render.py matrix)"
+          else
+            MATRIX="$(python docker/render.py matrix --changed - < /tmp/changed.txt)"
+          fi
           if [ -n "$FILTER" ]; then
             MATRIX="$(FILTER="$FILTER" python - <<'PY'
           import json, os, subprocess
