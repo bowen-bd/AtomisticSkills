@@ -41,6 +41,7 @@ def load_model(
     model_name: str = "MACE-OMAT-0-small",
     device: str = "auto",
     task_name: Optional[str] = None,
+    accelerator: str = "auto",
 ) -> str:
     """
     Load a MACE model.
@@ -59,9 +60,15 @@ def load_model(
         task_name: Optional task name that sets the model's head.
                   Supported options for multi-head models (MACE-MH):
                   'omat_pbe' (default), 'matpes_r2scan', 'omol', 'spice_wB97M', 'oc20_usemppbe'.
+        accelerator: 'auto' (default) uses CuEquivariance on a CUDA device when
+                  it is installed, and runs the plain e3nn path otherwise — no
+                  GPU, no cuequivariance, or a card its kernels do not cover
+                  all still work, just slower. 'cueq' asks for it and degrades
+                  the same way; 'none' pins the plain path for reproducible
+                  timings.
 
     Returns:
-        Confirmation message.
+        Confirmation message naming the accelerator actually in use.
 
     CRITICAL: This tool must be called before using any other tool to load the model into memory.
     """
@@ -74,7 +81,12 @@ def load_model(
     try:
         from src.utils.mlips.mace.mace_wrapper import MACEWrapper
 
-        wrapper = MACEWrapper(model_name=model_name, device=device, head=task_name)
+        wrapper = MACEWrapper(
+            model_name=model_name,
+            device=device,
+            head=task_name,
+            accelerator=accelerator,
+        )
         # Load the model - this might take a while and produce output
         wrapper.load(model_path=model_name if os.path.exists(model_name) else None)
 
@@ -88,7 +100,13 @@ def load_model(
                     f"Model wrapper does not support setting head to {task_name}"
                 )
 
-        return f"Successfully loaded MACE model: {model_name}"
+        # The calculator, and with it the accelerator, is built lazily on the
+        # first structure; report what it will attempt rather than forcing a
+        # build here, which would download and convert the checkpoint.
+        return (
+            f"Successfully loaded MACE model: {model_name}. "
+            f"Acceleration: {wrapper.describe_accelerator()}."
+        )
     except Exception as e:
         logger.error(f"Failed to load model {model_name}: {e}")
         return f"Error loading model: {str(e)}"

@@ -137,8 +137,18 @@ lammps = ["cython", "mkl-devel ; platform_machine == 'x86_64'"]
 # torchvision (via timm, physicsnemo) is compiled against one torch build, so it
 # comes from the same index; a PyPI torchvision with a cu126 torch fails with
 # "operator torchvision::nms does not exist".
-cu126 = ["torch", "torchvision"]
-cu130 = ["torch", "torchvision"]
+# cuEquivariance ships the same pair of packages for both CUDA majors, so it
+# rides along with the torch build it must match: the ops wheels are compiled
+# against one CUDA major, and cuequivariance_torch imports them under the bare
+# module name cuequivariance_ops_torch either way. Upstream mace-torch declares
+# only the cu12 pair (cueq-cuda-11/12); cu13 exists and is what a driver >= 580
+# host needs. Roughly 30 MB per architecture.
+#
+# Installing it is not the same as using it: MaceWrapper enables CuEquivariance
+# only on a CUDA device where the kernels import, and falls back to the plain
+# e3nn path otherwise (see _build_calculator).
+cu126 = ["torch", "torchvision", "cuequivariance-torch>=0.2.0", "cuequivariance-ops-torch-cu12>=0.2.0"]
+cu130 = ["torch", "torchvision", "cuequivariance-torch>=0.2.0", "cuequivariance-ops-torch-cu13>=0.2.0"]
 
 [dependency-groups]
 dev = ["pytest", "pytest-timeout"]

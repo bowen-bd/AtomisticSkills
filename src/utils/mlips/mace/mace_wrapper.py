@@ -12,6 +12,32 @@ from src.utils.mlips.base import MLIPModel
 
 logger = logging.getLogger(__name__)
 
+# How a calculator may be accelerated. CuEquivariance ("cueq") swaps MACE's
+# e3nn tensor-product kernels for fused CUDA ones, which needs both its Python
+# front end and its compiled ops package, and only helps on a GPU.
+#
+# "auto" is deliberately forgiving. A host with no GPU, no cuequivariance
+# installed (the CPU-only environments, or a run that did not sync the cu130
+# extra), or a card that cuequivariance has no kernels for must still be able
+# to run MACE, so an accelerator that cannot be used is a log line and a slower
+# path, never an exception out of load(). Asking for "cueq" is a request, not a
+# guarantee, for the same reason: it is honoured where it works.
+ACCELERATORS = ("auto", "cueq", "none")
+_CUEQ_MODULES = ("cuequivariance_torch", "cuequivariance_ops_torch")
+
+
+def cueq_installed() -> bool:
+    """Whether both halves of CuEquivariance can be imported."""
+    from importlib.util import find_spec
+
+    return all(find_spec(name) is not None for name in _CUEQ_MODULES)
+
+
+def _is_cuda(device: str) -> bool:
+    """Whether an ASE/``torch`` device string names a CUDA device."""
+    return str(device).split(":")[0] == "cuda"
+
+
 # Available MACE checkpoints and models
 AVAILABLE_MACE_MODELS = {
     # MACE-MH (Multi-Head) models - MACE-MH-1 is the latest recommended default
@@ -76,6 +102,7 @@ class MACEWrapper(MLIPModel):
         model_version: str = "latest",
         device: str = "auto",
         head: Optional[str] = None,
+        accelerator: str = "auto",
     ):
         """
         Initialize MACE wrapper.
@@ -85,10 +112,26 @@ class MACEWrapper(MLIPModel):
             model_version: Version of the model
             device: Device to run the model on ("auto", "cpu", "cuda")
             head: Optional head name for multi-head models (e.g. "omat_pbe")
+            accelerator: One of ``ACCELERATORS``. "auto" uses CuEquivariance
+                where it can help and quietly runs the plain e3nn path
+                elsewhere; "cueq" asks for it but still degrades; "none" pins
+                the plain path for reproducible timings.
         """
+        if accelerator not in ACCELERATORS:
+            raise ValueError(
+                f"Unknown accelerator {accelerator!r}; expected one of "
+                f"{', '.join(ACCELERATORS)}."
+            )
         super().__init__(model_name, model_version)
         self.device = device
         self.head = head
+        self.accelerator = accelerator
+        # What actually ended up on the calculator; set by _build_calculator.
+        self.accelerator_effective = "none"
+        self._accelerator_warned = False
+        # Set once the accelerated attempt has failed on this device, so a
+        # per-structure rebuild does not retry a conversion that cannot work.
+        self._accelerator_failed = False
         self.model_class = None
         self.calculator_class = None
         self.model = None
@@ -131,6 +174,107 @@ class MACEWrapper(MLIPModel):
             self.load_checkpoint(model_path)
             logger.info(f"Loaded model from checkpoint: {model_path}")
 
+    def _accepts_accelerator(self) -> bool:
+        """
+        Whether this model's calculator path can take an accelerator at all.
+
+        MACE-ANI-CC is built by mace_anicc, which fixes its own argument list,
+        so it cannot be handed enable_cueq. Reporting the cuEquivariance
+        speedup for it would promise a fast path that never runs — the same
+        mistake as announcing a Nitro fallback for a checkpoint that was never
+        eligible for Nitro.
+        """
+        return "ANI-CC" not in self.model_name.upper()
+
+    def _accelerator_kwargs(self) -> Dict[str, Any]:
+        """
+        Calculator kwargs for the accelerated path, or empty when it is out.
+
+        Decides once per call and explains the decision the first time it is
+        a "no", so a user who expected the speedup can tell whether the host
+        lacks a GPU, the package, or a compatible card.
+        """
+        if self.accelerator == "none" or self._accelerator_failed:
+            return {}
+        if not self._accepts_accelerator():
+            return {}
+        if not _is_cuda(self.device):
+            if not self._accelerator_warned:
+                logger.info(
+                    "CuEquivariance needs a CUDA device; running %s on %s "
+                    "without it.",
+                    self.model_name,
+                    self.device,
+                )
+                self._accelerator_warned = True
+            return {}
+        if not cueq_installed():
+            if not self._accelerator_warned:
+                logger.info(
+                    "CuEquivariance is not installed; running %s without it. "
+                    "It ships with the mlip cu126/cu130 extras.",
+                    self.model_name,
+                )
+                self._accelerator_warned = True
+            return {}
+        return {"enable_cueq": True}
+
+    def describe_accelerator(self) -> str:
+        """
+        One line on what the calculator will attempt, and why.
+
+        Cheap and side-effect free: it answers from the device, the installed
+        packages and the requested mode, without building a calculator or
+        touching the model. Whether cueq then holds up on the card is only
+        known when the calculator is built, and _build_calculator logs it.
+        """
+        if self.accelerator == "none":
+            return "none (disabled by request)"
+        if not self._accepts_accelerator():
+            return f"none ({self.model_name} has no accelerated calculator path)"
+        if not _is_cuda(self.device):
+            return f"none (device is {self.device}, and cueq needs CUDA)"
+        if not cueq_installed():
+            return "none (cuequivariance is not installed)"
+        return "cueq (falls back to the plain path if this card has no kernels)"
+
+    def _build_calculator(self, factory, /, **kwargs):
+        """
+        Build a calculator, preferring the accelerated path.
+
+        MACE raises rather than degrading when cueqvariance is missing or has
+        no kernels for the card in use, and doing that here would take MACE
+        away from a user whose GPU merely is not one cuequivariance supports.
+        So the accelerated attempt is the only thing in the try: if it fails,
+        rebuild on the plain path and keep the reason. The plain path is not
+        guarded, so a real error (a bad checkpoint, an unreadable model) still
+        surfaces instead of being absorbed.
+        """
+        extra = self._accelerator_kwargs()
+        if extra:
+            try:
+                calculator = factory(**kwargs, **extra)
+            except Exception as exc:
+                logger.warning(
+                    "CuEquivariance could not run %s on %s (%s: %s); "
+                    "continuing on the plain e3nn path, which is slower.",
+                    self.model_name,
+                    self.device,
+                    type(exc).__name__,
+                    exc,
+                )
+                self.accelerator_effective = "none"
+                self._accelerator_failed = True
+            else:
+                self.accelerator_effective = "cueq"
+                logger.info(
+                    "CuEquivariance acceleration enabled for %s.", self.model_name
+                )
+                return calculator
+        else:
+            self.accelerator_effective = "none"
+        return factory(**kwargs)
+
     def create_calculator(self) -> Calculator:
         """
         Create an ASE calculator from the model.
@@ -145,16 +289,22 @@ class MACEWrapper(MLIPModel):
         if self.model_path and Path(self.model_path).exists():
             from mace.calculators import MACECalculator
 
-            return MACECalculator(
-                model_paths=str(self.model_path), device=self.device, head=self.head
+            return self._build_calculator(
+                MACECalculator,
+                model_paths=str(self.model_path),
+                device=self.device,
+                head=self.head,
             )
 
         # 2. Check if model_name is a path (fallback)
         if Path(self.model_name).exists():
             from mace.calculators import MACECalculator
 
-            return MACECalculator(
-                model_paths=str(self.model_name), device=self.device, head=self.head
+            return self._build_calculator(
+                MACECalculator,
+                model_paths=str(self.model_name),
+                device=self.device,
+                head=self.head,
             )
 
         # 3. Standard Pretrained mapping
@@ -199,7 +349,9 @@ class MACEWrapper(MLIPModel):
             ):
                 head = "omat_pbe"
 
-            return MACECalculator(model_paths=model_path, device=self.device, head=head)
+            return self._build_calculator(
+                MACECalculator, model_paths=model_path, device=self.device, head=head
+            )
 
         if "OFF" in model_name_upper:
             # Use MACE-OFF calculator
@@ -211,25 +363,29 @@ class MACEWrapper(MLIPModel):
                 "MACE-OFF23-LARGE": "large",
             }
             off_model_size = off_model_mapping.get(model_name_upper, "medium")
-            return mace_off(model=off_model_size, device=self.device)
+            return self._build_calculator(
+                mace_off, model=off_model_size, device=self.device
+            )
 
         elif "ANI-CC" in model_name_upper:
             # Use MACE-ANI-CC
             from mace.calculators import mace_anicc
 
+            # mace_anicc takes a fixed argument list, so it cannot be handed
+            # enable_cueq the way the other helpers can.
             return mace_anicc(device=self.device)
 
         elif "OMOL" in model_name_upper:
             # Use MACE-OMOL
             from mace.calculators import mace_omol
 
-            return mace_omol(model=model_id, device=self.device)
+            return self._build_calculator(mace_omol, model=model_id, device=self.device)
 
         else:
             # Use MACE-MP calculator for materials models (including MPA, MATPES, OMAT)
             from mace.calculators import mace_mp
 
-            return mace_mp(model=model_id, device=self.device)
+            return self._build_calculator(mace_mp, model=model_id, device=self.device)
 
     def predict_atomic_features(self, structure_data: Any) -> Dict[str, Any]:
         """
